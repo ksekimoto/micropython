@@ -46,6 +46,7 @@
 void gpio_mode_output(uint32_t pin);
 void gpio_mode_input(uint32_t pin);
 void gpio_write(uint32_t pin, uint32_t state);
+void gpio_toggle(uint32_t pin);
 uint32_t gpio_read(uint32_t pin);
 
 #endif /* PORTS_RX_RX63N_RX63N_GPIO_H_ */

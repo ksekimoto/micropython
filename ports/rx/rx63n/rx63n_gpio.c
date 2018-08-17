@@ -56,6 +56,14 @@ void gpio_write(uint32_t pin, uint32_t state)
         _PODR(port) &= ~mask;
 }
 
+void gpio_toggle(uint32_t pin)
+{
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    _PDR(port) |= mask;
+    _PODR(port) ^= mask;
+}
+
 uint32_t gpio_read(uint32_t pin)
 {
     uint32_t port = GPIO_PORT(pin);

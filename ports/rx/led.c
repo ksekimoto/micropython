@@ -92,6 +92,8 @@ void led_toggle(pyb_led_t led) {
     if (led < 1 || led > NUM_LEDS) {
         return;
     }
+    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    MICROPY_HW_LED_TOGGLE(led_pin);
 }
 
 void led_debug(int n, int delay) {

@@ -20,6 +20,7 @@
 #define mp_hal_pin_open_drain(p)
 #define mp_hal_pin_high(p)      gpio_write((p)->pin, 1)
 #define mp_hal_pin_low(p)       gpio_write((p)->pin, 0)
+#define mp_hal_pin_toggle(p)    gpio_toggle((p)->pin)
 #define mp_hal_pin_od_low(p)    mp_hal_pin_low(p)
 #define mp_hal_pin_od_high(p)   mp_hal_pin_high(p)
 #define mp_hal_pin_read(p)      gpio_read((p)->pin)
