@@ -24,14 +24,28 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+#ifndef PORTS_RX_RX63N_RX63N_GPIO_H_
+#define PORTS_RX_RX63N_RX63N_GPIO_H_
 
-void rx63n_init(void)
-{
-    bootstrap();
-    udelay_init();
-    SCI_Init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    usb_init();
-}
+#include <stdint.h>
 
+#define GPIO_PORT(pin)  (pin >> 3)
+#define GPIO_MASK(pin)  (1 << (pin & 7))
+
+#define _PXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port*8 + bit))
+#define _PDR(port)  (*(volatile uint8_t *)(0x0008c000 + port))
+#define _PODR(port) (*(volatile uint8_t *)(0x0008c020 + port))
+#define _PIDR(port) (*(volatile uint8_t *)(0x0008c040 + port))
+#define _PMR(port)  (*(volatile uint8_t *)(0x0008c060 + port))
+#define _ODR0(port) (*(volatile uint8_t *)(0x0008c080 + port*2))
+#define _ODR1(port) (*(volatile uint8_t *)(0x0008c081 + port*2))
+#define _PCR(port)  (*(volatile uint8_t *)(0x0008c0C0 + port))
+#define _DSCR(port) (*(volatile uint8_t *)(0x0008c0E0 + port))
+#define _MPC(pin)   (*(volatile uint8_t *)(0x0008c140 + pin))
+
+void gpio_mode_output(uint32_t pin);
+void gpio_mode_input(uint32_t pin);
+void gpio_write(uint32_t pin, uint32_t state);
+uint32_t gpio_read(uint32_t pin);
+
+#endif /* PORTS_RX_RX63N_RX63N_GPIO_H_ */

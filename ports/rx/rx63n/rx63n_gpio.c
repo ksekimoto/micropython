@@ -25,13 +25,40 @@
  */
 
 #include "common.h"
+#include "iodefine.h"
+#include "interrupt_handlers.h"
+#include "rx63n_gpio.h"
 
-void rx63n_init(void)
+void gpio_mode_output(uint32_t pin)
 {
-    bootstrap();
-    udelay_init();
-    SCI_Init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    usb_init();
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    _PMR(port) &= ~mask;
+    _PDR(port) |= mask;
 }
 
+void gpio_mode_input(uint32_t pin)
+{
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    _PMR(port) &= ~mask;
+    _PDR(port) &= ~mask;
+}
+
+void gpio_write(uint32_t pin, uint32_t state)
+{
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    _PDR(port) |= mask;
+    if (state)
+        _PODR(port) |= mask;
+    else
+        _PODR(port) &= ~mask;
+}
+
+uint32_t gpio_read(uint32_t pin)
+{
+    uint32_t port = GPIO_PORT(pin);
+    uint32_t mask = GPIO_MASK(pin);
+    return ((_PIDR(port) & mask) != 0)? 1 : 0;
+}

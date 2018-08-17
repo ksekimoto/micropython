@@ -24,14 +24,19 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+#ifndef PORTS_RX_RX63N_RX63N_USB_H_
+#define PORTS_RX_RX63N_RX63N_USB_H_
 
-void rx63n_init(void)
-{
-    bootstrap();
-    udelay_init();
-    SCI_Init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    usb_init();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void usb_init(void);
+int usbcdc_read(void);
+void usbcdc_write(unsigned char c);
+
+#ifdef __cplusplus
 }
+#endif
 
+#endif /* PORTS_RX_RX63N_RX63N_USB_H_ */

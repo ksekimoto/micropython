@@ -1,8 +1,8 @@
 MEMORY
 {
-    ram(rwx)    : o = 0x00000000, l = 0x0001e000 /* RAM 128KB */
-    stack(rw)   : o = 0x0001e000, l = 0x00002000 /* end of RAM */
-    rom(rx)     : o = 0xfff00000, l = 0x000fff80 /* ROM 1MB */
+    ram(rwx)    : o = 0x00000000, l = 0x0003e000 /* RAM 256KB */
+    stack(rw)   : o = 0x0003e000, l = 0x00002000 /* end of RAM */
+    rom(rx)     : o = 0xffe00000, l = 0x001fff80 /* ROM 1MB */
     fvectors(rx): o = 0xffffff80, l = 0x00000080
 }
 
@@ -59,7 +59,7 @@ SECTIONS
     . = ALIGN(4);
     _end = . ;
 
-	.heapmax 0x1e000 : AT (0x1e000)
+	.heapmax 0x3e000 : AT (0x3e000)
 	{
 		_heapmax = .;
 	} > ram
@@ -75,8 +75,8 @@ SECTIONS
 }
 
 /* produce a link error if there is not this amount of RAM for these sections */
-/* _minimum_stack_size = 2K; */
-/* _minimum_heap_size = 16K; */
+_minimum_stack_size = 2K;
+_minimum_heap_size = 16K;
 
 /* Define tho top end of the stack.  The stack is full descending so begins just
    above last byte of RAM.  Note that EABI requires the stack to be 8-byte

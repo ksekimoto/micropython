@@ -24,14 +24,23 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+extern char end; /* Set by linker.  */
+extern char heapmax;
+char *heap_end = 0;
 
-void rx63n_init(void)
+void *sbrk(int incr)
 {
-    bootstrap();
-    udelay_init();
-    SCI_Init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    usb_init();
+	char * prev_heap_end;
+
+	if (heap_end == 0)
+		heap_end = &end;
+
+	if (((int)heap_end + incr) > (int)(&heapmax))
+		return (void *)-1;
+
+	prev_heap_end = heap_end;
+	heap_end += incr;
+
+	return (void *) prev_heap_end;
 }
 
