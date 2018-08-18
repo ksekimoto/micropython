@@ -24,8 +24,9 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONFIG_RX63N_H_
-#define CONFIG_RX63N_H_
+#ifndef RX63N_CONFIG_H_
+#define RX63N_CONFIG_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,8 +42,9 @@ extern "C" {
 
 void rx63n_init(void);
 void bootstrap(void);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CONFIG_RX63N_H_ */
+#endif /* RX63N_CONFIG_H_ */

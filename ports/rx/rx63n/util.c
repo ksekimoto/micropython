@@ -103,18 +103,15 @@ do { \
 #define sbi(port, bit) BSET((port), (bit))
 #define cbi(port, bit) BCLR((port), (bit))
 
-void startModule(MstpId module)
-{
+void startModule(MstpId module) {
     _startOrStopModule(module, true);
 }
 
-void stopModule(MstpId module)
-{
+void stopModule(MstpId module) {
     _startOrStopModule(module, false);
 }
 
-static void _startOrStopModule(MstpId id, bool start)
-{
+static void _startOrStopModule(MstpId id, bool start) {
     static const struct {
         int id:9;
         uint8_t reg:2;

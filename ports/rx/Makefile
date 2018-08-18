@@ -13,7 +13,6 @@ include ../../py/mkenv.mk
 include boards/$(BOARD)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
-#QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h $(BUILD)/modstm_qstr.h
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h boards/$(BOARD)/mpconfigboard.h
 
@@ -83,6 +82,7 @@ SRC_C += gccollect.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
 #SRC_C += modutime.c
+SRC_C += mphalport.c
 SRC_C += led.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
@@ -198,6 +198,11 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
+
+DRIVERS_SRC_C = $(addprefix drivers/,\
+	bus/softspi.c \
+	bus/softqspi.c \
+	)
 endif
 
 #OBJ = $(PY_CORE_O)
@@ -205,8 +210,9 @@ OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Creates the pin file for the STM32F4xx."""
+"""Creates the pin file for the RXxxx."""
 
 from __future__ import print_function
 

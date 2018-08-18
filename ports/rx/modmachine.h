@@ -32,6 +32,9 @@
 void machine_init(void);
 void machine_deinit(void);
 
+#define IRQ_STATE_DISABLED (0x00000000)
+#define IRQ_STATE_ENABLED  (0x00000001)
+
 MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(machine_unique_id_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(machine_reset_obj);

@@ -23,8 +23,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef RX_SCI_H_
-#define RX_SCI_H_
+#ifndef RX63N_SCI_H_
+#define RX63N_SCI_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +39,4 @@ void SCI_TxStr(int ch, unsigned char *p);
 }
 #endif
 
-#endif /* RX_SCI_H_ */
+#endif /* RX63N_SCI_H_ */

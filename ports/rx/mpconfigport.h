@@ -108,7 +108,6 @@ extern const struct _mp_obj_module_t machine_module;
 #endif
 extern const struct _mp_obj_module_t pyb_module;
 #if 0
-extern const struct _mp_obj_module_t stm_module;
 extern const struct _mp_obj_module_t mp_module_ubinascii;
 extern const struct _mp_obj_module_t mp_module_ure;
 extern const struct _mp_obj_module_t mp_module_uzlib;
@@ -122,16 +121,9 @@ extern const struct _mp_obj_module_t mp_module_network;
 extern const struct _mp_obj_module_t mp_module_onewire;
 #endif
 
-#if MICROPY_PY_STM
-#define STM_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_stm), MP_ROM_PTR(&stm_module) },
-#else
-#define STM_BUILTIN_MODULE
-#endif
-
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
-    /* STM_BUILTIN_MODULE */ \
     /* { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, */ \
     /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */ \
     /* SOCKET_BUILTIN_MODULE */ \
@@ -243,18 +235,18 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (1)
 #define MICROPY_PY_MACHINE          (1)
-#define MICROPY_PY_MACHINE_PULSE    (0)
+#define MICROPY_PY_MACHINE_PULSE    (1)
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW mp_pin_make_new
-#define MICROPY_PY_MACHINE_I2C      (0)
-//#if MICROPY_HW_ENABLE_HW_I2C
-//#define MICROPY_PY_MACHINE_I2C_MAKE_NEW machine_hard_i2c_make_new
-//#endif
-#define MICROPY_PY_MACHINE_SPI      (0)
-//#define MICROPY_PY_MACHINE_SPI_MSB  (SPI_FIRSTBIT_MSB)
-//#define MICROPY_PY_MACHINE_SPI_LSB  (SPI_FIRSTBIT_LSB)
-//#define MICROPY_PY_MACHINE_SPI_MAKE_NEW machine_hard_spi_make_new
-//#define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
-//#define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (HAL_RCC_GetSysClockFreq() / 48)
+#define MICROPY_PY_MACHINE_I2C      (1)
+#if MICROPY_HW_ENABLE_HW_I2C
+#define MICROPY_PY_MACHINE_I2C_MAKE_NEW machine_hard_i2c_make_new
+#endif
+#define MICROPY_PY_MACHINE_SPI      (1)
+#define MICROPY_PY_MACHINE_SPI_MSB  (SPI_FIRSTBIT_MSB)
+#define MICROPY_PY_MACHINE_SPI_LSB  (SPI_FIRSTBIT_LSB)
+#define MICROPY_PY_MACHINE_SPI_MAKE_NEW mp_machine_soft_spi_make_new
+#define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
+#define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
 #define MICROPY_PY_FRAMEBUF         (0)
 #ifndef MICROPY_PY_USOCKET
 #define MICROPY_PY_USOCKET          (0)

@@ -24,8 +24,8 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PORTS_RX_RX63N_RX63N_USB_H_
-#define PORTS_RX_RX63N_RX63N_USB_H_
+#ifndef RX63N_USB_H_
+#define RX63N_USB_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +39,4 @@ void usbcdc_write(unsigned char c);
 }
 #endif
 
-#endif /* PORTS_RX_RX63N_RX63N_USB_H_ */
+#endif /* RX63N_USB_H_ */

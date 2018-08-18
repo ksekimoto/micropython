@@ -30,13 +30,13 @@
 #define CLKDEV  8
 // PCLK = 48000000Hz default
 #if CLKDEV == 8
-#define CMT_VAL 0x0040;     // CMIE is Enable,CKS is PCLK/8
+#define CMT_VAL 0x0040;     // CMIE is Enable,CKS is PCLK/8     clk=1/6(us)
 #elif CLKDEV == 32
-#define CMT_VAL 0x0041;     // CMIE is Enable,CKS is PCLK/32
+#define CMT_VAL 0x0041;     // CMIE is Enable,CKS is PCLK/32    clk=1/1.5(us)
 #elif CLKDEV == 128
-#define CMT_VAL 0x0042;     // CMIE is Enable,CKS is PCLK/128
+#define CMT_VAL 0x0042;     // CMIE is Enable,CKS is PCLK/128   clk=32/12(us)
 #else
-#define CMT_VAL 0x0043;     // CMIE is Enable,CKS is PCLK/512
+#define CMT_VAL 0x0043;     // CMIE is Enable,CKS is PCLK/512   clk=128/3(us)
 #endif
 
 #define DELAY_CH    0
@@ -50,30 +50,24 @@ volatile struct st_cmt0 *CMTN[4] = {
 
 volatile static unsigned long cmcnt[4] = { 0L, 0L, 0L, 0L };
 
-static void isr_timer(unsigned int ch)
-{
+static void isr_timer(unsigned int ch) {
     cmcnt[ch] += 1L;
 }
 
-void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void)
-{
+void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void) {
     isr_timer(0);
 }
-void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void)
-{
+void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void) {
     isr_timer(1);
 }
-void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void)
-{
+void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void) {
     isr_timer(2);
 }
-void __attribute__ ((interrupt)) INT_Excep_CMT3_CMI3(void)
-{
+void __attribute__ ((interrupt)) INT_Excep_CMT3_CMI3(void) {
     isr_timer(3);
 }
 
-void timer_init(unsigned int ch)
-{
+void timer_init(unsigned int ch) {
     int i;
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     for (i = 0; i < 4; i++)
@@ -90,7 +84,7 @@ void timer_init(unsigned int ch)
     cmtn->CMCOR = 0xffff;
     cmtn->CMCR.WORD = CMT_VAL
     ;
-    switch(ch) {
+    switch (ch) {
     case 0:
         ICU.IPR[0x04].BIT.IPR = 0xf;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
@@ -112,8 +106,7 @@ void timer_init(unsigned int ch)
     CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
 }
 
-void timer_set_count(unsigned int ch, unsigned int count)
-{
+void timer_set_count(unsigned int ch, unsigned int count) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     cmtn->CMCNT = (unsigned short)0;
     do {
@@ -121,14 +114,12 @@ void timer_set_count(unsigned int ch, unsigned int count)
     } while (cmtn->CMCOR != (unsigned short)count);
 }
 
-void udelay_init(void)
-{
+void udelay_init(void) {
     timer_init(DELAY_CH);
     timer_set_count(DELAY_CH, 60);
 }
 
-void udelay(int m)
-{
+void udelay(int m) {
     volatile unsigned long start;
     if (m >= 10) {
         m /= 10;
@@ -143,12 +134,10 @@ void udelay(int m)
     }
 }
 
-unsigned long utick(void)
-{
-    return cmcnt[DELAY_CH]*10;
+unsigned long utick(void) {
+    return cmcnt[DELAY_CH] * 10;
 }
 
-unsigned long mtick(void)
-{
-    return cmcnt[DELAY_CH]/100;
+unsigned long mtick(void) {
+    return cmcnt[DELAY_CH] / 100;
 }

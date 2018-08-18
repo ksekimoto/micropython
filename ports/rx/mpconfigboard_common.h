@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2018 Damien P. George
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +33,7 @@
 /*****************************************************************************/
 // Feature settings with defaults
 
-// Whether to include the stm module, with peripheral register constants
+// Whether to include the rx module, with peripheral register constants
 #ifndef MICROPY_PY_RX
 #define MICROPY_PY_RX (1)
 #endif
@@ -104,7 +105,7 @@
 
 // The volume label used when creating the flash filesystem
 #ifndef MICROPY_HW_FLASH_FS_LABEL
-#define MICROPY_HW_FLASH_FS_LABEL "pybflash"
+#define MICROPY_HW_FLASH_FS_LABEL "rxflash"
 #endif
 
 /*****************************************************************************/
@@ -112,7 +113,7 @@
 
 // Configuration for RX63N series
 
-#define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
+//#define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
 #define PYB_EXTI_NUM_VECTORS (23)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (8)

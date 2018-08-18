@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +24,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_PIN_H
-#define MICROPY_INCLUDED_STM32_PIN_H
+#ifndef MICROPY_INCLUDED_RX_PIN_H
+#define MICROPY_INCLUDED_RX_PIN_H
 
 // This file requires pin_defs_xxx.h (which has port specific enums and
 // defines, so we include it here. It should never be included directly
@@ -90,4 +91,4 @@ const pin_af_obj_t *pin_find_af(const pin_obj_t *pin, uint8_t fn, uint8_t unit);
 const pin_af_obj_t *pin_find_af_by_index(const pin_obj_t *pin, mp_uint_t af_idx);
 const pin_af_obj_t *pin_find_af_by_name(const pin_obj_t *pin, const char *name);
 
-#endif // MICROPY_INCLUDED_STM32_PIN_H
+#endif // MICROPY_INCLUDED_RX_PIN_H

@@ -24,8 +24,3 @@
  * THE SOFTWARE.
  */
 
-// This file contains pin definitions that are specific to the rx port.
-// This file should only ever be #included by pin.h and not directly.
-
-//typedef GPIO_TypeDef pin_gpio_t;
-

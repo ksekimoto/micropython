@@ -26,8 +26,7 @@
 
 #include "common.h"
 
-void rx63n_init(void)
-{
+void rx63n_init(void) {
     bootstrap();
     udelay_init();
     SCI_Init(SCI_CH, SCI_BAUD);

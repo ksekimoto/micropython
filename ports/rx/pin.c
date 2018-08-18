@@ -34,22 +34,6 @@
 #include "extmod/virtpin.h"
 #include "pin.h"
 
-#define  GPIO_MODE_INPUT        1
-#define  GPIO_MODE_OUTPUT_PP    2
-#define  GPIO_MODE_OUTPUT_OD    3
-#define  GPIO_MODE_AF_PP        4
-#define  GPIO_MODE_AF_OD        5
-#define  GPIO_MODE_ANALOG       6
-#define  GPIO_MODE_IT_RISING    7
-#define  GPIO_MODE_IT_FALLING   8
-#define  GPIO_MODE_IT_RISING_FALLING 9
-#define  GPIO_MODE_EVT_RISING   10
-#define  GPIO_MODE_EVT_FALLING  11
-#define  GPIO_MODE_EVT_RISING_FALLING   12
-#define  GPIO_NOPULL            13
-#define  GPIO_PULLUP            14
-#define  GPIO_PULLDOWN          15
-
 
 /// \moduleref pyb
 /// \class Pin - control I/O pins
@@ -243,7 +227,6 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
         }
 
         // AF mode
-#if 0
         if (af) {
             mp_uint_t af_idx = pin_get_af(self);
             const pin_af_obj_t *af_obj = pin_find_af_by_index(self, af_idx);
@@ -255,9 +238,6 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
         } else {
             mp_print_str(print, ")");
         }
-#else
-        mp_print_str(print, ")");
-#endif
     }
 }
 
@@ -394,15 +374,6 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     }
 #endif
 
-    // configure the GPIO as requested
-    //GPIO_InitTypeDef GPIO_InitStructure;
-    //GPIO_InitStructure.Pin = self->pin_mask;
-    //GPIO_InitStructure.Mode = mode;
-    //GPIO_InitStructure.Pull = pull;
-    //GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-    //GPIO_InitStructure.Alternate = af;
-    //HAL_GPIO_Init(self->gpio, &GPIO_InitStructure);
-
     return mp_const_none;
 }
 
@@ -424,19 +395,15 @@ STATIC mp_obj_t pin_value(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pin_value_obj, 1, 2, pin_value);
 
 STATIC mp_obj_t pin_off(mp_obj_t self_in) {
-#if 0
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_hal_pin_low(self);
-#endif
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_off_obj, pin_off);
 
 STATIC mp_obj_t pin_on(mp_obj_t self_in) {
-#if 0
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_hal_pin_high(self);
-#endif
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_on_obj, pin_on);
@@ -501,13 +468,21 @@ STATIC mp_obj_t pin_port(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 
-/// \method pin()
-/// Get the pin number.
+/// \method bit()
+/// Get the pin bit.
 STATIC mp_obj_t pin_bit(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return MP_OBJ_NEW_SMALL_INT(self->pin & 7);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_bit_obj, pin_bit);
+
+/// \method pin()
+/// Get the pin number.
+STATIC mp_obj_t pin_pin(mp_obj_t self_in) {
+    pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return MP_OBJ_NEW_SMALL_INT(self->pin);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_pin_obj, pin_pin);
 
 /// \method mode()
 /// Returns the currently configured mode of the pin. The integer returned
@@ -552,6 +527,7 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_af_list), MP_ROM_PTR(&pin_af_list_obj) },
     { MP_ROM_QSTR(MP_QSTR_port),    MP_ROM_PTR(&pin_port_obj) },
     { MP_ROM_QSTR(MP_QSTR_bit),     MP_ROM_PTR(&pin_bit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pin),     MP_ROM_PTR(&pin_pin_obj) },
     { MP_ROM_QSTR(MP_QSTR_mode),    MP_ROM_PTR(&pin_mode_obj) },
     { MP_ROM_QSTR(MP_QSTR_pull),    MP_ROM_PTR(&pin_pull_obj) },
     { MP_ROM_QSTR(MP_QSTR_af),      MP_ROM_PTR(&pin_af_obj) },
@@ -669,10 +645,6 @@ STATIC mp_obj_t pin_af_name(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_af_name_obj, pin_af_name);
 
-/// \method reg()
-/// Return the base register associated with the peripheral assigned to this
-/// alternate function. For example, if the alternate function were TIM2_CH3
-/// this would return stm.TIM2
 STATIC mp_obj_t pin_af_reg(mp_obj_t self_in) {
     pin_af_obj_t *af = MP_OBJ_TO_PTR(self_in);
     return MP_OBJ_NEW_SMALL_INT((uintptr_t)af->reg);

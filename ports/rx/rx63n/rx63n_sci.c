@@ -30,19 +30,20 @@
 
 #define SCI_BUF_SIZE 4096
 
-volatile struct st_sci0 *SCI[] = { (volatile struct st_sci0 *)0x8A000, /* sci 0 */
-(volatile struct st_sci0 *)0x8A020, /* sci 1 */
-(volatile struct st_sci0 *)0x8A040, /* sci 2 */
-(volatile struct st_sci0 *)0x8A060, /* sci 3 */
-(volatile struct st_sci0 *)0x8A080, /* sci 4 */
-(volatile struct st_sci0 *)0x8A0A0, /* sci 5 */
-(volatile struct st_sci0 *)0x8A0C0, /* sci 6 */
-(volatile struct st_sci0 *)0x8A0E0, /* sci 7 */
-(volatile struct st_sci0 *)0x8A100, /* sci 8 */
-(volatile struct st_sci0 *)0x8A120, /* sci 9 */
-(volatile struct st_sci0 *)0x8A140, /* sci 10 */
-(volatile struct st_sci0 *)0x8A160, /* sci 11 */
-(volatile struct st_sci0 *)0x8B300 /* sci 12 */
+volatile struct st_sci0 *SCI[] = {
+    (volatile struct st_sci0 *)0x8A000, /* sci 0 */
+    (volatile struct st_sci0 *)0x8A020, /* sci 1 */
+    (volatile struct st_sci0 *)0x8A040, /* sci 2 */
+    (volatile struct st_sci0 *)0x8A060, /* sci 3 */
+    (volatile struct st_sci0 *)0x8A080, /* sci 4 */
+    (volatile struct st_sci0 *)0x8A0A0, /* sci 5 */
+    (volatile struct st_sci0 *)0x8A0C0, /* sci 6 */
+    (volatile struct st_sci0 *)0x8A0E0, /* sci 7 */
+    (volatile struct st_sci0 *)0x8A100, /* sci 8 */
+    (volatile struct st_sci0 *)0x8A120, /* sci 9 */
+    (volatile struct st_sci0 *)0x8A140, /* sci 10 */
+    (volatile struct st_sci0 *)0x8A160, /* sci 11 */
+    (volatile struct st_sci0 *)0x8B300 /* sci 12 */
 };
 
 static volatile struct SCI_FIFO {
@@ -53,15 +54,13 @@ static volatile struct SCI_FIFO {
 static volatile struct SCI_FIFO TxFifo;
 static volatile struct SCI_FIFO RxFifo;
 
-static void delay_ms(volatile unsigned int ms)
-{
+static void delay_ms(volatile unsigned int ms) {
     ms *= 1000;
     while (ms-- > 0)
         ;
 }
 
-static void sci_isr_rx(int ch)
-{
+static void sci_isr_rx(int ch) {
     int i;
     unsigned char d;
     volatile struct st_sci0 *sci = SCI[ch];
@@ -74,15 +73,13 @@ static void sci_isr_rx(int ch)
     }
 }
 
-static void sci_isr_er(int ch)
-{
+static void sci_isr_er(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     sci->RDR;
     sci->SSR.BYTE = 0x84;
 }
 
-static void sci_isr_tx(int ch)
-{
+static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     if (TxFifo.ct) {
@@ -95,84 +92,65 @@ static void sci_isr_tx(int ch)
     }
 }
 
-void INT_Excep_SCI0_RXI0(void)
-{
+void INT_Excep_SCI0_RXI0(void) {
     sci_isr_rx(0);
 }
-void INT_Excep_SCI1_RXI1(void)
-{
+void INT_Excep_SCI1_RXI1(void) {
     sci_isr_rx(1);
 }
-void INT_Excep_SCI2_RXI2(void)
-{
+void INT_Excep_SCI2_RXI2(void) {
     sci_isr_rx(2);
 }
-void INT_Excep_SCI3_RXI3(void)
-{
+void INT_Excep_SCI3_RXI3(void) {
     sci_isr_rx(3);
 }
-void INT_Excep_SCI5_RXI5(void)
-{
+void INT_Excep_SCI5_RXI5(void) {
     sci_isr_rx(5);
 }
-void INT_Excep_SCI6_RXI6(void)
-{
+void INT_Excep_SCI6_RXI6(void) {
     sci_isr_rx(6);
 }
 
-void INT_Excep_SCI0_ERI0(void)
-{
+void INT_Excep_SCI0_ERI0(void) {
     sci_isr_er(0);
 }
-void INT_Excep_SCI1_ERI1(void)
-{
+void INT_Excep_SCI1_ERI1(void) {
     sci_isr_er(1);
 }
-void INT_Excep_SCI2_ERI2(void)
-{
+void INT_Excep_SCI2_ERI2(void) {
     sci_isr_er(2);
 }
-void INT_Excep_SCI3_ERI3(void)
-{
+void INT_Excep_SCI3_ERI3(void) {
     sci_isr_er(3);
 }
-void INT_Excep_SCI5_ERI5(void)
-{
+void INT_Excep_SCI5_ERI5(void) {
     sci_isr_er(5);
 }
-void INT_Excep_SCI6_ERI6(void)
-{
+void INT_Excep_SCI6_ERI6(void) {
     sci_isr_er(6);
 }
 
-void INT_Excep_SCI0_TXI0(void)
-{
+void INT_Excep_SCI0_TXI0(void) {
     sci_isr_tx(0);
 }
-void INT_Excep_SCI1_TXI1(void)
-{
+void INT_Excep_SCI1_TXI1(void) {
     sci_isr_tx(1);
 }
-void INT_Excep_SCI2_TXI2(void)
-{
+void INT_Excep_SCI2_TXI2(void) {
     sci_isr_tx(2);
 }
-void INT_Excep_SCI3_TXI3(void)
-{
+void INT_Excep_SCI3_TXI3(void) {
     sci_isr_tx(3);
 }
-void INT_Excep_SCI4_TXI5(void)
-{
+void INT_Excep_SCI4_TXI5(void) {
     sci_isr_tx(5);
 }
-void INT_Excep_SCI6_TXI6(void)
-{
+void INT_Excep_SCI6_TXI6(void) {
     sci_isr_tx(6);
 }
 
-void SCI_RxEnable(int ch)
-{
-    switch(ch) {
+void SCI_RxEnable(int ch) {
+    switch (ch) {
     case 0:
         IEN(SCI0, RXI0)= 1;
         break;
@@ -181,9 +159,8 @@ void SCI_RxEnable(int ch)
     }
 }
 
-void SCI_RxDisable(int ch)
-{
-    switch(ch) {
+void SCI_RxDisable(int ch) {
+    switch (ch) {
     case 0:
         IEN(SCI0, RXI0)= 0;
         break;
@@ -192,9 +169,8 @@ void SCI_RxDisable(int ch)
     }
 }
 
-void SCI_TxEnable(int ch)
-{
-    switch(ch) {
+void SCI_TxEnable(int ch) {
+    switch (ch) {
     case 0:
         IEN(SCI0, TXI0)= 1;
         break;
@@ -203,9 +179,8 @@ void SCI_TxEnable(int ch)
     }
 }
 
-void SCI_TxDisable(int ch)
-{
-    switch(ch) {
+void SCI_TxDisable(int ch) {
+    switch (ch) {
     case 0:
         IEN(SCI0, TXI0)= 0;
         break;
@@ -214,8 +189,7 @@ void SCI_TxDisable(int ch)
     }
 }
 
-unsigned char SCI_Rx(int ch)
-{
+unsigned char SCI_Rx(int ch) {
     unsigned char c;
     int i;
     //while (!RxFifo.ct) ;
@@ -231,8 +205,7 @@ unsigned char SCI_Rx(int ch)
     return c;
 }
 
-void SCI_Tx(int ch, unsigned char c)
-{
+void SCI_Tx(int ch, unsigned char c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     while (TxFifo.ct >= SCI_BUF_SIZE)
@@ -250,8 +223,7 @@ void SCI_Tx(int ch, unsigned char c)
     SCI_TxEnable(ch);
 }
 
-void SCI_TxStr(int ch, unsigned char *p)
-{
+void SCI_TxStr(int ch, unsigned char *p) {
     unsigned char c;
     while ((c = *p++) != 0) {
         if (c == '\n')
@@ -260,8 +232,7 @@ void SCI_TxStr(int ch, unsigned char *p)
     }
 }
 
-static void sci_fifo_init()
-{
+static void sci_fifo_init() {
     TxFifo.ri = 0;
     TxFifo.wi = 0;
     TxFifo.ct = 0;
@@ -271,9 +242,8 @@ static void sci_fifo_init()
     RxFifo.ct = 0;
 }
 
-void sci_int_enable(int ch)
-{
-    switch(ch) {
+void sci_int_enable(int ch) {
+    switch (ch) {
     case 0:
         IPR(SCI0, RXI0)= 3;
         IEN(SCI0, RXI0) = 1;
@@ -303,22 +273,21 @@ void sci_int_enable(int ch)
     }
 }
 
-void SCI_Init(int ch, int baud)
-{
+void SCI_Init(int ch, int baud) {
     volatile struct st_sci0 *sci = SCI[ch];
 
     sci_fifo_init();
     SYSTEM.PRCR.WORD = 0xA502;
-    switch(ch) {
+    switch (ch) {
     case 0:
         MSTP_SCI0 = 0;
         //PORT2.PMR.BIT.B0 = 0;
         //PORT2.PMR.BIT.B1= 0;
-        MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
-        MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
+        MPC.PWPR.BIT.B0WI = 0;      /* Enable write to PFSWE */
+        MPC.PWPR.BIT.PFSWE = 1;     /* Enable write to PFS */
         MPC.P20PFS.BYTE = 0x0A;
         MPC.P21PFS.BYTE = 0x0A;
-        //MPC.PWPR.BYTE = 0x80;       /* Disable write to PFSWE and PFS*/
+        //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
         PORT2.PMR.BIT.B0 = 1;
         PORT2.PMR.BIT.B1 = 1;
         break;

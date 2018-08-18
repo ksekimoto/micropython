@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013-2015 Damien P. George
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,12 +32,11 @@
 #include "py/gc.h"
 #include "py/runtime.h"
 #include "py/mphal.h"
-#if 0
 #include "extmod/machine_mem.h"
 #include "extmod/machine_signal.h"
 #include "extmod/machine_pulse.h"
 #include "extmod/machine_i2c.h"
-#endif
+#include "extmod/machine_spi.h"
 #include "lib/utils/pyexec.h"
 #if 0
 #include "lib/oofatfs/ff.h"
@@ -69,6 +69,28 @@
 #define PYB_RESET_DEEPSLEEP (4)
 
 STATIC uint32_t reset_cause;
+
+/// \function disable_irq()
+/// Disable interrupt requests.
+/// Returns the previous IRQ state: `False`/`True` for disabled/enabled IRQs
+/// respectively.  This return value can be passed to enable_irq to restore
+/// the IRQ to its original state.
+STATIC mp_obj_t pyb_disable_irq(void) {
+    return mp_obj_new_bool(disable_irq() == IRQ_STATE_ENABLED);
+}
+MP_DEFINE_CONST_FUN_OBJ_0(pyb_disable_irq_obj, pyb_disable_irq);
+
+/// \function enable_irq(state=True)
+/// Enable interrupt requests.
+/// If `state` is `True` (the default value) then IRQs are enabled.
+/// If `state` is `False` then IRQs are disabled.  The most common use of
+/// this function is to pass it the value returned by `disable_irq` to
+/// exit a critical section.
+STATIC mp_obj_t pyb_enable_irq(uint n_args, const mp_obj_t *arg) {
+    enable_irq((n_args == 0 || mp_obj_is_true(arg[0])) ? IRQ_STATE_ENABLED : IRQ_STATE_DISABLED);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_enable_irq_obj, 0, 1, pyb_enable_irq);
 
 void machine_init(void) {
 }
@@ -188,7 +210,7 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 #if 0
     { MP_ROM_QSTR(MP_QSTR_wake_reason),         MP_ROM_PTR(&machine_wake_reason_obj) },
 #endif
-
+#endif
     { MP_ROM_QSTR(MP_QSTR_disable_irq),         MP_ROM_PTR(&pyb_disable_irq_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable_irq),          MP_ROM_PTR(&pyb_enable_irq_obj) },
 
@@ -197,8 +219,8 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mem8),                MP_ROM_PTR(&machine_mem8_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem16),               MP_ROM_PTR(&machine_mem16_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem32),               MP_ROM_PTR(&machine_mem32_obj) },
-
     { MP_ROM_QSTR(MP_QSTR_Pin),                 MP_ROM_PTR(&pin_type) },
+#if 0
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
 #endif
 #if 0
@@ -208,15 +230,13 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 #if MICROPY_PY_MACHINE_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
 #endif
+    { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&mp_machine_soft_spi_type) },
 #if 0
-    { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
     { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },
 #endif
 #if 0
     { MP_ROM_QSTR(MP_QSTR_Timer),               MP_ROM_PTR(&pyb_timer_type) },
-#endif
-#if 0
     { MP_ROM_QSTR(MP_QSTR_HeartBeat),           MP_ROM_PTR(&pyb_heartbeat_type) },
     { MP_ROM_QSTR(MP_QSTR_SD),                  MP_ROM_PTR(&pyb_sd_type) },
 

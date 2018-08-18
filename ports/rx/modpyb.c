@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +33,6 @@
 #include "lib/utils/pyexec.h"
 #if 0
 #include "drivers/dht/dht.h"
-#include "stm32_it.h"
 #include "irq.h"
 #endif
 #include "led.h"
@@ -61,29 +61,16 @@
 #include "modmachine.h"
 #if 0
 #include "extmod/vfs.h"
+#endif
 #include "extmod/utime_mphal.h"
-#endif
-
-#if 0
-STATIC mp_obj_t pyb_fault_debug(mp_obj_t value) {
-    pyb_hard_fault_debug = mp_obj_is_true(value);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_fault_debug_obj, pyb_fault_debug);
-#endif
 
 #if MICROPY_PY_PYB_LEGACY
 
 // Returns the number of milliseconds which have elapsed since `start`.
 // This function takes care of counter wrap and always returns a positive number.
 STATIC mp_obj_t pyb_elapsed_millis(mp_obj_t start) {
-#if 0
     uint32_t startMillis = mp_obj_get_int(start);
     uint32_t currMillis = mp_hal_ticks_ms();
-#else
-    uint32_t startMillis = 0;
-    uint32_t currMillis = 0;
-#endif
     return MP_OBJ_NEW_SMALL_INT((currMillis - startMillis) & 0x3fffffff);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_elapsed_millis_obj, pyb_elapsed_millis);
@@ -91,13 +78,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_elapsed_millis_obj, pyb_elapsed_millis);
 // Returns the number of microseconds which have elapsed since `start`.
 // This function takes care of counter wrap and always returns a positive number.
 STATIC mp_obj_t pyb_elapsed_micros(mp_obj_t start) {
-#if 0
     uint32_t startMicros = mp_obj_get_int(start);
     uint32_t currMicros = mp_hal_ticks_us();
-#else
-    uint32_t startMicros = 0;
-    uint32_t currMicros = 0;
-#endif
     return MP_OBJ_NEW_SMALL_INT((currMicros - startMicros) & 0x3fffffff);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_elapsed_micros_obj, pyb_elapsed_micros);
@@ -138,10 +120,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_repl_uart_obj, 0, 1, pyb_repl_uar
 
 STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_pyb) },
-
-#if 0
-    { MP_ROM_QSTR(MP_QSTR_fault_debug), MP_ROM_PTR(&pyb_fault_debug_obj) },
-#endif
 
     #if MICROPY_PY_PYB_LEGACY
 #if 0
@@ -189,6 +167,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_hid), MP_ROM_PTR(&pyb_hid_send_report_obj) },
     #endif
     #endif
+#endif
     #if MICROPY_PY_PYB_LEGACY
     { MP_ROM_QSTR(MP_QSTR_millis), MP_ROM_PTR(&mp_utime_ticks_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_elapsed_millis), MP_ROM_PTR(&pyb_elapsed_millis_obj) },
@@ -196,10 +175,11 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_elapsed_micros), MP_ROM_PTR(&pyb_elapsed_micros_obj) },
     { MP_ROM_QSTR(MP_QSTR_delay), MP_ROM_PTR(&mp_utime_sleep_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_udelay), MP_ROM_PTR(&mp_utime_sleep_us_obj) },
+#if 0
     { MP_ROM_QSTR(MP_QSTR_sync), MP_ROM_PTR(&mod_os_sync_obj) },
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
-    #endif
 #endif
+    #endif
 
 #if 0
     // This function is not intended to be public and may be moved elsewhere

@@ -1,9 +1,9 @@
 # The Renesas RX port
 
 This port is intended to be a Renesas RX MicroPython port that actually runs.
-It can run on RX63N MCU (eg GR-SAKURA).
+It can run on RX63N/RX631 MCU (eg GR-SAKURA or GR-CITRUS).
 
-## Building for an RX63N MCU
+## Building for an RX63N/RX631 MCU
 
 The Makefile has the ability to build for Renesas RX CPU, and by default
 includes some start-up code for an RX63N MCU and also enables a UART

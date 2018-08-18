@@ -24,13 +24,33 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PORTS_RX_RX63N_RX63N_GPIO_H_
-#define PORTS_RX_RX63N_RX63N_GPIO_H_
+#ifndef RX63N_GPIO_H_
+#define RX63N_GPIO_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdint.h>
 
-#define GPIO_PORT(pin)  (pin >> 3)
-#define GPIO_MASK(pin)  (1 << (pin & 7))
+#define  GPIO_MODE_INPUT        1
+#define  GPIO_MODE_OUTPUT_PP    2
+#define  GPIO_MODE_OUTPUT_OD    3
+#define  GPIO_MODE_AF_PP        4
+#define  GPIO_MODE_AF_OD        5   /* N-channel open drain */
+#define  GPIO_MODE_ANALOG       6
+#define  GPIO_MODE_IT_RISING    7
+#define  GPIO_MODE_IT_FALLING   8
+#define  GPIO_MODE_IT_RISING_FALLING 9
+#define  GPIO_MODE_EVT_RISING   10
+#define  GPIO_MODE_EVT_FALLING  11
+#define  GPIO_MODE_EVT_RISING_FALLING   12
+#define  GPIO_NOPULL            13
+#define  GPIO_PULLUP            14
+#define  GPIO_PULLDOWN          15
+
+#define GPIO_PORT(pin)  ((uint8_t)(pin >> 3))
+#define GPIO_MASK(pin)  ((uint8_t)(1 << (pin & 7)))
 
 #define _PXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port*8 + bit))
 #define _PDR(port)  (*(volatile uint8_t *)(0x0008c000 + port))
@@ -49,4 +69,8 @@ void gpio_write(uint32_t pin, uint32_t state);
 void gpio_toggle(uint32_t pin);
 uint32_t gpio_read(uint32_t pin);
 
-#endif /* PORTS_RX_RX63N_RX63N_GPIO_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* RX63N_GPIO_H_ */
