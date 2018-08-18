@@ -24,30 +24,10 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
-
-#ifndef TRUE
-#define TRUE    1
-#endif
-
-#ifndef FALSE
-#define FALSE   0
-#endif
-
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
+#include <stdint.h>
+#include <stdbool.h>
+#include "common.h"
 #include "iodefine.h"
-#include "rx63n_config.h"
-#include "rx63n_sci.h"
-#include "rx63n_timer.h"
-#include "rx63n_gpio.h"
-#include "rx63n_usb.h"
 #include "rx63n_utils.h"
 
-#endif /* COMMON_H_ */
+

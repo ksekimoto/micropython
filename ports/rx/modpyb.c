@@ -39,7 +39,9 @@
 #include "timer.h"
 #if 0
 #include "extint.h"
+#endif
 #include "usrsw.h"
+#if 0
 #include "rng.h"
 #include "rtc.h"
 #include "i2c.h"
@@ -47,7 +49,9 @@
 #include "uart.h"
 #include "can.h"
 #include "adc.h"
+#endif
 #include "storage.h"
+#if 0
 #include "sdcard.h"
 #include "accel.h"
 #include "servo.h"
@@ -59,9 +63,7 @@
 #include "portmodules.h"
 #endif
 #include "modmachine.h"
-#if 0
 #include "extmod/vfs.h"
-#endif
 #include "extmod/utime_mphal.h"
 
 #if MICROPY_PY_PYB_LEGACY
@@ -177,8 +179,8 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_udelay), MP_ROM_PTR(&mp_utime_sleep_us_obj) },
 #if 0
     { MP_ROM_QSTR(MP_QSTR_sync), MP_ROM_PTR(&mod_os_sync_obj) },
-    { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
 #endif
+    { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
     #endif
 
 #if 0
@@ -207,10 +209,8 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Servo), MP_ROM_PTR(&pyb_servo_type) },
 #endif
 
-#if 0
 #if MICROPY_HW_HAS_SWITCH
     { MP_ROM_QSTR(MP_QSTR_Switch), MP_ROM_PTR(&pyb_switch_type) },
-#endif
 #endif
 
 #if MICROPY_HW_HAS_FLASH

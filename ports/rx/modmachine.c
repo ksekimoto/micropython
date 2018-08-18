@@ -160,7 +160,7 @@ STATIC NORETURN mp_obj_t machine_bootloader(void) {
     pyb_usb_dev_deinit();
     #endif
     #if MICROPY_HW_ENABLE_STORAGE
-    //storage_flush();
+    storage_flush();
     #endif
 
     //HAL_RCC_DeInit();

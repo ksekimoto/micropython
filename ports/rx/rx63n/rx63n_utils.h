@@ -24,30 +24,32 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef RX63N_UTILS_H_
+#define RX63N_UTILS_H_
 
-#ifndef TRUE
-#define TRUE    1
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#ifndef FALSE
-#define FALSE   0
+#include <stdint.h>
+
+static inline uint32_t rx_get_int(void)
+{
+    uint32_t ipl;
+    __asm__ __volatile__ ("mvfc psw,%0":"=r"(ipl):);
+    return ((ipl & 0x00010000) >> 16);
+}
+
+static inline void rx_enable_irq(void) {
+    __asm__ __volatile__ ("setpsw i");
+}
+
+static inline void rx_disable_irq(void) {
+    __asm__ __volatile__ ("clrpsw i");
+}
+
+#ifdef __cplusplus
+}
 #endif
 
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#include "iodefine.h"
-#include "rx63n_config.h"
-#include "rx63n_sci.h"
-#include "rx63n_timer.h"
-#include "rx63n_gpio.h"
-#include "rx63n_usb.h"
-#include "rx63n_utils.h"
-
-#endif /* COMMON_H_ */
+#endif /* RX63N_UTILS_H_ */

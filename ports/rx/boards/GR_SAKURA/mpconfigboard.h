@@ -1,8 +1,8 @@
-#define MICROPY_HW_BOARD_NAME       "GR-GSAKURA"
+#define MICROPY_HW_BOARD_NAME       "GR-SAKURA"
 #define MICROPY_HW_MCU_NAME         "RX63N" /* R5F563NBDDF */
 
 #define MICROPY_HW_HAS_SWITCH       (1)
-#define MICROPY_HW_HAS_FLASH        (0)
+#define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
 
 // UART config

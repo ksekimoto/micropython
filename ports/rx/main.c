@@ -53,14 +53,18 @@
 #if MICROPY_PY_THREAD
 pyb_thread_t pyb_thread_main;
 #endif
+fs_user_mount_t fs_user_mount_flash;
 
 void flash_error(int n) {
     for (int i = 0; i < n; i++) {
-        led_state(1, 1);
+        led_state(PYB_LED_RED, 1);
+        led_state(PYB_LED_GREEN, 0);
         mp_hal_delay_ms(250);
-        led_state(1, 0);
+        led_state(PYB_LED_RED, 0);
+        led_state(PYB_LED_GREEN, 1);
         mp_hal_delay_ms(250);
     }
+    led_state(PYB_LED_GREEN, 0);
 }
 
 void NORETURN __fatal_error(const char *msg) {
@@ -114,8 +118,219 @@ STATIC mp_obj_t pyb_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pyb_main_obj, 1, pyb_main);
 
+#if MICROPY_HW_ENABLE_STORAGE
+static const char fresh_boot_py[] =
+"# boot.py -- run on boot-up\r\n"
+"# can run arbitrary Python, but best to keep it minimal\r\n"
+"\r\n"
+"import machine\r\n"
+"import pyb\r\n"
+"#pyb.main('main.py') # main script to run after this one\r\n"
+#if MICROPY_HW_ENABLE_USB
+"#pyb.usb_mode('VCP+MSC') # act as a serial and a storage device\r\n"
+"#pyb.usb_mode('VCP+HID') # act as a serial device and a mouse\r\n"
+#endif
+;
+
+static const char fresh_main_py[] =
+"# main.py -- put your code here!\r\n"
+;
+
+#if 0
+static const char fresh_pybcdc_inf[] =
+#include "genhdr/pybcdc_inf.h"
+;
+#endif
+
+static const char fresh_readme_txt[] =
+"This is a MicroPython board\r\n"
+"\r\n"
+"You can get started right away by writing your Python code in 'main.py'.\r\n"
+"\r\n"
+"For a serial prompt:\r\n"
+" - Windows: you need to go to 'Device manager', right click on the unknown device,\r\n"
+"   then update the driver software, using the 'pybcdc.inf' file found on this drive.\r\n"
+"   Then use a terminal program like Hyperterminal or putty.\r\n"
+" - Mac OS X: use the command: screen /dev/tty.usbmodem*\r\n"
+" - Linux: use the command: screen /dev/ttyACM0\r\n"
+"\r\n"
+"Please visit http://micropython.org/help/ for further help.\r\n"
+;
+
+// avoid inlining to avoid stack usage within main()
+MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
+    // init the vfs object
+    fs_user_mount_t *vfs_fat = &fs_user_mount_flash;
+    vfs_fat->flags = 0;
+    pyb_flash_init_vfs(vfs_fat);
+
+    // try to mount the flash
+    FRESULT res = f_mount(&vfs_fat->fatfs);
+
+    if (reset_mode == 3 || res == FR_NO_FILESYSTEM) {
+        // no filesystem, or asked to reset it, so create a fresh one
+
+        // LED on to indicate creation of LFS
+        led_state(PYB_LED_GREEN, 1);
+        uint32_t start_tick = mtick();
+
+        uint8_t working_buf[_MAX_SS];
+        res = f_mkfs(&vfs_fat->fatfs, FM_FAT, 0, working_buf, sizeof(working_buf));
+        if (res == FR_OK) {
+            // success creating fresh LFS
+        } else {
+            printf("PYB: can't create flash filesystem\n");
+            return false;
+        }
+
+        // set label
+        f_setlabel(&vfs_fat->fatfs, MICROPY_HW_FLASH_FS_LABEL);
+
+        // create empty main.py
+        FIL fp;
+        f_open(&vfs_fat->fatfs, &fp, "/main.py", FA_WRITE | FA_CREATE_ALWAYS);
+        UINT n;
+        f_write(&fp, fresh_main_py, sizeof(fresh_main_py) - 1 /* don't count null terminator */, &n);
+        // TODO check we could write n bytes
+        f_close(&fp);
+
+#if 0
+        // create .inf driver file
+        f_open(&vfs_fat->fatfs, &fp, "/pybcdc.inf", FA_WRITE | FA_CREATE_ALWAYS);
+        f_write(&fp, fresh_pybcdc_inf, sizeof(fresh_pybcdc_inf) - 1 /* don't count null terminator */, &n);
+        f_close(&fp);
+#endif
+
+        // create readme file
+        f_open(&vfs_fat->fatfs, &fp, "/README.txt", FA_WRITE | FA_CREATE_ALWAYS);
+        f_write(&fp, fresh_readme_txt, sizeof(fresh_readme_txt) - 1 /* don't count null terminator */, &n);
+        f_close(&fp);
+
+        // keep LED on for at least 200ms
+        sys_tick_wait_at_least(start_tick, 200);
+        led_state(PYB_LED_GREEN, 0);
+    } else if (res == FR_OK) {
+        // mount sucessful
+    } else {
+    fail:
+        printf("PYB: can't mount flash\n");
+        return false;
+    }
+
+    // mount the flash device (there should be no other devices mounted at this point)
+    // we allocate this structure on the heap because vfs->next is a root pointer
+    mp_vfs_mount_t *vfs = m_new_obj_maybe(mp_vfs_mount_t);
+    if (vfs == NULL) {
+        goto fail;
+    }
+    vfs->str = "/flash";
+    vfs->len = 6;
+    vfs->obj = MP_OBJ_FROM_PTR(vfs_fat);
+    vfs->next = NULL;
+    MP_STATE_VM(vfs_mount_table) = vfs;
+
+    // The current directory is used as the boot up directory.
+    // It is set to the internal flash filesystem by default.
+    MP_STATE_PORT(vfs_cur) = vfs;
+
+    // Make sure we have a /flash/boot.py.  Create it if needed.
+    FILINFO fno;
+    res = f_stat(&vfs_fat->fatfs, "/boot.py", &fno);
+    if (res != FR_OK) {
+        // doesn't exist, create fresh file
+
+        // LED on to indicate creation of boot.py
+        led_state(PYB_LED_GREEN, 1);
+        uint32_t start_tick = mtick();
+
+        FIL fp;
+        f_open(&vfs_fat->fatfs, &fp, "/boot.py", FA_WRITE | FA_CREATE_ALWAYS);
+        UINT n;
+        f_write(&fp, fresh_boot_py, sizeof(fresh_boot_py) - 1 /* don't count null terminator */, &n);
+        // TODO check we could write n bytes
+        f_close(&fp);
+
+        // keep LED on for at least 200ms
+        sys_tick_wait_at_least(start_tick, 200);
+        led_state(PYB_LED_GREEN, 0);
+    }
+
+    return true;
+}
+#endif
 #if !MICROPY_HW_USES_BOOTLOADER
 STATIC uint update_reset_mode(uint reset_mode) {
+    #if MICROPY_HW_HAS_SWITCH
+    if (switch_get()) {
+
+        // The original method used on the pyboard is appropriate if you have 2
+        // or more LEDs.
+        #if defined(MICROPY_HW_LED2)
+        for (uint i = 0; i < 3000; i++) {
+            if (!switch_get()) {
+                break;
+            }
+            mp_hal_delay_ms(20);
+            if (i % 30 == 29) {
+                if (++reset_mode > 3) {
+                    reset_mode = 1;
+                }
+                led_state(2, reset_mode & 1);
+                led_state(3, reset_mode & 2);
+                led_state(4, reset_mode & 4);
+            }
+        }
+        // flash the selected reset mode
+        for (uint i = 0; i < 6; i++) {
+            led_state(2, 0);
+            led_state(3, 0);
+            led_state(4, 0);
+            mp_hal_delay_ms(50);
+            led_state(2, reset_mode & 1);
+            led_state(3, reset_mode & 2);
+            led_state(4, reset_mode & 4);
+            mp_hal_delay_ms(50);
+        }
+        mp_hal_delay_ms(400);
+
+        #elif defined(MICROPY_HW_LED1)
+
+        // For boards with only a single LED, we'll flash that LED the
+        // appropriate number of times, with a pause between each one
+        for (uint i = 0; i < 10; i++) {
+            led_state(1, 0);
+            for (uint j = 0; j < reset_mode; j++) {
+                if (!switch_get()) {
+                    break;
+                }
+                led_state(1, 1);
+                mp_hal_delay_ms(100);
+                led_state(1, 0);
+                mp_hal_delay_ms(200);
+            }
+            mp_hal_delay_ms(400);
+            if (!switch_get()) {
+                break;
+            }
+            if (++reset_mode > 3) {
+                reset_mode = 1;
+            }
+        }
+        // Flash the selected reset mode
+        for (uint i = 0; i < 2; i++) {
+            for (uint j = 0; j < reset_mode; j++) {
+                led_state(1, 1);
+                mp_hal_delay_ms(100);
+                led_state(1, 0);
+                mp_hal_delay_ms(200);
+            }
+            mp_hal_delay_ms(400);
+        }
+        #else
+        #error Need a reset mode update method
+        #endif
+    }
+    #endif
     return reset_mode;
 }
 #endif
@@ -137,6 +352,9 @@ void main(uint32_t reset_mode) {
     //switch_init0();
     #endif
     machine_init();
+    #if MICROPY_HW_ENABLE_STORAGE
+    storage_init();
+    #endif
 soft_reset:
 
     #if defined(MICROPY_HW_LED2)
@@ -211,6 +429,9 @@ soft_reset:
     // Initialise the local flash filesystem.
     // Create it if needed, mount in on /flash, and set it as current dir.
     bool mounted_flash = false;
+    #if MICROPY_HW_ENABLE_STORAGE
+    mounted_flash = init_flash_fs(reset_mode);
+    #endif
     bool mounted_sdcard = false;
 
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
@@ -319,6 +540,10 @@ soft_reset_exit:
 
     // soft reset
 
+    #if MICROPY_HW_ENABLE_STORAGE
+    printf("PYB: sync filesystems\n");
+    storage_flush();
+    #endif
     printf("PYB: soft reboot\n");
     machine_deinit();
 

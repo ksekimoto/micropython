@@ -36,6 +36,7 @@ SECTIONS
     _sdataonrom = .; 
     .data : AT(_sdataonrom) {
         _sdata = . ;
+        *(FLASH_OP)
         *(.data)
 		*(.data.*)
 		*(D)

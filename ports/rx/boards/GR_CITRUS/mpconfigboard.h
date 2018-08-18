@@ -2,7 +2,7 @@
 #define MICROPY_HW_MCU_NAME         "RX631" /* RR5F5631FDDFP */
 
 #define MICROPY_HW_HAS_SWITCH       (0)
-#define MICROPY_HW_HAS_FLASH        (0)
+#define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
 
 // UART config
