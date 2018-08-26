@@ -34,6 +34,8 @@ extern "C" {
 void usb_init(void);
 int usbcdc_read(void);
 void usbcdc_write(unsigned char c);
+typedef int (*USB_CALLBACK)(int d);
+void usb_rx_set_callback(USB_CALLBACK callback);
 
 #ifdef __cplusplus
 }

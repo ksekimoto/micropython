@@ -42,6 +42,8 @@
 #define NULL 0
 #endif
 
+#include "stdint.h"
+#include "stdbool.h"
 #include "iodefine.h"
 #include "rx63n_config.h"
 #include "rx63n_sci.h"
@@ -49,5 +51,7 @@
 #include "rx63n_gpio.h"
 #include "rx63n_usb.h"
 #include "rx63n_utils.h"
+#include "rx63n_ad.h"
+#include "rx63n_exti.h"
 
 #endif /* COMMON_H_ */

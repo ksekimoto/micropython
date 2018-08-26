@@ -53,7 +53,6 @@ NORETURN void mp_hal_raise(HAL_StatusTypeDef status) {
     mp_raise_OSError(mp_hal_status_to_errno_table[status]);
 }
 
-#if 0
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
 #if 0
@@ -69,6 +68,11 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
         #if MICROPY_HW_ENABLE_USB
         byte c;
         if (usb_vcp_recv_byte(&c) != 0) {
+            return c;
+        }
+        #else
+        byte c;
+        if ((c = usbcdc_read()) != 0) {
             return c;
         }
         #endif
@@ -98,6 +102,11 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (usb_vcp_is_enabled()) {
         usb_vcp_send_strn(str, len);
     }
+    #else
+    uint8_t *p = (uint8_t *)str;
+    while (len--) {
+        usbcdc_write(*str++);
+    }
     #endif
     mp_uos_dupterm_tx_strn(str, len);
 }
@@ -121,7 +130,6 @@ void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
         mp_hal_stdout_tx_strn(last, str - last);
     }
 }
-#endif
 
 void mp_hal_ticks_cpu_enable(void) {
 }

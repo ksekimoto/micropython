@@ -107,7 +107,7 @@ const fp RelocatableVectors[] RVECT_SECT = {
 //;0x0000  Reserved
         (fp)INT_Excep_BRK,
 //;0x0004  Reserved
-        (fp)0,
+        (fp)INT_Excep_1,
 //;0x0008  Reserved
         (fp)0,
 //;0x000C  Reserved

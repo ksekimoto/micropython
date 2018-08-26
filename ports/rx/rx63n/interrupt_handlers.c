@@ -53,6 +53,11 @@ void __attribute__ ((weak)) INT_Excep_BRK(void)
 { /* wait(); */
 }
 
+// INT1 - for user defined software interrupt
+void __attribute__ ((weak)) INT_Excep_1(void)
+{
+}
+
 // BSC BUSERR
 void __attribute__ ((weak)) INT_Excep_BSC_BUSERR(void)
 {

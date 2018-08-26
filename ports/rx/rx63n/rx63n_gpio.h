@@ -52,7 +52,7 @@ extern "C" {
 #define GPIO_PORT(pin)  ((uint8_t)(pin >> 3))
 #define GPIO_MASK(pin)  ((uint8_t)(1 << (pin & 7)))
 
-#define _PXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port*8 + bit))
+#define _PXXPFS(port, bit)  (*(volatile uint8_t *)(0x0008c140 + port*8 + (bit)))
 #define _PDR(port)  (*(volatile uint8_t *)(0x0008c000 + port))
 #define _PODR(port) (*(volatile uint8_t *)(0x0008c020 + port))
 #define _PIDR(port) (*(volatile uint8_t *)(0x0008c040 + port))
@@ -63,6 +63,7 @@ extern "C" {
 #define _DSCR(port) (*(volatile uint8_t *)(0x0008c0E0 + port))
 #define _MPC(pin)   (*(volatile uint8_t *)(0x0008c140 + pin))
 
+void gpio_config(uint32_t pin, uint32_t mode, uint32_t pull, uint32_t alt);
 void gpio_mode_output(uint32_t pin);
 void gpio_mode_input(uint32_t pin);
 void gpio_write(uint32_t pin, uint32_t state);

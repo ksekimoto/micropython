@@ -29,92 +29,106 @@
 #include "usb_hal.h"
 #include "usb_cdc.h"
 #include "common.h"
+#include "pendsv.h"
 
 #define PID_NAK     0
 #define PID_BUF     1
 #define PID_STALL_1 2
 #define PID_STALL_2 3
-#define SERIAL_BUFFER_SIZE 1024
+#define USBCDC_BUF_SIZE 512
 
-unsigned char _rx_buffer[SERIAL_BUFFER_SIZE];
-unsigned char _tx_buffer[SERIAL_BUFFER_SIZE];
+static uint8_t rx_buf[USBCDC_BUF_SIZE];
+static uint8_t tx_buf[USBCDC_BUF_SIZE];
 
 volatile bool _begin = false;
-volatile uint32_t _rx_buffer_head;
-volatile uint32_t _rx_buffer_tail;
-volatile uint32_t _tx_buffer_head;
-volatile uint32_t _tx_buffer_tail;
+volatile uint32_t rx_buf_head;
+volatile uint32_t rx_buf_tail;
+volatile uint32_t tx_buf_head;
+volatile uint32_t tx_buf_tail;
 
-bool _buffer_available() {
-    return (_tx_buffer_head != _tx_buffer_tail);
+static USB_CALLBACK usb_callback = 0;
+
+void usb_rx_set_callback(USB_CALLBACK callback) {
+    usb_callback = callback;
 }
 
-int _store_char(unsigned char c) {
-    uint32_t i = (uint32_t)(_rx_buffer_head + 1) % SERIAL_BUFFER_SIZE;
-    if (i != _rx_buffer_tail) {
-        _rx_buffer[_rx_buffer_head] = c;
-        _rx_buffer_head = i;
+bool tx_buf_available() {
+    return (tx_buf_head != tx_buf_tail);
+}
+
+int rx_write_buf(uint8_t c) {
+    uint32_t i = (uint32_t)(rx_buf_head + 1) % USBCDC_BUF_SIZE;
+    if (i != rx_buf_tail) {
+        rx_buf[rx_buf_head] = c;
+        rx_buf_head = i;
         return 1;
     } else {
         return 0;
     }
 }
 
-unsigned char _extract_char() {
-    unsigned char c = _tx_buffer[_tx_buffer_tail];
-    if (_tx_buffer_head != _tx_buffer_tail) {
-        _tx_buffer_tail = (_tx_buffer_tail + 1) % SERIAL_BUFFER_SIZE;
+uint8_t tx_read_buf() {
+    uint8_t c = tx_buf[tx_buf_tail];
+    if (tx_buf_head != tx_buf_tail) {
+        tx_buf_tail = (tx_buf_tail + 1) % USBCDC_BUF_SIZE;
     }
     return c;
 }
 
 void ReadBulkOUTPacket(void) {
     uint16_t DataLength = 0;
-
     /*Read data using D1FIFO*/
     /*NOTE: This probably will have already been selected if using BRDY interrupt.*/
     do {
         USB0.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
     } while (USB0.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT);
-
     /*Set PID to BUF*/
     USB0.PIPE1CTR.BIT.PID = PID_BUF;
-
     /*Wait for buffer to be ready*/
     while (USB0.D1FIFOCTR.BIT.FRDY == 0) {
         ;
     }
-
     /*Set Read Count Mode - so DTLN count will decrement as data read from buffer*/
     USB0.D1FIFOSEL.BIT.RCNT = 1;
-
     /*Read length of data */
     DataLength = USB0.D1FIFOCTR.BIT.DTLN;
-
     if (DataLength == 0) {
         USB0.D1FIFOCTR.BIT.BCLR = 1;
         return;
     }
-
     while (DataLength != 0) {
         /*Read from the FIFO*/
-        uint16_t Data = USB0.D1FIFO.WORD;
+        uint16_t c = USB0.D1FIFO.WORD;
         if (DataLength >= 2) {
             /*Save first byte*/
-            _store_char((uint8_t)Data);
+            if (usb_callback) {
+                if ((*usb_callback)((int)(c & 0xff))) {
+                    return;
+                }
+            }
+            rx_write_buf((uint8_t)c);
             /*Save second byte*/
-            _store_char((uint8_t)(Data >> 8));
+            if (usb_callback) {
+                if ((*usb_callback)((int)(c >> 8))) {
+                    return;
+                }
+            }
+            rx_write_buf((uint8_t)(c >> 8));
             DataLength -= 2;
         } else {
-            _store_char((uint8_t)Data);
+            if (usb_callback) {
+                if ((*usb_callback)((int)(c & 0xff))) {
+                    return;
+                }
+            }
+            rx_write_buf((uint8_t)c);
             DataLength--;
         }
     }
-
 }
+
 void WriteBulkINPacket(void) {
     uint32_t Count = 0;
-
     /*Write data to Bulk IN pipe using D0FIFO*/
     /*Select pipe (Check this happens before continuing)*/
     /*Set 8 bit access*/
@@ -122,42 +136,37 @@ void WriteBulkINPacket(void) {
     do {
         USB0.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN;
     } while (USB0.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN);
-
     /*Wait for buffer to be ready*/
     while (USB0.D0FIFOCTR.BIT.FRDY == 0) {
         ;
     }
-
     /* Write data to the IN Fifo until have written a full packet
      or we have no more data to write */
-    while ((Count < BULK_IN_PACKET_SIZE) && _buffer_available()) {
-        USB0.D0FIFO.WORD = (unsigned short)_extract_char();
+    while ((Count < BULK_IN_PACKET_SIZE) && tx_buf_available()) {
+        USB0.D0FIFO.WORD = (unsigned short)tx_read_buf();
         Count++;
     }
-
     /*Send the packet */
     /*Set PID to BUF*/
     USB0.PIPE2CTR.BIT.PID = PID_BUF;
-
     /*If we have not written a full packets worth to the buffer then need to
      signal that the buffer is now ready to be sent, set the buffer valid flag (BVAL).*/
     if (Count != BULK_IN_PACKET_SIZE) {
         USB0.D0FIFOCTR.BIT.BVAL = 1;
     }
-
-    if (!_buffer_available()) {
+    if (!tx_buf_available()) {
         USB0.BRDYENB.BIT.PIPE2BRDYE = 0;
     }
 }
 
-void usbcdc_write(unsigned char c) {
-    unsigned int i = (_tx_buffer_head + 1) % SERIAL_BUFFER_SIZE;
+void usbcdc_write(uint8_t c) {
+    unsigned int i = (tx_buf_head + 1) % USBCDC_BUF_SIZE;
 
     if (_begin) {
-        if (i != _tx_buffer_tail) {
+        if (i != tx_buf_tail) {
             USB0.INTENB0.BIT.BRDYE = 0;
-            _tx_buffer[_tx_buffer_head] = c;
-            _tx_buffer_head = i;
+            tx_buf[tx_buf_head] = c;
+            tx_buf_head = i;
             USB0.INTENB0.BIT.BRDYE = 1;
             USB0.BRDYENB.BIT.PIPE2BRDYE = 1;
         }
@@ -165,18 +174,18 @@ void usbcdc_write(unsigned char c) {
         if (USBCDC_IsConnected()) {
             _begin = true;
         }
-        _tx_buffer[_tx_buffer_head] = c;
-        _tx_buffer_head = i;
+        tx_buf[tx_buf_head] = c;
+        tx_buf_head = i;
     }
 }
 
 int usbcdc_read(void) {
     // if the head isn't ahead of the tail, we don't have any characters
-    if (_rx_buffer_head == _rx_buffer_tail) {
+    if (rx_buf_head == rx_buf_tail) {
         return -1;
     } else {
-        unsigned char c = _rx_buffer[_rx_buffer_tail];
-        _rx_buffer_tail = (uint32_t)(_rx_buffer_tail + 1) % SERIAL_BUFFER_SIZE;
+        uint8_t c = rx_buf[rx_buf_tail];
+        rx_buf_tail = (uint32_t)(rx_buf_tail + 1) % USBCDC_BUF_SIZE;
         return c;
     }
 }

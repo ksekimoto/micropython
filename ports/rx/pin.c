@@ -34,6 +34,9 @@
 #include "extmod/virtpin.h"
 #include "pin.h"
 
+// ====================================================================
+// Pin
+// ====================================================================
 
 /// \moduleref pyb
 /// \class Pin - control I/O pins
@@ -560,6 +563,7 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AF_OD),     MP_ROM_INT(GPIO_MODE_AF_OD) },
     { MP_ROM_QSTR(MP_QSTR_PULL_NONE), MP_ROM_INT(GPIO_NOPULL) },
 
+//#include "genhdr/pins_ad_const.h"
 //#include "genhdr/pins_af_const.h"
 };
 
@@ -594,6 +598,59 @@ const mp_obj_type_t pin_type = {
     .protocol = &pin_pin_p,
     .locals_dict = (mp_obj_dict_t*)&pin_locals_dict,
 };
+
+// ====================================================================
+// PinAD
+// ====================================================================
+
+/// \moduleref pyb
+/// \class PinAD - Analog to Digital
+///
+
+/// \method __str__()
+/// Return a string describing the alternate function.
+STATIC void pin_ad_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    pin_ad_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "Pin.%q", self->name);
+}
+
+/// \method name()
+/// Return the name of the alternate function.
+STATIC mp_obj_t pin_ad_name(mp_obj_t self_in) {
+    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
+    return MP_OBJ_NEW_QSTR(ad->name);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_name_obj, pin_ad_name);
+
+STATIC mp_obj_t pin_ad_bit(mp_obj_t self_in) {
+    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
+    return MP_OBJ_NEW_SMALL_INT((uintptr_t)ad->bit);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_bit_obj, pin_ad_bit);
+
+STATIC mp_obj_t pin_ad_channel(mp_obj_t self_in) {
+    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
+    return MP_OBJ_NEW_SMALL_INT((uintptr_t)ad->channel);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_channel_obj, pin_ad_channel);
+
+STATIC const mp_rom_map_elem_t pin_ad_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pin_ad_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_bit), MP_ROM_PTR(&pin_ad_bit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel), MP_ROM_PTR(&pin_ad_channel_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(pin_ad_locals_dict, pin_ad_locals_dict_table);
+
+const mp_obj_type_t pin_ad_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_PinAD,
+    .print = pin_ad_obj_print,
+    .locals_dict = (mp_obj_dict_t*)&pin_ad_locals_dict,
+};
+
+// ====================================================================
+// PinAF
+// ====================================================================
 
 /// \moduleref pyb
 /// \class PinAF - Pin Alternate Functions

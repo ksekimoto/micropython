@@ -42,6 +42,7 @@ void Dummy(void) __attribute__ ((interrupt));
 void INT_Excep_BRK(void) __attribute__ ((interrupt));
 
 // vector  1 reserved
+void INT_Excep_1(void) __attribute__ ((interrupt));
 // vector  2 reserved
 // vector  3 reserved
 // vector  4 reserved

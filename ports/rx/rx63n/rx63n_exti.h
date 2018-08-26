@@ -24,35 +24,50 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef RX63N_EXTI_H_
+#define RX63N_EXTI_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
-#include <unistd.h>
-#include "py/mpconfig.h"
-#include "common.h"
 
-#define MP_USBCDC
+#define IRQ0    0
+#define IRQ1    1
+#define IRQ2    2
+#define IRQ3    3
+#define IRQ4    4
+#define IRQ5    5
+#define IRQ6    6
+#define IRQ7    7
+#define IRQ8    8
+#define IRQ9    9
+#define IRQ10   10
+#define IRQ11   11
+#define IRQ12   12
+#define IRQ13   13
+#define IRQ14   14
+#define IRQ15   15
 
-/*
- * Core UART functions to implement for a port
- */
+#define NMI     16
 
-// Receive single character
-int mp_hal_stdin_rx_chr(void) {
-    int c = 0;
-#if defined(MP_USBCDC)
-    c = usbcdc_read();
-#else
-    c = (int)SCI_Rx(SCI_CH);
-#endif
-    return c;
+#define RX_IR(irq_no)     (*((volatile unsigned char *)&ICU.IR[IR_ICU_IRQ0 + irq_no]))
+#define RX_IER(irq_no)    (*((volatile unsigned char *)&ICU.IER[IER_ICU_IRQ0 + (irq_no / 8)]))
+#define RX_IPR(irq_no)    (*((volatile unsigned char *)&ICU.IPR[IPR_ICU_IRQ0 + irq_no]))
+#define RX_DTCER(irq_no)  (*((volatile unsigned char *)&ICU.DTCER[DTCE_ICU_IRQ0 + irq_no]))
+#define RX_IRQCR(irq_no)  (*((volatile unsigned char *)&ICU.IRQCR[irq_no]))
+
+#define DEFAULT_INT_PRIORITY    0x05
+
+typedef void (*EXTI_FUNC)(void *);
+
+void exti_enable(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t irq_priority);
+void exti_disable(uint32_t pin, uint32_t irq_no);
+void exti_set_callback(uint32_t irq_no, void (*func)(void *));
+
+#ifdef __cplusplus
 }
-
-// Send string of given length
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    while (len--) {
-#if defined(MP_USBCDC)
-        usbcdc_write((unsigned char)*str++);
-#else
-        SCI_Tx(SCI_CH, *str++);
 #endif
-    }
-}
+
+#endif /* RX63N_EXTI_H_ */

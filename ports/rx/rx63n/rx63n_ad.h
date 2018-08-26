@@ -24,13 +24,22 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+#ifndef RX63N_AD_H_
+#define RX63N_AD_H_
 
-void rx63n_init(void) {
-    bootstrap();
-    udelay_init();
-    //sci_init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    //usb_init();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include <stdbool.h>
+
+bool ad_enable(uint32_t pin);
+void ad_disable(uint32_t pin);
+uint32_t ad_read(uint32_t pin);
+
+#ifdef __cplusplus
 }
+#endif
 
+#endif /* RX63N_AD_H_ */

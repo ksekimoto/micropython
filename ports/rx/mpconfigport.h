@@ -376,7 +376,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     mp_obj_t pin_class_mapper; \
     mp_obj_t pin_class_map_dict; \
     \
-    /* mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; */ \
+    mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; \
     \
     /* pointers to all Timer objects (if they have been created) */ \
     struct _pyb_timer_obj_t *pyb_timer_obj_all[MICROPY_HW_MAX_TIMER]; \

@@ -76,23 +76,27 @@ LDFLAGS += -Map=$@.map --cref --gc-sections
 LIBS =
 
 SRC_C = main.c
-SRC_C += help.c
+SRC_C += adc.c
+SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
 SRC_C += flashbdev.c
 SRC_C += gccollect.c
+SRC_C += help.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
 #SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += led.c
+SRC_C += pendsv.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
 SRC_C += storage.c
 SRC_C += systick.c
+SRC_C += uart.c
+#SRC_C += uart_core.c
 SRC_C += usrsw.c
-SRC_C += $(MCU_SERIES)/uart_core.c
 #SRC_C += $(BUILD)/_frozen_mpy.c
 SRC_C += $(MCU_SERIES)/sbrk.c
 SRC_C += $(MCU_SERIES)/interrupt_handlers.c
@@ -105,6 +109,8 @@ SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_ad.c
 SRC_C += $(MCU_SERIES)/usb_core.c
 SRC_C += $(MCU_SERIES)/usb_cdc.c
 SRC_C += $(MCU_SERIES)/usb_hal.c
@@ -123,7 +129,7 @@ SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
 SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
 SRC_LIB += $(addprefix lib/, utils/printf.c)
 SRC_LIB += $(addprefix lib/, utils/pyexec.c)
-SRC_LIB += $(addprefix lib/, utils/stdout_helpers.c)
+#SRC_LIB += $(addprefix lib/, utils/stdout_helpers.c)
 SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
 
 
@@ -253,6 +259,7 @@ PREFIX_FILE = boards/$(MCU_SERIES)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
 GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
 GEN_PINS_QSTR = $(BUILD)/pins_qstr.h
+GEN_PINS_AD_CONST = $(HEADER_BUILD)/pins_ad_const.h
 GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
 #GEN_PINS_AF_DEFS = $(HEADER_BUILD)/pins_af_defs.h
 GEN_PINS_AF_PY = $(BUILD)/pins_af.py
@@ -276,9 +283,10 @@ main.c: $(GEN_CDCINF_HEADER)
 
 # Use a pattern rule here so that make will only call make-pins.py once to make
 # both pins_$(BOARD).c and pins.h
-$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: boards/$(BOARD)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
+.PRECIOUS: $(GEN_PINS_SRC)
+$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_ad_const.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: boards/$(BOARD)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
-	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
+	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --ad-const $(GEN_PINS_AD_CONST) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
 
 #$(BUILD)/pins_$(BOARD).o: $(GEN_PINS_SRC)
 #	$(call compile_c)

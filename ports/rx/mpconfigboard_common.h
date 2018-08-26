@@ -114,9 +114,9 @@
 // Configuration for RX63N series
 
 //#define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
-#define PYB_EXTI_NUM_VECTORS (23)
+#define PYB_EXTI_NUM_VECTORS (16)
 #define MICROPY_HW_MAX_TIMER (17)
-#define MICROPY_HW_MAX_UART (8)
+#define MICROPY_HW_MAX_UART (13)
 
 
 

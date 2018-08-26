@@ -30,10 +30,15 @@
 extern "C" {
 #endif
 
-void SCI_Init(int ch, int baud);
-unsigned char SCI_Rx(int ch);
-void SCI_Tx(int ch, unsigned char c);
-void SCI_TxStr(int ch, unsigned char *p);
+void sci_init(int ch, int baud);
+void sci_set_baud(int ch, int baud);
+uint8_t sci_rx_ch(int ch);
+int sci_rx_any(int ch);
+void sci_tx_ch(int ch, unsigned char c);
+void sci_tx_str(int ch, unsigned char *p);
+void sci_deinit(int ch);
+typedef int (*SCI_CALLBACK)(int d);
+void sci_rx_set_callback(int ch, SCI_CALLBACK callback);
 
 #ifdef __cplusplus
 }

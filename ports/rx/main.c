@@ -46,9 +46,14 @@
 //#include "pybthread.h"
 #include "gccollect.h"
 #include "modmachine.h"
+#include "uart.h"
 #include "timer.h"
 #include "led.h"
 #include "pin.h"
+
+#if MICROPY_KBD_EXCEPTION
+int mp_interrupt_channel;
+#endif
 
 #if MICROPY_PY_THREAD
 pyb_thread_t pyb_thread_main;
@@ -335,6 +340,20 @@ STATIC uint update_reset_mode(uint reset_mode) {
 }
 #endif
 
+#if MICROPY_KBD_EXCEPTION
+extern int mp_interrupt_char;
+
+static int chk_kbd_interrupt(int d)
+{
+    if (d == mp_interrupt_char) {
+        pendsv_kbd_intr();
+        return 1;
+    } else {
+        return 0;
+    }
+}
+#endif
+
 void main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers
 
@@ -406,12 +425,11 @@ soft_reset:
     //pin_init0();
     //extint_init0();
     //timer_init0();
-    //uart_init0();
+    uart_init0();
 
     // Define MICROPY_HW_UART_REPL to be PYB_UART_6 and define
     // MICROPY_HW_UART_REPL_BAUD in your mpconfigboard.h file if you want a
     // REPL on a hardware UART as well as on USB VCP
-#if 0
     #if defined(MICROPY_HW_UART_REPL)
     {
         mp_obj_t args[2] = {
@@ -424,6 +442,13 @@ soft_reset:
     #else
     MP_STATE_PORT(pyb_stdio_uart) = NULL;
     #endif
+
+    #if MICROPY_HW_ENABLE_USB
+    pyb_usb_init0();
+    #endif
+    usb_init();
+#if MICROPY_KBD_EXCEPTION
+    usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
 #endif
 
     // Initialise the local flash filesystem.
@@ -478,9 +503,15 @@ soft_reset:
     // or whose initialisation can be safely deferred until after running
     // boot.py.
 
+    #if MICROPY_HW_ENABLE_USB
+    // init USB device to default setting if it was not already configured
+    //if (!(pyb_usb_flags & PYB_USB_FLAG_USB_MODE_CALLED)) {
+    //    pyb_usb_dev_init(USBD_VID, USBD_PID_CDC_MSC, USBD_MODE_CDC_MSC, NULL);
+    //}
+    #endif
     // At this point everything is fully configured and initialised.
 
-#if 0
+#if 1
     // Run the main script from the current directory.
     if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         const char *main_py;

@@ -47,8 +47,17 @@ typedef struct {
   mp_obj_base_t base;
   qstr name;
   uint8_t pin;
+  uint8_t bit;
+  uint8_t channel;
+} pin_ad_obj_t;
+
+typedef struct {
+  mp_obj_base_t base;
+  qstr name;
+  uint8_t pin;
   uint8_t num_af;
   const pin_af_obj_t *af;
+  const pin_ad_obj_t *ad;
 } pin_obj_t;
 
 extern const mp_obj_type_t pin_type;

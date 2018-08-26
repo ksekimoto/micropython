@@ -24,13 +24,35 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
+#include <unistd.h>
+#include "py/mpconfig.h"
 #include "common.h"
 
-void rx63n_init(void) {
-    bootstrap();
-    udelay_init();
-    //sci_init(SCI_CH, SCI_BAUD);
-    //SCI_TxStr(SCI_CH, "rx63n_init\r\n");
-    //usb_init();
+#define MP_USBCDC
+
+/*
+ * Core UART functions to implement for a port
+ */
+
+// Receive single character
+int mp_hal_stdin_rx_chr(void) {
+    int c = 0;
+#if defined(MP_USBCDC)
+    c = usbcdc_read();
+#else
+    c = (int)sci_rx_ch(SCI_CH);
+#endif
+    return c;
 }
 
+// Send string of given length
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+    while (len--) {
+#if defined(MP_USBCDC)
+        usbcdc_write((unsigned char)*str++);
+#else
+        sci_tx_ch(SCI_CH, *str++);
+#endif
+    }
+}

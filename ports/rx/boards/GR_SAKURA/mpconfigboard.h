@@ -8,8 +8,16 @@
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
 #define MICROPY_HW_UART0_RX         (pin_P21)
+#define MICROPY_HW_UART1_TX         (pin_P16)
+#define MICROPY_HW_UART1_RX         (pin_P15)
 #define MICROPY_HW_UART2_TX         (pin_P50)
 #define MICROPY_HW_UART2_RX         (pin_P52)
+#define MICROPY_HW_UART3_TX         (pin_P23)
+#define MICROPY_HW_UART3_RX         (pin_P25)
+#define MICROPY_HW_UART5_TX         (pin_PC3)
+#define MICROPY_HW_UART5_RX         (pin_PC2)
+#define MICROPY_HW_UART6_TX         (pin_P33)
+#define MICROPY_HW_UART6_RX         (pin_P32)
 #define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
 

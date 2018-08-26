@@ -7,25 +7,79 @@ import argparse
 import sys
 import csv
 
+class PinAD(object):
+
+    def __init__(self, name, cpu_pin_name, pin_idx, bit, channel):
+        self._name = name
+        self._cpu_pin_name = cpu_pin_name
+        self._pin_idx = pin_idx
+        self._bit = bit
+        self._channel = channel
+
+    def cpu_pin_name(self):
+        return self._cpu_pin_name
+
+    def name(self):
+        return self._name
+
+    def bit(self):
+        return self._bit
+
+    def channel(self):
+        return self._channel
+
+    def print(self):
+        print('const pin_ad_obj_t pin_{:s}_ad_obj = PIN_AD({:s}, {:d}, {:d}, {:d});'.format(self._cpu_pin_name, self._name, self._pin_idx, self._bit, self._channel))
+        print('')
+
+    def print_header(self, hdr_file):
+        n = self.cpu_pin_name()
+        hdr_file.write('extern const pin_ad_obj_t pin_{:s}_ad_obj;\n'.format(n))
+        hdr_file.write('#define pin_{:s}_ad (&pin_{:s}_ad_obj)\n'.format(n, n)) 
+
+    def qstr_list(self):
+        return [self._name]
+
 class Pin(object):
 
     def __init__(self, name, port, bit):
-        self.name = name
-        self.pin = port * 8 + bit
-        self.board_pin = False
+        self._name = name
+        self._pin_idx = port * 8 + bit
+        self._pin_ad = []
+        self._board_pin = False
         #print('// pin_{:s}_obj = PIN({:s}, {:d});'.format(self.name, self.name, self.pin))
 
     def cpu_pin_name(self):
-        return self.name
+        return self._name
+
+    def pin_ad(self):
+        return self._pin_ad
 
     def is_board_pin(self):
-        return self.board_pin
+        return self._board_pin
 
     def set_is_board_pin(self):
-        self.board_pin = True
+        self._board_pin = True
+
+    def parse_ad(self, ad_str):
+        ad_bit = 0
+        ad_channel = 0
+        if len(ad_str) == 5:
+            ad_bit = 12
+            ad_channel = int(ad_str[3:])
+            self._pin_ad.append(PinAD(ad_str, self._name, self._pin_idx, ad_bit, ad_channel))
+        elif ad_str[:2] == 'AN':
+            if ad_str[:3] != 'ANE':
+                ad_bit = 8
+                ad_channel = int(ad_str[2:])
+                self._pin_ad.append(PinAD(ad_str, self._name, self._pin_idx, ad_bit, ad_channel))
 
     def print(self):
-        print('const pin_obj_t pin_{:s}_obj = PIN({:s}, {:d});'.format(self.name, self.name, self.pin))
+        pin_ad_name = 'NULL'
+        for pin_ad in self._pin_ad:
+            pin_ad.print()
+            pin_ad_name = 'pin_{:s}_ad'.format(pin_ad.cpu_pin_name())
+        print('const pin_obj_t pin_{:s}_obj = PIN({:s}, {:d}, {:s});'.format(self._name, self._name, self._pin_idx, pin_ad_name))
         print('')
 
     def print_header(self, hdr_file):
@@ -35,6 +89,8 @@ class Pin(object):
 
     def qstr_list(self):
         result = []
+        for pin_ad in self._pin_ad:
+            result += pin_ad.qstr_list()
         #for alt_fn in self.alt_fn:
         #    if alt_fn.is_supported():
         #        result += alt_fn.qstr_list()
@@ -45,7 +101,7 @@ class NamedPin(object):
     def __init__(self, name, pin):
         self._name = name
         self._pin = pin
-        print('// NamedPin {:s}'.format(self._name))
+        #print('// NamedPin {:s}'.format(self._name))
 
     def pin(self):
         return self._pin
@@ -78,6 +134,7 @@ class Pins(object):
                     continue
                 pin = Pin(cpu_pin_name, cpu_pin_port, cpu_pin_bit)
                 self.cpu_pins.append(NamedPin(cpu_pin_name, pin))
+                pin.parse_ad(row[3])
 
     # pins.csv
     # named_pin, cpu_pin_name
@@ -119,6 +176,9 @@ class Pins(object):
                 pin = named_pin.pin()
                 if pin.is_board_pin():
                     pin.print_header(hdr_file)
+                pin_ads = pin.pin_ad()
+                for pin_ad in pin_ads:
+                    pin_ad.print_header(hdr_file)
             # provide #define's mapping board to cpu name
             for named_pin in self.board_pins:
                 hdr_file.write("#define pyb_pin_{:s} pin_{:s}\n".format(named_pin.name(), named_pin.pin().cpu_pin_name()))
@@ -141,6 +201,15 @@ class Pins(object):
                     print_conditional_if(cond_var, file=qstr_file)
                 print('Q({})'.format(qstr), file=qstr_file)
                 #print_conditional_endif(cond_var, file=qstr_file)
+
+    def print_ad_hdr(self, ad_const_filename):
+        with open(ad_const_filename,  'wt') as ad_const_file:
+            for named_pin in self.cpu_pins:
+                pin = named_pin.pin()
+                if pin.is_board_pin():
+                    pin_ads = pin.pin_ad()                    
+                    for pin_ad in pin_ads:
+                        ad_const_file.write('  {{ MP_ROM_QSTR(MP_QSTR_{:s}), MP_ROM_INT(GPIO_{:s}) }}, \n'.format(pin_ad.name(),  pin_ad.name()))
 
 def main():
     parser = argparse.ArgumentParser(
@@ -165,6 +234,12 @@ def main():
         dest="prefix_filename",
         help="Specifies beginning portion of generated pins file",
         default="rx63n_prefix.c"
+    )
+    parser.add_argument(
+        "--ad-const",
+        dest="ad_const_filename",
+        help="Specifies header file for AD function constants.",
+        default="build/pins_ad_const.h"
     )
     parser.add_argument(
         "--af-const",
@@ -219,6 +294,7 @@ def main():
     pins.print()
     pins.print_header(args.hdr_filename)
     pins.print_qstr(args.qstr_filename)
+    pins.print_ad_hdr(args.ad_const_filename)
 
 if __name__ == "__main__":
     main()
