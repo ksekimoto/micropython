@@ -96,10 +96,10 @@ LDFLAGS += --gc-sections
 
 # Debugging/Optimization
 ifeq ($(DEBUG), 1)
-CFLAGS += -g -DPENDSV_DEBUG
-COPT = -O0
+CFLAGS += -g3 -DPENDSV_DEBUG
+COPT = -Os
 else
-COPT += -Os -DNDEBUG
+COPT += -Os -g3 -DNDEBUG
 endif
 
 SRC_LIB = $(addprefix lib/,\
