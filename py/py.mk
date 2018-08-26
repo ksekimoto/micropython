@@ -107,6 +107,7 @@ endif
 PY_CORE_O_BASENAME = $(addprefix py/,\
 	mpstate.o \
 	nlr.o \
+	nlrrx.o \
 	nlrx86.o \
 	nlrx64.o \
 	nlrthumb.o \
