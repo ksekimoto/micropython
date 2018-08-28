@@ -87,28 +87,80 @@
 
 typedef struct {
     mp_obj_base_t base;
+    mp_int_t pin_idx;
     mp_int_t irq_no;
 } extint_obj_t;
 
-// The callback arg is a small-int or a ROM Pin object, so no need to scan by GC
 STATIC mp_obj_t pyb_extint_callback_arg[EXTI_NUM_VECTORS];
+static uint irq_param[EXTI_NUM_VECTORS];
 
-void extint_enable(uint irq_no) {
-    if (irq_no >= EXTI_NUM_VECTORS) {
-        return;
+void exit_callback(void *param) {
+    uint irq_no = *((uint *)param);
+    mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
+    if (*cb != mp_const_none) {
+        mp_sched_lock();
+        // When executing code within a handler we must lock the GC to prevent
+        // any memory allocations.  We must also catch any exceptions.
+        gc_lock();
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            mp_call_function_1(*cb, pyb_extint_callback_arg[irq_no]);
+            nlr_pop();
+        } else {
+            // Uncaught exception; disable the callback so it doesn't run again.
+            *cb = mp_const_none;
+            exti_disable(irq_no);
+            printf("Uncaught exception in ExtInt interrupt handler line %u\n", (unsigned int)irq_no);
+            mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));
+        }
+        gc_unlock();
+        mp_sched_unlock();
     }
 }
 
-void extint_disable(uint irq_no) {
-    if (irq_no >= EXTI_NUM_VECTORS) {
-        return;
+// Set override_callback_obj to true if you want to unconditionally set the
+// callback function.
+uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t callback_obj, bool override_callback_obj) {
+    const pin_obj_t *pin = NULL;
+    uint pin_idx;
+    uint irq_no;
+    uint cond = 0;
+    if (!MP_OBJ_IS_TYPE(pin_obj, &pin_type)) {
+        return 0xff;
     }
-}
-
-void extint_swint(uint irq_no) {
-    if (irq_no >= EXTI_NUM_VECTORS) {
-        return;
+    pin = pin_find(pin_obj);
+    pin_idx = pin->pin;
+    irq_no = (uint)exti_find_pin_irq((uint8_t)pin_idx);
+    if (irq_no == 0xff) {
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ExtInt can't be assigned for %q", pin->name));
     }
+    if ((mode == GPIO_MODE_IT_RISING) || (mode == GPIO_MODE_EVT_RISING)) {
+        cond = 2;
+    } else if ((mode == GPIO_MODE_IT_FALLING) || (mode != GPIO_MODE_EVT_FALLING)) {
+        cond = 1;
+    } else if ((mode != GPIO_MODE_IT_RISING_FALLING) || (mode != GPIO_MODE_EVT_RISING_FALLING)) {
+        cond  = 3;
+    } else {
+        cond = 0;
+    }
+    if (pull != GPIO_NOPULL &&
+        pull != GPIO_PULLUP &&
+        pull != GPIO_PULLDOWN) {
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid ExtInt Pull: %d", pull));
+    }
+    mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
+    //if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
+    //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ExtInt vector %d is already in use", irq_no));
+    //}
+    exti_disable(pin_idx);
+    *cb = callback_obj;
+    irq_param[irq_no] = (uint)irq_no;
+    exti_set_callback(irq_no, (EXTI_FUNC)exit_callback, (void *)&irq_param[irq_no]);
+    if (*cb != mp_const_none) {
+        pyb_extint_callback_arg[irq_no] = MP_OBJ_FROM_PTR(pin);
+        exti_register((uint32_t)pin_idx, (uint32_t)cond, (uint32_t)pull);
+    }
+    return irq_no;
 }
 
 /// \method irq_no()
@@ -123,7 +175,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_irq_no_obj, extint_obj_irq_no);
 /// Enable a disabled interrupt.
 STATIC mp_obj_t extint_obj_enable(mp_obj_t self_in) {
     extint_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    //extint_enable(self->irq_no);
+    exti_enable(self->pin_idx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_enable_obj, extint_obj_enable);
@@ -133,20 +185,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_enable_obj, extint_obj_enable);
 /// This could be useful for debouncing.
 STATIC mp_obj_t extint_obj_disable(mp_obj_t self_in) {
     extint_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    //extint_disable(self->irq_no);
+    exti_disable(self->pin_idx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_disable_obj, extint_obj_disable);
-
-/// \method swint()
-/// Trigger the callback from software.
-STATIC mp_obj_t extint_obj_swint(mp_obj_t self_in) {
-    extint_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    //extint_swint(self->irq_no);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_swint_obj,  extint_obj_swint);
-
 
 /// \classmethod \constructor(pin, mode, pull, callback)
 /// Create an ExtInt object:
@@ -180,7 +222,8 @@ STATIC mp_obj_t extint_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 
     extint_obj_t *self = m_new_obj(extint_obj_t);
     self->base.type = type;
-    self->irq_no = 0;
+    self->pin_idx = 0xff;
+    self->irq_no = extint_register(vals[0].u_obj, vals[1].u_int, vals[2].u_int, vals[3].u_obj, false);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -194,7 +237,6 @@ STATIC const mp_rom_map_elem_t extint_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_irq_no),  MP_ROM_PTR(&extint_obj_irq_no_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable),  MP_ROM_PTR(&extint_obj_enable_obj) },
     { MP_ROM_QSTR(MP_QSTR_disable), MP_ROM_PTR(&extint_obj_disable_obj) },
-    { MP_ROM_QSTR(MP_QSTR_swint),   MP_ROM_PTR(&extint_obj_swint_obj) },
 
     // class constants
     /// \constant IRQ_RISING - interrupt on a rising edge
@@ -203,9 +245,6 @@ STATIC const mp_rom_map_elem_t extint_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_IRQ_RISING),         MP_ROM_INT(GPIO_MODE_IT_RISING) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_FALLING),        MP_ROM_INT(GPIO_MODE_IT_FALLING) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_RISING_FALLING), MP_ROM_INT(GPIO_MODE_IT_RISING_FALLING) },
-    { MP_ROM_QSTR(MP_QSTR_EVT_RISING),         MP_ROM_INT(GPIO_MODE_EVT_RISING) },
-    { MP_ROM_QSTR(MP_QSTR_EVT_FALLING),        MP_ROM_INT(GPIO_MODE_EVT_FALLING) },
-    { MP_ROM_QSTR(MP_QSTR_EVT_RISING_FALLING), MP_ROM_INT(GPIO_MODE_EVT_RISING_FALLING) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(extint_locals_dict, extint_locals_dict_table);

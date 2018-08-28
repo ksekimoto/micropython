@@ -60,11 +60,13 @@ extern "C" {
 
 #define DEFAULT_INT_PRIORITY    0x05
 
-typedef void (*EXTI_FUNC)(void *);
+typedef void (*EXTI_FUNC)(uint32_t);
 
-void exti_enable(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t irq_priority);
-void exti_disable(uint32_t pin, uint32_t irq_no);
-void exti_set_callback(uint32_t irq_no, void (*func)(void *));
+uint8_t exti_find_pin_irq(uint8_t idx);
+void exti_enable(uint32_t pin);
+void exti_disable(uint32_t pin);
+void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param);
+void exti_register(uint32_t pin, uint32_t cond, uint32_t pull);
 
 #ifdef __cplusplus
 }

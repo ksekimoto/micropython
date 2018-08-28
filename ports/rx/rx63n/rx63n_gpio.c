@@ -69,6 +69,7 @@ void gpio_config(uint32_t pin, uint32_t mode, uint32_t pull, uint32_t alt) {
         break;
     }
     switch (pull) {
+    case GPIO_PULLDOWN:
     case GPIO_NOPULL:
         // assumption GPIO input mode
         _PCR(port) &= ~mask;
