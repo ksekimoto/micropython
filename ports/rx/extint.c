@@ -96,6 +96,7 @@ static uint irq_param[EXTI_NUM_VECTORS];
 
 void exit_callback(void *param) {
     uint irq_no = *((uint *)param);
+    exti_irq_clear(irq_no);
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
     if (*cb != mp_const_none) {
         mp_sched_lock();
@@ -258,6 +259,8 @@ const mp_obj_type_t extint_type = {
 };
 
 void extint_init0(void) {
+    exti_init();
+    exti_deinit();
     for (int i = 0; i < PYB_EXTI_NUM_VECTORS; i++) {
         MP_STATE_PORT(pyb_extint_callback)[i] = mp_const_none;
    }

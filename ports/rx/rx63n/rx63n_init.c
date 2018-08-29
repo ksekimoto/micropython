@@ -28,6 +28,8 @@
 
 void rx63n_init(void) {
     bootstrap();
+    exti_init();
+    exti_deinit();
     udelay_init();
     //sci_init(SCI_CH, SCI_BAUD);
     //SCI_TxStr(SCI_CH, "rx63n_init\r\n");

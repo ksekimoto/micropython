@@ -128,8 +128,13 @@ uint8_t exti_find_pin_irq(uint8_t idx) {
     }
     return 0xff;
 }
+
+void exti_irq_clear(uint32_t irq_no) {
+    RX_IR(irq_no) &= ~0x01;
+}
+
 void _exti_enable(uint32_t pin, uint32_t irq_no) {
-    unsigned char mask2 = 1 << (irq_no & 7);
+    uint8_t mask2 = 1 << (irq_no & 7);
     /* IRQx input: set ISEL bit */
     _MPC(pin) |= 0x40;
     /* clear interrupt flag */
@@ -146,7 +151,7 @@ void exti_enable(uint32_t pin) {
 }
 
 void _exti_disable(uint32_t pin, uint32_t irq_no) {
-    unsigned char mask2 = 1 << (irq_no & 7);
+    uint8_t mask2 = 1 << (irq_no & 7);
     /* disable interrupt */
     RX_IER(irq_no) &= ~mask2;
     /* IRQx input: reset ISEL bit */
@@ -185,8 +190,9 @@ void exti_callback(uint32_t irq_no) {
 
 void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
         uint32_t irq_priority) {
-    unsigned char mask = 1 << (pin & 7);
-    unsigned char mask2 = 1 << (irq_no & 7);
+    uint8_t mask = 1 << (pin & 7);
+    uint8_t mask2 = 1 << (irq_no & 7);
+    uint16_t mask3 = 3 << ((irq_no & 7) * 2);
     cond = (cond & 0x3) << 2;
     /* disable interrupt */
     RX_IER(irq_no) &= ~mask2;
@@ -199,6 +205,13 @@ void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
     RX_IR(irq_no) &= ~0x01;
     /* set interrupt priority */
     RX_IPR(irq_no) = irq_priority;
+    if (irq_no < 8) {
+        ICU.IRQFLTC0.WORD |= mask3;
+        ICU.IRQFLTE0.BYTE |= mask2;
+    } else {
+        ICU.IRQFLTC1.WORD |= mask3;
+        ICU.IRQFLTE1.BYTE |= mask2;
+    }
     /* enable interrupt */
     RX_IER(irq_no) |= mask2;
 }
@@ -208,6 +221,28 @@ void exti_register(uint32_t pin, uint32_t cond, uint32_t pull) {
     if (irq_no != 0xff) {
         _exti_register(pin, irq_no, cond, pull,
                 (uint32_t)EXTI_DEFAULT_PRIORITY);
+    }
+}
+
+void exti_init(void) {
+    /* set the digital filters to use PCLK/1 and disable */
+    ICU.IRQFLTC0.WORD = 0U;
+    ICU.IRQFLTE0.BYTE = 0U;
+    ICU.IRQFLTC1.WORD = 0U;
+    ICU.IRQFLTE1.BYTE = 0U;
+}
+
+void exti_deinit(void) {
+    uint8_t cond = 0;
+    for (int irq_no = 0; irq_no < 16; irq_no++) {
+        uint8_t mask2 = 1 << (irq_no & 7);
+        RX_IER(irq_no) &= ~mask2;
+        /* interrupt condition (level or edge) */
+        RX_IRQCR(irq_no) = (RX_IRQCR(irq_no) & ~0x0c) | (cond << 2);
+        /* clear interrupt flag */
+        RX_IR(irq_no) &= ~0x01;
+        /* set interrupt priority */
+        RX_IPR(irq_no) = 0;
     }
 }
 

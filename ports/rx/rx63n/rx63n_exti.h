@@ -67,6 +67,9 @@ void exti_enable(uint32_t pin);
 void exti_disable(uint32_t pin);
 void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param);
 void exti_register(uint32_t pin, uint32_t cond, uint32_t pull);
+void exti_irq_clear(uint32_t irq_no);
+void exti_init(void);
+void exti_deinit(void);
 
 #ifdef __cplusplus
 }
