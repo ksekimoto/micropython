@@ -46,10 +46,15 @@
 //#include "pybthread.h"
 #include "gccollect.h"
 #include "modmachine.h"
+#include "spi.h"
 #include "uart.h"
 #include "timer.h"
 #include "led.h"
 #include "pin.h"
+#include "extint.h"
+#include "usrsw.h"
+#include "storage.h"
+#include "sdcard.h"
 
 #if MICROPY_KBD_EXCEPTION
 int mp_interrupt_channel;
@@ -263,6 +268,83 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     return true;
 }
 #endif
+
+#if MICROPY_HW_HAS_SDCARD
+STATIC bool init_sdcard_fs(void) {
+    bool first_part = true;
+    for (int part_num = 1; part_num <= 4; ++part_num) {
+        // create vfs object
+        fs_user_mount_t *vfs_fat = m_new_obj_maybe(fs_user_mount_t);
+        mp_vfs_mount_t *vfs = m_new_obj_maybe(mp_vfs_mount_t);
+        if (vfs == NULL || vfs_fat == NULL) {
+            break;
+        }
+        vfs_fat->flags = FSUSER_FREE_OBJ;
+        sdcard_init_vfs(vfs_fat, part_num);
+
+        // try to mount the partition
+        FRESULT res = f_mount(&vfs_fat->fatfs);
+
+        if (res != FR_OK) {
+            // couldn't mount
+            m_del_obj(fs_user_mount_t, vfs_fat);
+            m_del_obj(mp_vfs_mount_t, vfs);
+        } else {
+            // mounted via FatFs, now mount the SD partition in the VFS
+            if (first_part) {
+                // the first available partition is traditionally called "sd" for simplicity
+                vfs->str = "/sd";
+                vfs->len = 3;
+            } else {
+                // subsequent partitions are numbered by their index in the partition table
+                if (part_num == 2) {
+                    vfs->str = "/sd2";
+                } else if (part_num == 2) {
+                    vfs->str = "/sd3";
+                } else {
+                    vfs->str = "/sd4";
+                }
+                vfs->len = 4;
+            }
+            vfs->obj = MP_OBJ_FROM_PTR(vfs_fat);
+            vfs->next = NULL;
+            for (mp_vfs_mount_t **m = &MP_STATE_VM(vfs_mount_table);; m = &(*m)->next) {
+                if (*m == NULL) {
+                    *m = vfs;
+                    break;
+                }
+            }
+
+            #if MICROPY_HW_ENABLE_USB
+            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
+                // if no USB MSC medium is selected then use the SD card
+                pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
+            }
+            #endif
+
+            #if MICROPY_HW_ENABLE_USB
+            // only use SD card as current directory if that's what the USB medium is
+            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
+            #endif
+            {
+                if (first_part) {
+                    // use SD card as current directory
+                    MP_STATE_PORT(vfs_cur) = vfs;
+                }
+            }
+            first_part = false;
+        }
+    }
+
+    if (first_part) {
+        printf("PYB: can't mount SD card\n");
+        return false;
+    } else {
+        return true;
+    }
+}
+#endif
+
 #if !MICROPY_HW_USES_BOOTLOADER
 STATIC uint update_reset_mode(uint reset_mode) {
     #if MICROPY_HW_HAS_SWITCH
@@ -366,14 +448,32 @@ void main(uint32_t reset_mode) {
     #if MICROPY_PY_THREAD
     pyb_thread_init(&pyb_thread_main);
     #endif
+    pendsv_init();
     led_init();
     #if MICROPY_HW_HAS_SWITCH
-    //switch_init0();
+    switch_init0();
     #endif
     machine_init();
+    #if MICROPY_HW_ENABLE_RTC
+    rtc_init_start(false);
+    #endif
+    spi_init0();
+    #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
+    i2c_init0();
+    #endif
+    #if MICROPY_HW_HAS_SDCARD
+    sdcard_init();
+    #endif
     #if MICROPY_HW_ENABLE_STORAGE
     storage_init();
     #endif
+    #if MICROPY_PY_LWIP
+    // lwIP doesn't allow to reinitialise itself by subsequent calls to this function
+    // because the system timeout list (next_timeout) is only ever reset by BSS clearing.
+    // So for now we only init the lwIP stack once on power-up.
+    lwip_init();
+    #endif
+
 soft_reset:
 
     #if defined(MICROPY_HW_LED2)
@@ -421,9 +521,9 @@ soft_reset:
     // we can run Python scripts (eg boot.py), but anything that is configurable
     // by boot.py must be set after boot.py is run.
 
-    //readline_init0();
-    //pin_init0();
-    //extint_init0();
+    readline_init0();
+    pin_init0();
+    extint_init0();
     //timer_init0();
     uart_init0();
 
@@ -443,6 +543,10 @@ soft_reset:
     MP_STATE_PORT(pyb_stdio_uart) = NULL;
     #endif
 
+    #if MICROPY_HW_ENABLE_CAN
+    can_init0();
+    #endif
+
     #if MICROPY_HW_ENABLE_USB
     pyb_usb_init0();
     #endif
@@ -457,7 +561,17 @@ soft_reset:
     #if MICROPY_HW_ENABLE_STORAGE
     mounted_flash = init_flash_fs(reset_mode);
     #endif
+
     bool mounted_sdcard = false;
+    #if MICROPY_HW_HAS_SDCARD
+    // if an SD card is present then mount it on /sd/
+    //if (sdcard_is_present()) {
+        // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
+        //if (!mounted_flash || f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+            mounted_sdcard = init_sdcard_fs();
+        //}
+    //}
+    #endif
 
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
     if (mounted_sdcard) {
@@ -509,9 +623,20 @@ soft_reset:
     //    pyb_usb_dev_init(USBD_VID, USBD_PID_CDC_MSC, USBD_MODE_CDC_MSC, NULL);
     //}
     #endif
+    #if MICROPY_HW_ENABLE_SERVO
+    servo_init();
+    #endif
+
+    #if MICROPY_HW_ENABLE_DAC
+    dac_init();
+    #endif
+
+    #if MICROPY_PY_NETWORK
+    mod_network_init();
+    #endif
+
     // At this point everything is fully configured and initialised.
 
-#if 1
     // Run the main script from the current directory.
     if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         const char *main_py;
@@ -545,27 +670,6 @@ soft_reset:
             }
         }
     }
-#else
-
-#if MICROPY_ENABLE_COMPILER
-#if MICROPY_REPL_EVENT_DRIVEN
-    pyexec_event_repl_init();
-    for (;;) {
-        int c = mp_hal_stdin_rx_chr();
-        if (pyexec_event_repl_process_char(c)) {
-            break;
-        }
-    }
-#else
-    pyexec_friendly_repl();
-#endif
-    //do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    //do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
-#else
-    pyexec_frozen_module("frozentest.py");
-#endif
-
-#endif
 
 soft_reset_exit:
 
@@ -575,7 +679,16 @@ soft_reset_exit:
     printf("PYB: sync filesystems\n");
     storage_flush();
     #endif
+
     printf("PYB: soft reboot\n");
+    #if MICROPY_PY_NETWORK
+    mod_network_deinit();
+    #endif
+    //timer_deinit();
+    uart_deinit();
+    #if MICROPY_HW_ENABLE_CAN
+    can_deinit();
+    #endif
     machine_deinit();
 
     #if MICROPY_PY_THREAD

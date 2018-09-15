@@ -38,18 +38,16 @@
 #include "extmod/machine_i2c.h"
 #include "extmod/machine_spi.h"
 #include "lib/utils/pyexec.h"
-#if 0
 #include "lib/oofatfs/ff.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
-#endif
 #include "gccollect.h"
 #if 0
 #include "irq.h"
 #include "pybthread.h"
 #include "rng.h"
-#include "storage.h"
 #endif
+#include "storage.h"
 #include "pin.h"
 #include "timer.h"
 #include "adc.h"
@@ -57,8 +55,10 @@
 #include "usb.h"
 #include "rtc.h"
 #include "i2c.h"
+#endif
 #include "spi.h"
 #include "uart.h"
+#if 0
 #include "wdt.h"
 #include "genhdr/pllfreqtable.h"
 #endif
@@ -231,9 +231,9 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 #if MICROPY_PY_MACHINE_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
 #endif
-    { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&mp_machine_soft_spi_type) },
-#if 0
+    { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
+#if 0
     { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },
 #endif
 #if 0

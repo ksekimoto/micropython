@@ -47,6 +47,7 @@ CFLAGS += $(INC) -w -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
 
 ifeq ($(DEBUG), 1)
+#CFLAGS += -Os -ggdb
 CFLAGS += -Os -ggdb
 else
 CFLAGS += -Os -DNDEBUG
@@ -77,6 +78,7 @@ LIBS =
 
 SRC_C = main.c
 SRC_C += adc.c
+SRC_C += bufhelper.c
 SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -85,6 +87,7 @@ SRC_C += gccollect.c
 SRC_C += help.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
+SRC_C += moduos.c
 #SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += led.c
@@ -92,6 +95,8 @@ SRC_C += pendsv.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
+SRC_C += sdcard.c
+SRC_C += spi.c
 SRC_C += storage.c
 SRC_C += systick.c
 SRC_C += uart.c
@@ -102,15 +107,16 @@ SRC_C += $(MCU_SERIES)/sbrk.c
 SRC_C += $(MCU_SERIES)/interrupt_handlers.c
 SRC_C += $(MCU_SERIES)/vector_table.c
 SRC_C += $(MCU_SERIES)/bootstrap.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_ad.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_flash.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_ad.c
 SRC_C += $(MCU_SERIES)/usb_core.c
 SRC_C += $(MCU_SERIES)/usb_cdc.c
 SRC_C += $(MCU_SERIES)/usb_hal.c

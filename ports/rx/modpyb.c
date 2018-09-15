@@ -43,14 +43,16 @@
 #include "rng.h"
 #include "rtc.h"
 #include "i2c.h"
+#endif
 #include "spi.h"
 #include "uart.h"
+#if 0
 #include "can.h"
 #include "adc.h"
 #endif
 #include "storage.h"
-#if 0
 #include "sdcard.h"
+#if 0
 #include "accel.h"
 #include "servo.h"
 #include "dac.h"
@@ -91,7 +93,6 @@ MP_DECLARE_CONST_FUN_OBJ_KW(pyb_main_obj); // defined in main.c
 // Get or set the UART object that the REPL is repeated on.
 // This is a legacy function, use of uos.dupterm is preferred.
 STATIC mp_obj_t pyb_repl_uart(size_t n_args, const mp_obj_t *args) {
-#if 0
     if (n_args == 0) {
         if (MP_STATE_PORT(pyb_stdio_uart) == NULL) {
             return mp_const_none;
@@ -112,9 +113,6 @@ STATIC mp_obj_t pyb_repl_uart(size_t n_args, const mp_obj_t *args) {
         }
         return mp_const_none;
     }
-#else
-    return mp_const_none;
-#endif
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_repl_uart_obj, 0, 1, pyb_repl_uart);
 
@@ -150,9 +148,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     #endif
 #endif
     { MP_ROM_QSTR(MP_QSTR_main), MP_ROM_PTR(&pyb_main_obj) },
-#if 0
     { MP_ROM_QSTR(MP_QSTR_repl_uart), MP_ROM_PTR(&pyb_repl_uart_obj) },
-#endif
 
 #if 0
     #if MICROPY_HW_ENABLE_USB
@@ -223,12 +219,12 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #if defined(MICROPY_HW_LED1)
     { MP_ROM_QSTR(MP_QSTR_LED), MP_ROM_PTR(&pyb_led_type) },
 #endif
-#if 0
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C), MP_ROM_PTR(&pyb_i2c_type) },
     #endif
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&pyb_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&pyb_uart_type) },
+#if 0
 #if MICROPY_HW_ENABLE_CAN
     { MP_ROM_QSTR(MP_QSTR_CAN), MP_ROM_PTR(&pyb_can_type) },
 #endif

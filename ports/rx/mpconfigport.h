@@ -35,105 +35,6 @@
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
 
-#if 0
-#define MICROPY_DEBUG_VERBOSE       (1)
-#define MICROPY_DEBUG_PRINTERS      (1)
-#endif
-
-#if 0
-// You can disable the built-in MicroPython compiler by setting the following
-// config option to 0.  If you do this then you won't get a REPL prompt, but you
-// will still be able to execute pre-compiled scripts, compiled with mpy-cross.
-#define MICROPY_ENABLE_COMPILER     (1)
-
-#define MICROPY_QSTR_BYTES_IN_HASH  (1)
-//#define MICROPY_QSTR_EXTRA_POOL     mp_qstr_frozen_const_pool
-#define MICROPY_ALLOC_PATH_MAX      (128)
-#define MICROPY_ALLOC_PARSE_CHUNK_INIT (16)
-#define MICROPY_EMIT_X64            (0)
-#define MICROPY_EMIT_THUMB          (0)
-#define MICROPY_EMIT_INLINE_THUMB   (0)
-#define MICROPY_COMP_MODULE_CONST   (0)
-#define MICROPY_COMP_CONST          (0)
-#define MICROPY_COMP_DOUBLE_TUPLE_ASSIGN (0)
-#define MICROPY_COMP_TRIPLE_TUPLE_ASSIGN (0)
-#define MICROPY_MEM_STATS           (0)
-#define MICROPY_DEBUG_PRINTERS      (1)
-#define MICROPY_ENABLE_GC           (1)
-#define MICROPY_GC_ALLOC_THRESHOLD  (1)
-#define MICROPY_REPL_EVENT_DRIVEN   (0)
-#define MICROPY_HELPER_REPL         (1)
-#define MICROPY_HELPER_LEXER_UNIX   (0)
-#define MICROPY_ENABLE_SOURCE_LINE  (0)
-#define MICROPY_ENABLE_DOC_STRING   (0)
-#define MICROPY_ERROR_REPORTING     (MICROPY_ERROR_REPORTING_TERSE)
-#define MICROPY_BUILTIN_METHOD_CHECK_SELF_ARG (0)
-#define MICROPY_PY_ASYNC_AWAIT      (0)
-#define MICROPY_PY_BUILTINS_BYTEARRAY (0)
-#define MICROPY_PY_BUILTINS_MEMORYVIEW (0)
-#define MICROPY_PY_BUILTINS_ENUMERATE (0)
-#define MICROPY_PY_BUILTINS_FILTER  (0)
-#define MICROPY_PY_BUILTINS_FROZENSET (0)
-#define MICROPY_PY_BUILTINS_REVERSED (0)
-#define MICROPY_PY_BUILTINS_SET     (0)
-#define MICROPY_PY_BUILTINS_SLICE   (0)
-#define MICROPY_PY_BUILTINS_PROPERTY (0)
-#define MICROPY_PY_BUILTINS_MIN_MAX (0)
-#define MICROPY_PY___FILE__         (0)
-#define MICROPY_PY_GC               (1)
-#define MICROPY_PY_ARRAY            (0)
-#define MICROPY_PY_ATTRTUPLE        (0)
-#define MICROPY_PY_COLLECTIONS      (0)
-#define MICROPY_PY_MATH             (0)
-#define MICROPY_PY_CMATH            (0)
-#define MICROPY_PY_IO               (0)
-#define MICROPY_PY_STRUCT           (0)
-#define MICROPY_PY_SYS              (0)
-#define MICROPY_MODULE_FROZEN_MPY   (0)
-#define MICROPY_CPYTHON_COMPAT      (0)
-#define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
-#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_NONE)
-
-#define MICROPY_PERSISTENT_CODE_LOAD (0)    // mp_reader_new_file needs to be implemented
-
-#define MICROPY_PY_BUILTINS_HELP    (1)
-#define MICROPY_PY_BUILTINS_HELP_TEXT rx_help_text
-#define MICROPY_PY_BUILTINS_HELP_MODULES (1)
-
-#define MICROPY_KBD_EXCEPTION       (1)
-
-// extra built in modules to add to the list of known ones
-#if 0
-extern const struct _mp_obj_module_t machine_module;
-#endif
-extern const struct _mp_obj_module_t pyb_module;
-#if 0
-extern const struct _mp_obj_module_t mp_module_ubinascii;
-extern const struct _mp_obj_module_t mp_module_ure;
-extern const struct _mp_obj_module_t mp_module_uzlib;
-extern const struct _mp_obj_module_t mp_module_ujson;
-extern const struct _mp_obj_module_t mp_module_uheapq;
-extern const struct _mp_obj_module_t mp_module_uhashlib;
-extern const struct _mp_obj_module_t mp_module_uos;
-extern const struct _mp_obj_module_t mp_module_utime;
-extern const struct _mp_obj_module_t mp_module_usocket;
-extern const struct _mp_obj_module_t mp_module_network;
-extern const struct _mp_obj_module_t mp_module_onewire;
-#endif
-
-#define MICROPY_PORT_BUILTIN_MODULES \
-    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
-    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, */ \
-    /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */ \
-    /* SOCKET_BUILTIN_MODULE */ \
-    /* NETWORK_BUILTIN_MODULE */ \
-    /* { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, */ \
-
-
-#endif
-
-#define MICROPY_ENABLE_COMPILER     (1)
 // memory allocation policies
 #define MICROPY_ALLOC_PATH_MAX      (128)
 
@@ -244,7 +145,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PY_MACHINE_SPI      (1)
 #define MICROPY_PY_MACHINE_SPI_MSB  (SPI_FIRSTBIT_MSB)
 #define MICROPY_PY_MACHINE_SPI_LSB  (SPI_FIRSTBIT_LSB)
-#define MICROPY_PY_MACHINE_SPI_MAKE_NEW mp_machine_soft_spi_make_new
+#define MICROPY_PY_MACHINE_SPI_MAKE_NEW machine_hard_spi_make_new
 #define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
 #define MICROPY_PY_FRAMEBUF         (0)
@@ -284,8 +185,8 @@ extern const struct _mp_obj_module_t mp_module_uzlib;
 extern const struct _mp_obj_module_t mp_module_ujson;
 extern const struct _mp_obj_module_t mp_module_uheapq;
 extern const struct _mp_obj_module_t mp_module_uhashlib;
-#if 0
 extern const struct _mp_obj_module_t mp_module_uos;
+#if 0
 extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
@@ -320,7 +221,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */ \
     /* SOCKET_BUILTIN_MODULE */ \
     /* NETWORK_BUILTIN_MODULE */ \
@@ -347,7 +248,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_heapq), MP_ROM_PTR(&mp_module_uheapq) }, \
     { MP_ROM_QSTR(MP_QSTR_hashlib), MP_ROM_PTR(&mp_module_uhashlib) }, \
     { MP_ROM_QSTR(MP_QSTR_io), MP_ROM_PTR(&mp_module_io) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_random), MP_ROM_PTR(&mp_module_urandom) }, \
     /* { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, */ \
     /* { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, */ \

@@ -45,7 +45,7 @@
 
 // Whether to enable storage on the internal flash of the MCU
 #ifndef MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
-#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
+//#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
 #endif
 
 // Whether to enable the RTC, exposed as pyb.RTC
@@ -90,7 +90,7 @@
 
 // Whether to enable the SD card interface, exposed as pyb.SDCard
 #ifndef MICROPY_HW_HAS_SDCARD
-#define MICROPY_HW_HAS_SDCARD (0)
+#define MICROPY_HW_HAS_SDCARD (1)
 #endif
 
 // Whether to enable the MMA7660 driver, exposed as pyb.Accel
