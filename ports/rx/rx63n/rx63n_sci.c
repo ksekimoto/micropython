@@ -84,7 +84,7 @@ static const uint8_t sci_rx_pins[] = {
 };
 
 static volatile struct SCI_FIFO {
-    int ri, wi, ct, run;
+    int tail, head, len, run;
     uint8_t buff[SCI_BUF_SIZE];
 };
 
@@ -103,6 +103,48 @@ void sci_rx_set_callback(int ch, SCI_CALLBACK callback)
     sci_callback[ch] = callback;
 }
 
+void sci_rx_set_int(int ch, int flag) {
+    int idx = (214 + ch * 3) / 8;
+    int bit = (6 +  ch * 3) & 7;
+    uint8_t mask = (1 << bit);
+    ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
+}
+
+void sci_rx_int_enable(int ch) {
+    sci_rx_set_int(ch, 1);
+}
+
+void sci_rx_int_disable(int ch) {
+    sci_rx_set_int(ch, 0);
+}
+
+void sci_tx_set_int(int ch, int flag) {
+    int idx = (215 + ch * 3) / 8;
+    int bit = (7 +  ch * 3) & 7;
+    uint8_t mask = (1 << bit);
+    ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
+}
+
+void sci_tx_int_enable(int ch) {
+    sci_tx_set_int(ch, 1);
+}
+
+void sci_tx_int_disable(int ch) {
+    sci_tx_set_int(ch, 0);
+}
+
+#if defined(RX63N_SCI_ADDITIONAL)
+void sci_tx_enable(int ch) {
+    volatile struct st_sci0 *sci = SCI[ch];
+    sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
+}
+
+void sci_tx_disable(int ch) {
+    volatile struct st_sci0 *sci = SCI[ch];
+    sci->SCR.BYTE &= ~0xa0; /* TIE and TE clear */
+}
+#endif
+
 static void sci_isr_rx(int ch) {
     int i;
     uint8_t d;
@@ -113,11 +155,11 @@ static void sci_isr_rx(int ch) {
             return;
         }
     }
-    if (rx_fifo[ch].ct < SCI_BUF_SIZE) {
-        i = rx_fifo[ch].wi;
+    if (rx_fifo[ch].len < SCI_BUF_SIZE) {
+        i = rx_fifo[ch].head;
         rx_fifo[ch].buff[i++] = d;
-        rx_fifo[ch].wi = i % SCI_BUF_SIZE;
-        rx_fifo[ch].ct++;
+        rx_fifo[ch].head = i % SCI_BUF_SIZE;
+        rx_fifo[ch].len++;
     }
 }
 
@@ -130,87 +172,57 @@ static void sci_isr_er(int ch) {
 static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
-    if (tx_fifo[ch].ct) {
-        i = tx_fifo[ch].ri;
+    if (tx_fifo[ch].len != 0) {
+        i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
-        tx_fifo[ch].ri = i % SCI_BUF_SIZE;
-        tx_fifo[ch].ct--;
+        tx_fifo[ch].len--;
+        tx_fifo[ch].tail = i % SCI_BUF_SIZE;
     } else {
         tx_fifo[ch].run = 0;
     }
 }
 
-void sci_rx_set_int(int ch, int flag) {
-    int idx = (214 + ch * 3) / 8;
-    int bit = (6 +  ch * 3) & 7;
-    uint8_t mask = (1 << bit);
-    ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
-
-}
-
-void sci_rx_enable(int ch) {
-    sci_rx_set_int(ch, 1);
-}
-
-void sci_rx_disable(int ch) {
-    sci_rx_set_int(ch, 0);
-}
-
-void sci_tx_set_int(int ch, int flag) {
-    int idx = (215 + ch * 3) / 8;
-    int bit = (7 +  ch * 3) & 7;
-    uint8_t mask = (1 << bit);
-    ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
-}
-
-void sci_tx_enable(int ch) {
-    sci_tx_set_int(ch, 1);
-}
-
-void sci_tx_disable(int ch) {
-    sci_tx_set_int(ch, 0);
-}
-
 uint8_t sci_rx_ch(int ch) {
     uint8_t c;
     int i;
-    //while (!rx_fifo[ch].ct) ;
-    if (rx_fifo[ch].ct) {
-        sci_rx_disable(ch);
-        i = rx_fifo[ch].ri;
+    if (rx_fifo[ch].len) {
+        sci_rx_int_disable(ch);
+        i = rx_fifo[ch].tail;
         c = rx_fifo[ch].buff[i++];
-        rx_fifo[ch].ri = i % SCI_BUF_SIZE;
-        rx_fifo[ch].ct--;
-        sci_rx_enable(ch);
-    } else
+        rx_fifo[ch].tail = i % SCI_BUF_SIZE;
+        rx_fifo[ch].len--;
+        sci_rx_int_enable(ch);
+    } else {
         c = 0;
+    }
     return c;
 }
 
 int sci_rx_any(int ch) {
-    return (int)(rx_fifo[ch].ct != rx_fifo[ch].ri);
+    return (int)(rx_fifo[ch].head != rx_fifo[ch].tail);
 }
 
 void sci_tx_ch(int ch, uint8_t c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
-    while (tx_fifo[ch].ct >= SCI_BUF_SIZE)
+    while (tx_fifo[ch].len == SCI_BUF_SIZE) {
         ;
-    sci_tx_disable(ch);
+    }
     if (tx_fifo[ch].run) {
-        i = tx_fifo[ch].wi;
+        sci_tx_int_disable(ch);
+        i = tx_fifo[ch].head;
         tx_fifo[ch].buff[i++] = c;
-        tx_fifo[ch].wi = i % SCI_BUF_SIZE;
-        tx_fifo[ch].ct++;
+        tx_fifo[ch].head = i % SCI_BUF_SIZE;
+        tx_fifo[ch].len++;
+        sci_tx_int_enable(ch);
     } else {
         sci->TDR = c;
         tx_fifo[ch].run = 1;
     }
-    sci_tx_enable(ch);
 }
 
 int sci_tx_wait(int ch) {
-    return (int)(tx_fifo[ch].ct != tx_fifo[ch].wi);
+    return (int)(tx_fifo[ch].head != tx_fifo[ch].tail);
 }
 
 void sci_tx_str(int ch, uint8_t *p) {
@@ -223,13 +235,14 @@ void sci_tx_str(int ch, uint8_t *p) {
 }
 
 static void sci_fifo_init(int ch) {
-    tx_fifo[ch].ri = 0;
-    tx_fifo[ch].wi = 0;
-    tx_fifo[ch].ct = 0;
+    tx_fifo[ch].head = 0;
+    tx_fifo[ch].tail = 0;
+    tx_fifo[ch].len = 0;
     tx_fifo[ch].run = 0;
-    rx_fifo[ch].ri = 0;
-    rx_fifo[ch].wi = 0;
-    rx_fifo[ch].ct = 0;
+    rx_fifo[ch].head = 0;
+    rx_fifo[ch].tail = 0;
+    rx_fifo[ch].len = 0;
+    rx_fifo[ch].run = 0;
 }
 
 void sci_int_priority(int ch, int priority) {
@@ -377,6 +390,8 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
     uint8_t rx_mask = GPIO_MASK(rx_pin);
     _PMR(tx_port) &= ~tx_mask;
     _PMR(rx_port) &= ~rx_mask;
+    _PDR(tx_port) |= tx_mask;
+    _PDR(rx_port) &= ~rx_mask;
     _PXXPFS(tx_port, tx_pin & 7) = 0x0a;
     _PXXPFS(rx_port, rx_pin & 7) = 0x0a;
     _PMR(tx_port) |= tx_mask;
@@ -387,9 +402,9 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
     sci->SMR.BYTE = 0x00;
     sci_set_baud(ch, baud);
     delay_ms(1);
-    sci->SCR.BYTE = 0xF0;
+    sci->SCR.BYTE = 0xf0;
     sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
-    sci_int_enable(ch);
+    sci_rx_int_enable(ch);
 }
 
 void sci_init(int ch, int baud) {
@@ -411,7 +426,6 @@ void sci_deinit(int ch) {
     //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
     SYSTEM.PRCR.WORD = 0xA500;
 }
-
 
 /* rx interrupt */
 void INT_Excep_SCI0_RXI0(void) {

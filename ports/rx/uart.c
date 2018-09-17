@@ -324,7 +324,8 @@ void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
-    return 1;
+    int ch = (int)self->uart_id;
+    return sci_rx_any(ch);
 }
 
 // Waits at most timeout milliseconds for at least 1 char to become ready for
@@ -398,6 +399,7 @@ STATIC size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_
     for (int i = 0; i < num_chars; i++) {
         sci_tx_ch(ch, *data++);
     }
+    *errcode = 0;
     return i;
 }
 
