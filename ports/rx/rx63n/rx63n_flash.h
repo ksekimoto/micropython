@@ -53,6 +53,7 @@ int lmemcmp(const void *p1, const void *p2, size_t len) FLASH_SECTION;
 
 uint32_t sector_size(uint32_t addr) FLASH_SECTION;
 uint32_t sector_start(uint32_t addr) FLASH_SECTION;
+uint32_t sector_index(uint32_t addr) FLASH_SECTION;
 
 bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) FLASH_SECTION;
 bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite) FLASH_SECTION;

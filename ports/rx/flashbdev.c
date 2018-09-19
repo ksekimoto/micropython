@@ -36,13 +36,15 @@
 
 #if MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
 
+//#define DEBUG_FLASH_BDEV
+
 // Here we try to automatically configure the location and size of the flash
 // pages to use for the internal storage.  We also configure the location of the
 // cache used for writing.
 
 #if defined(GRSAKURA)
 
-STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(4))); // 16k
+STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(16))); // 16k
 #define CACHE_MEM_START_ADDR (&flash_cache_mem[0])
 #define FLASH_SECTOR_SIZE_MAX (0x4000)          // 16k max
 #define FLASH_MEM_SEG1_START_ADDR (0xfff80000)  // sector 1
@@ -50,7 +52,7 @@ STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(4))); // 16k
 
 #elif defined(GRCITRUS)
 
-STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(4))); // 16k
+STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(16))); // 16k
 #define CACHE_MEM_START_ADDR (&flash_cache_mem[0])
 #define FLASH_SECTOR_SIZE_MAX (0x4000)          // 16k max due to size of cache buffer
 #define FLASH_MEM_SEG1_START_ADDR (0xfff80000)  // sector 1
@@ -68,7 +70,7 @@ STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(4))); // 16k
 #define FLASH_FLAG_DIRTY        (1)
 #define FLASH_FLAG_FORCE_WRITE  (2)
 #define FLASH_FLAG_ERASED       (4)
-static uint8_t flash_flags = 0;
+static volatile uint8_t flash_flags = 0;
 static uint32_t flash_cache_sector_id;
 static uint32_t flash_cache_sector_start;
 static uint32_t flash_cache_sector_size;
@@ -95,6 +97,7 @@ int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
         case BDEV_IOCTL_SYNC:
             if (flash_flags & FLASH_FLAG_DIRTY) {
                 flash_flags |= FLASH_FLAG_FORCE_WRITE;
+                flash_bdev_irq_handler();
                 //while (flash_flags & FLASH_FLAG_DIRTY) {
                 //   NVIC->STIR = FLASH_IRQn;
                 //}
@@ -120,7 +123,7 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
         flash_cache_sector_size = flash_sector_size;
     }
     flash_flags |= FLASH_FLAG_DIRTY;
-    //led_state(PYB_LED_RED, 1); // indicate a dirty cache with LED on
+    led_state(PYB_LED_RED, 1); // indicate a dirty cache with LED on
     flash_tick_counter_last_write = utick();
     return (uint8_t*)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
 }
@@ -176,20 +179,20 @@ static void flash_bdev_irq_handler(void) {
 
     // This code erases the flash directly, waiting for it to finish
     if (!(flash_flags & FLASH_FLAG_ERASED)) {
-        flash_erase(flash_cache_sector_start, flash_cache_sector_size / 4);
+        flash_erase(flash_cache_sector_start, flash_cache_sector_size);
         flash_flags |= FLASH_FLAG_ERASED;
-        return;
+        //return;
     }
 
     // If not a forced write, wait at least 5 seconds after last write to flush
     // On file close and flash unmount we get a forced write, so we can afford to wait a while
     if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || mtick() - flash_tick_counter_last_write >= 5000) {
         // sync the cache RAM buffer by writing it to the flash page
-        flash_write(flash_cache_sector_start, (const uint32_t*)CACHE_MEM_START_ADDR, flash_cache_sector_size / 4);
+        flash_write(flash_cache_sector_start, (const uint32_t*)CACHE_MEM_START_ADDR, flash_cache_sector_size);
         // clear the flash flags now that we have a clean cache
         flash_flags = 0;
         // indicate a clean cache with LED off
-        //led_state(PYB_LED_RED, 0);
+        led_state(PYB_LED_RED, 0);
     }
 }
 
@@ -203,6 +206,25 @@ bool flash_bdev_readblock(uint8_t *dest, uint32_t block) {
     uint8_t *src = flash_cache_get_addr_for_read(flash_addr);
     memcpy(dest, src, FLASH_BLOCK_SIZE);
     return true;
+}
+
+bool flash_bdev_is_erased(uint32_t block) {
+    uint32_t *start;
+    uint32_t *end;
+    bool ret = true;
+    uint32_t flash_addr = convert_block_to_flash_addr(block);
+    start = (uint32_t *)flash_addr;
+    end = (uint32_t *)(flash_addr + FLASH_BLOCK_SIZE);
+    while (start < end) {
+        if (*start++ != 0xffffffff) {
+            ret = false;
+            break;
+        }
+    }
+#if defined(DEBUG_FLASH_BDEV)
+    debug_printf("is_erased block=%x ret=%x\r\n", block, ret);
+#endif
+    return ret;
 }
 
 bool flash_bdev_writeblock(const uint8_t *src, uint32_t block) {

@@ -31,6 +31,17 @@
 #include "interrupt_handlers.h"
 #include "rx63n_flash.h"
 
+#define RX63N
+
+////////////////////////////////////////////////////////////////////////////
+// For Debugging
+////////////////////////////////////////////////////////////////////////////
+//#define DEBUG_FLASH
+//#define DEBUG_FLASH_SKIP
+#define DEBUG_FLASH_WriteX
+#define DEBUG_FLASH_EraseBlock
+//#define DEBUG_FLASH_Read
+//#define DEBUG_FLASH_Memset
 
 ////////////////////////////////////////////////////////////////////////////
 // From Renesas sample
@@ -258,16 +269,6 @@ bool fcu_Write(volatile unsigned char *command_addr, unsigned short *flash_addr,
     return true;
 }
 
-////////////////////////////////////////////////////////////////////////////
-// For Debugging
-////////////////////////////////////////////////////////////////////////////
-//#define DEBUG_FLASH
-//#define DEBUG_FLASH_SKIP
-//#define DEBUG_FLASH_WriteX
-//#define DEBUG_FLASH_EraseBlock
-//#define DEBUG_FLASH_Read
-//#define DEBUG_FLASH_Memset
-
 #define REGION3_SECTOR_SIZE 0x10000     // 64K
 #define REGION3_SECTOR_MAX  16
 #define REGION2_SECTOR_SIZE 0x8000      // 32K
@@ -290,7 +291,11 @@ uint8_t flash_buf[FLASH_BUF_SIZE]  __attribute__((aligned (2)));
 
 static void wait(volatile int count)
 {
-    while (count-- > 0);
+    while (count-- > 0) {
+        __asm__ __volatile__ ("nop");
+        __asm__ __volatile__ ("nop");
+        __asm__ __volatile__ ("nop");
+    }
 }
 
 void *lmemset(void *dst, int c, size_t len)
@@ -351,6 +356,18 @@ uint32_t sector_start(uint32_t addr)
         return (addr & ~(REGION3_SECTOR_SIZE - 1));
 }
 
+uint32_t sector_index(uint32_t addr)
+{
+    if (addr >= 0xFFFF8000)
+        return (7 - ((addr - 0xFFFF8000) / REGION0_SECTOR_SIZE));
+    else if (addr >= 0xFFF80000)
+        return (37 - ((addr - 0xFFF80000) / REGION1_SECTOR_SIZE));
+    else if (addr >= 0xFFF00000)
+        return (53 - ((addr - 0xFFF0000) / REGION2_SECTOR_SIZE));
+    else
+        return (69 - ((addr - 0xFFE0000) / REGION3_SECTOR_SIZE));
+}
+
 bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff)
 {
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_Read)
@@ -375,7 +392,6 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
     debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
 #endif
 #ifndef DEBUG_FLASH_SKIP
-    rx_disable_irq();
     uint32_t error_code = 0;
     bool flag;
     unsigned char *command_addr = (unsigned char *)((uint32_t)addr & 0x00FFFFFF);
@@ -403,6 +419,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
         unsigned short *buf_addr = (unsigned short *)&flash_buf[0];
         wait(100000);
         //FLASH_BEGIN_PROGRAMMING_FAST() ;
+        __asm__ __volatile__ ("clrpsw i");
         fcu_Interrupt_Disable();
         flag = fcu_Transfer_Firmware(command_addr);
         if (!flag) {
@@ -432,6 +449,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             goto WriteX_exit;
         }
         //FLASH_END_PROGRAMMING_FAST("", addr);
+        __asm__ __volatile__ ("setpsw i");
         if (fIncrementDataPtr) {
             flag= (memcmp((void *)(startaddr+offset), flash_buf+offset, count) == 0);
             if (!flag) {
@@ -449,7 +467,6 @@ WriteX_exit:
     debug_printf("WriteX() error_code=%x\r\n", error_code);
 #endif
 #endif
-    rx_enable_irq();
     if (error_code == 0)
         return true;
     return false;
@@ -491,6 +508,7 @@ bool internal_flash_eraseblock(unsigned char *addr)
     unsigned long block_size  = (unsigned long)sector_size((uint32_t)addr);
 
     //FLASH_BEGIN_PROGRAMMING_FAST() ;
+    __asm__ __volatile__ ("clrpsw i");
     fcu_Interrupt_Disable();
     flag = fcu_Transfer_Firmware(command_addr);
     if (!flag) {
@@ -524,6 +542,7 @@ bool internal_flash_eraseblock(unsigned char *addr)
         error_code = 6;
     }
     //FLASH_END_PROGRAMMING_FAST("", addr);
+    __asm__ __volatile__ ("setpsw i");
 EraseBlock_exit:
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     debug_printf("EraseBlock() error_code=%x\r\n", error_code);

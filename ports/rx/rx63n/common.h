@@ -53,5 +53,8 @@
 #include "rx63n_utils.h"
 #include "rx63n_ad.h"
 #include "rx63n_exti.h"
+#ifdef USE_DBG_PRINT
+#include "debug_printf.h"
+#endif
 
 #endif /* COMMON_H_ */

@@ -33,10 +33,13 @@
 #include "led.h"
 #include "storage.h"
 //#include "irq.h"
+#include "common.h"
 
 #if MICROPY_HW_ENABLE_STORAGE
 
-#define FLASH_PART1_START_BLOCK (0x100)
+//#define DEBUG_STORAGE
+
+#define FLASH_PART1_START_BLOCK (0x1)
 
 #if defined(MICROPY_HW_BDEV2_IOCTL)
 #define FLASH_PART2_START_BLOCK (FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV2_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0))
@@ -48,17 +51,17 @@ void storage_init(void) {
     if (!storage_is_initialised) {
         storage_is_initialised = true;
 
+#if defined (DEBUG_STORAGE)
+        bool ret;
+        ret = flash_erase(0xfff80000, 0x4000);
+        ret = flash_erase(0xfff84000, 0x4000);
+#endif
+
         MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_INIT, 0);
 
         #if defined(MICROPY_HW_BDEV2_IOCTL)
         MICROPY_HW_BDEV2_IOCTL(BDEV_IOCTL_INIT, 0);
         #endif
-
-        // Enable the flash IRQ, which is used to also call our storage IRQ handler
-        // It needs to go at a higher priority than all those components that rely on
-        // the flash storage (eg higher than USB MSC).
-        //NVIC_SetPriority(FLASH_IRQn, IRQ_PRI_FLASH);
-        //HAL_NVIC_EnableIRQ(FLASH_IRQn);
     }
 }
 

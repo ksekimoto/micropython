@@ -38,13 +38,20 @@ typedef struct {
 uint32_t flash_get_sector_info(uint32_t addr, uint32_t *start_addr, uint32_t *size) {
     *start_addr = sector_start(addr);
     *size = sector_size(addr);
-    return 0;
+    return sector_index(addr);
 }
 
-void flash_erase(uint32_t flash_dest, uint32_t num_word32) {
-    internal_flash_eraseblock((unsigned char*)flash_dest);
+bool flash_erase(uint32_t flash_dest, uint32_t num_word32) {
+    // check there is something to write
+    if (num_word32 == 0) {
+        return true;
+    }
+    bool ret = internal_flash_eraseblock((unsigned char*)flash_dest);
+    return ret;
 }
 
-void flash_write(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) {
-    internal_flash_write((unsigned char *)flash_dest, num_word32, (uint8_t *)src, false);
+bool flash_write(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) {
+    bool ret;
+    ret = internal_flash_write((unsigned char *)flash_dest, num_word32, (uint8_t *)src, false);
+    return ret;
 }

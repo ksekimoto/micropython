@@ -36,6 +36,7 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(MCU_SERIES)
+INC += -Idebug
 INC += -Iboards/$(BOARD)
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 
@@ -48,7 +49,8 @@ CFLAGS += $(INC) -w -std=c99 -nostdlib $(COPT)
 
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
-CFLAGS += -Os -ggdb
+CFLAGS += -Os -g -DUSE_DBG_PRINT
+#CFLAGS += -Os -g
 else
 CFLAGS += -Os -DNDEBUG
 endif
@@ -70,9 +72,11 @@ CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 #LINC += $(GCCDIR)/lib/gcc/rx-elf/$(GCCVER)
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
-LFFLAGS += -nostdlib
+#LFFLAGS += -nostdlib
+LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
-LDFLAGS += -Map=$@.map --cref --gc-sections
+LDFLAGS += -Wl,-Map=$@.map
+#LDFLAGS += --cref --gc-sections
 
 LIBS =
 
@@ -122,6 +126,10 @@ SRC_C += $(MCU_SERIES)/usb_cdc.c
 SRC_C += $(MCU_SERIES)/usb_hal.c
 SRC_C += $(MCU_SERIES)/usbdescriptors.c
 SRC_C += $(MCU_SERIES)/util.c
+ifeq ($(DEBUG), 1)
+SRC_C += debug/debug_printf.c
+SRC_C += debug/vsnprintf.c
+endif
 
 SRC_S = $(MCU_SERIES)/startup_$(MCU_SERIES).S
 SRC_S += setjmp.S
@@ -255,7 +263,7 @@ all: $(BUILD)/firmware.elf
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
 MAKE_PINS = boards/make-pins.py

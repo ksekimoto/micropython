@@ -34,11 +34,11 @@ extern "C" {
 #define SCI_CH  0
 #define SCI_BAUD 115200
 #define UART_CH SCI_CH
-#define UART_TxStr SCI_TxStr
+#define UART_TxStr sci_tx_str
 #define PCLK    48000000
 
 #define DEBUG_CH SCI_CH
-#define DEBUG_TXSTR SCI_TxStr
+#define DEBUG_TXSTR sci_tx_str
 
 void rx63n_init(void);
 void bootstrap(void);

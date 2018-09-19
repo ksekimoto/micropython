@@ -436,6 +436,7 @@ static int chk_kbd_interrupt(int d)
 }
 #endif
 
+
 void main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers
 
@@ -550,7 +551,7 @@ soft_reset:
     #if MICROPY_HW_ENABLE_USB
     pyb_usb_init0();
     #endif
-    usb_init();
+    //usb_init();
 #if MICROPY_KBD_EXCEPTION
     usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
 #endif
