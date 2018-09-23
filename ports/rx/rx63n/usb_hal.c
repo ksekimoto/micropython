@@ -54,6 +54,7 @@ User Includes (Project Level Includes)
 #include "usb_hal.h"
 
 #include "rx63n/util.h"
+#include "common.h"
 
 /**********************************************************************
 System Definitions & Global Variables
@@ -349,6 +350,9 @@ USB_ERR USBHAL_Control_Status(void)
         g_Control.m_etState = STATE_READY;
     }
 
+#ifdef USB_DEBUG_CS
+    debug_printf("CS(xx) err=%d\r\n", err);
+#endif
     return err;
 }
 /*******************************************************************************
@@ -373,6 +377,10 @@ USB_ERR USBHAL_Control_IN(uint16_t _NumBytes, const uint8_t* _Buffer)
 {
     USB_ERR err = USB_ERR_OK;
 
+#ifdef USB_DEBUG_CI
+    debug_printf("CI%d P:xx A:xx E:xx\r\n", _NumBytes);
+#endif
+
     /*Check state*/
     if(g_Control.m_etState != STATE_CONTROL_SETUP)
     {
@@ -396,6 +404,9 @@ USB_ERR USBHAL_Control_IN(uint16_t _NumBytes, const uint8_t* _Buffer)
         /*Expect to get BEMP interrupt*/
     }
 
+#ifdef USB_DEBUG_CI
+    debug_printf("CI(%d) err=%d\r\n", _NumBytes, err);
+#endif
     return err;
 }
 /*******************************************************************************
@@ -423,6 +434,10 @@ USB_ERR USBHAL_Control_OUT(uint16_t _NumBytes, uint8_t* _Buffer,
                          CB_DONE_OUT _CBDone)
 {
     USB_ERR err = USB_ERR_OK;
+
+#ifdef USB_DEBUG_CO
+    debug_printf("CO%d P:xx A:xx E:xx\r\n", _NumBytes);
+#endif
 
     /*Check state*/
     if(g_Control.m_etState != STATE_CONTROL_SETUP)
@@ -457,6 +472,9 @@ USB_ERR USBHAL_Control_OUT(uint16_t _NumBytes, uint8_t* _Buffer,
         USBIO.BRDYENB.BIT.PIPE0BRDYE = 1;
     }
 
+#ifdef USB_DEBUG_CO
+    debug_printf("CO(%d) err=%d\r\n", _NumBytes, err);
+#endif
     return err;
 }
 /*******************************************************************************
@@ -481,6 +499,10 @@ USB_ERR USBHAL_Bulk_OUT(uint32_t _NumBytes, uint8_t* _Buffer,
                         CB_DONE_OUT _CBDone)
 {
     USB_ERR err = USB_ERR_OK;
+
+#ifdef USB_DEBUG_BO
+    debug_printf("BO%d P:xx A:xx E:xx\r\n", _NumBytes);
+#endif
 
     /*Check cable is connected*/
     if(STATE_DISCONNECTED == g_Control.m_etState)
@@ -515,6 +537,9 @@ USB_ERR USBHAL_Bulk_OUT(uint32_t _NumBytes, uint8_t* _Buffer,
         }
     }
 
+#ifdef USB_DEBUG_BO
+    debug_printf("BO(%d) err=%d\r\n", _NumBytes, err);
+#endif
     return err;
 }
 /*******************************************************************************
@@ -534,6 +559,10 @@ End USBHAL_Bulk_OUT function
 USB_ERR USBHAL_Bulk_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone)
 {
     USB_ERR err = USB_ERR_OK;
+
+#ifdef USB_DEBUG_BI
+    debug_printf("BI%d P:xx A:xx E:xx\r\n", _NumBytes);
+#endif
 
     /*Check cable is connected*/
     if(STATE_DISCONNECTED == g_Control.m_etState)
@@ -568,6 +597,9 @@ USB_ERR USBHAL_Bulk_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDo
         }
     }
 
+#ifdef USB_DEBUG_BI
+    debug_printf("BI(%d) err=%d\r\n", _NumBytes, err);
+#endif
     return err;
 }
 /******************************************************************************
@@ -1986,6 +2018,10 @@ static void HandleSetupCmd(void)
      - (either Control IN or Control OUT) or straight to a Status Stage ,
     Users of this HAL must set this up when handling the Setup callback.*/
 
+#ifdef USB_DEBUG_SU
+    p_16 = (uint16_t*)SetupCmdBuffer;
+    debug_printf("SU r=%04x v=%04x i=%04x l=%04x\r\n", p_16[0], p_16[1], p_16[2], p_16[3]);
+#endif
     /*Call Registered Callback*/
     g_CBs.fpSetup((const uint8_t(*)[USB_SETUP_PACKET_SIZE])SetupCmdBuffer);
 }

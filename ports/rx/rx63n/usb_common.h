@@ -51,11 +51,19 @@
 #ifndef RELEASE
     #include <stdio.h>
 #endif
-
+#include "common.h"
 
 /*******************************************************************************
 * Defines
 *******************************************************************************/
+
+//#define USB_DEBUG_SU
+//#define USB_DEBUG_CS
+//#define USB_DEBUG_CI
+//#define USB_DEBUG_CO
+//#define USB_DEBUG_BO
+//#define USB_DEBUG_BI
+
 /*Debug messages*/
 /*The debug level - decides what level of message will be output*/
 #define DEBUG_LEVEL_NONE    0 /*No Debug*/
@@ -82,7 +90,7 @@ with some drivers, where they cause the interrupt handling to take too long.*/
     #endif
 
     #if DEBUG_LEVEL >= DEBUG_LEVEL_MID
-        #define DEBUG_MSG_MID(x) printf x
+        #define DEBUG_MSG_MID(x) debug_printf x
     #else
         #define DEBUG_MSG_MID(x)
     #endif

@@ -37,9 +37,9 @@
 // For Debugging
 ////////////////////////////////////////////////////////////////////////////
 //#define DEBUG_FLASH
-//#define DEBUG_FLASH_SKIP
-#define DEBUG_FLASH_WriteX
-#define DEBUG_FLASH_EraseBlock
+#define DEBUG_FLASH_SKIP
+//#define DEBUG_FLASH_WriteX
+//#define DEBUG_FLASH_EraseBlock
 //#define DEBUG_FLASH_Read
 //#define DEBUG_FLASH_Memset
 
@@ -391,8 +391,8 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
 #endif
-#ifndef DEBUG_FLASH_SKIP
     uint32_t error_code = 0;
+#ifndef DEBUG_FLASH_SKIP
     bool flag;
     unsigned char *command_addr = (unsigned char *)((uint32_t)addr & 0x00FFFFFF);
     //FLASH_BEGIN_PROGRAMMING_FAST() ;

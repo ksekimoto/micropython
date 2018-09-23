@@ -1,5 +1,6 @@
 # Select the board to build for: if not given on the command line,
 # then default to PYBV10.
+#USB_NEW = 1
 BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -119,12 +120,21 @@ SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
-SRC_C += $(MCU_SERIES)/usb_core.c
+ifeq ($(USB_NEW), 1)
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_cdc.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_descriptor.c
+SRC_C += $(MCU_SERIES)/usblib_hw.c
+else
+SRC_C += $(MCU_SERIES)/usb_cdc_entry.c
 SRC_C += $(MCU_SERIES)/usb_cdc.c
+#SRC_C += $(MCU_SERIES)/usb_msc_scsi.c
+#SRC_C += $(MCU_SERIES)/usb_msc.c
+SRC_C += $(MCU_SERIES)/usb_core.c
 SRC_C += $(MCU_SERIES)/usb_hal.c
 SRC_C += $(MCU_SERIES)/usbdescriptors.c
+endif
 SRC_C += $(MCU_SERIES)/util.c
 ifeq ($(DEBUG), 1)
 SRC_C += debug/debug_printf.c
