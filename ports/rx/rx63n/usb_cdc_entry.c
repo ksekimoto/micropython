@@ -31,6 +31,7 @@
 #include "usb_msc.h"
 #include "common.h"
 #include "pendsv.h"
+#include "usbdescriptors.h"
 
 #define PID_NAK     0
 #define PID_BUF     1
@@ -76,13 +77,13 @@ uint8_t tx_read_buf() {
     return c;
 }
 
-void ReadBulkOUTPacket(void) {
+void ReadBulkOUTPacketCDC(void) {
     uint16_t DataLength = 0;
     /*Read data using D1FIFO*/
     /*NOTE: This probably will have already been selected if using BRDY interrupt.*/
     do {
-        USB0.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
-    } while (USB0.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT);
+        USB0.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
+    } while (USB0.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT_CDC);
     /*Set PID to BUF*/
     USB0.PIPE1CTR.BIT.PID = PID_BUF;
     /*Wait for buffer to be ready*/
@@ -128,15 +129,15 @@ void ReadBulkOUTPacket(void) {
     }
 }
 
-void WriteBulkINPacket(void) {
+void WriteBulkINPacketCDC(void) {
     uint32_t Count = 0;
     /*Write data to Bulk IN pipe using D0FIFO*/
     /*Select pipe (Check this happens before continuing)*/
     /*Set 8 bit access*/
     USB0.D0FIFOSEL.BIT.MBW = 0;
     do {
-        USB0.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN;
-    } while (USB0.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN);
+        USB0.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN_CDC;
+    } while (USB0.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN_CDC);
     /*Wait for buffer to be ready*/
     while (USB0.D0FIFOCTR.BIT.FRDY == 0) {
         ;
@@ -192,7 +193,13 @@ int usbcdc_read(void) {
 }
 
 void usb_init(void) {
+#if defined(USB_COMB)
+    USB_ERR err = USBCDCMSC_Init();
+#elif defined (USB_MSC)
+    USB_ERR err = USBMSC_Init();
+#else
     USB_ERR err = USBCDC_Init();
+#endif
     if (err == USB_ERR_OK) {
         const unsigned long TimeOut = 3000;
         unsigned long start = mtick();

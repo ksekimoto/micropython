@@ -68,5 +68,7 @@ extern const DESCRIPTOR gStringDescriptorManufacturer;
 extern const DESCRIPTOR gStringDescriptorProduct;
 extern const DESCRIPTOR gStringDescriptorSerialNum;
 
+#define USB_COMB
+
 /* FILENAME_USBDESCRIPTORS_H */
 #endif

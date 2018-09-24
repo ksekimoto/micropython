@@ -73,12 +73,22 @@ static const uint8_t gDeviceDescriptorData[DEVICE_DESCRIPTOR_SIZE] =
     0x01,
     /*USB Version 2.0*/
     0x00,0x02,
-    /*Class Code - CDC*/
-    0x02,
+#if defined(USB_COMB)
+    /*Class Code - Misc*/
+    0xef,
     /*Subclass Code*/
-    0x00,
+    0x02,
     /*Protocol Code*/
-    0x00,
+    0x01,
+#elif defined(USB_CDC)
+    2,                              /*  4:bFunctionClass */
+    2,                              /*  5:bFunctionSubClass */
+    1,                              /*  6:bFunctionProtocol */
+#elif defined(USB_MSC)
+    8,                              /*  4:bFunctionClass */
+    6,                              /*  5:bFunctionSubClass */
+    1,                              /*  6:bFunctionProtocol */
+#endif
     /*Max Packet Size for endpoint 0*/
     CONTROL_IN_PACKET_SIZE,
     (uint8_t)(VID & 0xFF),    /*Vendor ID LSB*/
@@ -103,7 +113,13 @@ const DESCRIPTOR gDeviceDescriptor =
 };
 
 /*Configuration Descriptor*/
-#define CONFIG_DESCRIPTOR_SIZE 67
+#if defined(USB_COMB)
+#define CONFIG_DESCRIPTOR_SIZE (67 + 8 + 23)
+#elif defined(USB_CDC)
+#define CONFIG_DESCRIPTOR_SIZE (67)
+#elif defined(USB_MSC)
+#define CONFIG_DESCRIPTOR_SIZE (32)
+#endif
 static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
 {
     /*Size of this descriptor (Just the configuration part)*/
@@ -111,27 +127,103 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*Configuration Descriptor*/
     0x02,
     /*Combined length of all descriptors (little endian)*/
-    CONFIG_DESCRIPTOR_SIZE,0x00,
+    CONFIG_DESCRIPTOR_SIZE, 0x00,
     /*Number of interfaces*/
+#if defined(USB_COMB)
+    0x03,
+#elif defined(USB_CDC)
     0x02,
+#elif defined(USB_MSC)
+    0x01,
+#endif
     /*This Interface Value*/
     0x01,
     /*No String Descriptor for this configuration*/
     0x00,
     /*bmAttributes - Self Powered(USB bus powered), No Remote Wakeup*/
-    0xC0,
+    /* 0xC0, */
     /*bmAttributes - Not USB Bus powered, No Remote Wakeup*/
-    /*0x80,*/
+    0x80,
     /*bMaxPower (2mA units) 100mA (A unit load is defined as 100mA)*/
     50,
 
+#if defined(USB_MSC) | defined(USB_COMB)
+    /*Size of this descriptor*/
+    0x09,
+    /*INTERFACE Descriptor*/
+    0x04,
+    /*Index of Interface*/
+#if defined(USB_COMB)
+    0x00,
+#else
+    0x00,
+#endif
+    /*bAlternateSetting*/
+    0x00,
+    /*Number of Endpoints - BULK IN and BULK OUT*/
+    0x02,
+    /*Class code = Mass Storage*/
+    0x08,
+    /*Subclass = SCSI*/
+    0x06,
+    /*Bulk only Protocol*/
+    0x50,
+    /*No String Descriptor for this interface*/
+    0x00,
+
+    /* Endpoint Bulk OUT */
+    /*Size of this descriptor*/
+    0x07,
+    /*ENDPOINT Descriptor*/
+    0x05,
+    /*bEndpointAddress - OUT endpoint, endpoint number = 1*/
+    0x04,
+    /*Endpoint Type is BULK*/
+    0x02,
+    /*Max Packet Size*/
+    BULK_OUT_PACKET_SIZE, 0x00,
+    /*Polling Interval in mS - IGNORED FOR BULK (except high speed out)*/
+    0x00,
+
+    /* Endpoint Bulk IN */
+    /*Size of this descriptor*/
+    0x07,
+    /*ENDPOINT Descriptor*/
+    0x05,
+    /*bEndpointAddress - IN endpoint, endpoint number = 2*/
+    0x85,
+    /*Endpoint Type is BULK*/
+    0x02,
+    /*Max Packet Size*/
+    BULK_IN_PACKET_SIZE, 0x00,
+    /*Polling Interval in mS - IGNORED FOR BULK*/
+    0x00,
+#endif
+
+#if defined(USB_COMB)
+    /* IAD */
+        8,                              /*  0:bLength */
+        0x0B,                           /*  1:bDescriptorType*/
+        1,                              /*  2:bFirstInterface */
+        2,                              /*  3:bInterfaceCount */
+        2,                              /*  4:bFunctionClass */
+        2,                              /*  5:bFunctionSubClass */
+        1,                              /*  6:bFunctionProtocol */
+        0,                              /*  7:iInterface */
+#endif
+
+#if defined(USB_CDC) | defined(USB_COMB)
 /* Communication Class Interface Descriptor */
     /*Size of this descriptor*/
     0x09,
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
+#if defined(USB_COMB)
+    0x01,
+#else
     0x00,
+#endif
     /*bAlternateSetting*/
     0x00,
     /*Number of Endpoints*/
@@ -173,9 +265,17 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*bDescriptor Subtype = Union*/
     0x06,
     /*bMasterInterface = Communication Class Interface*/
-    0x00,
-    /*bSlaveInterface = Data Class Interface*/
+#if defined(USB_COMB)
     0x01,
+#else
+    0x00,
+#endif
+    /*bSlaveInterface = Data Class Interface*/
+#if defined(USB_COMB)
+    0x02,
+#else
+    0x01,
+#endif
 
 /* Call Management Functional Descriptor */
     /*bFunctionalLength*/
@@ -187,7 +287,11 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*bmCapabilities*/
     0x00,
     /*bDataInterface: Data Class Interface = 1*/
+#if defined(USB_COMB)
+    0x02,
+#else
     0x01,
+#endif
 
 /* Interrupt Endpoint */
     /*Size of this descriptor*/
@@ -209,7 +313,11 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
+#if defined(USB_COMB)
+    0x02,
+#else
     0x01,
+#endif
     /*bAlternateSetting*/
     0x00,
     /*Number of Endpoints*/
@@ -249,7 +357,8 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*Max Packet Size*/
     64,0x00,
     /*Polling Interval in mS - IGNORED FOR BULK*/
-    0x00
+    0x00,
+#endif
 };
 
 const DESCRIPTOR gConfigurationDescriptor =

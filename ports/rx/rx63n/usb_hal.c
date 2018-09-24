@@ -43,6 +43,13 @@ System Includes
 /* Following header file defines the C preprocessor macro assert(). */
 #include <assert.h>
 
+//#define USB_DEBUG_SU
+//#define USB_DEBUG_CS
+//#define USB_DEBUG_CO
+//#define USB_DEBUG_CI
+//#define USB_DEBUG_BO
+//#define USB_DEBUG_BI
+
 /*******************************************************************************
 User Includes (Project Level Includes)
 *******************************************************************************/
@@ -75,6 +82,9 @@ typedef struct CBs
     CB_SETUP fpSetup;
     CB_CABLE fpCable;
     CB_ERROR fpError;
+    CB_SETUP fpSetup2;
+    CB_CABLE fpCable2;
+    CB_ERROR fpError2;
 }CBs;
 
 /*General purpose buffer*/
@@ -140,6 +150,9 @@ Variables
 /*Call Backs Registered by USB Core*/
 static volatile CBs g_CBs =
 {
+    NULL,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -209,16 +222,12 @@ static void SetDefaultInterrupts(void);
 
 /*Operations*/
 static void WriteControlINPacket(void);
-#if 0
-static void WriteBulkINPacket(void);
-#endif
-extern void WriteBulkINPacket(void);
+static void WriteBulkINPacketMSC(void);
+extern void WriteBulkINPacketCDC(void);
 static void WriteIntINPacket(void);
 static void ReadControlOUTPacket(void);
-#if 0
-static void ReadBulkOUTPacket(void);
-#endif
-extern void ReadBulkOUTPacket(void);
+static void ReadBulkOUTPacketMSC(void);
+extern void ReadBulkOUTPacketCDC(void);
 
 /*Interrupt Handlers*/
 static void HandleVBus(void);
@@ -284,6 +293,9 @@ USB_ERR USBHAL_Init(CB_SETUP _fpSetup, CB_CABLE _fpCable,
         g_CBs.fpSetup = _fpSetup;
         g_CBs.fpCable = _fpCable;
         g_CBs.fpError = _fpError;
+        g_CBs.fpSetup2 = NULL;
+        g_CBs.fpCable2 = NULL;
+        g_CBs.fpError2 = NULL;
     }
 
     if(USB_ERR_OK == err)
@@ -295,6 +307,39 @@ USB_ERR USBHAL_Init(CB_SETUP _fpSetup, CB_CABLE _fpCable,
 
     return err;
 }
+
+USB_ERR USBHAL_Init2(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError, CB_SETUP _fpSetup2, CB_CABLE _fpCable2, CB_ERROR _fpError2)
+{
+    USB_ERR err = USB_ERR_OK;
+
+    /*Check parameters are not NULL*/
+    if( (NULL == _fpSetup) ||
+        (NULL == _fpCable) ||
+        (NULL == _fpError) )
+    {
+        err = USB_ERR_PARAM;
+    }
+    else
+    {
+        /*Store CallBack function pointers*/
+        g_CBs.fpSetup = _fpSetup;
+        g_CBs.fpCable = _fpCable;
+        g_CBs.fpError = _fpError;
+        g_CBs.fpSetup2 = _fpSetup2;
+        g_CBs.fpCable2 = _fpCable2;
+        g_CBs.fpError2 = _fpError2;
+    }
+
+    if(USB_ERR_OK == err)
+    {
+        /*Initialise the USB module.
+        This includes enabling USB interrupts*/
+        HW_Init();
+    }
+
+    return err;
+}
+
 /******************************************************************************
 End of function USBHAL_Init
 ******************************************************************************/
@@ -495,13 +540,61 @@ End USBHAL_Control_OUT function
 *                 _CBDone:  Callback called when OUT has completed.
 * Return value  : Error code.
 **********************************************************************/
-USB_ERR USBHAL_Bulk_OUT(uint32_t _NumBytes, uint8_t* _Buffer,
+USB_ERR USBHAL_Bulk_OUT_CDC(uint32_t _NumBytes, uint8_t* _Buffer,
                         CB_DONE_OUT _CBDone)
 {
     USB_ERR err = USB_ERR_OK;
 
 #ifdef USB_DEBUG_BO
-    debug_printf("BO%d P:xx A:xx E:xx\r\n", _NumBytes);
+    debug_printf("BO%d P:01 A:xx E:01\r\n", _NumBytes);
+#endif
+
+    /*Check cable is connected*/
+    if(STATE_DISCONNECTED == g_Control.m_etState)
+    {
+        err = USB_ERR_NOT_CONNECTED;
+        DEBUG_MSG_MID(("USBHAL: BULK OUT - Not Connected\r\n"));
+    }
+    else
+    {
+        /*Check BULK IN isn't busy*/
+        if(true == g_Bulk.m_OUTBusy)
+        {
+            /*Error - already busy*/
+            err = USB_ERR_BUSY;
+            DEBUG_MSG_LOW(("USBHAL: BULK OUT ***BUSY***\r\n"));
+        }
+        else
+        {
+            /*Set busy flag*/
+            g_Bulk.m_OUTBusy = true;
+
+            DEBUG_MSG_MID(("USBHAL: BULK OUT start, %lu bytes.\r\n", _NumBytes));
+
+            /*Store parameters*/
+            g_Bulk.m_OUT.m_DataBuff.pucBuf = _Buffer;
+            /*Number of bytes received into buffer */
+            g_Bulk.m_OUT.m_DataBuff.NumBytes = 0;
+            g_Bulk.m_OUT.m_BuffSize = _NumBytes;
+            g_Bulk.m_OUT.m_fpDone = _CBDone;
+
+            /*Expect to get a BRDY interrupt when data is received*/
+        }
+    }
+
+#ifdef USB_DEBUG_BO
+    debug_printf("BO(%d) err=%d\r\n", _NumBytes, err);
+#endif
+    return err;
+}
+
+USB_ERR USBHAL_Bulk_OUT_MSC(uint32_t _NumBytes, uint8_t* _Buffer,
+                        CB_DONE_OUT _CBDone)
+{
+    USB_ERR err = USB_ERR_OK;
+
+#ifdef USB_DEBUG_BO
+    debug_printf("BO%d P:04 A:xx E:04\r\n", _NumBytes);
 #endif
 
     /*Check cable is connected*/
@@ -556,12 +649,13 @@ End USBHAL_Bulk_OUT function
 *
 * Return value  : Error code.
 **********************************************************************/
-USB_ERR USBHAL_Bulk_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone)
+
+USB_ERR USBHAL_Bulk_IN_CDC(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone)
 {
     USB_ERR err = USB_ERR_OK;
 
 #ifdef USB_DEBUG_BI
-    debug_printf("BI%d P:xx A:xx E:xx\r\n", _NumBytes);
+    debug_printf("BI:%d P:02 A:xx E:02\r\n", _NumBytes);
 #endif
 
     /*Check cable is connected*/
@@ -602,6 +696,54 @@ USB_ERR USBHAL_Bulk_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDo
 #endif
     return err;
 }
+
+USB_ERR USBHAL_Bulk_IN_MSC(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone)
+{
+    USB_ERR err = USB_ERR_OK;
+
+#ifdef USB_DEBUG_BI
+    debug_printf("BI%d P:05 A:xx E:05\r\n", _NumBytes);
+#endif
+
+    /*Check cable is connected*/
+    if(STATE_DISCONNECTED == g_Control.m_etState)
+    {
+        err = USB_ERR_NOT_CONNECTED;
+        DEBUG_MSG_MID(("USBHAL: BULK IN - Not Connected\r\n"));
+    }
+    else
+    {
+        /*Check BULK IN isn't busy*/
+        if(true == g_Bulk.m_INBusy)
+        {
+            /*Error - already busy*/
+            err = USB_ERR_BUSY;
+            DEBUG_MSG_LOW(("USBHAL: BULK IN ***BUSY***\r\n"));
+        }
+        else
+        {
+            /*Set busy flag*/
+            g_Bulk.m_INBusy = true;
+
+            DEBUG_MSG_MID(("USBHAL: BULK IN start, %lu bytes.\r\n", _NumBytes));
+
+            /*Setup data buffer*/
+            g_Bulk.m_IN.m_DataBuff.pucBuf = (uint8_t*)_Buffer;
+            g_Bulk.m_IN.m_DataBuff.NumBytes = _NumBytes;
+            g_Bulk.m_IN.m_fpDone = _CBDone;
+
+            /*Write packet. Do this be enabling BRDY interrupt for BULK IN pipe.
+            The actual packet will be written out when get the BRDY interrupt.*/
+            USBIO.BRDYENB.BIT.PIPE5BRDYE = 1;
+        }
+    }
+
+#ifdef USB_DEBUG_BI
+    debug_printf("BI(%d) err=%d\r\n", _NumBytes, err);
+#endif
+    return err;
+}
+
 /******************************************************************************
 End USBHAL_Bulk_IN function
 ******************************************************************************/
@@ -691,7 +833,7 @@ End USBHAL_Control_Stall function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-void USBHAL_Bulk_IN_Stall(void)
+void USBHAL_Bulk_IN_CDC_Stall(void)
 {
     DEBUG_MSG_MID(("USBHAL: - Bulk_IN_Stall\r\n"));
 
@@ -705,6 +847,22 @@ void USBHAL_Bulk_IN_Stall(void)
         USBIO.PIPE2CTR.BIT.PID = PID_STALL_1;
     }
 }
+
+void USBHAL_Bulk_IN_MSC_Stall(void)
+{
+    DEBUG_MSG_MID(("USBHAL: - Bulk_IN_Stall\r\n"));
+
+    /*There are two ways of creating a stall depending on current PID*/
+    if(USBIO.PIPE5CTR.BIT.PID == PID_BUF)
+    {
+        USBIO.PIPE5CTR.BIT.PID = PID_STALL_2;
+    }
+    else
+    {
+        USBIO.PIPE5CTR.BIT.PID = PID_STALL_1;
+    }
+}
+
 /**********************************************************************
 End USBHAL_Bulk_IN_Stall function
 **********************************************************************/
@@ -715,7 +873,7 @@ End USBHAL_Bulk_IN_Stall function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-void USBHAL_Bulk_OUT_Stall(void)
+void USBHAL_Bulk_OUT_CDC_Stall(void)
 {
     DEBUG_MSG_MID(("USBHAL: - Bulk_OUT_Stall\r\n"));
 
@@ -729,6 +887,22 @@ void USBHAL_Bulk_OUT_Stall(void)
         USBIO.PIPE1CTR.BIT.PID = PID_STALL_1;
     }
 }
+
+void USBHAL_Bulk_OUT_MSC_Stall(void)
+{
+    DEBUG_MSG_MID(("USBHAL: - Bulk_OUT_Stall\r\n"));
+
+    /*There are two ways of creating a stall depending on current PID*/
+    if(USBIO.PIPE4CTR.BIT.PID == PID_BUF)
+    {
+        USBIO.PIPE4CTR.BIT.PID = PID_STALL_2;
+    }
+    else
+    {
+        USBIO.PIPE4CTR.BIT.PID = PID_STALL_1;
+    }
+}
+
 /**********************************************************************
 End USBHAL_Bulk_OUT_Stall function
 **********************************************************************/
@@ -764,7 +938,7 @@ End USBHAL_Interrupt_IN_Stall function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-void USBHAL_Bulk_IN_Stall_Clear(void)
+void USBHAL_Bulk_IN_CDC_Stall_Clear(void)
 {
     DEBUG_MSG_MID(("USBHAL: - Bulk_IN_Stall Clear\r\n"));
 
@@ -779,6 +953,23 @@ void USBHAL_Bulk_IN_Stall_Clear(void)
     USBIO.PIPE2CTR.BIT.ACLRM = 1;
     USBIO.PIPE2CTR.BIT.ACLRM = 0;
 }
+
+void USBHAL_Bulk_IN_MSC_Stall_Clear(void)
+{
+    DEBUG_MSG_MID(("USBHAL: - Bulk_IN_Stall Clear\r\n"));
+
+    USBIO.PIPE5CTR.BIT.PID = PID_NAK;
+
+    /*Wait for pipe to be not busy*/
+    while(USBIO.PIPE5CTR.BIT.PBUSY == 1){;}
+
+    /*Reset Data toggle*/
+    USBIO.PIPE5CTR.BIT.SQCLR = 1;
+    /*Clear Buffer*/
+    USBIO.PIPE5CTR.BIT.ACLRM = 1;
+    USBIO.PIPE5CTR.BIT.ACLRM = 0;
+}
+
 /**********************************************************************
 End USBHAL_Bulk_IN_Stall_Clear function
 **********************************************************************/
@@ -790,7 +981,7 @@ End USBHAL_Bulk_IN_Stall_Clear function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-void USBHAL_Bulk_OUT_Stall_Clear(void)
+void USBHAL_Bulk_OUT_CDC_Stall_Clear(void)
 {
     DEBUG_MSG_MID(("USBHAL: - Bulk_OUT_Stall Clear\r\n"));
 
@@ -815,8 +1006,37 @@ void USBHAL_Bulk_OUT_Stall_Clear(void)
     USBIO.PIPE1CTR.BIT.PID = PID_BUF;
 
     /*Re-select this pipe for D1FIFO*/
-    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
+    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
 }
+
+void USBHAL_Bulk_OUT_MSC_Stall_Clear(void)
+{
+    DEBUG_MSG_MID(("USBHAL: - Bulk_OUT_Stall Clear\r\n"));
+
+    /*Pipe must not be "curpipe" while being configured.*/
+    do{
+    USBIO.D1FIFOSEL.BIT.CURPIPE = 0;
+    }while(USBIO.D1FIFOSEL.BIT.CURPIPE != 0);
+
+    /*PID must be set to NAK before configuring PIPECFG*/
+    USBIO.PIPE4CTR.BIT.PID = PID_NAK;
+
+    /*Wait for pipe to be not busy*/
+    while(USBIO.PIPE4CTR.BIT.PBUSY == 1){;}
+
+    /*Reset Data toggle*/
+    USBIO.PIPE4CTR.BIT.SQCLR = 1;
+    /*Clear Buffer*/
+    USBIO.PIPE4CTR.BIT.ACLRM = 1;
+    USBIO.PIPE4CTR.BIT.ACLRM = 0;
+
+    /*Set PID to BUF for this OUT pipe*/
+    USBIO.PIPE4CTR.BIT.PID = PID_BUF;
+
+    /*Re-select this pipe for D1FIFO*/
+    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_MSC;
+}
+
 /**********************************************************************
 End USBHAL_Bulk_OUT_Stall_Clear function
 **********************************************************************/
@@ -853,7 +1073,7 @@ End USBHAL_Interrupt_IN_Stall_Clear function
 * Argument      : none
 * Return value  : true: Endpoint is stalled.
 **********************************************************************/
-bool USBHAL_Bulk_IN_Is_Stalled(void)
+bool USBHAL_Bulk_IN_CDC_Is_Stalled(void)
 {
     if( (USBIO.PIPE2CTR.BIT.PID == PID_STALL_1) ||
         (USBIO.PIPE2CTR.BIT.PID == PID_STALL_2))
@@ -865,6 +1085,20 @@ bool USBHAL_Bulk_IN_Is_Stalled(void)
         return false;
     }
 }
+
+bool USBHAL_Bulk_IN_MSC_Is_Stalled(void)
+{
+    if( (USBIO.PIPE5CTR.BIT.PID == PID_STALL_1) ||
+        (USBIO.PIPE5CTR.BIT.PID == PID_STALL_2))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 /**********************************************************************
 End USBHAL_Bulk_IN_Is_Stalled function
 **********************************************************************/
@@ -875,7 +1109,7 @@ End USBHAL_Bulk_IN_Is_Stalled function
 * Argument      : none
 * Return value  : true: Endpoint is stalled.
 **********************************************************************/
-bool USBHAL_Bulk_OUT_Is_Stalled(void)
+bool USBHAL_Bulk_OUT_CDC_Is_Stalled(void)
 {
     if( (USBIO.PIPE1CTR.BIT.PID == PID_STALL_1) ||
         (USBIO.PIPE1CTR.BIT.PID == PID_STALL_2))
@@ -887,6 +1121,20 @@ bool USBHAL_Bulk_OUT_Is_Stalled(void)
         return false;
     }
 }
+
+bool USBHAL_Bulk_OUT_MSC_Is_Stalled(void)
+{
+    if( (USBIO.PIPE4CTR.BIT.PID == PID_STALL_1) ||
+        (USBIO.PIPE4CTR.BIT.PID == PID_STALL_2))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 /**********************************************************************
 End USBHAL_Bulk_OUT_Is_Stalled function
 **********************************************************************/
@@ -1052,8 +1300,10 @@ USB_ERR USBHAL_Reset(void)
     g_Int.m_IN.m_fpDone = NULL;
 
     /*Clear stalls (this also resets data toggle and clears buffers*/
-    USBHAL_Bulk_OUT_Stall_Clear();
-    USBHAL_Bulk_IN_Stall_Clear();
+    USBHAL_Bulk_OUT_CDC_Stall_Clear();
+    USBHAL_Bulk_IN_CDC_Stall_Clear();
+    USBHAL_Bulk_OUT_MSC_Stall_Clear();
+    USBHAL_Bulk_IN_MSC_Stall_Clear();
     USBHAL_Interrupt_IN_Stall_Clear();
 
     /*Return to the default interrupts*/
@@ -1098,7 +1348,7 @@ USB_ERR USBHAL_ResetEndpoints(void)
 
     /*Re-select this pipe for D1FIFO and 16bit access.*/
     USBIO.D1FIFOSEL.BIT.MBW = 1;
-    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
+    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
 
     /***BULK IN***/
     /*PID must be set to NAK before configuring PIPECFG*/
@@ -1125,6 +1375,44 @@ USB_ERR USBHAL_ResetEndpoints(void)
     USBIO.PIPE6CTR.BIT.ACLRM = 1;
     USBIO.PIPE6CTR.BIT.ACLRM = 0;
 
+    /*** BULK OUT ***/
+    /*Pipe must not be "curpipe" while being configured.*/
+    do{
+    USBIO.D1FIFOSEL.BIT.CURPIPE = 0;
+    }while(USBIO.D1FIFOSEL.BIT.CURPIPE != 0);
+
+    /*PID must be set to NAK before configuring PIPECFG*/
+    USBIO.PIPE4CTR.BIT.PID = PID_NAK;
+
+    /*Wait for pipe to be not busy*/
+    while(USBIO.PIPE4CTR.BIT.PBUSY == 1){;}
+
+    /*Reset Data toggle*/
+    USBIO.PIPE4CTR.BIT.SQCLR = 1;
+    /*Clear Buffer*/
+    USBIO.PIPE4CTR.BIT.ACLRM = 1;
+    USBIO.PIPE4CTR.BIT.ACLRM = 0;
+
+    /*Set PID to BUF for this OUT pipe*/
+    USBIO.PIPE4CTR.BIT.PID = PID_BUF;
+
+    /*Re-select this pipe for D1FIFO and 16bit access.*/
+    USBIO.D1FIFOSEL.BIT.MBW = 1;
+    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_MSC;
+
+    /***BULK IN***/
+    /*PID must be set to NAK before configuring PIPECFG*/
+    USBIO.PIPE5CTR.BIT.PID = PID_NAK;
+
+    /*Wait for pipe to be not busy*/
+    while(USBIO.PIPE5CTR.BIT.PBUSY == 1){;}
+
+    /*Reset Data toggle*/
+    USBIO.PIPE5CTR.BIT.SQCLR = 1;
+    /*Clear Buffer*/
+    USBIO.PIPE5CTR.BIT.ACLRM = 1;
+    USBIO.PIPE5CTR.BIT.ACLRM = 0;
+
     return USB_ERR_OK;
 }
 /**********************************************************************
@@ -1142,8 +1430,8 @@ End USBHAL_ResetEndpoints function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-#if 0
-static void ReadBulkOUTPacket(void)
+
+static void ReadBulkOUTPacketMSC(void)
 {
     uint32_t Count = 0;
     uint16_t DataLength;
@@ -1153,14 +1441,14 @@ static void ReadBulkOUTPacket(void)
     /*Read data using D1FIFO*/
     /*NOTE: This probably will have already been selected if using BRDY interrupt.*/
     do{
-    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
-    }while(USBIO.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT);
+    USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_MSC;
+    }while(USBIO.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT_MSC);
 
     /*16 bit access*/
 //  USBIO.D1FIFOSEL.BIT.MBW = 1;
 
     /*Set PID to BUF*/
-    USBIO.PIPE1CTR.BIT.PID = PID_BUF;
+    USBIO.PIPE4CTR.BIT.PID = PID_BUF;
 
     /*Wait for buffer to be ready*/
     while(USBIO.D1FIFOCTR.BIT.FRDY == 0){;}
@@ -1182,7 +1470,7 @@ static void ReadBulkOUTPacket(void)
             (g_Bulk.m_OUT.m_BuffSize >= (g_Bulk.m_OUT.m_DataBuff.NumBytes+2)))
         {
             /*Read from the FIFO*/
-            uint16_t Data = USBIO.D1FIFO;
+            uint16_t Data = (uint16_t)USBIO.D1FIFO.WORD;
 
             if(NULL != g_Bulk.m_OUT.m_DataBuff.pucBuf)
             {
@@ -1275,7 +1563,9 @@ static void ReadBulkOUTPacket(void)
 
         /*Call error callback*/
         g_CBs.fpError(USB_ERR_BULK_OUT_NO_BUFFER);
-
+        if (g_CBs.fpError2) {
+            g_CBs.fpError2(USB_ERR_BULK_OUT_NO_BUFFER);
+        }
         /*Empty buffer*/
         while(0 != USBIO.D1FIFOCTR.BIT.DTLN)
         {
@@ -1286,7 +1576,6 @@ static void ReadBulkOUTPacket(void)
         }
     }
 }
-#endif
 /**********************************************************************
 End ReadBulkOUTPacket function
 **********************************************************************/
@@ -1404,8 +1693,7 @@ End WriteIntINPacket function
 * Argument      : none
 * Return value  : none
 **********************************************************************/
-#if 0
-static void WriteBulkINPacket(void)
+static void WriteBulkINPacketMSC(void)
 {
     uint32_t Count = 0;
 
@@ -1414,8 +1702,8 @@ static void WriteBulkINPacket(void)
     /*Set 16 bit access*/
     USBIO.D0FIFOSEL.BIT.MBW = 1;
     do{
-        USBIO.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN;
-    }while(USBIO.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN);
+        USBIO.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN_MSC;
+    }while(USBIO.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN_MSC);
 
 
     /*Wait for buffer to be ready*/
@@ -1435,7 +1723,7 @@ static void WriteBulkINPacket(void)
             Data |= (uint16_t)(((uint16_t)*g_Bulk.m_IN.m_DataBuff.pucBuf) << 8);
             g_Bulk.m_IN.m_DataBuff.pucBuf++;
             /*Write data to Data Port*/
-            USBIO.D0FIFO = Data;
+            USBIO.D0FIFO.WORD = Data;
             g_Bulk.m_IN.m_DataBuff.NumBytes-=2;
             Count+=2;
         }
@@ -1472,7 +1760,7 @@ static void WriteBulkINPacket(void)
 
     /*Send the packet */
     /*Set PID to BUF*/
-    USBIO.PIPE2CTR.BIT.PID = PID_BUF;
+    USBIO.PIPE5CTR.BIT.PID = PID_BUF;
 
     /*If we have not written a full packets worth to the buffer then need to
     signal that the buffer is now ready to be sent, set the buffer valid flag (BVAL).*/
@@ -1492,7 +1780,7 @@ static void WriteBulkINPacket(void)
             CB_DONE CBTemp;
 
             /*Disable this BRDY interrupt*/
-            USBIO.BRDYENB.BIT.PIPE2BRDYE = 0;
+            USBIO.BRDYENB.BIT.PIPE5BRDYE = 0;
 
             DEBUG_MSG_HIGH( ("USBHAL: BULK IN - done.\r\n"));
 
@@ -1513,16 +1801,15 @@ static void WriteBulkINPacket(void)
         else
         {
             /*Enable Interrupt so will send zero packet*/
-            USBIO.BRDYENB.BIT.PIPE2BRDYE = 1;
+            USBIO.BRDYENB.BIT.PIPE5BRDYE = 1;
         }
     }
     else
     {
         /*Enable Interrupt so can write rest of data out.*/
-        USBIO.BRDYENB.BIT.PIPE2BRDYE = 1;
+        USBIO.BRDYENB.BIT.PIPE5BRDYE = 1;
     }
 }
-#endif
 /**********************************************************************
 End WriteBulkINPacket function
 **********************************************************************/
@@ -1695,6 +1982,9 @@ static void ReadControlOUTPacket(void)
     {
         /*No buffer available for CONTROL OUT*/
         g_CBs.fpError(USB_ERR_CONTROL_OUT);
+        if (g_CBs.fpError2) {
+            g_CBs.fpError2(USB_ERR_CONTROL_OUT);
+        }
     }
 }
 /**********************************************************************
@@ -1763,6 +2053,9 @@ static void HandleVBus(void)
 
         /*Call Registered Callback*/
         g_CBs.fpCable(false);
+        if (g_CBs.fpCable2) {
+            g_CBs.fpCable2(false);
+        }
     }
 }
 /**********************************************************************
@@ -1801,6 +2094,9 @@ static void HandleDVST(void)
             DEBUG_MSG_LOW(("USBHAL: Entered Address State\r\n"));
             /*This is a conveniant point to tell user that USB is connected. */
             g_CBs.fpCable(true);
+            if (g_CBs.fpCable2) {
+                g_CBs.fpCable2(true);
+            }
         break;
         case 3:
             DEBUG_MSG_LOW(("USBHAL: Entered Configured State\r\n"));
@@ -1904,7 +2200,7 @@ static void HandleBRDY(void)
         USBIO.BRDYSTS.WORD = ~0x0004;
 
         /*Send another packet (possibly zero legth)*/
-        WriteBulkINPacket();
+        WriteBulkINPacketCDC();
     }
 
     /*Has BULK OUT pipe caused this interrupt (pipe1)*/
@@ -1916,7 +2212,31 @@ static void HandleBRDY(void)
         USBIO.BRDYSTS.WORD = ~0x0002;
 
         /*Read received packet*/
-        ReadBulkOUTPacket();
+        ReadBulkOUTPacketCDC();
+    }
+
+    /*Has BULK IN pipe caused this interrupt (pipe5)*/
+    if((1 == USBIO.BRDYSTS.BIT.PIPE5BRDY) && (1== USBIO.BRDYENB.BIT.PIPE5BRDYE))
+    {
+        DEBUG_MSG_HIGH(("USBHAL: BRDY PIPE Bulk IN\r\n"));
+
+        /*Clear this bit (write 1 to all other bits)*/
+        USBIO.BRDYSTS.WORD = ~0x0020;
+
+        /*Send another packet (possibly zero legth)*/
+        WriteBulkINPacketMSC();
+    }
+
+    /*Has BULK OUT pipe caused this interrupt (pipe4)*/
+    if((1 == USBIO.BRDYSTS.BIT.PIPE4BRDY) && (1== USBIO.BRDYENB.BIT.PIPE4BRDYE))
+    {
+        DEBUG_MSG_HIGH(("USBHAL: BRDY PIPE Bulk OUT\r\n"));
+
+        /*Clear this bit (write 1 to all other bits)*/
+        USBIO.BRDYSTS.WORD = ~0x0010;
+
+        /*Read received packet*/
+        ReadBulkOUTPacketMSC();
     }
 
     /*Has Control OUT pipe caused this interrupt (pipe1)*/
@@ -2140,15 +2460,15 @@ End HW_Init_Module0 function
 **********************************************************************/
 static void ConfigurePipes(void)
 {
-    /*** BULK OUT ***/
+    /*** BULK OUT for CDC ***/
     {
         /*This is written for a particular pipe*/
-        #if(1 != PIPE_BULK_OUT)
+        #if(1 != PIPE_BULK_OUT_CDC)
             #error
         #endif
 
         /*Select Pipe*/
-        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_OUT;
+        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_OUT_CDC;
 
         /*Pipe Control*/
         /*Note: PID must be set to NAK before configuring PIPECFG*/
@@ -2161,7 +2481,7 @@ static void ConfigurePipes(void)
         /*Default */
         USBIO.PIPECFG.WORD = 0;
         /*Endpoint*/
-        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_OUT;
+        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_OUT_CDC;
         /*Direction*/
         USBIO.PIPECFG.BIT.DIR = 0;
         /*Double Buffer */
@@ -2186,18 +2506,18 @@ static void ConfigurePipes(void)
 
         /*Exclusively use D1FIFO for BULK OUT pipe and 16bit access*/
         USBIO.D1FIFOSEL.BIT.MBW = 1;
-        USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT;
+        USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
     }
 
-    /*** BULK IN ***/
+    /*** BULK IN for CDC ***/
     {
         /*This is written for a particular pipe*/
-        #if(2 != PIPE_BULK_IN)
+        #if(2 != PIPE_BULK_IN_CDC)
             #error
         #endif
 
         /*Select Pipe*/
-        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_IN;
+        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_IN_CDC;
 
         /*Pipe Control*/
         /*Note: PID must be set to NAK before configuring PIPECFG*/
@@ -2209,7 +2529,90 @@ static void ConfigurePipes(void)
         /*Default */
         USBIO.PIPECFG.WORD = 0;
         /*Endpoint*/
-        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_IN;
+        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_IN_CDC;
+        /*Direction*/
+        USBIO.PIPECFG.BIT.DIR = 1;
+        /*Double Buffer */
+        USBIO.PIPECFG.BIT.DBLB = 1;
+        /*BRDY Interrupt Operation*/
+        USBIO.PIPECFG.BIT.BFRE = 0;
+        /*Transfer Type */
+        USBIO.PIPECFG.BIT.TYPE = 1;
+
+        /*Pipe Packet Size*/
+        USBIO.PIPEMAXP.BIT.MXPS = BULK_IN_PACKET_SIZE;
+    }
+
+    /*** BULK OUT for MSC ***/
+    {
+        /*This is written for a particular pipe*/
+        #if(4 != PIPE_BULK_OUT_MSC)
+            #error
+        #endif
+
+        /*Select Pipe*/
+        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_OUT_MSC;
+
+        /*Pipe Control*/
+        /*Note: PID must be set to NAK before configuring PIPECFG*/
+        USBIO.PIPE4CTR.WORD = 0x000;
+
+        /*Wait for pipe to be not busy*/
+        while(USBIO.PIPE4CTR.BIT.PBUSY == 1){;}
+
+        /*Pipe Configure, Direction, Type, Double Buffer, BRDY Interrupt operation*/
+        /*Default */
+        USBIO.PIPECFG.WORD = 0;
+        /*Endpoint*/
+        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_OUT_MSC;
+        /*Direction*/
+        USBIO.PIPECFG.BIT.DIR = 0;
+        /*Double Buffer */
+        USBIO.PIPECFG.BIT.DBLB = 1;
+        /*BRDY Interrupt Operation*/
+        USBIO.PIPECFG.BIT.BFRE = 0;
+        /*Transfer Type */
+        USBIO.PIPECFG.BIT.TYPE = 1;
+
+        /*Pipe Packet Size*/
+        USBIO.PIPEMAXP.BIT.MXPS = BULK_OUT_PACKET_SIZE;
+
+        /*Reset Data toggle*/
+        USBIO.PIPE4CTR.BIT.SQCLR = 1;
+
+        /*Clear Buffer*/
+        USBIO.PIPE4CTR.BIT.ACLRM = 1;
+        USBIO.PIPE4CTR.BIT.ACLRM = 0;
+
+        /*Set PID to BUF so it can receive data*/
+        USBIO.PIPE4CTR.BIT.PID = PID_BUF;
+
+        /*Exclusively use D1FIFO for BULK OUT pipe and 16bit access*/
+        USBIO.D1FIFOSEL.BIT.MBW = 1;
+        USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_MSC;
+    }
+
+    /*** BULK IN for MSC ***/
+    {
+        /*This is written for a particular pipe*/
+        #if(5 != PIPE_BULK_IN_MSC)
+            #error
+        #endif
+
+        /*Select Pipe*/
+        USBIO.PIPESEL.BIT.PIPESEL = PIPE_BULK_IN_MSC;
+
+        /*Pipe Control*/
+        /*Note: PID must be set to NAK before configuring PIPECFG*/
+        USBIO.PIPE5CTR.WORD = 0x000;
+        /*Wait for pipe to be not busy*/
+        while(USBIO.PIPE5CTR.BIT.PBUSY == 1){;}
+
+        /*Pipe Configure, Direction, Type, Double Buffer, BRDY Interrupt operation*/
+        /*Default */
+        USBIO.PIPECFG.WORD = 0;
+        /*Endpoint*/
+        USBIO.PIPECFG.BIT.EPNUM = EP_BULK_IN_MSC;
         /*Direction*/
         USBIO.PIPECFG.BIT.DIR = 1;
         /*Double Buffer */
@@ -2310,6 +2713,19 @@ static void SetDefaultInterrupts(void)
     USBIO.BEMPENB.BIT.PIPE1BEMPE = 0;
     /*BRDY - enable so host can always send us data*/
     USBIO.BRDYENB.BIT.PIPE1BRDYE = 1;
+
+    /*Bulk IN pipe (pipe5)*/
+    /*BEMP - enable only as required*/
+    USBIO.BEMPENB.BIT.PIPE5BEMPE = 0;
+    /*BRDY - enable only as required*/
+    USBIO.BRDYENB.BIT.PIPE5BRDYE = 0;
+
+    /*Bulk OUT pipe (pipe4)*/
+    /*BEMP - enable only as required*/
+    USBIO.BEMPENB.BIT.PIPE4BEMPE = 0;
+    /*BRDY - enable so host can always send us data*/
+    USBIO.BRDYENB.BIT.PIPE4BRDYE = 1;
+
 }
 /**********************************************************************
 End SetDefaultInterrupts function

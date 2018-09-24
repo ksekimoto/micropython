@@ -48,6 +48,10 @@
 #include "usb_core.h"
 #include "usbdescriptors.h"
 #include "usb_cdc.h"
+#include "common.h"
+#if defined(DEBUG_USE_RAMDISK)
+#include "ram_disk.h"
+#endif
 
 /***********************************************************************************
 * Defines
@@ -185,6 +189,60 @@ USB_ERR USBCDC_Init(void)
                        (CB_ERROR)CBError);
     return err;
 }
+
+USB_ERR CBUnhandledSetupPacketMSC(SetupPacket* _pSetupPacket,
+                                        uint16_t* _pNumBytes,
+                                        uint8_t** _ppBuffer);
+
+void CBDoneControlOutMSC(USB_ERR _err, uint32_t _NumBytes);
+
+void CBCableMSC(bool _bConnected);
+void CBErrorMSC(USB_ERR _err);
+
+USB_ERR USBCDCMSC_Init(void)
+{
+    USB_ERR err;
+
+    /*Initialize this modules data*/
+    InitialiseData();
+
+#if defined(DEBUG_USE_RAMDISK)
+    RamDiskInit();
+#endif
+
+    /*Initialize the USB core*/
+    err = USBCORE_Init2(gStringDescriptorManufacturer.pucData,
+                       gStringDescriptorManufacturer.length,
+                       gStringDescriptorProduct.pucData,
+                       gStringDescriptorProduct.length,
+                       gStringDescriptorSerialNum.pucData,
+                       gStringDescriptorSerialNum.length,
+                       gDeviceDescriptor.pucData,
+                       gDeviceDescriptor.length,
+                       gConfigurationDescriptor.pucData,
+                       gConfigurationDescriptor.length,
+                       (CB_SETUP_PACKET)CBUnhandledSetupPacket,
+                       (CB_DONE_OUT)CBDoneControlOut,
+                       (CB_CABLE)CBCable,
+                       (CB_ERROR)CBError,
+                       (CB_SETUP_PACKET)CBUnhandledSetupPacketMSC,
+                       (CB_DONE_OUT)CBDoneControlOutMSC,
+                       (CB_CABLE)CBCableMSC,
+                       (CB_ERROR)CBErrorMSC);
+    if(USB_ERR_OK == err)
+    {
+        USBHAL_CONFIG oHALConfig;
+        /*Config HAL*/
+        /*Get default/current config*/
+        oHALConfig = *USBHAL_Config_Get();
+        /*MSC is a special case as it mustn't send a zero length packet
+        to end a BULK IN that doesn't automatically end with a short packet*/
+        oHALConfig.m_bBULK_IN_No_Short_Packet = true;
+        err = USBHAL_Config_Set(&oHALConfig);
+    }
+    return err;
+}
+
 /***********************************************************************************
 * End of function USBCDC_Init
 ***********************************************************************************/
@@ -289,7 +347,7 @@ USB_ERR USBCDC_Write(uint32_t _NumBytes, const uint8_t* _Buffer)
             /*Set Flag to wait on*/
             g_BulkIn.m_Busy = true;
             g_BulkIn.m_CBDone = NULL; /*No call back this is a blocking function */
-            err = USBHAL_Bulk_IN(_NumBytes, _Buffer, (CB_DONE)CBDoneBulkIn);
+            err = USBHAL_Bulk_IN_CDC(_NumBytes, _Buffer, (CB_DONE)CBDoneBulkIn);
             if(USB_ERR_OK == err)
             {
                 /*Wait for flag that will be cleared when the operation has completed*/
@@ -338,7 +396,7 @@ USB_ERR USBCDC_Write_Async(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _
             /*Set Flag to wait on*/
             g_BulkIn.m_Busy = true;
             g_BulkIn.m_CBDone = _cb;
-            err = USBHAL_Bulk_IN(_NumBytes, _Buffer, (CB_DONE)CBDoneBulkIn);
+            err = USBHAL_Bulk_IN_CDC(_NumBytes, _Buffer, (CB_DONE)CBDoneBulkIn);
             if(USB_ERR_OK != err)
             {
                 g_BulkIn.m_Busy = false;
@@ -384,7 +442,7 @@ USB_ERR USBCDC_Read(uint32_t _BufferSize, uint8_t* _Buffer, uint32_t* _pNumBytes
             /*Set Flag to wait on*/
             g_BulkOut.m_Busy = true;
             g_BulkOut.m_CBDone = NULL; /*No call back this is a blocking function */
-            err = USBHAL_Bulk_OUT(_BufferSize, _Buffer, (CB_DONE_OUT)CBDoneBulkOut);
+            err = USBHAL_Bulk_OUT_CDC(_BufferSize, _Buffer, (CB_DONE_OUT)CBDoneBulkOut);
             if(USB_ERR_OK == err)
             {
                 /*Wait for flag that will be cleared when the operation has completed*/
@@ -435,7 +493,7 @@ USB_ERR USBCDC_Read_Async(uint32_t _BufferSize, uint8_t* _Buffer, CB_DONE_OUT _c
             /*Set Flag to wait on*/
             g_BulkOut.m_Busy = true;
             g_BulkOut.m_CBDone = _cb;
-            err = USBHAL_Bulk_OUT(_BufferSize, _Buffer,
+            err = USBHAL_Bulk_OUT_CDC(_BufferSize, _Buffer,
                                  (CB_DONE_OUT)CBDoneBulkOut);
 
             if(USB_ERR_OK != err)

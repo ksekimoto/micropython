@@ -37,7 +37,7 @@
 // For Debugging
 ////////////////////////////////////////////////////////////////////////////
 //#define DEBUG_FLASH
-#define DEBUG_FLASH_SKIP
+//#define DEBUG_FLASH_SKIP
 //#define DEBUG_FLASH_WriteX
 //#define DEBUG_FLASH_EraseBlock
 //#define DEBUG_FLASH_Read
@@ -389,7 +389,8 @@ bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSect
 bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr)
 {
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
-    debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
+    //debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
+    debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
 #endif
     uint32_t error_code = 0;
 #ifndef DEBUG_FLASH_SKIP

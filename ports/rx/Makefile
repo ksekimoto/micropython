@@ -1,6 +1,7 @@
 # Select the board to build for: if not given on the command line,
 # then default to PYBV10.
 #USB_NEW = 1
+#TEST_RAMDISK = 1
 BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -66,6 +67,10 @@ CFLAGS += -DGRSAKURA
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
+ifeq ($(TEST_RAMDISK), 1)
+CFLAGS += -DDEBUG_USE_RAMDISK
+endif
+
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -129,11 +134,17 @@ SRC_C += $(MCU_SERIES)/usblib_hw.c
 else
 SRC_C += $(MCU_SERIES)/usb_cdc_entry.c
 SRC_C += $(MCU_SERIES)/usb_cdc.c
-#SRC_C += $(MCU_SERIES)/usb_msc_scsi.c
-#SRC_C += $(MCU_SERIES)/usb_msc.c
+SRC_C += $(MCU_SERIES)/usb_msc_scsi.c
+SRC_C += $(MCU_SERIES)/usb_msc.c
 SRC_C += $(MCU_SERIES)/usb_core.c
 SRC_C += $(MCU_SERIES)/usb_hal.c
 SRC_C += $(MCU_SERIES)/usbdescriptors.c
+SRC_C += $(MCU_SERIES)/ram_disk.c
+SRC_C += $(MCU_SERIES)/FAT_0000_200.c
+SRC_C += $(MCU_SERIES)/FAT_0C00_005.c
+SRC_C += $(MCU_SERIES)/FAT_0E00_005.c
+SRC_C += $(MCU_SERIES)/FAT_1000_100.c
+SRC_C += $(MCU_SERIES)/FAT_5000_041.c
 endif
 SRC_C += $(MCU_SERIES)/util.c
 ifeq ($(DEBUG), 1)

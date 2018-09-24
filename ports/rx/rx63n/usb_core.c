@@ -52,6 +52,7 @@
 #include "usb_hal.h"
 /* Following header file defines USB core definitions. */
 #include "usb_core.h"
+#include "common.h"
 
 #if 0
 /* Declaration of abort function. */
@@ -143,6 +144,8 @@ static SetupPacket g_oSetupPacket;
 /*Registered CallBacks*/
 static CB_SETUP_PACKET g_fpCBSetupPacket = NULL;
 static CB_DONE_OUT g_fpCBControlOut = NULL;
+static CB_SETUP_PACKET g_fpCBSetupPacket2 = NULL;
+static CB_DONE_OUT g_fpCBControlOut2 = NULL;
 
 /*Configuration Value */
 static uint8_t g_ConfigurationValue;
@@ -213,6 +216,53 @@ USB_ERR USBCORE_Init(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
 
     return err;
 }
+
+USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
+                     const uint8_t* _Product, uint16_t _ProductSize,
+                     const uint8_t* _Serial, uint16_t _SerialSize,
+                     const uint8_t* _DeviceDescriptor, uint16_t _DeviceDescriptorSize,
+                     const uint8_t* _ConfigDescriptor, uint16_t _ConfigDescriptorSize,
+                     CB_SETUP_PACKET _fpCBSetupPacket,
+                     CB_DONE_OUT _fpCBControlOut,
+                     CB_CABLE _fpCBCable,
+                     CB_ERROR _fpCBError,
+                     CB_SETUP_PACKET _fpCBSetupPacket2,
+                     CB_DONE_OUT _fpCBControlOut2,
+                     CB_CABLE _fpCBCable2,
+                     CB_ERROR _fpCBError2)
+{
+    USB_ERR err = USB_ERR_OK;
+
+    /*Store passed in descriptors*/
+    g_Descriptors.Device.pucBuf = _DeviceDescriptor;
+    g_Descriptors.Device.NumBytes = _DeviceDescriptorSize;
+
+    g_Descriptors.Config.pucBuf = _ConfigDescriptor;
+    g_Descriptors.Config.NumBytes = _ConfigDescriptorSize;
+
+    g_Descriptors.StringManufacturer.pucBuf = _Manufacturer;
+    g_Descriptors.StringManufacturer.NumBytes = _ManufacturerSize;
+
+    g_Descriptors.StringProduct.pucBuf = _Product;
+    g_Descriptors.StringProduct.NumBytes = _ProductSize;
+
+    g_Descriptors.StringSerial.pucBuf = _Serial;
+    g_Descriptors.StringSerial.NumBytes = _SerialSize;
+
+    /*Store passed in callback*/
+    g_fpCBSetupPacket = _fpCBSetupPacket;
+    g_fpCBControlOut = _fpCBControlOut;
+    g_fpCBSetupPacket2 = _fpCBSetupPacket2;
+    g_fpCBControlOut2 = _fpCBControlOut2;
+
+    /*Initialise variables*/
+    g_ConfigurationValue = 0;
+    /*Initialise USB HAL*/
+    err = USBHAL_Init2(CBSetup, _fpCBCable, _fpCBError, CBSetup, _fpCBCable2, _fpCBError2);
+
+    return err;
+}
+
 /******************************************************************************
 * End of function USBCORE_Init
 ******************************************************************************/
@@ -246,6 +296,13 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         /*Can't handle this setup packet*/
         /*Let upper layer try - call registered callback*/
         err = g_fpCBSetupPacket(&g_oSetupPacket, &NumBytes, &pBuffer);
+    }
+
+    if(USB_ERR_UNKNOWN_REQUEST == err)
+    {
+        /*Can't handle this setup packet*/
+        /*Let upper layer try - call registered callback*/
+        err = g_fpCBSetupPacket2(&g_oSetupPacket, &NumBytes, &pBuffer);
     }
 
     if(USB_ERR_OK == err)
@@ -438,16 +495,24 @@ static USB_ERR ProcessSetFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
             /*Stall the specified endpoint if BULK IN, BULK OUT or INTERRUPT IN*/
             switch(0x0F & g_oSetupPacket.wIndex)
             {
-                case EP_BULK_OUT:
-                    USBHAL_Bulk_OUT_Stall();
+                case EP_BULK_OUT_CDC:
+                    USBHAL_Bulk_OUT_CDC_Stall();
                     err = USB_ERR_OK;
                     break;
-                case EP_BULK_IN:
-                    USBHAL_Bulk_IN_Stall();
+                case EP_BULK_IN_CDC:
+                    USBHAL_Bulk_IN_CDC_Stall();
                     err = USB_ERR_OK;
                     break;
                 case EP_INTERRUPT_IN:
                     USBHAL_Interrupt_IN_Stall();
+                    err = USB_ERR_OK;
+                    break;
+                case EP_BULK_OUT_MSC:
+                    USBHAL_Bulk_OUT_MSC_Stall();
+                    err = USB_ERR_OK;
+                    break;
+                case EP_BULK_IN_MSC:
+                    USBHAL_Bulk_IN_MSC_Stall();
                     err = USB_ERR_OK;
                     break;
                 default:
@@ -498,11 +563,11 @@ static USB_ERR ProcessClearFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffe
             /*Stall the specified endpoint if BULK IN, BULK OUT or INTERRUPT IN*/
             switch(0x0F & g_oSetupPacket.wIndex)
             {
-                case EP_BULK_OUT:
+                case EP_BULK_OUT_CDC:
                     /*Only clear a BULK OUT if flag "m_bAllowStallClear" is set.*/
                     if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
                     {
-                        USBHAL_Bulk_OUT_Stall_Clear();
+                        USBHAL_Bulk_OUT_CDC_Stall_Clear();
                     }
                     else
                     {
@@ -510,11 +575,11 @@ static USB_ERR ProcessClearFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffe
                     }
                     err = USB_ERR_OK;
                     break;
-                case EP_BULK_IN:
+                case EP_BULK_IN_CDC:
                     /*Only clear a BULK IN if flag "m_bAllowStallClear" is set.*/
                     if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
                     {
-                        USBHAL_Bulk_IN_Stall_Clear();
+                        USBHAL_Bulk_IN_CDC_Stall_Clear();
                     }
                     else
                     {
@@ -524,6 +589,30 @@ static USB_ERR ProcessClearFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffe
                     break;
                 case EP_INTERRUPT_IN:
                     USBHAL_Interrupt_IN_Stall_Clear();
+                    err = USB_ERR_OK;
+                    break;
+                case EP_BULK_OUT_MSC:
+                    /*Only clear a BULK OUT if flag "m_bAllowStallClear" is set.*/
+                    if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
+                    {
+                        USBHAL_Bulk_OUT_MSC_Stall_Clear();
+                    }
+                    else
+                    {
+                        DEBUG_MSG_MID(("USBCORE: Not clearing BULK OUT stall as m_bAllowStallClear flag not set.\r\n"));
+                    }
+                    err = USB_ERR_OK;
+                    break;
+                case EP_BULK_IN_MSC:
+                    /*Only clear a BULK IN if flag "m_bAllowStallClear" is set.*/
+                    if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
+                    {
+                        USBHAL_Bulk_IN_MSC_Stall_Clear();
+                    }
+                    else
+                    {
+                        DEBUG_MSG_MID(("USBCORE: Not clearing BULK IN stall as m_bAllowStallClear flag not set.\r\n"));
+                    }
                     err = USB_ERR_OK;
                     break;
                 default:
@@ -658,15 +747,15 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
             /*Which endpoint?*/
             switch(0x0F & g_oSetupPacket.wIndex)
             {
-                case EP_BULK_OUT:
-                    if(true == USBHAL_Bulk_OUT_Is_Stalled())
+                case EP_BULK_OUT_CDC:
+                    if(true == USBHAL_Bulk_OUT_CDC_Is_Stalled())
                     {
                         /*Set HALT bit (BIT 0)*/
                         StatusData[0] |= 0x01;
                     }
                     break;
-                case EP_BULK_IN:
-                    if(true == USBHAL_Bulk_IN_Is_Stalled())
+                case EP_BULK_IN_CDC:
+                    if(true == USBHAL_Bulk_IN_CDC_Is_Stalled())
                     {
                             /*Set HALT bit (BIT 0)*/
                             StatusData[0] |= 0x01;
@@ -677,6 +766,20 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                     {
                         /*Set HALT bit (BIT 0)*/
                         StatusData[0] |= 0x01;
+                    }
+                    break;
+                case EP_BULK_OUT_MSC:
+                    if(true == USBHAL_Bulk_OUT_MSC_Is_Stalled())
+                    {
+                        /*Set HALT bit (BIT 0)*/
+                        StatusData[0] |= 0x01;
+                    }
+                    break;
+                case EP_BULK_IN_MSC:
+                    if(true == USBHAL_Bulk_IN_MSC_Is_Stalled())
+                    {
+                            /*Set HALT bit (BIT 0)*/
+                            StatusData[0] |= 0x01;
                     }
                     break;
                 default:

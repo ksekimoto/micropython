@@ -37,7 +37,7 @@
 
 #if MICROPY_HW_ENABLE_STORAGE
 
-#define DEBUG_STORAGE
+//#define DEBUG_STORAGE
 
 #define FLASH_PART1_START_BLOCK (0x1)
 
@@ -52,6 +52,8 @@ void storage_init(void) {
         storage_is_initialised = true;
 
 #if defined (DEBUG_STORAGE)
+        // clean up top of file system in flash to reduce number of erase.
+        // this is just for testing
         bool ret;
         ret = flash_erase(0xfff80000, 0x4000);
         ret = flash_erase(0xfff84000, 0x4000);
