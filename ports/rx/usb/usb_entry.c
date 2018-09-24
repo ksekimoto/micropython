@@ -32,6 +32,7 @@
 #include "common.h"
 #include "pendsv.h"
 #include "usbdescriptors.h"
+#include "usb_entry.h"
 
 #define PID_NAK     0
 #define PID_BUF     1

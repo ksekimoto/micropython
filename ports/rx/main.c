@@ -55,6 +55,7 @@
 #include "usrsw.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "usb_entry.h"
 
 #if MICROPY_KBD_EXCEPTION
 int mp_interrupt_channel;

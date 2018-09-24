@@ -1,7 +1,12 @@
 # Select the board to build for: if not given on the command line,
 # then default to PYBV10.
-#USB_NEW = 1
+
+#USE_NEW_USBLIB = 1
+# Use developing usb library instead of stable one for testing
+
 #TEST_RAMDISK = 1
+# Use ramdisk instead of CPU internal flash for testing the related codes
+
 BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -38,8 +43,10 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(MCU_SERIES)
-INC += -Idebug
 INC += -Iboards/$(BOARD)
+INC += -Idebug
+INC += -Iramdisk
+INC += -Iusb
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 
 #######################################################################
@@ -126,27 +133,29 @@ SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
-ifeq ($(USB_NEW), 1)
+ifeq ($(USE_NEW_USBLIB), 1)
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_cdc.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_descriptor.c
 SRC_C += $(MCU_SERIES)/usblib_hw.c
 else
-SRC_C += $(MCU_SERIES)/usb_cdc_entry.c
-SRC_C += $(MCU_SERIES)/usb_cdc.c
-SRC_C += $(MCU_SERIES)/usb_msc_scsi.c
-SRC_C += $(MCU_SERIES)/usb_msc.c
-SRC_C += $(MCU_SERIES)/usb_core.c
-SRC_C += $(MCU_SERIES)/usb_hal.c
-SRC_C += $(MCU_SERIES)/usbdescriptors.c
-SRC_C += $(MCU_SERIES)/ram_disk.c
-SRC_C += $(MCU_SERIES)/FAT_0000_200.c
-SRC_C += $(MCU_SERIES)/FAT_0C00_005.c
-SRC_C += $(MCU_SERIES)/FAT_0E00_005.c
-SRC_C += $(MCU_SERIES)/FAT_1000_100.c
-SRC_C += $(MCU_SERIES)/FAT_5000_041.c
+SRC_C += usb/usb_entry.c
+SRC_C += usb/usb_cdc.c
+SRC_C += usb/usb_msc_scsi.c
+SRC_C += usb/usb_msc.c
+SRC_C += usb/usb_core.c
+SRC_C += usb/usb_hal.c
+SRC_C += usb/usbdescriptors.c
 endif
-SRC_C += $(MCU_SERIES)/util.c
+ifeq ($(TEST_RAMDISK), 1)
+SRC_C += ramdisk/ram_disk.c
+SRC_C += ramdisk/FAT_0000_200.c
+SRC_C += ramdisk/FAT_0C00_005.c
+SRC_C += ramdisk/FAT_0E00_005.c
+SRC_C += ramdisk/FAT_1000_100.c
+SRC_C += ramdisk/FAT_5000_041.c
+endif
+#SRC_C += $(MCU_SERIES)/util.c
 ifeq ($(DEBUG), 1)
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
@@ -166,7 +175,6 @@ SRC_LIB += $(addprefix lib/, utils/printf.c)
 SRC_LIB += $(addprefix lib/, utils/pyexec.c)
 #SRC_LIB += $(addprefix lib/, utils/stdout_helpers.c)
 SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
-
 
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	virtpin.c \

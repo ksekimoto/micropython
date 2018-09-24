@@ -44,7 +44,7 @@ System Includes
 #include <string.h>
 #include <assert.h>
 
-#define DEBUG_USB_MSC
+//#define DEBUG_USB_MSC
 
 /***********************************************************************************
 User Includes

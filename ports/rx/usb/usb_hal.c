@@ -356,9 +356,9 @@ USB_ERR USBHAL_Disable(void)
 
     /*Stop the selected USB module*/
     #ifdef USB_MODULE_1
-        stopModule(MstpIdUSB1);
+        MSTP(USB1) = 1;
     #else
-        stopModule(MstpIdUSB0);
+        MSTP(USB0) = 1;
     #endif
 
     return USB_ERR_OK;
@@ -2440,9 +2440,9 @@ static void HW_Init_Module0(void)
     ICU.IR[IR_USB0_USBI0].BIT.IR = 0;
 
     #ifdef USB_MODULE_1
-        startModule(MstpIdUSB1);
+        MSTP(USB1) = 0;
     #else
-        startModule(MstpIdUSB0);
+        MSTP(USB0) = 0;
     #endif
 }
 /**********************************************************************

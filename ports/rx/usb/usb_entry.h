@@ -24,36 +24,21 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef USB_ENTRY_H_
+#define USB_ENTRY_H_
 
-#ifndef TRUE
-#define TRUE    1
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#ifndef FALSE
-#define FALSE   0
+void usb_init(void);
+int usbcdc_read(void);
+void usbcdc_write(unsigned char c);
+typedef int (*USB_CALLBACK)(int d);
+void usb_rx_set_callback(USB_CALLBACK callback);
+
+#ifdef __cplusplus
+}
 #endif
 
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#include "stdint.h"
-#include "stdbool.h"
-#include "iodefine.h"
-#include "rx63n_config.h"
-#include "rx63n_sci.h"
-#include "rx63n_timer.h"
-#include "rx63n_gpio.h"
-#include "rx63n_utils.h"
-#include "rx63n_ad.h"
-#include "rx63n_exti.h"
-#ifdef USE_DBG_PRINT
-#include "debug_printf.h"
-#endif
-
-#endif /* COMMON_H_ */
+#endif /* USB_ENTRY_H_ */
