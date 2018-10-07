@@ -83,9 +83,16 @@
 #define CMD55   (55)        /* APP_CMD */
 #define CMD58   (58)        /* READ_OCR */
 
+#if defined(GRSAKURA)
 #define MICROPY_HW_SDCARD_SPI_CH    0       /* channel 0 */
 #define MICROPY_HW_SDCARD_SPI_CS    96      /* pin PC0 */
 #define MICROPY_HW_SDCARD_CHK       13      /* pin P15 */
+#endif
+#if defined(GRCITRUS)
+#define MICROPY_HW_SDCARD_SPI_CH    0       /* channel 0 */
+#define MICROPY_HW_SDCARD_SPI_CS    98      /* pin PC2 */
+#define MICROPY_HW_SDCARD_CHK       13      /* pin P15 */
+#endif
 
 #define _CMD_TIMEOUT        100
 #define _TOKEN_CMD25        0xfc

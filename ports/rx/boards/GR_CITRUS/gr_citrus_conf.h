@@ -33,6 +33,7 @@
 #endif
 
 #include "../../rx63n/common.h"
+#define DEBUG_CH	2
 
 #ifdef __cplusplus
 }

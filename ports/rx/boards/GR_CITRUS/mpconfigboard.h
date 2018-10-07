@@ -2,9 +2,10 @@
 #define MICROPY_HW_MCU_NAME         "RX631" /* RR5F5631FDDFP */
 
 #define MICROPY_HW_HAS_SWITCH       (0)
-#define MICROPY_HW_HAS_FLASH        (0)
+#define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_HAS_SDCARD       (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
+#define MICROPY_HW_ENABLE_RX_USB    (1)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
@@ -25,3 +26,11 @@
 #define MICROPY_HW_LED_ON(pin)      mp_hal_pin_high(pin)
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
+// SD card detect switch
+#define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P13)
+#define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
+#define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
+#define MICROPY_HW_SDCARD_CS    (pin_PC2)
+#define MICROPY_HW_SDCARD_CK    (pin_PC5)
+#define MICROPY_HW_SDCARD_MOSI  (pin_PC6)
+#define MICROPY_HW_SDCARD_MISO  (pin_PC7)

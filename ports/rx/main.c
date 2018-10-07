@@ -567,12 +567,17 @@ soft_reset:
     bool mounted_sdcard = false;
     #if MICROPY_HW_HAS_SDCARD
     // if an SD card is present then mount it on /sd/
-    //if (sdcard_is_present()) {
+#if defined(GRCITRUS)
+    if (sdcard_is_present()) {
         // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
-        //if (!mounted_flash || f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+        if (!mounted_flash || f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
             mounted_sdcard = init_sdcard_fs();
-        //}
-    //}
+        }
+    }
+#endif
+#if defined(GRSAKURA)
+    mounted_sdcard = init_sdcard_fs();
+#endif
     #endif
 
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
