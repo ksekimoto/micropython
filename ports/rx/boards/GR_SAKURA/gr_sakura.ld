@@ -1,80 +1,156 @@
 MEMORY
 {
-    ram(rwx)    : o = 0x00000000, l = 0x0001e000 /* RAM 128KB */
-    stack(rw)   : o = 0x0001e000, l = 0x00002000 /* end of RAM */
-    rom(rx)     : o = 0xfff00000, l = 0x000fff80 /* ROM 1MB */
-    fvectors(rx): o = 0xffffff80, l = 0x00000080
+	RAM : ORIGIN = 0x0, LENGTH = 131072
+	ROM : ORIGIN = 0xFFF00000, LENGTH = 1048576
 }
 
-ENTRY("_startup")
 SECTIONS
 {
-    .text : {
+	.fvectors 0xFFFFFF80 : AT (0xFFFFFF80)
+	{
+		KEEP(*(.fvectors))
+	} > ROM
+	.text 0xFFF00000 : AT (0xFFF00000)
+	{
         _stext = . ;
-        *(.text)
+		*(.text)
 		*(.text.*)
 		*(P)
-        _etext = . ;
-    } > rom
-
-    .rodata : {
-        _srodata = . ;
-        *(.rodata)
-        *(.rodata.*)
-		*(C)
+		_etext = .;
+		etext = .;
+	} > ROM
+	.rvectors : 
+	{
+		_rvectors_start = .;
+		*(.rvectors)
+		_rvectors_end = .;
+	} > ROM
+	.init : 
+	{
+		*(.init)
+		__preinit_array_start = .;
+		*(.preinit_array)
+		__preinit_array_end = .;
+		__init_array_start = (. + 3) & ~ 3;
+		*(.init_array)
+		*(SORT(.init_array.*))
+		__init_array_end = .;
+		__fini_array_start = .;
+		*(.fini_array)
+		*(SORT(.fini_array.*))
+		__fini_array_end = .;
+	} > ROM
+	.fini : 
+	{
+		*(.fini)
+	} > ROM
+	.got : 
+	{
+		*(.got)
+		*(.got.plt)
+	} > ROM
+	.rodata : 
+	{
+		*(.rodata)
+		*(.rodata.*)
 		*(C_1)
 		*(C_2)
-		*(C$VECT)
-        *(.strings)
-        _erodata = . ;
-    } > rom
+		*(C)
+		_erodata = .;
+	} > ROM
+	.eh_frame_hdr : 
+	{
+		*(.eh_frame_hdr)
+	} > ROM
+	.eh_frame : 
+	{
+		*(.eh_frame)
+	} > ROM
+	.jcr : 
+	{
+		*(.jcr)
+	} > ROM
+	.tors : 
+	{
+		__CTOR_LIST__ = .;
+		. = ALIGN(2);
+		___ctors = .;
+		*(.ctors)
+		___ctors_end = .;
+		__CTOR_END__ = .;
+		__DTOR_LIST__ = .;
+		___dtors = .;
+		*(.dtors)
+		___dtors_end = .;
+		__DTOR_END__ = .;
+		. = ALIGN(2);
+		_mdata = .;
+	} > ROM
 
-     . = ALIGN(4);
-     __end_of_text__ = .;
-     _sidata = __end_of_text__;
-
+    . = ALIGN(4);
+    __end_of_text__ = .;
+    _sidata = __end_of_text__;
     _sdataonrom = .; 
-    .data : AT(_sdataonrom) {
-        _sdata = . ;
-        *(FLASH_OP)
-        *(.data)
+	
+	.istack 0x20000 : AT (0x20000)
+	{
+		_istack = .;
+	} > RAM
+	.ustack 0x20000 : AT (0x20000)
+	{
+		_ustack = .;
+	} > RAM
+	.heapmax 0x1F000 : AT (0x1F000)
+	{
+		_heapmax = .;
+	} > RAM
+
+	.data 0x1000 : AT (_mdata)
+	{
+        _sdata = .;
+  		_data = .;
+  		*(FLASH_OP)
+		*(.data)
 		*(.data.*)
 		*(D)
 		*(D_1)
 		*(D_2)
-        _edata = . ;
-    } > ram
-    _edataonrom = _sdataonrom + SIZEOF(.data);
+		_edata = .;
+	} > RAM
 
-    .bss : {
-        _sbss = . ;
-        *(.bss)
-		*(.bss.*)
-        *(COMMON)
+#	._RX_DESC : 
+#	{
+#		. = ALIGN(32);
+#		*(._RX_DESC)
+#	} > RAM
+#	._TX_DESC : 
+#	{
+#		. = ALIGN(32);
+#		*(._TX_DESC)
+#	} > RAM
+#	._ETHERNET_BUFFERS : 
+#	{
+#		*(._ETHERNET_BUFFERS)
+#	} > RAM
+
+	.bss : 
+	{
+		_sbss = .;
+		_bss = .;
+		*(.bss)
+		*(.bss.**)
+		*(COMMON)
 		*(B)
 		*(B_1)
 		*(B_2)
-        _ebss = . ;
-    } > ram
-
-    . = ALIGN(4);
-    _end = . ;
-
-	.heapmax 0x1e000 : AT (0x1e000)
+		_ebss = .;
+		_end = .;
+	} > RAM
+	.gcc_exc : 
 	{
-		_heapmax = .;
-	} > ram
-
-    .stack : {
-        _stack = .;
-        _user_vbr = .;
-    } > stack
-
-    .fvector_tbl  : {
-        KEEP(*(.fvectors)) 
-    } > fvectors AT>fvectors
+		*(.gcc_exc)
+	} > RAM
 }
-
 /* produce a link error if there is not this amount of RAM for these sections */
 /* _minimum_stack_size = 2K; */
 /* _minimum_heap_size = 16K; */
@@ -82,10 +158,11 @@ SECTIONS
 /* Define tho top end of the stack.  The stack is full descending so begins just
    above last byte of RAM.  Note that EABI requires the stack to be 8-byte
    aligned for a call. */
-_estack = ORIGIN(ram) + LENGTH(ram);
+_estack = ORIGIN(RAM) + LENGTH(RAM);
 
 /* RAM extents for the garbage collector */
-_ram_start = ORIGIN(ram);
-_ram_end = ORIGIN(ram) + LENGTH(ram);
+_ram_start = ORIGIN(RAM);
+_ram_end = ORIGIN(RAM) + LENGTH(RAM);
 _heap_start = _ebss; /* heap starts just after statically allocated memory */
 _heap_end = 0x0001e000; /* tunable */
+

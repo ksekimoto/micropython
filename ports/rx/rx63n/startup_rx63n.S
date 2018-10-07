@@ -19,33 +19,29 @@ _startup:
     nop
     nop
     nop
-/* initialise user stack pointer */
-    mvtc    #0x00018000-4,USP
-/* initialise interrupt stack pointer */
-    mvtc    #0x00018000-4,ISP
-/* setup intb */
-    mvtc    #_RelocatableVectors,intb    /* INTERRUPT VECTOR ADDRESS  definition    */
-/* setup FPSW */
-    mvtc    #100h, fpsw
-/* setup PSW */
-    mvtc    #10000h, psw            /* Set Ubit & Ibit for PSW */
-/* start user program */
 
-    mov #_sidata,r2     /* src ROM address of data section in R2 */
-    mov #_sdata,r1      /* dest start RAM address of data section in R1 */
-    mov #_edata,r3      /* end RAM address of data section in R3 */
-    sub r1,r3           /* size of data section in R3 (R3=R3-R1) */
-    smovf               /* block copy R3 bytes from R2 to R1 */
+	mvtc    #_ustack, USP
+	mvtc	#_istack, ISP
+	mvtc	#_rvectors_start, intb
+	mvtc    #100h, fpsw
 
-    mov #00h,r2         /* load R2 reg with zero */
-    mov #_ebss, r3      /* store the end address of bss in R3 */
-    mov #_sbss, r1      /* store the start address of bss in R1 */
-    sub   r1,r3         /* size of bss section in R3 (R3=R3-R1) */
-    sstr.b
+	mov     #_mdata, r2
+	mov     #_data, r1
+	mov     #_edata, r3
+	sub    	r1,r3
+	smovf
 
-    bsr.a    _main
-    bsr.a     _exit
-/* call to exit*/
+	mov		#00h, r2
+	mov		#_ebss, r3
+	mov		#_bss, r1
+	sub   	r1,r3
+	sstr.b
+
+	mvtc	#10000h, psw
+
+	bsr.a	_main
+	bsr.a 	_exit
+
 _exit:
     bra  _loop_here
 _loop_here:
