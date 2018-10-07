@@ -67,7 +67,7 @@ Defines
 
 #if defined(DEBUG_USE_RAMDISK)
 #else
-static uint8_t buf[8192];
+static uint8_t buf[0x4000];
 #endif
 						
 /***********************************************************************************
