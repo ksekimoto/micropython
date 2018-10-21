@@ -96,7 +96,7 @@ SECTIONS
 	{
 		_istack = .;
 	} > RAM
-	.ustack 0x20000 : AT (0x20000)
+	.ustack 0x1FF00 : AT (0x1FF00)
 	{
 		_ustack = .;
 	} > RAM
