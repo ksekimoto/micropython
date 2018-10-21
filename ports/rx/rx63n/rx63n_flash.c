@@ -464,6 +464,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
     }
     //FLASH_END_PROGRAMMING_FAST("", addr);
 WriteX_exit:
+    __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     debug_printf("WriteX() error_code=%x\r\n", error_code);
 #endif
@@ -538,13 +539,14 @@ bool internal_flash_eraseblock(unsigned char *addr)
         error_code = 5;
         goto EraseBlock_exit;
     }
+    __asm__ __volatile__ ("setpsw i");
     flag = internal_flash_isblockerased(addr, block_size);
     if (!flag) {
         error_code = 6;
     }
     //FLASH_END_PROGRAMMING_FAST("", addr);
-    __asm__ __volatile__ ("setpsw i");
 EraseBlock_exit:
+    __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     debug_printf("EraseBlock() error_code=%x\r\n", error_code);
 #endif
