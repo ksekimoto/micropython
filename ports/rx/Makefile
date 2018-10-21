@@ -94,6 +94,7 @@ LDFLAGS += -Wl,-Map=$@.map
 LIBS =
 
 SRC_C = main.c
+SRC_C += template/mymodule.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += extint.c
