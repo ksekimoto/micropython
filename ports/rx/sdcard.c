@@ -83,15 +83,19 @@
 #define CMD55   (55)        /* APP_CMD */
 #define CMD58   (58)        /* READ_OCR */
 
+#ifndef MICROPY_HW_SDCARD_SPI_CH
+#define MICROPY_HW_SDCARD_SPI_CH    0           /* channel 0 */
+#endif
+#ifndef MICROPY_HW_SDCARD_SPI_CS
 #if defined(GRSAKURA)
-#define MICROPY_HW_SDCARD_SPI_CH    0       /* channel 0 */
 #define MICROPY_HW_SDCARD_SPI_CS    96      /* pin PC0 */
-#define MICROPY_HW_SDCARD_CHK       13      /* pin P15 */
 #endif
 #if defined(GRCITRUS)
-#define MICROPY_HW_SDCARD_SPI_CH    0       /* channel 0 */
 #define MICROPY_HW_SDCARD_SPI_CS    98      /* pin PC2 */
-#define MICROPY_HW_SDCARD_CHK       13      /* pin P15 */
+#endif
+#endif
+#ifndef MICROPY_HW_SDCARD_DETECT_PIN
+#define MICROPY_HW_SDCARD_DETECT_PIN    13      /* pin P15 */
 #endif
 
 #define _CMD_TIMEOUT        100
@@ -105,7 +109,7 @@
 
 static uint32_t sd_handle = NULL;
 static uint8_t sd_ch = MICROPY_HW_SDCARD_SPI_CH;
-static uint8_t sd_cs = MICROPY_HW_SDCARD_SPI_CS;
+static uint8_t sd_cs = 0;
 static uint8_t sd_csd[16];
 static uint32_t sd_cdv;
 static uint32_t sd_sectors;
@@ -385,17 +389,21 @@ uint8_t sd_init_card(void) {
 
 void sdcard_init(void) {
     sd_handle = NULL;
+    //sd_ch = MICROPY_HW_SDCARD_SPI_CH;
+    //sd_cs = MICROPY_HW_SDCARD_SPI_CS;
+    //gpio_mode_input(MICROPY_HW_SDCARD_CHK);
+    mp_hal_pin_config(MICROPY_HW_SDCARD_SPI_CS, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+    mp_hal_pin_config(MICROPY_HW_SDCARD_DETECT_PIN, MP_HAL_PIN_MODE_INPUT, MICROPY_HW_SDCARD_DETECT_PULL, 0);
     sd_ch = MICROPY_HW_SDCARD_SPI_CH;
-    sd_cs = MICROPY_HW_SDCARD_SPI_CS;
-    gpio_mode_input(MICROPY_HW_SDCARD_CHK);
+    sd_cs = MICROPY_HW_SDCARD_SPI_CS->pin;
     gpio_mode_output(sd_cs);
     sd_init_card();
     sd_handle = 1;
 }
 
 bool sdcard_is_present(void) {
-    gpio_mode_input(MICROPY_HW_SDCARD_CHK);
-    return (gpio_read(MICROPY_HW_SDCARD_CHK) == MICROPY_HW_SDCARD_DETECT_PRESENT);
+    gpio_mode_input(MICROPY_HW_SDCARD_DETECT_PIN->pin);
+    return (gpio_read(MICROPY_HW_SDCARD_DETECT_PIN->pin) == MICROPY_HW_SDCARD_DETECT_PRESENT);
 }
 
 bool sdcard_power_on(void) {

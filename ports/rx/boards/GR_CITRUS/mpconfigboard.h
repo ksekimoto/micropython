@@ -15,6 +15,12 @@
 #define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
+// SPI busses
+#define MICROPY_HW_SPI0_NAME "X"
+#define MICROPY_HW_SPI0_NSS  (pin_PC4)
+#define MICROPY_HW_SPI0_SCK  (pin_PC5)
+#define MICROPY_HW_SPI0_MISO (pin_PC7)
+#define MICROPY_HW_SPI0_MOSI (pin_PC6)
 // USRSW is pulled low. Pressing the button makes the input go high.
 //#define MICROPY_HW_USRSW_PIN        (pin_PA7)
 //#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
@@ -30,7 +36,13 @@
 #define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P13)
 #define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
 #define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
-#define MICROPY_HW_SDCARD_CS    (pin_PC2)
-#define MICROPY_HW_SDCARD_CK    (pin_PC5)
-#define MICROPY_HW_SDCARD_MOSI  (pin_PC6)
-#define MICROPY_HW_SDCARD_MISO  (pin_PC7)
+//#define MICROPY_HW_SDCARD_CS    (pin_PC2)
+//#define MICROPY_HW_SDCARD_CK    (pin_PC5)
+//#define MICROPY_HW_SDCARD_MOSI  (pin_PC6)
+//#define MICROPY_HW_SDCARD_MISO  (pin_PC7)
+#define MICROPY_HW_SDCARD_SPI_CH    (0)
+//#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC0)   /* Default */
+#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC2)   /* Jtag configuration */
+#define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
+#define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
+#define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
