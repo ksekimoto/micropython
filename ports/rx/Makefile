@@ -7,6 +7,18 @@
 #TEST_RAMDISK = 1
 # Use ramdisk instead of CPU internal flash for testing the related codes
 
+#FLASH_SKIP = 1
+# To avoid flash operation during debugging
+
+#FLASH_DEBUG = 1
+# Display erase and write log
+
+USB_CDC = 1
+USB_MSC = 2
+USB_CDC_MSC = 3
+USB_MODE = 3
+
+#BOARD ?= GR_CITRUS
 BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -77,6 +89,33 @@ CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 ifeq ($(TEST_RAMDISK), 1)
 CFLAGS += -DDEBUG_USE_RAMDISK
 endif
+
+ifeq ($(FLASH_SKIP), 1)
+CFLAGS += -DDEBUG_FLASH_SKIP
+endif
+
+ifeq ($(FLASH_DEBUG), 1)
+CFLAGS += -DDEBUG_FLASH_WriteX
+CFLAGS += -DDEBUG_FLASH_EraseBlock
+endif
+
+#define DEBUG_FLASH_SKIP
+#define DEBUG_FLASH_WriteX
+#define DEBUG_FLASH_EraseBlock
+
+ifeq ($(USB_MODE), 1)
+CFLAGS += -DUSB_CDC
+endif
+ifeq ($(USB_MODE), 2)
+CFLAGS += -DUSB_MSC
+endif
+ifeq ($(USB_MODE), 3)
+CFLAGS += -DUSB_CDC_MSC
+endif
+
+#define USB_CDC_MSC
+#define USB_CDC
+#define USB_MSC
 
 #######################################################################
 # Linker flags.
@@ -294,6 +333,8 @@ all: $(BUILD)/firmware.elf
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin
+	$(Q)$(OBJCOPY) -O srec -I elf32-rx-be-ns $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
 	$(Q)$(SIZE) $@
 
 MAKE_PINS = boards/make-pins.py

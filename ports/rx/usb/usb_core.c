@@ -302,7 +302,9 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
     {
         /*Can't handle this setup packet*/
         /*Let upper layer try - call registered callback*/
+        if (g_fpCBSetupPacket2) {
         err = g_fpCBSetupPacket2(&g_oSetupPacket, &NumBytes, &pBuffer);
+        }
     }
 
     if(USB_ERR_OK == err)

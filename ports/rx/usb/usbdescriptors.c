@@ -46,7 +46,7 @@ User Includes
 ***********************************************************************************/
 #include "usb_hal.h"
 #include "usb_core.h"
-#include "USBDescriptors.h"
+#include "usbdescriptors.h"
 
 /***********************************************************************************
 Defines
@@ -73,7 +73,7 @@ static const uint8_t gDeviceDescriptorData[DEVICE_DESCRIPTOR_SIZE] =
     0x01,
     /*USB Version 2.0*/
     0x00,0x02,
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     /*Class Code - Misc*/
     0xef,
     /*Subclass Code*/
@@ -113,7 +113,7 @@ const DESCRIPTOR gDeviceDescriptor =
 };
 
 /*Configuration Descriptor*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
 #define CONFIG_DESCRIPTOR_SIZE (67 + 8 + 23)
 #elif defined(USB_CDC)
 #define CONFIG_DESCRIPTOR_SIZE (67)
@@ -129,7 +129,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*Combined length of all descriptors (little endian)*/
     CONFIG_DESCRIPTOR_SIZE, 0x00,
     /*Number of interfaces*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x03,
 #elif defined(USB_CDC)
     0x02,
@@ -147,13 +147,13 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*bMaxPower (2mA units) 100mA (A unit load is defined as 100mA)*/
     50,
 
-#if defined(USB_MSC) | defined(USB_COMB)
+#if defined(USB_MSC) | defined(USB_CDC_MSC)
     /*Size of this descriptor*/
     0x09,
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x00,
 #else
     0x00,
@@ -200,7 +200,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     0x00,
 #endif
 
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     /* IAD */
         8,                              /*  0:bLength */
         0x0B,                           /*  1:bDescriptorType*/
@@ -212,14 +212,14 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
         0,                              /*  7:iInterface */
 #endif
 
-#if defined(USB_CDC) | defined(USB_COMB)
+#if defined(USB_CDC) | defined(USB_CDC_MSC)
 /* Communication Class Interface Descriptor */
     /*Size of this descriptor*/
     0x09,
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x01,
 #else
     0x00,
@@ -265,13 +265,13 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*bDescriptor Subtype = Union*/
     0x06,
     /*bMasterInterface = Communication Class Interface*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x01,
 #else
     0x00,
 #endif
     /*bSlaveInterface = Data Class Interface*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x02,
 #else
     0x01,
@@ -287,7 +287,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*bmCapabilities*/
     0x00,
     /*bDataInterface: Data Class Interface = 1*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x02,
 #else
     0x01,
@@ -313,7 +313,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
-#if defined(USB_COMB)
+#if defined(USB_CDC_MSC)
     0x02,
 #else
     0x01,
