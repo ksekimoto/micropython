@@ -65,6 +65,10 @@ int mp_interrupt_channel;
 pyb_thread_t pyb_thread_main;
 #endif
 fs_user_mount_t fs_user_mount_flash;
+#if MICROPY_HW_HAS_SDCARD
+fs_user_mount_t *fs_user_mount_sd;
+FATFS *fatfs_sd = (FATFS *)0;
+#endif
 
 void flash_error(int n) {
     for (int i = 0; i < n; i++) {
@@ -273,6 +277,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
 #if MICROPY_HW_HAS_SDCARD
 STATIC bool init_sdcard_fs(void) {
     bool first_part = true;
+    fatfs_sd = (FATFS *)0;
     for (int part_num = 1; part_num <= 4; ++part_num) {
         // create vfs object
         fs_user_mount_t *vfs_fat = m_new_obj_maybe(fs_user_mount_t);
@@ -296,6 +301,8 @@ STATIC bool init_sdcard_fs(void) {
                 // the first available partition is traditionally called "sd" for simplicity
                 vfs->str = "/sd";
                 vfs->len = 3;
+                fs_user_mount_sd = vfs_fat;
+                fatfs_sd = &(vfs_fat->fatfs);
             } else {
                 // subsequent partitions are numbered by their index in the partition table
                 if (part_num == 2) {

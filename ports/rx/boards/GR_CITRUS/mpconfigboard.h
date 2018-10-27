@@ -36,10 +36,6 @@
 #define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P13)
 #define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
 #define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
-//#define MICROPY_HW_SDCARD_CS    (pin_PC2)
-//#define MICROPY_HW_SDCARD_CK    (pin_PC5)
-//#define MICROPY_HW_SDCARD_MOSI  (pin_PC6)
-//#define MICROPY_HW_SDCARD_MISO  (pin_PC7)
 #define MICROPY_HW_SDCARD_SPI_CH    (0)
 //#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC0)   /* Default */
 #define MICROPY_HW_SDCARD_SPI_CS    (pin_PC2)   /* Jtag configuration */

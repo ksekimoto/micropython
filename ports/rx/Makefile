@@ -59,6 +59,7 @@ INC += -Iboards/$(BOARD)
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
+INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 
 #######################################################################
@@ -160,6 +161,12 @@ SRC_C += uart.c
 #SRC_C += uart_core.c
 SRC_C += usrsw.c
 #SRC_C += $(BUILD)/_frozen_mpy.c
+SRC_C += esp8266/base64encode.c
+SRC_C += esp8266/esp8266.c
+SRC_C += esp8266/hmac.c
+SRC_C += esp8266/ntp.c
+SRC_C += esp8266/urlencode.c
+SRC_C += esp8266/wifi.c
 SRC_C += $(MCU_SERIES)/sbrk.c
 SRC_C += $(MCU_SERIES)/interrupt_handlers.c
 SRC_C += $(MCU_SERIES)/vector_table.c
