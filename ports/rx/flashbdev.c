@@ -74,9 +74,9 @@ static volatile uint8_t flash_flags = 0;
 static uint32_t flash_cache_sector_id;
 static uint32_t flash_cache_sector_start;
 static uint32_t flash_cache_sector_size;
-static uint32_t flash_tick_counter_last_write;
+static long flash_tick_counter_last_write;
 
-static void flash_bdev_irq_handler(void);
+void flash_bdev_irq_handler(void);
 
 int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
     (void)arg;
@@ -84,7 +84,7 @@ int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
         case BDEV_IOCTL_INIT:
             flash_flags = 0;
             flash_cache_sector_id = 0;
-            flash_tick_counter_last_write = 0;
+            flash_tick_counter_last_write = 0L;
             return 0;
 
         case BDEV_IOCTL_NUM_BLOCKS:
@@ -124,7 +124,7 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
     }
     flash_flags |= FLASH_FLAG_DIRTY;
     led_state(PYB_LED_RED, 1); // indicate a dirty cache with LED on
-    flash_tick_counter_last_write = utick();
+    flash_tick_counter_last_write = (long)mtick();
     return (uint8_t*)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
 }
 
@@ -153,7 +153,10 @@ static uint32_t convert_block_to_flash_addr(uint32_t block) {
     return -1;
 }
 
-static void flash_bdev_irq_handler(void) {
+void flash_bdev_irq_handler(void) {
+#if defined(DEBUG_FLASH_BDEV)
+    //debug_printf("FLASH IRQ\r\n");
+#endif
     if (!(flash_flags & FLASH_FLAG_DIRTY)) {
         return;
     }
@@ -186,8 +189,9 @@ static void flash_bdev_irq_handler(void) {
 
     // If not a forced write, wait at least 5 seconds after last write to flush
     // On file close and flash unmount we get a forced write, so we can afford to wait a while
-    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || mtick() - flash_tick_counter_last_write >= 5000) {
+    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || ((long)mtick() - flash_tick_counter_last_write) >= 3000L) {
         // sync the cache RAM buffer by writing it to the flash page
+        flash_tick_counter_last_write = 0x7fffffffL;
         flash_write(flash_cache_sector_start, (const uint32_t*)CACHE_MEM_START_ADDR, flash_cache_sector_size);
         // clear the flash flags now that we have a clean cache
         flash_flags = 0;
@@ -236,6 +240,8 @@ bool flash_bdev_writeblock(const uint8_t *src, uint32_t block) {
     }
     uint8_t *dest = flash_cache_get_addr_for_write(flash_addr);
     memcpy(dest, src, FLASH_BLOCK_SIZE);
+    //flash_flags |= FLASH_FLAG_FORCE_WRITE;
+    //flash_bdev_irq_handler();
     return true;
 }
 

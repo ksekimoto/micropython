@@ -57,11 +57,9 @@
 #include "servo.h"
 #include "dac.h"
 #include "lcd.h"
+#endif
 #include "usb.h"
-#endif
-#if 0
 #include "portmodules.h"
-#endif
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
@@ -171,9 +169,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_elapsed_micros), MP_ROM_PTR(&pyb_elapsed_micros_obj) },
     { MP_ROM_QSTR(MP_QSTR_delay), MP_ROM_PTR(&mp_utime_sleep_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_udelay), MP_ROM_PTR(&mp_utime_sleep_us_obj) },
-#if 0
     { MP_ROM_QSTR(MP_QSTR_sync), MP_ROM_PTR(&mod_os_sync_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
     #endif
 
@@ -224,14 +220,15 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     #endif
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&pyb_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&pyb_uart_type) },
-#if 0
 #if MICROPY_HW_ENABLE_CAN
     { MP_ROM_QSTR(MP_QSTR_CAN), MP_ROM_PTR(&pyb_can_type) },
 #endif
 
     #if MICROPY_HW_ENABLE_ADC
+#if 0
     { MP_ROM_QSTR(MP_QSTR_ADC), MP_ROM_PTR(&pyb_adc_type) },
     { MP_ROM_QSTR(MP_QSTR_ADCAll), MP_ROM_PTR(&pyb_adc_all_type) },
+#endif
     #endif
 
 #if MICROPY_HW_ENABLE_DAC
@@ -244,7 +241,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
 #if MICROPY_HW_HAS_LCD
     { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
-#endif
 #endif
 };
 

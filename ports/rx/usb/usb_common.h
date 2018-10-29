@@ -75,6 +75,7 @@
 /*WARNING NOTE: Too high a level of debug message output may cause problems
 with some drivers, where they cause the interrupt handling to take too long.*/
 #define DEBUG_LEVEL     DEBUG_LEVEL_NONE
+//#define DEBUG_LEVEL     DEBUG_LEVEL_MID
 
 /*MACROS used to ouput DEBUG messages depending upon set DEBUG_LEVEL
 1. DEBUG_MSG_HIGH:  Output msg if DEBUG_LEVEL is DEBUG_LEVEL_HIGH
@@ -84,7 +85,7 @@ with some drivers, where they cause the interrupt handling to take too long.*/
 /*Only allow debug messages in a debug build*/
 #ifndef RELEASE
     #if DEBUG_LEVEL >= DEBUG_LEVEL_HIGH
-        #define DEBUG_MSG_HIGH(x) printf x
+        #define DEBUG_MSG_HIGH(x) debug_printf x
     #else
         #define DEBUG_MSG_HIGH(x)
     #endif
@@ -96,7 +97,7 @@ with some drivers, where they cause the interrupt handling to take too long.*/
     #endif
 
     #if DEBUG_LEVEL >= DEBUG_LEVEL_LOW
-        #define DEBUG_MSG_LOW(x) printf x
+        #define DEBUG_MSG_LOW(x) debug_printf x
     #else
         #define DEBUG_MSG_LOW(x)
     #endif

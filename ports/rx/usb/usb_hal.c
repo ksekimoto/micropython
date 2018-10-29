@@ -1563,17 +1563,17 @@ static void ReadBulkOUTPacketMSC(void)
 
         /*Call error callback*/
         g_CBs.fpError(USB_ERR_BULK_OUT_NO_BUFFER);
-        if (g_CBs.fpError2) {
-            g_CBs.fpError2(USB_ERR_BULK_OUT_NO_BUFFER);
-        }
+        //if (g_CBs.fpError2) {
+        //    g_CBs.fpError2(USB_ERR_BULK_OUT_NO_BUFFER);
+        //}
         /*Empty buffer*/
-        while(0 != USBIO.D1FIFOCTR.BIT.DTLN)
-        {
-            /* Create 8bit pointer to D1FIFO register */
-                uint8_t * ptr = (uint8_t *)&USBIO.D1FIFO;
+        //while(0 != USBIO.D1FIFOCTR.BIT.DTLN)
+        //{
+        //    /* Create 8bit pointer to D1FIFO register */
+        //        uint8_t * ptr = (uint8_t *)&USBIO.D1FIFO;
 
-            (void)*ptr;
-        }
+        //    (void)*ptr;
+        //}
     }
 }
 /**********************************************************************

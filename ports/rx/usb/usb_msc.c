@@ -56,7 +56,9 @@ User Includes
 #include "usb_hal.h"
 #include "usb_core.h"
 #include "usbdescriptors.h"
-//#include "ram_disk.h"
+#if defined(DEBUG_USE_RAMDISK)
+#include "ram_disk.h"
+#endif
 #include "usb_msc_scsi.h"
 #include "usb_msc.h"
 #include "common.h"
@@ -687,7 +689,8 @@ static void ProcessCBW(void)
 	}
 	else
 	{
-		DEBUG_MSG_MID(("\r\nUSBMSC: SCSI cmd received = %#2.2X, Length = %lu\r\n",
+		//DEBUG_MSG_MID(("\r\nUSBMSC: SCSI cmd received = %#2.2X, Length = %lu\r\n",
+	    DEBUG_MSG_MID(("\r\nUSBMSC: SCSI cmd received = %x, Length = %lu\r\n",
 			g_SCSI.oCBW.CBWCB[0], g_SCSI.oCBW.dCBWDataTransferLength));
 		
 		/*Set CSW to passed to start with*/

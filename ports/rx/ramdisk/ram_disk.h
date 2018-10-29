@@ -22,7 +22,7 @@
  ******************************************************************************/
  /* Copyright (C) 2010 Renesas Electronics Corporation. All rights reserved.*/
 
-/*””FILE COMMENT””******************************* Technical reference data ****
+/*ï¿½ï¿½FILE COMMENTï¿½ï¿½******************************* Technical reference data ****
 * File Name		: ram_disk.h
 * Version 		: 1.00
 * Device 		: Renesas Generic MCU.
@@ -37,7 +37,7 @@
 
 /******************************************************************************
 * History 		: 07.05.2009 Ver. 1.00 First Release
-*””FILE COMMENT END””*********************************************************/
+*ï¿½ï¿½FILE COMMENT ENDï¿½ï¿½*********************************************************/
 
 /***********************************************************************************
 Revision History
@@ -58,6 +58,6 @@ Function Prototypes
 void		RamDiskInit(void);
 uint16_t	RamDiskGetBlockSize(void);
 uint16_t	RamDiskGetNumBlocks(void);
-uint8_t*	RamDiskGetBuffer(uint16_t _LBA);
+uint8_t*	RamDiskGetBuffer(uint32_t _LBA);
 
 #endif /*RAM_DISK_H*/

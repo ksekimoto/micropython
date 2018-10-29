@@ -28,9 +28,7 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
-#if 0
 #include "extint.h"
-#endif
 #include "pin.h"
 #include "usrsw.h"
 

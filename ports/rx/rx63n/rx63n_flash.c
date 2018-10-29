@@ -37,6 +37,7 @@
 // For Debugging
 ////////////////////////////////////////////////////////////////////////////
 //#define DEBUG_FLASH
+//#define DEBUG_FLASH_ERROR
 //#define DEBUG_FLASH_SKIP
 //#define DEBUG_FLASH_WriteX
 //#define DEBUG_FLASH_EraseBlock
@@ -388,9 +389,11 @@ bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSect
 
 bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr)
 {
+    __asm__ __volatile__ ("clrpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     //debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
-    debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
+    //debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
+    debug_printf("FLW:%x,%x,", addr, NumBytes);
 #endif
     uint32_t error_code = 0;
 #ifndef DEBUG_FLASH_SKIP
@@ -418,9 +421,9 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
         command_addr = (unsigned char *)((uint32_t)startaddr & 0x00FFFFFF);;
         unsigned short *flash_addr  = (unsigned short *)((uint32_t)startaddr & 0x00FFFFFF);
         unsigned short *buf_addr = (unsigned short *)&flash_buf[0];
-        wait(100000);
+        //wait(100000);
         //FLASH_BEGIN_PROGRAMMING_FAST() ;
-        __asm__ __volatile__ ("clrpsw i");
+        //__asm__ __volatile__ ("clrpsw i");
         fcu_Interrupt_Disable();
         flag = fcu_Transfer_Firmware(command_addr);
         if (!flag) {
@@ -450,7 +453,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             goto WriteX_exit;
         }
         //FLASH_END_PROGRAMMING_FAST("", addr);
-        __asm__ __volatile__ ("setpsw i");
+        //__asm__ __volatile__ ("setpsw i");
         if (fIncrementDataPtr) {
             flag= (memcmp((void *)(startaddr+offset), flash_buf+offset, count) == 0);
             if (!flag) {
@@ -466,11 +469,15 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
 WriteX_exit:
     __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
-    debug_printf("WriteX() error_code=%x\r\n", error_code);
+    //debug_printf("WriteX() error_code=%x\r\n", error_code);
+    debug_printf("%x\r\n", error_code);
 #endif
 #endif
     if (error_code == 0)
         return true;
+#if defined(DEBUG_FLASH_ERROR)
+    debug_printf("Flash Write Fail:%x\r\n", error_code);
+#endif
     return false;
 }
 
@@ -484,24 +491,44 @@ bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes)
     return internal_flash_writex(addr, NumBytes, (uint8_t *)&chipData, TRUE, FALSE);
 }
 
-bool internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength)
+bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bool debug)
 {
+    if (debug) {
 #if defined(DEBUG_FLASH)
-    debug_printf("IsBlockErased(addr=%x, len=%x)\r\n", addr, BlockLength);
+        //debug_printf("IsBlockErased(addr=%x, len=%x)\r\n", addr, BlockLength);
+        debug_printf("FLI:%x,%x,", addr, BlockLength);
 #endif
+    }
+    bool flag = TRUE;
     CHIP_WORD *startaddr = (CHIP_WORD *)addr;
     CHIP_WORD *endaddr = (CHIP_WORD *)(addr + BlockLength);
-    while (startaddr < endaddr)
-        if (*startaddr++ != (CHIP_WORD)0xFFFFFFFF)
-            return FALSE;
-    return TRUE;
+    while (startaddr < endaddr) {
+        if (*startaddr++ != (CHIP_WORD)0xFFFFFFFF) {
+            flag = FALSE;
+            break;
+        }
+    }
+    if (debug) {
+#if defined(DEBUG_FLASH)
+        //debug_printf("IsEraseBlock() error_code=%x\r\n", (flag == TRUE)? 0:1);
+        debug_printf("%x\r\n", (flag == TRUE)? 0:1);
+#endif
+    }
+    return flag;
+}
+
+bool internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength)
+{
+    return _internal_flash_isblockerased(addr, BlockLength, TRUE);
 }
 
 // erase one page
 bool internal_flash_eraseblock(unsigned char *addr)
 {
+    __asm__ __volatile__ ("clrpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
-    debug_printf("EraseBlock(addr=%x)\r\n", addr);
+    //debug_printf("EraseBlock(addr=%x)\r\n", addr);
+    debug_printf("FLE:%x,", addr);
 #endif
     uint32_t error_code = 0;
     bool flag;
@@ -510,7 +537,6 @@ bool internal_flash_eraseblock(unsigned char *addr)
     unsigned long block_size  = (unsigned long)sector_size((uint32_t)addr);
 
     //FLASH_BEGIN_PROGRAMMING_FAST() ;
-    __asm__ __volatile__ ("clrpsw i");
     fcu_Interrupt_Disable();
     flag = fcu_Transfer_Firmware(command_addr);
     if (!flag) {
@@ -539,8 +565,7 @@ bool internal_flash_eraseblock(unsigned char *addr)
         error_code = 5;
         goto EraseBlock_exit;
     }
-    __asm__ __volatile__ ("setpsw i");
-    flag = internal_flash_isblockerased(addr, block_size);
+    flag = _internal_flash_isblockerased(addr, block_size, false);
     if (!flag) {
         error_code = 6;
     }
@@ -548,11 +573,15 @@ bool internal_flash_eraseblock(unsigned char *addr)
 EraseBlock_exit:
     __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
-    debug_printf("EraseBlock() error_code=%x\r\n", error_code);
+    //debug_printf("EraseBlock() error_code=%x\r\n", error_code);
+    debug_printf("%x\r\n", error_code);
 #endif
 #endif
     if (error_code == 0)
         return true;
+#if defined(DEBUG_FLASH_ERROR)
+    debug_printf("Flash Erase Fail:%x\r\n", error_code);
+#endif
     return false;
 }
 

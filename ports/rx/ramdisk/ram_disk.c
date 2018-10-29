@@ -60,7 +60,7 @@ Defines
 /*  Note: If changing the size of the RAM disk then the example FAT Image
 may not be suitable. In which case make sure 'FORMAT_WITH_FAT_Example'
 is not defined.*/
-#define NUM_BLOCKS 0x00000030 /*Number of logical blocks */
+#define NUM_BLOCKS 0x00000060 /*Number of logical blocks*/
 #define BLOCK_SIZE 0x00000200 /*512 BYTES within a block*/
 
 /*	If FORMAT_WITH_FAT_Example is defined then the RAM disk will
@@ -69,7 +69,7 @@ is not defined.*/
 	If FORMAT_WITH_FAT_Example is not defined then the RAM disk
 	will be unformatted. This will cause Windows to ask if you want
 	to format it.*/
-#define FORMAT_WITH_FAT_Example
+//#define FORMAT_WITH_FAT_Example
 
 /***********************************************************************************
 Variables
@@ -173,7 +173,7 @@ End of function RamDiskGetNumBlocks
 * Return value  : Pointer to the actual RAM.
 **********************************************************************/
 
-uint8_t* RamDiskGetBuffer(uint16_t _LBA)
+uint8_t* RamDiskGetBuffer(uint32_t _LBA)
 {
 	return &g_RAM_DATA[_LBA*BLOCK_SIZE];
 }

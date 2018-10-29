@@ -57,6 +57,8 @@ User Includes
 #include "storage.h"
 #include "common.h"
 
+uint32_t storage_get_cache_block_count(void);
+
 /***********************************************************************************
 Defines
 ***********************************************************************************/
@@ -65,11 +67,10 @@ Defines
 #define SUPPORT_SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL_CMD
 //#define SUPPORT_MODE_SENSE_CMD
 
-#if defined(DEBUG_USE_RAMDISK)
-#else
-static uint8_t buf[0x4000];
-#endif
-						
+#define SCSI_BUF_SIZE   0x2000
+static uint8_t scsi_buf[SCSI_BUF_SIZE] __attribute__((aligned(16)));
+static uint32_t scsi_blk;
+
 /***********************************************************************************
 Local Types
 ***********************************************************************************/
@@ -239,7 +240,7 @@ SCSI_ERROR SCSI_Init(void)
 	Value = storage_get_block_size();
 #endif
 #if defined(DEBUG_USB_MSC)
-	debug_printf("bs:%x\r\n", Value);
+	debug_printf("SCSIBLKSZ:%x\r\n", Value);
 #endif
 	pArray = (uint8_t*)&g_SCSI_READ_CAPACITY.BlockLength;
 	pArray[0] = (uint8_t)((Value >> 24) & 0xFF);
@@ -373,9 +374,6 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 #else
 			TransferBytes = (uint32_t)TransferLength * (uint32_t)storage_get_block_size();
 #endif
-#if defined(DEBUG_USB_MSC)
-    debug_printf("scsir tl:%x tb:%x\r\n", TransferLength, TransferBytes);
-#endif
 			/*Check parameters are OK*/
 			/*  1. LUN == 0 (Only suppporting a single Logical unit)
 				2. Number of blocks + block to start is within RAM disk.*/
@@ -383,10 +381,13 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 #if defined(DEBUG_USE_RAMDISK)
 			( (LogicalBlockAddress + TransferLength) > RamDiskGetNumBlocks()) )
 #else
-			( (LogicalBlockAddress + TransferLength) > storage_get_block_count()) )
+			( (LogicalBlockAddress + TransferLength) > storage_get_block_count()) || (TransferBytes > SCSI_BUF_SIZE) )
 #endif	
 			{
-				/*Invalid request*/
+#if defined(DEBUG_USB_MSC)
+                debug_printf("SCSIRD Invalid buf:%x blk:%x bytes:%x\r\n", *_ppBuffer, LogicalBlockAddress, TransferBytes);
+#endif
+                /*Invalid request*/
 				DEBUG_MSG_LOW(("READ(10) - Invalid parameter!"));
 				
 				/*Set SCSI Sense data*/
@@ -409,13 +410,13 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 				/*Set data*/
 				*_pNumBytes = TransferBytes;
 #if defined(DEBUG_USE_RAMDISK)
-				*_ppBuffer = RamDiskGetBuffer((uint16_t)LogicalBlockAddress);
+                *_ppBuffer = RamDiskGetBuffer(LogicalBlockAddress);
 #else
-				storage_read_blocks(buf, LogicalBlockAddress, TransferBytes/512);
-				*_ppBuffer = buf;
+                *_ppBuffer = scsi_buf;
+                storage_read_blocks(*_ppBuffer, LogicalBlockAddress, TransferLength);
 #endif
 #if defined(DEBUG_USB_MSC)
-    debug_printf("scsir la:%x tb:%x\r\n", LogicalBlockAddress, TransferBytes);
+                debug_printf("SCSIRD buf:%x blk:%x bytes:%x\r\n", *_ppBuffer, LogicalBlockAddress, TransferBytes);
 #endif
 			}
 			break;
@@ -459,10 +460,6 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 #else
 			TransferBytes = (uint32_t)TransferLength * (uint32_t)storage_get_block_size();
 #endif
-#if defined(DEBUG_USB_MSC)
-    debug_printf("scsiw tl:%x tb:%x\r\n", TransferLength, TransferBytes);
-#endif
-			
 			/*Check parameters are OK*/
 			/*  1. LUN == 0 (Only suppporting a single Logical unit)
 				2. Number of blocks + block to start is within RAM disk.*/
@@ -470,9 +467,12 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 #if defined(DEBUG_USE_RAMDISK)
 			( (LogicalBlockAddress + TransferLength) > RamDiskGetNumBlocks()) )
 #else
-			( (LogicalBlockAddress + TransferLength) > storage_get_block_count()) )
+			( (LogicalBlockAddress + TransferLength) > storage_get_block_count()) || (TransferBytes > SCSI_BUF_SIZE) )
 #endif
 			{
+#if defined(DEBUG_USB_MSC)
+                debug_printf("SCSIWT Invalid buf:%x blk:%x bytes:%x\r\n", *_ppBuffer, LogicalBlockAddress, TransferBytes);
+#endif
 				/*Invalid request*/
 				DEBUG_MSG_LOW(("WRITE(10) - Invalid parameter!"));
 				
@@ -496,13 +496,13 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 				/*Set data*/
 				*_pNumBytes = TransferBytes;
 #if defined(DEBUG_USE_RAMDISK)
-				*_ppBuffer = RamDiskGetBuffer((uint16_t)LogicalBlockAddress);
+                *_ppBuffer = RamDiskGetBuffer(LogicalBlockAddress);
 #else
-				*_ppBuffer = buf;
-				storage_write_blocks(buf, LogicalBlockAddress, TransferBytes/512);
+                *_ppBuffer = scsi_buf;
+                scsi_blk = LogicalBlockAddress;
 #endif
 #if defined(DEBUG_USB_MSC)
-    debug_printf("scsiw la:%x tb:%x\r\n", LogicalBlockAddress, TransferBytes);
+    debug_printf("SCSIWR buf:%x blk:%x bytes:%x\r\n", *_ppBuffer, LogicalBlockAddress, TransferBytes);
 #endif
 			
 				/*Set the DATA_OUT_EXPECTED structure so we know what to do
@@ -699,6 +699,16 @@ SCSI_ERROR SCSI_Data_OUT(uint32_t _NumBytes, uint8_t* _pBuffer)
 			this cmd was first received is infact the RAMDisk.
 			So no need to do anything extra with the data as it has already
 			been written to the RAMDisk.*/	
+#if defined(DEBUG_USE_RAMDISK)
+#if defined(DEBUG_USB_MSC)
+		    debug_printf("SCSIOUT buf:%x bytes:%x\r\n", _pBuffer, _NumBytes);
+#endif
+#else
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSIOUT buf:%x blk:%x bytes:%x\r\n", _pBuffer, scsi_blk, _NumBytes);
+#endif
+            storage_write_blocks(_pBuffer, scsi_blk, _NumBytes / storage_get_block_size());
+#endif
 		}
 		else
 		{

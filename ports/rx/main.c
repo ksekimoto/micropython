@@ -53,6 +53,7 @@
 #include "pin.h"
 #include "extint.h"
 #include "usrsw.h"
+#include "usb.h"
 #include "storage.h"
 #include "sdcard.h"
 #include "usb_entry.h"
@@ -151,11 +152,9 @@ static const char fresh_main_py[] =
 "# main.py -- put your code here!\r\n"
 ;
 
-#if 0
 static const char fresh_pybcdc_inf[] =
 #include "genhdr/pybcdc_inf.h"
 ;
-#endif
 
 static const char fresh_readme_txt[] =
 "This is a MicroPython board\r\n"
@@ -323,17 +322,17 @@ STATIC bool init_sdcard_fs(void) {
                 }
             }
 
-            #if MICROPY_HW_ENABLE_USB
+            //#if MICROPY_HW_ENABLE_USB
             if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
                 // if no USB MSC medium is selected then use the SD card
                 pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
             }
-            #endif
+            //#endif
 
-            #if MICROPY_HW_ENABLE_USB
+            //#if MICROPY_HW_ENABLE_USB
             // only use SD card as current directory if that's what the USB medium is
             if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
-            #endif
+            //#endif
             {
                 if (first_part) {
                     // use SD card as current directory
@@ -556,13 +555,9 @@ soft_reset:
     can_init0();
     #endif
 
-    #if MICROPY_HW_ENABLE_USB
+    //#if MICROPY_HW_ENABLE_USB
     pyb_usb_init0();
-    #endif
-    usb_init();
-#if MICROPY_KBD_EXCEPTION
-    usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
-#endif
+    //#endif
 
     // Initialise the local flash filesystem.
     // Create it if needed, mount in on /flash, and set it as current dir.
@@ -587,6 +582,10 @@ soft_reset:
 #endif
     #endif
 
+    // if the SD card isn't used as the USB MSC medium then use the internal flash
+    if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
+        pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_FLASH;
+    }
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
     if (mounted_sdcard) {
         mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd));
@@ -637,6 +636,10 @@ soft_reset:
     //    pyb_usb_dev_init(USBD_VID, USBD_PID_CDC_MSC, USBD_MODE_CDC_MSC, NULL);
     //}
     #endif
+    usb_init();
+#if MICROPY_KBD_EXCEPTION
+    usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
+#endif
     #if MICROPY_HW_ENABLE_SERVO
     servo_init();
     #endif
@@ -674,6 +677,9 @@ soft_reset:
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
+#if MICROPY_HW_ENABLE_STORAGE
+        storage_flush();
+#endif
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             if (pyexec_raw_repl() != 0) {
                 break;

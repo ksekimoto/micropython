@@ -159,6 +159,7 @@ SRC_C += storage.c
 SRC_C += systick.c
 SRC_C += uart.c
 #SRC_C += uart_core.c
+SRC_C += usb.c
 SRC_C += usrsw.c
 #SRC_C += $(BUILD)/_frozen_mpy.c
 SRC_C += esp8266/base64encode.c
@@ -356,8 +357,19 @@ GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
 #GEN_PINS_AF_DEFS = $(HEADER_BUILD)/pins_af_defs.h
 GEN_PINS_AF_PY = $(BUILD)/pins_af.py
 
+INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
+FILE2H = $(TOP)/tools/file2h.py
+
+USB_IDS_FILE = usb.h
+CDCINF_TEMPLATE = pybcdc.inf_template
+GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
+GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
+
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(SRC_MOD) $(SRC_LIB) $(EXTMOD_SRC_C)
+# Append any auto-generated sources that are needed by sources listed in
+# SRC_QSTR
+SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)
 
 # Making OBJ use an order-only depenedency on the generated pins.h file
 # has the side effect of making the pins.h file before we actually compile
@@ -382,5 +394,13 @@ $(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_ad_const.h $(HEADER_
 
 #$(BUILD)/pins_$(BOARD).o: $(GEN_PINS_SRC)
 #	$(call compile_c)
+
+$(GEN_CDCINF_HEADER): $(GEN_CDCINF_FILE) $(FILE2H)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(FILE2H) $< > $@
+
+$(GEN_CDCINF_FILE): $(CDCINF_TEMPLATE) $(INSERT_USB_IDS) $(USB_IDS_FILE)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(INSERT_USB_IDS) $(USB_IDS_FILE) $< > $@
 
 include $(TOP)/py/mkrules.mk

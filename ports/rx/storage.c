@@ -37,6 +37,13 @@
 
 #if MICROPY_HW_ENABLE_STORAGE
 
+/* debug */
+//#define DEBUG_STORAGE
+
+#if defined(DEBUG_USE_RAMDISK)
+#include "ram_disk.h"
+#endif
+
 //#define DEBUG_STORAGE_FLASH_CLEAR
 
 #define FLASH_PART1_START_BLOCK (0x1)
@@ -132,6 +139,9 @@ static void build_partition(uint8_t *buf, int boot, int type, uint32_t start_blo
 bool storage_read_block(uint8_t *dest, uint32_t block) {
     //printf("RD %u\n", block);
     if (block == 0) {
+#if defined(DEBUG_STORAGE)
+        debug_printf("STORAGERD ->%x blk:%x\r\n", dest, block);
+#endif
         // fake the MBR so we can decide on our own partition table
 
         for (int i = 0; i < 446; i++) {
@@ -153,8 +163,17 @@ bool storage_read_block(uint8_t *dest, uint32_t block) {
         return true;
 
     #if defined(MICROPY_HW_BDEV_READBLOCK)
+#if defined(DEBUG_USE_RAMDISK)
+    } else if (block < RamDiskGetNumBlocks()) {
+#if defined(DEBUG_STORAGE)
+        debug_printf("STORAGERD %x->%x blk:%x\r\n", RamDiskGetBuffer(block), dest, block);
+#endif
+        memcpy(dest, RamDiskGetBuffer(block), 512);
+        return true;
+#else
     } else if (FLASH_PART1_START_BLOCK <= block && block < FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_READBLOCK(dest, block - FLASH_PART1_START_BLOCK);
+#endif
     #endif
     } else {
         return false;
@@ -164,11 +183,23 @@ bool storage_read_block(uint8_t *dest, uint32_t block) {
 bool storage_write_block(const uint8_t *src, uint32_t block) {
     //printf("WR %u\n", block);
     if (block == 0) {
+#if defined(DEBUG_STORAGE)
+        debug_printf("STORAGEWT %x-> blk:%x\r\n", src, block);
+#endif
         // can't write MBR, but pretend we did
         return true;
     #if defined(MICROPY_HW_BDEV_WRITEBLOCK)
+#if defined(DEBUG_USE_RAMDISK)
+    } else if (block < RamDiskGetNumBlocks()) {
+#if defined(DEBUG_STORAGE)
+        debug_printf("STORAGEWT %x->%x blk:%x\r\n", src, RamDiskGetBuffer(block), block);
+#endif
+        memcpy(RamDiskGetBuffer(block), src, 512);
+        return true;
+#else
     } else if (FLASH_PART1_START_BLOCK <= block && block < FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_WRITEBLOCK(src, block - FLASH_PART1_START_BLOCK);
+#endif
     #endif
     } else {
         return false;
@@ -176,6 +207,9 @@ bool storage_write_block(const uint8_t *src, uint32_t block) {
 }
 
 mp_uint_t storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
+#if defined(DEBUG_STORAGE)
+    debug_printf("STORAGERDB ->%x blk:%x num:%x\r\n", dest, block_num, num_blocks);
+#endif
     #if defined(MICROPY_HW_BDEV_READBLOCKS)
     if (FLASH_PART1_START_BLOCK <= block_num && block_num + num_blocks <= FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_READBLOCKS(dest, block_num - FLASH_PART1_START_BLOCK, num_blocks);
@@ -197,6 +231,9 @@ mp_uint_t storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_bl
 }
 
 mp_uint_t storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
+#if defined(DEBUG_STORAGE)
+    debug_printf("STORAGEWTB %x-> blk:%x num:%x\r\n", src, block_num, num_blocks);
+#endif
     #if defined(MICROPY_HW_BDEV_WRITEBLOCKS)
     if (FLASH_PART1_START_BLOCK <= block_num && block_num + num_blocks <= FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_WRITEBLOCKS(src, block_num - FLASH_PART1_START_BLOCK, num_blocks);
