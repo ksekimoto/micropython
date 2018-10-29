@@ -31,6 +31,23 @@
 extern "C" {
 #endif
 
+typedef void (*CMT_TIMER_FUNC)(uint32_t);
+
+void cmt_timer_init(unsigned int ch);
+void cmt_timer_deinit(unsigned int ch);
+void cmt_timer_disable_clk(unsigned int ch);
+void cmt_timer_eable_clk(unsigned int ch);
+unsigned int cmt_timer_get_prescale(unsigned int ch);
+void cmt_timer_set_prescale(unsigned int ch, unsigned int prescale);
+unsigned int cmt_timer_get_counter(unsigned int ch);
+void cmt_timer_set_counter(unsigned int ch, unsigned int count);
+void cmt_timer_set_callback(unsigned int ch, CMT_TIMER_FUNC func, void *param);
+void cmt_timer_callback(unsigned int ch);
+unsigned long cmt_timer_get_cnt(unsigned int ch);
+void cmt_timer_set_cnt(unsigned int ch, unsigned long cnt);
+unsigned long cmt_timer_get_period(unsigned int ch);
+void cmt_timer_set_period(unsigned int ch, unsigned long period);
+
 void udelay_init(void);
 void udelay(int m);
 unsigned long utick(void);

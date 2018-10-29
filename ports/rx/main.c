@@ -532,7 +532,7 @@ soft_reset:
     readline_init0();
     pin_init0();
     extint_init0();
-    //timer_init0();
+    timer_init0();
     uart_init0();
 
     // Define MICROPY_HW_UART_REPL to be PYB_UART_6 and define
@@ -704,7 +704,7 @@ soft_reset_exit:
     #if MICROPY_PY_NETWORK
     mod_network_deinit();
     #endif
-    //timer_deinit();
+    timer_deinit();
     uart_deinit();
     #if MICROPY_HW_ENABLE_CAN
     can_deinit();

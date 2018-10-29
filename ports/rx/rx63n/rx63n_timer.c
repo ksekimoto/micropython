@@ -39,6 +39,25 @@
 #define CMT_VAL 0x0043;     // CMIE is Enable,CKS is PCLK/512   clk=128/3(us)
 #endif
 
+/*
+ * Prescale: 8
+ * freq = 1000(1/s) = 1000(us) -> 6000
+ * freq = 10000(1/s) = 100(us) -> 600
+ * freq = 100000(1/s) = 10(us) -> 60
+ * Prescale: 32
+ * freq = 100(1/s) = 10000(us) -> 15000
+ * freq = 1000(1/s) = 1000(us) -> 1500
+ * freq = 10000(1/s) = 100(us) -> 150
+ * Prescale: 128
+ * freq = 10(1/s) = 100000(us) -> 37500
+ * freq = 100(1/s) = 10000(us) -> 3750
+ * freq = 1000(1/s) = 1000(us) -> 375
+ * Prescale: 512
+ * freq = 1(1/s) = 1000000(us) -> 23437.5 -> 23437
+ * freq = 10(1/s) = 100000(us) -> 2343.75 -> 2344
+ * freq = 100(1/s) = 10000(us) -> 234.375 -> 234
+ */
+
 #define DELAY_CH    0
 
 volatile struct st_cmt0 *CMTN[4] = {
@@ -48,30 +67,48 @@ volatile struct st_cmt0 *CMTN[4] = {
     (volatile struct st_cmt0 *)0x88018
 };
 
-volatile static unsigned long cmcnt[4] = { 0L, 0L, 0L, 0L };
+volatile static unsigned long cmt_count[4] = { 0L, 0L, 0L, 0L };
+volatile static unsigned long cmt_compare[4] = { 0L, 0L, 0L, 0L };
+volatile static unsigned long cmt_period[4] = { 0L, 0L, 0L, 0L };
+
+static CMT_TIMER_FUNC cmt_timer_func[4] = {0};
+static void *cmt_timer_param[4] = {0};
 
 static void isr_timer(unsigned int ch) {
-    cmcnt[ch] += 1L;
+    cmt_count[ch] += 1L;
 }
 
 void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void) {
     isr_timer(0);
+    cmt_timer_callback(0);
 }
 void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void) {
     isr_timer(1);
+    cmt_timer_callback(1);
 }
 void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void) {
     isr_timer(2);
+    cmt_timer_callback(2);
 }
 void __attribute__ ((interrupt)) INT_Excep_CMT3_CMI3(void) {
     isr_timer(3);
+    cmt_timer_callback(1);
 }
 
-void timer_init(unsigned int ch) {
-    int i;
+void cmt_timer_set_callback(unsigned int ch, CMT_TIMER_FUNC func, void *param) {
+    cmt_timer_func[ch] = func;
+    cmt_timer_param[ch] = param;
+}
+
+void cmt_timer_callback(unsigned int ch) {
+    if (cmt_timer_func[ch]) {
+        (*cmt_timer_func[ch])(cmt_timer_param[ch]);
+    }
+}
+
+void cmt_timer_init(unsigned int ch) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
-    for (i = 0; i < 4; i++)
-        cmcnt[i] = 0L;
+    cmt_count[ch] = 0L;
     SYSTEM.PRCR.WORD = 0xA502;
     if ((ch == 0) || (ch == 1)) {
         SYSTEM.MSTPCRA.BIT.MSTPA15 = 0;
@@ -106,7 +143,84 @@ void timer_init(unsigned int ch) {
     CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
 }
 
-void timer_set_count(unsigned int ch, unsigned int count) {
+void cmt_timer_deinit(unsigned int ch) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    cmt_count[ch] = 0L;
+    switch (ch) {
+    case 0:
+        ICU.IER[0x03].BIT.IEN4 = 0;         // IER disable
+        break;
+    case 1:
+        ICU.IER[0x03].BIT.IEN5 = 0;         // IER disable
+        break;
+    case 2:
+        ICU.IER[0x03].BIT.IEN6 = 0;         // IER disable
+        break;
+    case 3:
+        ICU.IER[0x03].BIT.IEN7 = 0;         // IER disable
+    default:
+        break;
+    }
+    cmt_timer_func[ch] = (CMT_TIMER_FUNC)0;
+    cmt_timer_param[ch] = (void *)0;
+}
+
+void cmt_timer_disable_clk(unsigned int ch) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
+}
+
+void cmt_timer_eable_clk(unsigned int ch) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
+}
+
+unsigned int cmt_timer_get_prescale(unsigned int ch) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    unsigned int prescale;
+    switch (cmtn->CMCR.WORD) {
+    case 0x40:
+        prescale = 8;
+        break;
+    case 0x41:
+        prescale = 32;
+        break;
+    case 0x42:
+        prescale = 128;
+        break;
+    case 0x43:
+        prescale = 512;
+        break;
+    }
+    return prescale;
+}
+
+void cmt_timer_set_prescale(unsigned int ch, unsigned int prescale) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    unsigned short val;
+    switch (prescale) {
+    case 8:
+        val = 0x40;
+        break;
+    case 32:
+        val = 0x41;
+        break;
+    case 128:
+        val = 0x42;
+        break;
+    case 512:
+        val = 0x43;
+        break;
+    }
+    cmtn->CMCR.WORD = (unsigned short)val;
+}
+
+unsigned int cmt_timer_get_counter(unsigned int ch) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    return (unsigned int)cmtn->CMCOR;
+}
+
+void cmt_timer_set_counter(unsigned int ch, unsigned int count) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     cmtn->CMCNT = (unsigned short)0;
     do {
@@ -114,17 +228,33 @@ void timer_set_count(unsigned int ch, unsigned int count) {
     } while (cmtn->CMCOR != (unsigned short)count);
 }
 
+unsigned long cmt_timer_get_cnt(unsigned int ch) {
+    return cmt_count[ch];
+}
+
+void cmt_timer_set_cnt(unsigned int ch, unsigned long cnt) {
+    cmt_compare[ch] = cnt;
+}
+
+unsigned long cmt_timer_get_period(unsigned int ch) {
+    return cmt_period[ch];
+}
+
+void cmt_timer_set_period(unsigned int ch, unsigned long period) {
+    cmt_period[ch] = period;
+}
+
 void udelay_init(void) {
-    timer_init(DELAY_CH);
-    timer_set_count(DELAY_CH, 60);
+    cmt_timer_init(DELAY_CH);
+    cmt_timer_set_counter(DELAY_CH, 60);
 }
 
 void udelay(int m) {
     volatile unsigned long start;
     if (m >= 10) {
         m /= 10;
-        start = cmcnt[DELAY_CH];
-        while (cmcnt[DELAY_CH] - start < (unsigned long)m) {
+        start = cmt_count[DELAY_CH];
+        while (cmt_count[DELAY_CH] - start < (unsigned long)m) {
             __asm__ __volatile__ ("nop");
         }
     } else {
@@ -135,9 +265,9 @@ void udelay(int m) {
 }
 
 unsigned long utick(void) {
-    return cmcnt[DELAY_CH] * 10;
+    return cmt_count[DELAY_CH] * 10;
 }
 
 unsigned long mtick(void) {
-    return cmcnt[DELAY_CH] / 100;
+    return cmt_count[DELAY_CH] / 100;
 }

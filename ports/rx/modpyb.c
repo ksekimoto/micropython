@@ -176,9 +176,9 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #if 0
     // This function is not intended to be public and may be moved elsewhere
     { MP_ROM_QSTR(MP_QSTR_dht_readinto), MP_ROM_PTR(&dht_readinto_obj) },
+#endif
 
     { MP_ROM_QSTR(MP_QSTR_Timer), MP_ROM_PTR(&pyb_timer_type) },
-#endif
 
 #if MICROPY_HW_ENABLE_RNG
     { MP_ROM_QSTR(MP_QSTR_rng), MP_ROM_PTR(&pyb_rng_get_obj) },

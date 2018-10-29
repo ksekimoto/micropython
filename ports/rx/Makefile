@@ -157,6 +157,7 @@ SRC_C += sdcard.c
 SRC_C += spi.c
 SRC_C += storage.c
 SRC_C += systick.c
+SRC_C += timer.c
 SRC_C += uart.c
 #SRC_C += uart_core.c
 SRC_C += usb.c
