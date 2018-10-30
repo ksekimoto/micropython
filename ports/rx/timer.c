@@ -37,6 +37,7 @@
 //#define TIMER_CHANNEL
 
 void timer_irq_handler(void *param);
+STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args);
 
 #if defined(TIMER_CHANNEL)
 typedef struct _pyb_timer_channel_obj_t {
@@ -63,6 +64,7 @@ STATIC mp_obj_t pyb_timer_callback(mp_obj_t self_in, mp_obj_t callback);
 #if defined(TIMER_CHANNEL)
 STATIC mp_obj_t pyb_timer_channel_callback(mp_obj_t self_in, mp_obj_t callback);
 #endif
+static const int cmt_timer_ch[TIMER_SIZE] = {1, 2, 3};
 
 void timer_init0(void) {
     for (uint i = 0; i < PYB_TIMER_OBJ_ALL_NUM; i++) {
@@ -137,7 +139,8 @@ STATIC void pyb_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
 ///
 ///  You must either specify freq or both of period and prescaler.
 STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_freq, ARG_prescaler, ARG_period, ARG_tick_hz, ARG_mode, ARG_div, ARG_callback, ARG_deadtime };
+    //enum { ARG_freq, ARG_prescaler, ARG_period, ARG_tick_hz, ARG_mode, ARG_div, ARG_callback, ARG_deadtime };
+    enum { ARG_freq, ARG_period, ARG_callback };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_freq,         MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
         { MP_QSTR_period,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0xffffffff} },
@@ -151,9 +154,17 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
     //HAL_TIM_Base_Init(&self->tim);
     //config_deadtime(self, args[ARG_deadtime].u_int);
     for (int i = 1; i <= TIMER_SIZE; i++) {
-        cmt_timer_set_callback(i, (CMT_TIMER_FUNC)timer_irq_handler, (void *)&i);
+        cmt_timer_set_callback(i, (CMT_TIMER_FUNC)timer_irq_handler, (void *)&cmt_timer_ch[i-1]);
     }
     cmt_timer_init(self->tim_id);
+    if (args[ARG_freq].u_obj != mp_const_none) {
+        mp_obj_t freq_args[2];
+        freq_args[0] = self;
+        freq_args[1] = args[ARG_freq].u_obj;
+        pyb_timer_freq(2, &freq_args);
+    } else {
+        mp_raise_TypeError("must specify either freq, period, or prescaler and period");
+    }
     // Enable ARPE so that the auto-reload register is buffered.
     // This allows to smoothly change the frequency of the timer.
     // Start the timer running
@@ -354,7 +365,15 @@ STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args) {
         /* counter = PCLK / (scale * freq) */
         uint32_t prescaler;
         uint32_t counter;
-        unsigned int freq = mp_obj_get_int(args[1]);
+        uint32_t freq;
+        if (0) {
+#if MICROPY_PY_BUILTINS_FLOAT
+        } else if MP_OBJ_IS_TYPE(args[1], &mp_type_float) {
+            freq = (int)mp_obj_get_float(args[1]);
+#endif
+        } else {
+            freq = mp_obj_get_int(args[1]);
+        }
         if (freq > 1000) {
             prescaler = 8;
         } else if (freq > 100) {
