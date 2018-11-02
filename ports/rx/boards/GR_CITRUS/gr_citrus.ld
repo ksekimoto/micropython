@@ -13,6 +13,7 @@ SECTIONS
 	.text 0xFFE00000 : AT (0xFFE00000)
 	{
         _stext = . ;
+        *(i.EntryPoint)
 		*(.text)
 		*(.text.*)
 		*(P)

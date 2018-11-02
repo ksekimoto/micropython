@@ -6,10 +6,6 @@ MEMORY
 
 SECTIONS
 {
-	.fvectors 0xFFFFFF80 : AT (0xFFFFFF80)
-	{
-		KEEP(*(.fvectors))
-	} > ROM
 	.text 0xFFF00000 : AT (0xFFF00000)
 	{
         _stext = . ;

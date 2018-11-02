@@ -67,7 +67,7 @@ Defines
 #define SUPPORT_SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL_CMD
 //#define SUPPORT_MODE_SENSE_CMD
 
-#define SCSI_BUF_SIZE   0x2000
+#define SCSI_BUF_SIZE   0x4000
 static uint8_t scsi_buf[SCSI_BUF_SIZE] __attribute__((aligned(16)));
 static uint32_t scsi_blk;
 

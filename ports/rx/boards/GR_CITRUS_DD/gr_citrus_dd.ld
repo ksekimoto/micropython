@@ -1,16 +1,12 @@
 MEMORY
 {
-	RAM : ORIGIN = 0x0, LENGTH = 131072
-	ROM : ORIGIN = 0xFFF00000, LENGTH = 1048576
+	RAM : ORIGIN = 0x0, LENGTH = 262144
+	ROM : ORIGIN = 0xFFE00000, LENGTH = 2097152
 }
 
 SECTIONS
 {
-	.fvectors 0xFFFFFF80 : AT (0xFFFFFF80)
-	{
-		KEEP(*(.fvectors))
-	} > ROM
-	.text 0xFFF00000 : AT (0xFFF00000)
+	.text 0xFFE00000 : AT (0xFFE00000)
 	{
         _stext = . ;
         *(i.EntryPoint)
@@ -59,6 +55,10 @@ SECTIONS
 		*(C)
 		_erodata = .;
 	} > ROM
+	.fvectors : 
+	{
+		KEEP(*(.fvectors))
+	} > ROM
 	.eh_frame_hdr : 
 	{
 		*(.eh_frame_hdr)
@@ -93,15 +93,15 @@ SECTIONS
     _sidata = __end_of_text__;
     _sdataonrom = .; 
 	
-	.istack 0x20000 : AT (0x20000)
+	.istack 0x40000 : AT (0x40000)
 	{
 		_istack = .;
 	} > RAM
-	.ustack 0x1FF00 : AT (0x1FF00)
+	.ustack 0x3FF00 : AT (0x3FF00)
 	{
 		_ustack = .;
 	} > RAM
-	.heapmax 0x1F000 : AT (0x1F000)
+	.heapmax 0x3F000 : AT (0x3F000)
 	{
 		_heapmax = .;
 	} > RAM
@@ -165,5 +165,5 @@ _estack = ORIGIN(RAM) + LENGTH(RAM);
 _ram_start = ORIGIN(RAM);
 _ram_end = ORIGIN(RAM) + LENGTH(RAM);
 _heap_start = _ebss; /* heap starts just after statically allocated memory */
-_heap_end = 0x0001e000; /* tunable */
+_heap_end = 0x0003e000; /* tunable */
 
