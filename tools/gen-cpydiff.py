@@ -90,15 +90,16 @@ def run_tests(tests):
     """ executes all tests """
     results = []
     for test in tests:
+        print('test file: ' + TESTPATH + test.name)
         with open(TESTPATH + test.name, 'rb') as f:
             input_cpy = f.read()
         input_upy = uimports(input_cpy)
 
         process = subprocess.Popen(CPYTHON3, shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        output_cpy = [com.decode('utf8') for com in process.communicate(input_cpy)]
+        output_cpy = [com.decode('utf8', 'replace') for com in process.communicate(input_cpy)]
 
         process = subprocess.Popen(MICROPYTHON, shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        output_upy = [com.decode('utf8') for com in process.communicate(input_upy)]
+        output_upy = [com.decode('utf8', 'replace') for com in process.communicate(input_upy)]
 
         if output_cpy[0] == output_upy[0] and output_cpy[1] == output_upy[1]:
             status = 'Supported'
@@ -174,7 +175,7 @@ def gen_rst(results):
             if i >= len(class_) or section[i] != class_[i]:
                 if i == 0:
                     filename = section[i].replace(' ', '_').lower()
-                    rst = open(DOCPATH + filename + '.rst', 'w')
+                    rst = open(DOCPATH + filename + '.rst', 'w', encoding='UTF-8')
                     rst.write(HEADER)
                     rst.write(section[i] + '\n')
                     rst.write(RSTCHARS[0] * len(section[i]))
