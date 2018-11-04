@@ -46,6 +46,7 @@
 //#include "pybthread.h"
 #include "gccollect.h"
 #include "modmachine.h"
+#include "i2c.h"
 #include "spi.h"
 #include "uart.h"
 #include "timer.h"

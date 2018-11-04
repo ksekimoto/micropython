@@ -28,6 +28,8 @@
 #include "common.h"
 #include "pin.h"
 /* ToDo */
+#define mp_hal_quiet_timing_enter() (1)
+#define mp_hal_quiet_timing_exit(irq_state) (void)(irq_state)
 #define mp_hal_delay_us_fast(us) mp_hal_delay_us(us)
 static inline mp_uint_t mp_hal_ticks_cpu(void) {
     return 0;

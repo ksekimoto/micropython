@@ -59,6 +59,7 @@
 ///     spi.send_recv(b'1234', buf)          # send 4 bytes and receive 4 into buf
 ///     spi.send_recv(buf, buf)              # send/recv 4 bytes from/to buf
 
+/* So far, only ch is used. */
 const spi_t spi_obj[3] = {
 };
 
@@ -88,7 +89,7 @@ STATIC int spi_find(mp_obj_t id) {
     } else {
         // given an integer id
         int spi_id = mp_obj_get_int(id);
-        if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
+        if (spi_id >= 0 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
             return spi_id;
         }
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,

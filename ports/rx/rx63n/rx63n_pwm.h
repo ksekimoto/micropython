@@ -23,41 +23,23 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef RX63N_PWM_H_
+#define RX63N_PWM_H_
 
-#ifndef COMMON_H_
-#define COMMON_H_
-
-#ifndef TRUE
-#define TRUE    1
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#ifndef FALSE
-#define FALSE   0
-#endif
-
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#include "stdint.h"
-#include "stdbool.h"
 #include "iodefine.h"
-#include "rx63n_ad.h"
-#include "rx63n_config.h"
-#include "rx63n_exti.h"
-#include "rx63n_flash.h"
-#include "rx63n_gpio.h"
-#include "rx63n_i2c.h"
-#include "rx63n_pwm.h"
-#include "rx63n_sci.h"
-#include "rx63n_spi.h"
-#include "rx63n_timer.h"
-#include "rx63n_utils.h"
-#ifdef USE_DBG_PRINT
-#include "debug_printf.h"
+
+enum PWM_SCALE_FACTOR {
+    PWM_MILLISECONDS = 1000,
+    PWM_MICROSECONDS = 1000000,
+    PWM_NANOSECONDS  = 1000000000,
+};
+
+#ifdef __cplusplus
+}
 #endif
 
-#endif /* COMMON_H_ */
+#endif /* RX63N_PWM_H_ */

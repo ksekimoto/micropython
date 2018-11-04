@@ -31,19 +31,17 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "lib/utils/pyexec.h"
-#if 0
 #include "drivers/dht/dht.h"
 #include "irq.h"
-#endif
 #include "led.h"
 #include "timer.h"
 #include "extint.h"
 #include "usrsw.h"
 #if 0
 #include "rng.h"
+#endif
 #include "rtc.h"
 #include "i2c.h"
-#endif
 #include "spi.h"
 #include "uart.h"
 #if 0
@@ -52,12 +50,12 @@
 #endif
 #include "storage.h"
 #include "sdcard.h"
-#if 0
 #include "accel.h"
+#if 0
 #include "servo.h"
 #include "dac.h"
-#include "lcd.h"
 #endif
+#include "lcd.h"
 #include "usb.h"
 #include "portmodules.h"
 #include "modmachine.h"
@@ -173,10 +171,8 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
     #endif
 
-#if 0
     // This function is not intended to be public and may be moved elsewhere
     { MP_ROM_QSTR(MP_QSTR_dht_readinto), MP_ROM_PTR(&dht_readinto_obj) },
-#endif
 
     { MP_ROM_QSTR(MP_QSTR_Timer), MP_ROM_PTR(&pyb_timer_type) },
 

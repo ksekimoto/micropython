@@ -188,12 +188,12 @@ extern const struct _mp_obj_module_t mp_module_ujson;
 extern const struct _mp_obj_module_t mp_module_uheapq;
 extern const struct _mp_obj_module_t mp_module_uhashlib;
 extern const struct _mp_obj_module_t mp_module_uos;
-#if 0
 extern const struct _mp_obj_module_t mp_module_utime;
+#if 0
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
-extern const struct _mp_obj_module_t mp_module_onewire;
 #endif
+extern const struct _mp_obj_module_t mp_module_onewire;
 
 #if 0
 #if MICROPY_PY_USOCKET && MICROPY_PY_LWIP
@@ -226,10 +226,10 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
     /* SOCKET_BUILTIN_MODULE */ \
     /* NETWORK_BUILTIN_MODULE */ \
-    /* { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, */ \
+    { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, \
 
 /* by including extmod folder, the following modules can be used.
  *   binascii
@@ -254,7 +254,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_io), MP_ROM_PTR(&mp_module_io) }, \
     { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_random), MP_ROM_PTR(&mp_module_urandom) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
     /* { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, */ \
     /* SOCKET_BUILTIN_MODULE_WEAK_LINKS */ \
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \

@@ -27,6 +27,8 @@ endif
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
 
+FROZEN_DIR = modules
+
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 include boards/$(BOARD)/mpconfigboard.mk
@@ -36,7 +38,7 @@ QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h boards/$(BOARD)/mpconfigboard.h
 
 # directory containing scripts to be frozen as bytecode
-#FROZEN_MPY_DIR ?= modules
+FROZEN_MPY_DIR ?= modules
 
 # include py core make definitions
 include $(TOP)/py/py.mk
@@ -86,6 +88,9 @@ ifeq ($(BOARD),GR_CITRUS_DD)
 CFLAGS += -DGRCITRUS
 endif
 ifeq ($(BOARD),GR_SAKURA)
+CFLAGS += -DGRSAKURA
+endif
+ifeq ($(BOARD),GR_SAKURA_DD)
 CFLAGS += -DGRSAKURA
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
@@ -138,6 +143,7 @@ LIBS =
 
 SRC_C = main.c
 SRC_C += template/mymodule.c
+SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += extint.c
@@ -146,16 +152,23 @@ SRC_C += flash.c
 SRC_C += flashbdev.c
 SRC_C += gccollect.c
 SRC_C += help.c
+SRC_C += i2c.c
+SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
 SRC_C += moduos.c
-#SRC_C += modutime.c
+SRC_C += modutime.c
 SRC_C += mphalport.c
+SRC_C += mpthreadport.c
+SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
+SRC_C += pyb_i2c.c
+SRC_C += pybthread.c
+SRC_C += rtc.c
 SRC_C += sdcard.c
 SRC_C += spi.c
 SRC_C += storage.c
@@ -165,6 +178,7 @@ SRC_C += uart.c
 #SRC_C += uart_core.c
 SRC_C += usb.c
 SRC_C += usrsw.c
+SRC_C += wdt.c
 #SRC_C += $(BUILD)/_frozen_mpy.c
 SRC_C += esp8266/base64encode.c
 SRC_C += esp8266/esp8266.c
@@ -180,8 +194,10 @@ SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_ad.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_flash.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_i2c.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_pwm.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
@@ -305,12 +321,16 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
+EXTMOD_SRC_C = $(addprefix extmod/,\
+	modonewire.c \
+        )
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
 	bus/softqspi.c \
+	memory/spiflash.c \
+	dht/dht.c \
 	)
-endif
 
 #OBJ = $(PY_CORE_O)
 OBJ += $(PY_O)
@@ -326,15 +346,15 @@ OBJ += $(BUILD)/pins_$(BOARD).o
 #ifneq ($(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
 # and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
-#CFLAGS += -DMICROPY_MODULE_FROZEN_STR
-#endif
+CFLAGS += -DMICROPY_MODULE_FROZEN_STR
+endif
 
-#ifneq ($(FROZEN_MPY_DIR),)
+ifneq ($(FROZEN_MPY_DIR),)
 # To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
 # then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
-#CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
-#CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
-#endif
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+endif
 
 all: $(BUILD)/firmware.elf
 

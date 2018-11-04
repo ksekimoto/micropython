@@ -24,6 +24,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
