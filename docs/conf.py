@@ -30,6 +30,7 @@ ports = OrderedDict((
     ('pyboard', 'the pyboard'),
     ('wipy', 'the WiPy'),
     ('esp8266', 'the ESP8266'),
+    ('rxboard', 'the rxboard'),
 ))
 
 # The members of the html_context dict are available inside topindex.html
