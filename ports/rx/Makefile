@@ -169,6 +169,7 @@ SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
 SRC_C += pyb_i2c.c
 SRC_C += pybthread.c
+SRC_C += rng.c
 SRC_C += rtc.c
 SRC_C += sdcard.c
 SRC_C += spi.c

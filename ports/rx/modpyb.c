@@ -37,17 +37,15 @@
 #include "timer.h"
 #include "extint.h"
 #include "usrsw.h"
-#if 0
 #include "rng.h"
-#endif
 #include "rtc.h"
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
 #if 0
 #include "can.h"
-#include "adc.h"
 #endif
+#include "adc.h"
 #include "storage.h"
 #include "sdcard.h"
 #include "accel.h"
@@ -61,6 +59,15 @@
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
+
+#if 0
+/* Only debugging for STM32 Hard Fault */
+STATIC mp_obj_t pyb_fault_debug(mp_obj_t value) {
+    pyb_hard_fault_debug = mp_obj_is_true(value);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_fault_debug_obj, pyb_fault_debug);
+#endif
 
 #if MICROPY_PY_PYB_LEGACY
 
@@ -116,10 +123,8 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_pyb) },
 
     #if MICROPY_PY_PYB_LEGACY
-#if 0
     { MP_ROM_QSTR(MP_QSTR_bootloader), MP_ROM_PTR(&machine_bootloader_obj) },
     { MP_ROM_QSTR(MP_QSTR_hard_reset), MP_ROM_PTR(&machine_reset_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&machine_info_obj) },
     { MP_ROM_QSTR(MP_QSTR_unique_id), MP_ROM_PTR(&machine_unique_id_obj) },
     { MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&machine_freq_obj) },
@@ -215,10 +220,8 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #endif
 
     #if MICROPY_HW_ENABLE_ADC
-#if 0
     { MP_ROM_QSTR(MP_QSTR_ADC), MP_ROM_PTR(&pyb_adc_type) },
     { MP_ROM_QSTR(MP_QSTR_ADCAll), MP_ROM_PTR(&pyb_adc_all_type) },
-#endif
     #endif
 
 #if MICROPY_HW_ENABLE_DAC
