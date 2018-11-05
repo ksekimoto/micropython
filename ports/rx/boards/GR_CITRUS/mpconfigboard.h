@@ -1,5 +1,7 @@
 #define MICROPY_HW_BOARD_NAME       "GR-CITRUS"
 #define MICROPY_HW_MCU_NAME         "RX631" /* RR5F5631FDDFP */
+#define MICROPY_HW_MCU_SYSCLK       96000000
+#define MICROPY_HW_MCU_PCLK         48000000
 
 #define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)

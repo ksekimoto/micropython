@@ -34,7 +34,7 @@
 #include "py/mphal.h"
 #include "lib/utils/interrupt_char.h"
 #include "uart.h"
-//#include "irq.h"
+#include "irq.h"
 #include "pendsv.h"
 #include "common.h"
 
@@ -121,7 +121,6 @@ void uart_deinit(void) {
         pyb_uart_obj_t *uart_obj = MP_STATE_PORT(pyb_uart_obj_all)[i];
         if (uart_obj != NULL) {
             pyb_uart_deinit(MP_OBJ_FROM_PTR(uart_obj));
-            sci_deinit((int)uart_obj->uart_id);
         }
     }
 }
@@ -443,6 +442,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
         { MP_QSTR_parity, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
         { MP_QSTR_stop, MP_ARG_INT, {.u_int = 1} },
         /* { MP_QSTR_flow, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = UART_HWCONTROL_NONE} }, */
+        { MP_QSTR_flow, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_timeout, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1000} },
         { MP_QSTR_timeout_char, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_read_buf_len, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 64} },
@@ -565,15 +565,15 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
     }
 
     pyb_uart_obj_t *self;
-    if (MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1] == NULL) {
+    if (MP_STATE_PORT(pyb_uart_obj_all)[uart_id] == NULL) {
         // create new UART object
         self = m_new0(pyb_uart_obj_t, 1);
         self->base.type = &pyb_uart_type;
         self->uart_id = uart_id;
-        MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1] = self;
+        MP_STATE_PORT(pyb_uart_obj_all)[uart_id] = self;
     } else {
         // reference existing UART object
-        self = MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1];
+        self = MP_STATE_PORT(pyb_uart_obj_all)[uart_id];
     }
 
     if (n_args > 1 || n_kw > 0) {
@@ -596,6 +596,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_uart_init_obj, 1, pyb_uart_init);
 STATIC mp_obj_t pyb_uart_deinit(mp_obj_t self_in) {
     pyb_uart_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->is_enabled = false;
+    sci_deinit((int)self->uart_id);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_deinit_obj, pyb_uart_deinit);

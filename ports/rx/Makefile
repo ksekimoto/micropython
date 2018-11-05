@@ -153,6 +153,7 @@ SRC_C += flashbdev.c
 SRC_C += gccollect.c
 SRC_C += help.c
 SRC_C += i2c.c
+SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c

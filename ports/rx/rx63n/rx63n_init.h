@@ -23,25 +23,20 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef RX63N_INIT_H_
+#define RX63N_INIT_H_
 
-#include "common.h"
-
-void rx63n_software_reset(void) {
-    SYSTEM.PRCR.WORD = 0xA502;  /* Enable writing to the Software Reset */
-    SYSTEM.SWRR = 0xA501;       /* Software Reset */
-    SYSTEM.PRCR.WORD = 0xA500;  /* Disable writing to the Software Reset */
-}
-
-void rx63n_init(void) {
-    bootstrap();
-    exti_init();
-    exti_deinit();
-    udelay_init();
-#ifdef USE_DBG_PRINT
-    sci_init(DEBUG_CH, SCI_BAUD);
-    //sci_tx_str(DEBUG_CH, "\r\n*** USE_DBG_PRINT ***\r\n");
-    //sci_tx_str(DEBUG_CH, "rx63n_init\r\n");
+#ifdef __cplusplus
+extern "C" {
 #endif
-    //usb_init();
-}
 
+#include "iodefine.h"
+
+void rx63n_software_reset(void);
+void rx63n_init(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* RX63N_INIT_H_ */

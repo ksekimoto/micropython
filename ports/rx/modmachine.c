@@ -60,6 +60,7 @@
 #if 0
 #include "genhdr/pllfreqtable.h"
 #endif
+#include "common.h"
 
 #define PYB_RESET_SOFT      (0)
 #define PYB_RESET_POWER_ON  (1)
@@ -68,28 +69,6 @@
 #define PYB_RESET_DEEPSLEEP (4)
 
 STATIC uint32_t reset_cause;
-
-/// \function disable_irq()
-/// Disable interrupt requests.
-/// Returns the previous IRQ state: `False`/`True` for disabled/enabled IRQs
-/// respectively.  This return value can be passed to enable_irq to restore
-/// the IRQ to its original state.
-STATIC mp_obj_t pyb_disable_irq(void) {
-    return mp_obj_new_bool(disable_irq() == IRQ_STATE_ENABLED);
-}
-MP_DEFINE_CONST_FUN_OBJ_0(pyb_disable_irq_obj, pyb_disable_irq);
-
-/// \function enable_irq(state=True)
-/// Enable interrupt requests.
-/// If `state` is `True` (the default value) then IRQs are enabled.
-/// If `state` is `False` then IRQs are disabled.  The most common use of
-/// this function is to pass it the value returned by `disable_irq` to
-/// exit a critical section.
-STATIC mp_obj_t pyb_enable_irq(uint n_args, const mp_obj_t *arg) {
-    enable_irq((n_args == 0 || mp_obj_is_true(arg[0])) ? IRQ_STATE_ENABLED : IRQ_STATE_DISABLED);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_enable_irq_obj, 0, 1, pyb_enable_irq);
 
 void machine_init(void) {
 }
@@ -102,6 +81,13 @@ void machine_deinit(void) {
 // machine.info([dump_alloc_table])
 // Print out lots of information about the board.
 STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
+    // get and print unique id; 128 bits
+    {
+        byte *id = (byte*)MP_HAL_UNIQUE_ID_ADDRESS;
+        printf("ID=%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x\n",
+            id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7],
+            id[8], id[9], id[10], id[11], id[12], id[13], id[14], id[15]);
+    }
     // to print info about memory
     {
         printf("_etext=%p\n", &etext);
@@ -134,6 +120,22 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
         printf("  1=%u 2=%u m=%u\n", info.num_1block, info.num_2block, info.max_block);
     }
 
+    // free space on flash
+    {
+        #if MICROPY_VFS_FAT
+        for (mp_vfs_mount_t *vfs = MP_STATE_VM(vfs_mount_table); vfs != NULL; vfs = vfs->next) {
+            if (strncmp("/flash", vfs->str, vfs->len) == 0) {
+                // assumes that it's a FatFs filesystem
+                fs_user_mount_t *vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
+                DWORD nclst;
+                f_getfree(&vfs_fat->fatfs, &nclst);
+                printf("LFS free: %u bytes\n", (uint)(nclst * vfs_fat->fatfs.csize * 512));
+                break;
+            }
+        }
+        #endif
+    }
+
     #if MICROPY_PY_THREAD
     pyb_thread_dump();
     #endif
@@ -147,8 +149,16 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj, 0, 1, machine_info);
 
+// Returns a string of 16 bytes (128 bits), which is the unique ID for the MCU.
+STATIC mp_obj_t machine_unique_id(void) {
+    byte *id = (byte*)MP_HAL_UNIQUE_ID_ADDRESS;
+    return mp_obj_new_bytes(id, 16);
+}
+MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);
+
+// Resets the pyboard in a manner similar to pushing the external RESET button.
 STATIC mp_obj_t machine_reset(void) {
-    //NVIC_SystemReset();
+    rx63n_software_reset();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);
@@ -179,6 +189,25 @@ STATIC NORETURN mp_obj_t machine_bootloader(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_bootloader_obj, machine_bootloader);
 
+STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
+    if (n_args == 0) {
+        // get
+        mp_obj_t tuple[] = {
+           mp_obj_new_int(MICROPY_HW_MCU_SYSCLK),
+           mp_obj_new_int(MICROPY_HW_MCU_PCLK),
+        };
+        return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
+    } else {
+        mp_raise_NotImplementedError("machine.freq set not supported yet");
+        return mp_const_none;
+
+    fail:;
+        void NORETURN __fatal_error(const char *msg);
+        __fatal_error("can't change freq");
+    }
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj, 0, 4, machine_freq);
+
 STATIC mp_obj_t machine_sleep(void) {
     return mp_const_none;
 }
@@ -198,19 +227,15 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_cause_obj, machine_reset_cause);
 STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_umachine) },
     { MP_ROM_QSTR(MP_QSTR_info),                MP_ROM_PTR(&machine_info_obj) },
-#if 0
     { MP_ROM_QSTR(MP_QSTR_unique_id),           MP_ROM_PTR(&machine_unique_id_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_reset),               MP_ROM_PTR(&machine_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_soft_reset),          MP_ROM_PTR(&machine_soft_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_bootloader),          MP_ROM_PTR(&machine_bootloader_obj) },
-#if 0
     { MP_ROM_QSTR(MP_QSTR_freq),                MP_ROM_PTR(&machine_freq_obj) },
 #if MICROPY_HW_ENABLE_RNG
     { MP_ROM_QSTR(MP_QSTR_rng),                 MP_ROM_PTR(&pyb_rng_get_obj) },
 #endif
     { MP_ROM_QSTR(MP_QSTR_idle),                MP_ROM_PTR(&pyb_wfi_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_sleep),               MP_ROM_PTR(&machine_sleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_deepsleep),           MP_ROM_PTR(&machine_deepsleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_cause),         MP_ROM_PTR(&machine_reset_cause_obj) },
@@ -228,9 +253,8 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mem32),               MP_ROM_PTR(&machine_mem32_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_Pin),                 MP_ROM_PTR(&pin_type) },
-#if 0
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
-#endif
+
 #if 0
     { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
     { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&pyb_adc_type) },
