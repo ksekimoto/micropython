@@ -2,10 +2,6 @@ Analog to Digital Conversion
 ============================
 
 
-Not implemented yet
--------------------
-
-
 The rxboard has a single pin (separate to the GPIO pins) which can be used to
 read analog voltages and convert them to a digital value.  You can construct
 such an ADC pin object using::

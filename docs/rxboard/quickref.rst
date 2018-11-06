@@ -186,6 +186,16 @@ and is accessed via the :ref:`machine.I2C <machine.I2C>` class::
     i2c.writeto(0x3a, buf)  # write the given buffer to the slave
 
 
+ADC (analog to digital conversion)
+----------------------------------
+
+Sample::
+
+    adc = pyb.ADC(pyb.Pin.board.PIN17)
+    val = adc.read()
+    print(val)
+
+
 WA-MIKAN board
 --------------
 
@@ -241,12 +251,6 @@ Sample::
 
 Limitations
 ===========
-
-
-ADC (analog to digital conversion)
-----------------------------------
-
-Not implemented yet.
 
 
 DAC (digital to analog conversion)
