@@ -24,168 +24,213 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <stdio.h>
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
 #include "rx63n_gpio.h"
 #include "rx63n_ad.h"
 
-static uint8_t ad_pin[] = {
-    /* AN0 - AN7*/
-    114, 115, 116, 117, 118, 119, 110, 111,
-    /* AN000 - AN007*/
-    32, 33, 34, 35, 36, 37, 38, 39,
-    /* AN008 - AN015 */
-    104, 105, 106, 107, 108, 109, 72 ,73,
-    /* AN0015 - AN020 */
-    74, 75, 0, 1, 2, -1
+static uint8_t adc10_pin[] = {
+    PE2,    /* AN0 */
+    PE3,    /* AN1 */
+    PE4,    /* AN2 */
+    PE5,    /* AN3 */
+    PE6,    /* AN4 */
+    PE7,    /* AN5 */
+    PD6,    /* AN6 */
+    PD7,    /* AN7 */
 };
+#define ADC10_SIZE  (sizeof(adc10_pin)/sizeof(uint8_t))
 
-static uint8_t ad_pres_bit[] = {
-    10, 10, 10, 10, 10, 10, 10, 10,
-    12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, -1
+static uint8_t adc12_pin[] = {
+    P40,    /* AN000 */
+    P41,    /* AN001 */
+    P42,    /* AN002 */
+    P43,    /* AN003 */
+    P44,    /* AN004 */
+    P45,    /* AN005 */
+    P46,    /* AN006 */
+    P47,    /* AN007 */
+    PD0,    /* AN008 */
+    PD1,    /* AN009 */
+    PD2,    /* AN010 */
+    PD3,    /* AN011 */
+    PD4,    /* AN012 */
+    PD5,    /* AN013 */
+    P90,    /* AN014 */
+    P91,    /* AN015 */
+    P92,    /* AN016 */
+    P93,    /* AN017 */
+    P00,    /* AN018 */
+    P01,    /* AN019 */
+    P02,    /* AN020 */
 };
+#define ADC12_SIZE  (sizeof(adc12_pin)/sizeof(uint8_t))
 
-static uint8_t ad_channel[] = {
-    0, 1, 2, 3, 4, 5, 6, 7,
-    0, 1, 2, 3, 4, 5, 6, 7,
-    8, 9, 10, 11, 12, 13, 14, 15,
-    16, 17, 18, 19, 20, -1
-};
-
-int32_t ad_get_pres_bit(uint32_t pin) {
+int32_t rx_adc_get_resolution(uint8_t pin) {
     int i;
-    for (i = 0; i < 29; i++) {
-        if (ad_pin[i] == (uint8_t)pin) {
-            return (uint32_t)ad_pres_bit[i];
+    int res = -1;
+    for (i = 0; i < ADC10_SIZE; i++) {
+        if (adc10_pin[i] == pin) {
+            return 10;
         }
     }
-    return -1;
-}
-
-int32_t ad_get_channel(uint32_t pin) {
-    int i;
-    for (i = 0; i < 29; i++) {
-        if (ad_pin[i] == (uint8_t)pin) {
-            return (uint32_t)ad_channel[i];
+    for (i = 0; i < ADC12_SIZE; i++) {
+        if (adc12_pin[i] == pin) {
+            return 12;
         }
     }
-    return -1;
+    return res;
 }
 
-bool ad_enable_sub(uint32_t pin, uint32_t pres_bit) {
+int32_t rx_adc_get_channel(uint8_t pin) {
+    int i;
+    int res = -1;
+    for (i = 0; i < ADC10_SIZE; i++) {
+        if (adc10_pin[i] == pin) {
+            return i;
+        }
+    }
+    for (i = 0; i < ADC12_SIZE; i++) {
+        if (adc12_pin[i] == pin) {
+            return i;
+        }
+    }
+    return res;
+}
+
+void rx_adc10_enable(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     uint8_t bit = 1 << (pin & 7);
 
-    if (ad_get_channel(pin) == -1) {
-        return false;
-    }
-    if (!((pres_bit == 10) || (pres_bit ==12))) {
-        return false;
-    }
-    if (pres_bit == 10) {
-        SYSTEM.PRCR.WORD = 0xA502;
-        /* 10 bit AD start */
-        SYSTEM.MSTPCRA.BIT.MSTPA23 = 0;
-        SYSTEM.PRCR.WORD = 0xA500;
-        /* Enable write to PFSWE */
-        MPC.PWPR.BIT.B0WI = 0;
-        /* Enable write to PFS */
-        MPC.PWPR.BIT.PFSWE = 1;
-        _PXXPFS(port, bit) |= 0x80;
-        _PMR(port) |= mask;
-        /* Disable write to PFSWE and PFS*/
-        MPC.PWPR.BYTE = 0x80;
-        // software trigger, PCLK, single mode
-        AD.ADCR.BYTE = 0x0C;
-        // LSB alignment
-        AD.ADCR2.BIT.DPSEL = 0;
-    } else if (pres_bit == 12) {
-        SYSTEM.PRCR.WORD = 0xA502;
-        /* 12 bit AD start */
-        SYSTEM.MSTPCRA.BIT.MSTPA17 = 0;
-        SYSTEM.PRCR.WORD = 0xA500;
-        /* Enable write to PFSWE */
-        MPC.PWPR.BIT.B0WI = 0;
-        MPC.PWPR.BIT.PFSWE = 1;
-        _PXXPFS(port, bit) |= 0x80;
-        _PMR(port) |= mask;
-        /* Disable write to PFSWE and PFS*/
-        MPC.PWPR.BYTE = 0x80;
-        S12AD.ADCSR.BYTE = 0x0;
-        S12AD.ADCER.BIT.ADRFMT = 0;
-    }
-    return true;
-}
-
-bool ad_enable(uint32_t pin) {
-    int32_t pres_bit = ad_get_pres_bit(pin);
-    if (pres_bit == -1) {
-        return false;
-    } else {
-        ad_enable_sub(pin, (uint32_t)pres_bit);
-    }
-}
-
-void ad_disable_sub(uint32_t pin, uint32_t pres_bit) {
-    uint8_t port = GPIO_PORT(pin);
-    uint8_t mask = GPIO_MASK(pin);
-    uint8_t bit = 1 << (pin & 7);
-
-    if (!((pres_bit == 10) || (pres_bit ==12))) {
-        return false;
-    }
+    SYSTEM.PRCR.WORD = 0xA502;
+    /* 10 bit AD start */
+    SYSTEM.MSTPCRA.BIT.MSTPA23 = 0;
+    SYSTEM.PRCR.WORD = 0xA500;
     /* Enable write to PFSWE */
     MPC.PWPR.BIT.B0WI = 0;
     /* Enable write to PFS */
     MPC.PWPR.BIT.PFSWE = 1;
-    if (pres_bit == 10) {
-        _PXXPFS(port, bit) &= ~0x80;
-        _PMR(port) &= ~mask;
-    } else if (pres_bit == 12) {
-        _PXXPFS(port, bit) &= ~0x80;
-        _PMR(port) &= ~mask;
+    _PXXPFS(port, bit) |= 0x80;
+    _PMR(port) |= mask;
+    /* Disable write to PFSWE and PFS*/
+    MPC.PWPR.BYTE = 0x80;
+    // software trigger, PCLK, single mode
+    AD.ADCR.BYTE = 0x0C;
+    // LSB alignment
+    AD.ADCR2.BIT.DPSEL = 0;
+}
+
+void rx_adc12_enable(uint8_t pin) {
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    uint8_t bit = 1 << (pin & 7);
+    SYSTEM.PRCR.WORD = 0xA502;
+    /* 12 bit AD start */
+    SYSTEM.MSTPCRA.BIT.MSTPA17 = 0;
+    SYSTEM.PRCR.WORD = 0xA500;
+    /* Enable write to PFSWE */
+    MPC.PWPR.BIT.B0WI = 0;
+    MPC.PWPR.BIT.PFSWE = 1;
+    _PXXPFS(port, bit) |= 0x80;
+    _PMR(port) |= mask;
+    /* Disable write to PFSWE and PFS*/
+    MPC.PWPR.BYTE = 0x80;
+    S12AD.ADCSR.BYTE = 0x0;
+    S12AD.ADCER.BIT.ADRFMT = 0;
+}
+
+bool rx_adc_enable(uint8_t pin) {
+    int resolution;
+    if (rx_adc_get_channel(pin) == -1) {
+        return false;
     }
+    resolution = rx_adc_get_resolution(pin);
+    if (resolution == 10) {
+        rx_adc10_enable(pin);
+    } else {
+        rx_adc12_enable(pin);
+    }
+    return true;
+}
+
+void rx_adc10_disable(uint8_t pin) {
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    uint8_t bit = 1 << (pin & 7);
+
+    /* Enable write to PFSWE */
+    MPC.PWPR.BIT.B0WI = 0;
+    /* Enable write to PFS */
+    MPC.PWPR.BIT.PFSWE = 1;
+    _PXXPFS(port, bit) &= ~0x80;
+    _PMR(port) &= ~mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;
 }
 
-void ad_disable(uint32_t pin) {
-    int32_t pres_bit = ad_get_pres_bit(pin);
-    if (pres_bit == -1) {
-        return;
+void rx_adc12_disable(uint8_t pin) {
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    uint8_t bit = 1 << (pin & 7);
+
+    /* Enable write to PFSWE */
+    MPC.PWPR.BIT.B0WI = 0;
+    /* Enable write to PFS */
+    MPC.PWPR.BIT.PFSWE = 1;
+    _PXXPFS(port, bit) &= ~0x80;
+    _PMR(port) &= ~mask;
+    /* Disable write to PFSWE and PFS*/
+    MPC.PWPR.BYTE = 0x80;
+}
+
+bool rx_adc_disable(uint8_t pin) {
+    int resolution;
+    if (rx_adc_get_channel(pin) == -1) {
+        return false;
+    }
+    resolution = rx_adc_get_resolution(pin);
+    if (resolution == 10) {
+        rx_adc10_disable(pin);
     } else {
-        ad_disable_sub(pin, (uint32_t)pres_bit);
+        rx_adc12_disable(pin);
     }
+    return true;
 }
 
-uint32_t ad_read_sub(uint32_t pin, uint32_t pres_bit, uint32_t channel) {
-    int32_t value32 = 0;
-    uint16_t off = channel;
-    if (pres_bit == 10) {
-        AD.ADCSR.BYTE = 0x20 | off;
-        while (AD.ADCSR.BIT.ADST);
-        value32 = *((unsigned short*)&AD.ADDRA + off);
-    } else if (pres_bit == 12) {
-        S12AD.ADANS0.WORD |= (1 << off);
-        S12AD.ADCSR.BIT.ADST = 1;
-        while (S12AD.ADCSR.BIT.ADST);
-        value32 = *((unsigned short*)&S12AD.ADDR0 + off);
+uint16_t rx_adc10_read(uint8_t pin) {
+    uint16_t value16 = 0;
+    uint8_t off = (uint8_t)rx_adc_get_channel(pin);
+    AD.ADCSR.BYTE = 0x20 | off;
+    while (AD.ADCSR.BIT.ADST) {
+        ;
     }
-    return (uint32_t)value32;
+    value16 = *((uint16_t *)&AD.ADDRA + off);
+    return (uint16_t)value16;
 }
 
-uint32_t ad_read(uint32_t pin) {
-    int32_t pres_bit = ad_get_pres_bit(pin);
-    int32_t channel = ad_get_channel(pin);
-    int32_t value32 = 0;
-    if (pres_bit != -1) {
-        value32 = ad_read_sub(pin, (uint32_t)pres_bit, (uint32_t)channel);
+uint16_t rx_adc12_read(uint8_t pin) {
+    uint16_t value16 = 0;
+    uint16_t off = (uint8_t)rx_adc_get_channel(pin);
+    S12AD.ADANS0.WORD |= (1 << off);
+    S12AD.ADCSR.BIT.ADST = 1;
+    while (S12AD.ADCSR.BIT.ADST) {
+        ;
     }
-    return value32;
+    value16 = *((unsigned short*)&S12AD.ADDR0 + off);
+    return (uint16_t)value16;
+}
+
+
+uint16_t rx_adc_read(uint8_t pin) {
+    uint16_t value16;
+    int resolution = rx_adc_get_resolution(pin);
+    if (resolution == 10) {
+        value16 = rx_adc10_read(pin);
+    } else {
+        value16 = rx_adc12_read(pin);
+    }
+    return value16;
 }

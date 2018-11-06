@@ -59,3 +59,5 @@
 #define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
 #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
+
+#define MICROPY_PY_LWIP (1)

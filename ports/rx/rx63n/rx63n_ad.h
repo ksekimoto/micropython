@@ -31,12 +31,17 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
-
-bool ad_enable(uint32_t pin);
-void ad_disable(uint32_t pin);
-uint32_t ad_read(uint32_t pin);
+int32_t rx_adc_get_resolution(uint8_t pin);
+int32_t rx_adc_get_channel(uint8_t pin);
+void rx_adc10_enable(uint8_t pin);
+void rx_adc12_enable(uint8_t pin);
+bool rx_adc_enable(uint8_t pin);
+void rx_adc10_disable(uint8_t pin);
+void rx_adc12_disable(uint8_t pin);
+bool rx_adc_disable(uint8_t pin);
+uint16_t rx_adc10_read(uint8_t pin);
+uint16_t rx_adc12_read(uint8_t pin);
+uint16_t rx_adc_read(uint8_t pin);
 
 #ifdef __cplusplus
 }

@@ -156,8 +156,12 @@ SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
+SRC_C += modnetwork.c
+#SRC_C += modnwcc3k.c
+#SRC_C += modnwwiznet5k.c
 SRC_C += modpyb.c
 SRC_C += moduos.c
+SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpthreadport.c
@@ -173,6 +177,7 @@ SRC_C += rng.c
 SRC_C += rtc.c
 SRC_C += sdcard.c
 SRC_C += spi.c
+#SRC_C += spibdev.c
 SRC_C += storage.c
 SRC_C += systick.c
 SRC_C += timer.c
@@ -237,6 +242,7 @@ SRC_S += gchelper.S
 
 SRC_LIB += $(addprefix lib/, libc/string0.c)
 SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
+SRC_LIB += $(addprefix lib/, netutils/netutils.c)
 SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
 SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
 SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
@@ -324,6 +330,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
 EXTMOD_SRC_C = $(addprefix extmod/,\
+	modlwip.c \
 	modonewire.c \
         )
 
@@ -335,6 +342,83 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 	)
 
 #OBJ = $(PY_CORE_O)
+ifneq ($(MICROPY_PY_WIZNET5K),0)
+WIZNET5K_DIR=drivers/wiznet5k
+INC += -I$(TOP)/$(WIZNET5K_DIR)
+CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
+SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
+	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
+	ethernet/wizchip_conf.c \
+	ethernet/socket.c \
+	internet/dns/dns.c \
+	)
+endif
+
+# for CC3000 module
+ifeq ($(MICROPY_PY_CC3K),1)
+CC3000_DIR=drivers/cc3000
+INC += -I$(TOP)/$(CC3000_DIR)/inc
+CFLAGS_MOD += -DMICROPY_PY_CC3K=1
+SRC_MOD += modnwcc3k.c
+SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
+	cc3000_common.c \
+	evnt_handler.c \
+	hci.c \
+	netapp.c \
+	nvmem.c \
+	security.c \
+	socket.c \
+	wlan.c \
+	ccspi.c \
+	inet_ntop.c \
+	inet_pton.c \
+	patch.c \
+	patch_prog.c \
+	)
+endif
+
+LWIP_DIR = lib/lwip/src
+INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
+$(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
+SRC_MOD += $(addprefix $(LWIP_DIR)/,\
+	core/def.c \
+	core/dns.c \
+	core/inet_chksum.c \
+	core/init.c \
+	core/ip.c \
+	core/mem.c \
+	core/memp.c \
+	core/netif.c \
+	core/pbuf.c \
+	core/raw.c \
+	core/stats.c \
+	core/sys.c \
+	core/tcp.c \
+	core/tcp_in.c \
+	core/tcp_out.c \
+	core/timeouts.c \
+	core/udp.c \
+	core/ipv4/autoip.c \
+	core/ipv4/dhcp.c \
+	core/ipv4/etharp.c \
+	core/ipv4/icmp.c \
+	core/ipv4/igmp.c \
+	core/ipv4/ip4_addr.c \
+	core/ipv4/ip4.c \
+	core/ipv4/ip4_frag.c \
+	core/ipv6/dhcp6.c \
+	core/ipv6/ethip6.c \
+	core/ipv6/icmp6.c \
+	core/ipv6/inet6.c \
+	core/ipv6/ip6_addr.c \
+	core/ipv6/ip6.c \
+	core/ipv6/ip6_frag.c \
+	core/ipv6/mld6.c \
+	core/ipv6/nd6.c \
+	netif/ethernet.c \
+	)
+OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
@@ -342,6 +426,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 

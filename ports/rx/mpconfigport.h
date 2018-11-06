@@ -39,7 +39,7 @@
 #define MICROPY_ALLOC_PATH_MAX      (128)
 
 // emitters
-#define MICROPY_PERSISTENT_CODE_LOAD (0)
+#define MICROPY_PERSISTENT_CODE_LOAD (1)
 
 // compiler configuration
 #define MICROPY_COMP_MODULE_CONST   (1)
@@ -131,7 +131,7 @@
 #define MICROPY_PY_UBINASCII        (1)
 #define MICROPY_PY_URANDOM          (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
-#define MICROPY_PY_USELECT          (0)
+#define MICROPY_PY_USELECT          (1)
 #define MICROPY_PY_UTIMEQ           (1)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (1)
@@ -148,12 +148,12 @@
 #define MICROPY_PY_MACHINE_SPI_MAKE_NEW machine_hard_spi_make_new
 #define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
-#define MICROPY_PY_FRAMEBUF         (0)
+#define MICROPY_PY_FRAMEBUF         (1)
 #ifndef MICROPY_PY_USOCKET
-#define MICROPY_PY_USOCKET          (0)
+#define MICROPY_PY_USOCKET          (1)
 #endif
 #ifndef MICROPY_PY_NETWORK
-#define MICROPY_PY_NETWORK          (0)
+#define MICROPY_PY_NETWORK          (1)
 #endif
 
 // fatfs configuration used in ffconf.h
@@ -189,13 +189,10 @@ extern const struct _mp_obj_module_t mp_module_uheapq;
 extern const struct _mp_obj_module_t mp_module_uhashlib;
 extern const struct _mp_obj_module_t mp_module_uos;
 extern const struct _mp_obj_module_t mp_module_utime;
-#if 0
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
-#endif
 extern const struct _mp_obj_module_t mp_module_onewire;
 
-#if 0
 #if MICROPY_PY_USOCKET && MICROPY_PY_LWIP
 // usocket implementation provided by lwIP
 #define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_lwip) },
@@ -218,7 +215,6 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #else
 #define NETWORK_BUILTIN_MODULE
 #endif
-#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) }, \
@@ -227,8 +223,8 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
-    /* SOCKET_BUILTIN_MODULE */ \
-    /* NETWORK_BUILTIN_MODULE */ \
+    SOCKET_BUILTIN_MODULE \
+    NETWORK_BUILTIN_MODULE \
     { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, \
 
 /* by including extmod folder, the following modules can be used.
@@ -255,8 +251,8 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_random), MP_ROM_PTR(&mp_module_urandom) }, \
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, */ \
-    /* SOCKET_BUILTIN_MODULE_WEAK_LINKS */ \
+    { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, \
+    SOCKET_BUILTIN_MODULE_WEAK_LINKS \
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_errno), MP_ROM_PTR(&mp_module_uerrno) }, \
@@ -296,7 +292,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     /* struct _pyb_can_obj_t *pyb_can_obj_all[2]; */ \
     \
     /* list of registered NICs */ \
-    /* mp_obj_list_t mod_network_nic_list; */ \
+    mp_obj_list_t mod_network_nic_list; \
 
 // type definitions for the specific machine
 
