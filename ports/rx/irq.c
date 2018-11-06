@@ -34,6 +34,10 @@
 uint32_t irq_stats[FPU_IRQn + 1] = {0};
 #endif
 
+void __attribute__((noreturn)) __WFI(void) {
+    __asm__("wait");
+}
+
 /// \function wfi()
 /// Wait for an interrupt.
 /// This executies a `wfi` instruction which reduces power consumption
