@@ -99,19 +99,20 @@ See :ref:`pyb.Pin <pyb.Pin>`. ::
 
 GR-CITRUS Pin Information ::
 
-    PIN0    P20     ExtInt
+                            PWM
+    PIN0    P20     ExtInt  MTIOC1A
     PIN1    P21     ExtInt
-    PIN2    PC0     ExtInt
-    PIN3    PC1     ExtInt
+    PIN2    PC0     ExtInt  MTIOC3C
+    PIN3    PC1     ExtInt  MTIOC3C
     PIN4    PC2
     PIN5    P50
     PIN6    P52
-    PIN7    P32     ExtInt
+    PIN7    P32     ExtInt  MTIOC0C
     PIN8    P33     ExtInt
     PIN9    P05     ExtInt
     PIN10   PC4
-    PIN11   PC6     ExtInt
-    PIN12   PC7     ExtInt
+    PIN11   PC6     ExtInt  MTIOC3C
+    PIN12   PC7     ExtInt  MTIOC3A
     PIN13   PC5
     PIN14   P40     ExtInt
     PIN15   P41     ExtInt
@@ -120,7 +121,7 @@ GR-CITRUS Pin Information ::
     PIN18   P12     ExtInt
     PIN19   P13     ExtInt
     NMI P35
-    LED PA0
+    LED PA0                 MTIOC4A
 
 
 External interrupts
@@ -196,6 +197,30 @@ Sample::
     print(val)
 
 
+PWM (pulse width modulation)
+----------------------------
+
+Sample::
+
+    pin7=pyb.Pin(pyb.Pin('PIN7'))
+    pwm=pyb.PWM(pin7)
+
+    led=pyb.Pin(pyb.Pin('LED'))
+    pwm=pyb.PWM(led)
+    pwm.freq(50)
+    pwm.duty(10)
+
+
+DAC (digital to analog conversion)
+----------------------------------
+
+Sample::
+
+    dac = pyb.DAC(pyb.Pin('PIN9'))
+    dac.write(512)
+    dac.write(256)
+
+
 WA-MIKAN board
 --------------
 
@@ -251,18 +276,6 @@ Sample::
 
 Limitations
 ===========
-
-
-DAC (digital to analog conversion)
-----------------------------------
-
-Not implemented yet.
-
-
-PWM (pulse width modulation)
-----------------------------
-
-Not implemented yet.
 
 
 RTC (real time clock)
