@@ -221,6 +221,18 @@ Sample::
     dac.write(256)
 
 
+RTC (real time clock)
+---------------------
+
+Sample::
+
+    rtc = pyb.RTC()
+    rtc.init()
+    rtc.datetime((2018,11,8,5,10,10,10,0))
+    rtc.datetime()
+    (2018, 11, 8, 5, 10, 10, 14, 0)
+
+
 WA-MIKAN board
 --------------
 
@@ -276,12 +288,6 @@ Sample::
 
 Limitations
 ===========
-
-
-RTC (real time clock)
----------------------
-
-Not implemented yet.
 
 
 Servo control
