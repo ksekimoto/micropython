@@ -208,6 +208,7 @@ SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_i2c.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_pwm.c
+SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_rtc.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c

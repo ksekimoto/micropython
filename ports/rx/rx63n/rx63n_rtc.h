@@ -24,43 +24,32 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef RX63N_RTC_H_
+#define RX63N_RTC_H_
 
-#ifndef TRUE
-#define TRUE    1
-#endif
+#define RTC_PERIOD_MINUTE   0x00
+#define RTC_PERIOD_SECOND   0x01
 
-#ifndef FALSE
-#define FALSE   0
-#endif
+typedef struct {
+    unsigned short  year;
+    unsigned char   month;
+    unsigned char   date;
+    unsigned char   weekday;
+    unsigned char   hour;
+    unsigned char   minute;
+    unsigned char   second;
+} rtc_t;
 
-#define SUCCESS  0
-#define ERROR    -1
+typedef void (*rx_rtc_cb_t)(void);
 
-#ifndef NULL
-#define NULL 0
-#endif
+int rx_rtc_get_year(void);
+int rx_rtc_get_month(void);
+int rx_rtc_get_date(void);
+int rx_rtc_get_hour(void);
+int rx_rtc_get_minute(void);
+int rx_rtc_get_second(void);
+int rx_rtc_get_weekday(void);
+void rx_rtc_init(void);
+void rx_rtc_deinit(void);
 
-#include "stdint.h"
-#include "stdbool.h"
-#include "iodefine.h"
-#include "rx63n_adc.h"
-#include "rx63n_config.h"
-#include "rx63n_dac.h"
-#include "rx63n_exti.h"
-#include "rx63n_flash.h"
-#include "rx63n_gpio.h"
-#include "rx63n_i2c.h"
-#include "rx63n_init.h"
-#include "rx63n_pwm.h"
-#include "rx63n_rtc.h"
-#include "rx63n_sci.h"
-#include "rx63n_spi.h"
-#include "rx63n_timer.h"
-#include "rx63n_utils.h"
-#ifdef USE_DBG_PRINT
-#include "debug_printf.h"
-#endif
-
-#endif /* COMMON_H_ */
+#endif /* RX63N_RTC_H_ */

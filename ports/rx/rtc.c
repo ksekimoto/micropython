@@ -58,56 +58,12 @@ static mp_uint_t rtc_info;
 #define RTC_SYNCH_PREDIV  (0x00ff)
 #endif
 
-#if defined(MICROPY_HW_RTC_USE_LSE) && MICROPY_HW_RTC_USE_LSE
-STATIC bool rtc_use_lse = true;
-#else
-STATIC bool rtc_use_lse = false;
-#endif
-STATIC uint32_t rtc_startup_tick;
-STATIC bool rtc_need_init_finalise = false;
-
-// check if LSE exists
-// not well tested, should probably be removed
-STATIC bool lse_magic(void) {
-#if 0
-    uint32_t mode_in = GPIOC->MODER & 0x3fffffff;
-    uint32_t mode_out = mode_in | 0x40000000;
-    GPIOC->MODER = mode_out;
-    GPIOC->OTYPER &= 0x7fff;
-    GPIOC->BSRRH = 0x8000;
-    GPIOC->OSPEEDR &= 0x3fffffff;
-    GPIOC->PUPDR &= 0x3fffffff;
-    int i = 0xff0;
-    __IO int d = 0;
-    uint32_t tc = 0;
-    __IO uint32_t j;
-    while (i) {
-        GPIOC->MODER = mode_out;
-        GPIOC->MODER = mode_in;
-        for (j = 0; j < d; j++) ;
-        i--;
-        if ((GPIOC->IDR & 0x8000) == 0) {
-            tc++;
-        }
-    }
-    return (tc < 0xff0)?true:false;
-#else
-    return false;
-#endif
-}
-
-void rtc_init_start(bool force_init) {
-    // ToDo
-}
-
-void rtc_init_finalise() {
-    if (!rtc_need_init_finalise) {
-        return;
-    }
-}
-
 #define PYB_LSE_TIMEOUT_VALUE 1000  // ST docs spec 2000 ms LSE startup, seems to be too pessimistic
 #define PYB_LSI_TIMEOUT_VALUE 500   // this is way too pessimistic, typ. < 1ms
+
+void rtc_init_finalise(void) {
+
+}
 
 /******************************************************************************/
 // MicroPython bindings
@@ -130,8 +86,7 @@ STATIC mp_obj_t pyb_rtc_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
 // force rtc to re-initialise
 mp_obj_t pyb_rtc_init(mp_obj_t self_in) {
-    rtc_init_start(true);
-    rtc_init_finalise();
+    rx_rtc_init();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_init_obj, pyb_rtc_init);
@@ -180,23 +135,16 @@ uint32_t rtc_us_to_subsec(uint32_t us) {
 #endif
 
 mp_obj_t pyb_rtc_datetime(size_t n_args, const mp_obj_t *args) {
-    rtc_init_finalise();
     if (n_args == 1) {
-        // get date and time
-        // note: need to call get time then get date to correctly access the registers
-        RTC_DateTypeDef date;
-        RTC_TimeTypeDef time;
-        //HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
-        //HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
         mp_obj_t tuple[8] = {
-            mp_obj_new_int(2000 + date.Year),
-            mp_obj_new_int(date.Month),
-            mp_obj_new_int(date.Date),
-            mp_obj_new_int(date.WeekDay),
-            mp_obj_new_int(time.Hours),
-            mp_obj_new_int(time.Minutes),
-            mp_obj_new_int(time.Seconds),
-            mp_obj_new_int(rtc_subsec_to_us(time.SubSeconds)),
+            mp_obj_new_int(rx_rtc_get_year()),
+            mp_obj_new_int(rx_rtc_get_month()),
+            mp_obj_new_int(rx_rtc_get_date()),
+            mp_obj_new_int(rx_rtc_get_weekday()),
+            mp_obj_new_int(rx_rtc_get_hour()),
+            mp_obj_new_int(rx_rtc_get_minute()),
+            mp_obj_new_int(rx_rtc_get_second()),
+            mp_obj_new_int(0),
         };
         return mp_obj_new_tuple(8, tuple);
     } else {
@@ -204,6 +152,15 @@ mp_obj_t pyb_rtc_datetime(size_t n_args, const mp_obj_t *args) {
         mp_obj_t *items;
         mp_obj_get_array_fixed_n(args[1], 8, &items);
         // ToDo
+        rtc_t tm;
+        tm.year = mp_obj_get_int(items[0]) - 2000;
+        tm.month = mp_obj_get_int(items[1]);
+        tm.date = mp_obj_get_int(items[2]);
+        tm.weekday = mp_obj_get_int(items[3]);
+        tm.hour = mp_obj_get_int(items[4]);
+        tm.minute = mp_obj_get_int(items[5]);
+        tm.second = mp_obj_get_int(items[6]);
+        rx_rtc_set_time(&tm);
         return mp_const_none;
     }
 }
@@ -230,10 +187,10 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_calibration_obj, 1, 2, pyb_rtc_calib
 
 STATIC const mp_rom_map_elem_t pyb_rtc_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_rtc_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_rtc_info_obj) },
+    /* { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_rtc_info_obj) }, */
     { MP_ROM_QSTR(MP_QSTR_datetime), MP_ROM_PTR(&pyb_rtc_datetime_obj) },
-    { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&pyb_rtc_wakeup_obj) },
-    { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&pyb_rtc_calibration_obj) },
+    /* { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&pyb_rtc_wakeup_obj) }, */
+    /* { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&pyb_rtc_calibration_obj) }, */
 };
 STATIC MP_DEFINE_CONST_DICT(pyb_rtc_locals_dict, pyb_rtc_locals_dict_table);
 
