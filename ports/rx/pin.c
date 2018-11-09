@@ -343,7 +343,6 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
-#if 0
     // get io mode
     uint mode = args[0].u_int;
     if (!IS_GPIO_MODE(mode)) {
@@ -359,6 +358,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid pin pull: %d", pull));
     }
 
+#if 0
     // get af (alternate function); alt-arg overrides af-arg
     mp_int_t af = args[4].u_int;
     if (af == -1) {
@@ -367,15 +367,12 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     if ((mode == GPIO_MODE_AF_PP || mode == GPIO_MODE_AF_OD) && !IS_GPIO_AF(af)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid pin af: %d", af));
     }
-
-    // enable the peripheral clock for the port of this pin
-    mp_hal_gpio_clock_enable(self->gpio);
+#endif
 
     // if given, set the pin value before initialising to prevent glitches
     if (args[3].u_obj != MP_OBJ_NULL) {
         mp_hal_pin_write(self, mp_obj_is_true(args[3].u_obj));
     }
-#endif
 
     return mp_const_none;
 }

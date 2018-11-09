@@ -61,3 +61,5 @@
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
 #define MICROPY_PY_LWIP (1)
+
+#define MICROPY_HW_ENABLE_DAC   (1)

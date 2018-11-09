@@ -29,7 +29,7 @@
 #include "iodefine.h"
 #include "interrupt_handlers.h"
 #include "rx63n_gpio.h"
-#include "rx63n_ad.h"
+#include "rx63n_adc.h"
 
 static uint8_t adc10_pin[] = {
     PE2,    /* AN0 */
@@ -103,8 +103,6 @@ int32_t rx_adc_get_channel(uint8_t pin) {
 void rx_adc10_enable(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    uint8_t bit = 1 << (pin & 7);
-
     SYSTEM.PRCR.WORD = 0xA502;
     /* 10 bit AD start */
     SYSTEM.MSTPCRA.BIT.MSTPA23 = 0;
@@ -113,7 +111,7 @@ void rx_adc10_enable(uint8_t pin) {
     MPC.PWPR.BIT.B0WI = 0;
     /* Enable write to PFS */
     MPC.PWPR.BIT.PFSWE = 1;
-    _PXXPFS(port, bit) |= 0x80;
+    _PXXPFS(port, pin & 7) |= 0x80;
     _PMR(port) |= mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;
@@ -126,7 +124,6 @@ void rx_adc10_enable(uint8_t pin) {
 void rx_adc12_enable(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    uint8_t bit = 1 << (pin & 7);
     SYSTEM.PRCR.WORD = 0xA502;
     /* 12 bit AD start */
     SYSTEM.MSTPCRA.BIT.MSTPA17 = 0;
@@ -134,7 +131,7 @@ void rx_adc12_enable(uint8_t pin) {
     /* Enable write to PFSWE */
     MPC.PWPR.BIT.B0WI = 0;
     MPC.PWPR.BIT.PFSWE = 1;
-    _PXXPFS(port, bit) |= 0x80;
+    _PXXPFS(port, pin & 7) |= 0x80;
     _PMR(port) |= mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;
@@ -159,13 +156,11 @@ bool rx_adc_enable(uint8_t pin) {
 void rx_adc10_disable(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    uint8_t bit = 1 << (pin & 7);
-
     /* Enable write to PFSWE */
     MPC.PWPR.BIT.B0WI = 0;
     /* Enable write to PFS */
     MPC.PWPR.BIT.PFSWE = 1;
-    _PXXPFS(port, bit) &= ~0x80;
+    _PXXPFS(port, pin & 7) &= ~0x80;
     _PMR(port) &= ~mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;
@@ -174,13 +169,11 @@ void rx_adc10_disable(uint8_t pin) {
 void rx_adc12_disable(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    uint8_t bit = 1 << (pin & 7);
-
     /* Enable write to PFSWE */
     MPC.PWPR.BIT.B0WI = 0;
     /* Enable write to PFS */
     MPC.PWPR.BIT.PFSWE = 1;
-    _PXXPFS(port, bit) &= ~0x80;
+    _PXXPFS(port, pin & 7) &= ~0x80;
     _PMR(port) &= ~mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;

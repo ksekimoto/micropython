@@ -51,14 +51,15 @@
 #include "accel.h"
 #if 0
 #include "servo.h"
-#include "dac.h"
 #endif
+#include "dac.h"
 #include "lcd.h"
 #include "usb.h"
 #include "portmodules.h"
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
+#include "pwm.h"
 
 #if 0
 /* Only debugging for STM32 Hard Fault */
@@ -218,6 +219,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #if MICROPY_HW_ENABLE_CAN
     { MP_ROM_QSTR(MP_QSTR_CAN), MP_ROM_PTR(&pyb_can_type) },
 #endif
+    { MP_ROM_QSTR(MP_QSTR_PWM), MP_ROM_PTR(&pyb_pwm_type) },
 
     #if MICROPY_HW_ENABLE_ADC
     { MP_ROM_QSTR(MP_QSTR_ADC), MP_ROM_PTR(&pyb_adc_type) },

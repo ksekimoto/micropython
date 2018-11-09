@@ -32,11 +32,22 @@ extern "C" {
 
 #include "iodefine.h"
 
-enum PWM_SCALE_FACTOR {
-    PWM_MILLISECONDS = 1000,
-    PWM_MICROSECONDS = 1000000,
-    PWM_NANOSECONDS  = 1000000000,
-};
+#define PWM_CHANNEL_SIZE    5
+#define PWM_DEFAULT_FREQ    (20.0f)
+#define PWM_DEFAULT_DUTY    (0.5f)
+
+uint8_t rx_pwm_get_mtu_channel(uint8_t pin_idx);
+void rx_pwm_set_freq(uint8_t pin_idx, float freq);
+float rx_pwm_get_freq(uint8_t pin_idx);
+void rx_pwm_set_duty(uint8_t pin_idx, float duty);
+float rx_pwm_get_duty(uint8_t pin_idx);
+void rx_pwm_start(uint8_t pin_idx);
+void rx_pwm_stop(uint8_t pin_idx);
+void rx_pwm_pin_init_freq(uint8_t pin_idx, float freq, float percent);
+void rx_pwm_pin_init(uint8_t pin_idx);
+void rx_pwm_pin_deinit(uint8_t pin_idx);
+void rx_pwm_init(void);
+void rx_pwm_deinit(void);
 
 #ifdef __cplusplus
 }

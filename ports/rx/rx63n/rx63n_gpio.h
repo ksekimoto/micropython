@@ -93,6 +93,24 @@ enum AF_INDEX {
 #define  GPIO_PULLUP            14
 #define  GPIO_PULLDOWN          15
 
+#define IS_GPIO_MODE(MODE) (((MODE) == GPIO_MODE_INPUT)              ||\
+                            ((MODE) == GPIO_MODE_OUTPUT_PP)          ||\
+                            ((MODE) == GPIO_MODE_OUTPUT_OD)          ||\
+                            ((MODE) == GPIO_MODE_AF_PP)              ||\
+                            ((MODE) == GPIO_MODE_AF_OD)              ||\
+                            ((MODE) == GPIO_MODE_IT_RISING)          ||\
+                            ((MODE) == GPIO_MODE_IT_FALLING)         ||\
+                            ((MODE) == GPIO_MODE_IT_RISING_FALLING)  ||\
+                            ((MODE) == GPIO_MODE_EVT_RISING)         ||\
+                            ((MODE) == GPIO_MODE_EVT_FALLING)        ||\
+                            ((MODE) == GPIO_MODE_EVT_RISING_FALLING) ||\
+                            ((MODE) == GPIO_MODE_ANALOG))
+
+#define IS_GPIO_PULL(PULL) (((PULL) == GPIO_NOPULL) || ((PULL) == GPIO_PULLUP) || \
+                            ((PULL) == GPIO_PULLDOWN))
+
+#define IS_GPIO_AF(AF)   ((AF) <= (uint8_t)0x0F)
+
 #define GPIO_PORT(pin)  ((uint8_t)(pin >> 3))
 #define GPIO_MASK(pin)  ((uint8_t)(1 << (pin & 7)))
 
