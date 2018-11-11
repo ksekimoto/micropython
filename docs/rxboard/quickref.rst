@@ -99,27 +99,27 @@ See :ref:`pyb.Pin <pyb.Pin>`. ::
 
 GR-CITRUS Pin Information ::
 
-                            PWM
-    PIN0    P20     ExtInt  MTIOC1A
-    PIN1    P21     ExtInt
-    PIN2    PC0     ExtInt  MTIOC3C
-    PIN3    PC1     ExtInt  MTIOC3C
-    PIN4    PC2
-    PIN5    P50
-    PIN6    P52
-    PIN7    P32     ExtInt  MTIOC0C
-    PIN8    P33     ExtInt
-    PIN9    P05     ExtInt
-    PIN10   PC4
-    PIN11   PC6     ExtInt  MTIOC3C
-    PIN12   PC7     ExtInt  MTIOC3A
-    PIN13   PC5
-    PIN14   P40     ExtInt
-    PIN15   P41     ExtInt
-    PIN16   P42     ExtInt
-    PIN17   P43     ExtInt
-    PIN18   P12     ExtInt
-    PIN19   P13     ExtInt
+                    Func    Jtag    Pin Int PWM(MTU)TPU(Servo)
+    PIN0    P20     SCI0-TX         ExtInt  MTIOC1A TIOCB3
+    PIN1    P21     SCI0-RX         ExtInt          TIOCA3
+    PIN2    PC0(P31)SD-SW   (TMS)   ExtInt  MTIOC3C 
+    PIN3    PC1(P30)SD-CS   (TDI)   ExtInt  MTIOC3C 
+    PIN4    PC2                     
+    PIN5    P50(P34)WIFI-EN TRST
+    PIN6    P52(P55)                     
+    PIN7    P32     SCI3-TX         ExtInt  MTIOC0C 
+    PIN8    P33     SCI3-RX TDO     ExtInt
+    PIN9    P05(P26)DA              ExtInt (MTIOC2A)
+    PIN10   PC4                                     TIOCC6(2)
+    PIN11   PC6     SPI-MOSI        ExtInt  MTIOC3C TIOCA6
+    PIN12   PC7     SPI-MISO        ExtInt  MTIOC3A TIOCB6
+    PIN13   PC5     SPI-CLK                         TIOCD6
+    PIN14   P40(P27)AD0     (TCK)   ExtInt
+    PIN15   P41(PB3)AD1             ExtInt (MTIOC0A)(TICOD3)
+    PIN16   P42(PB5)AD2             ExtInt          (TICOB4)
+    PIN17   P43(PE1)AD3             ExtInt (MTIOC4C)(TIOCA9)
+    PIN18   P12                     ExtInt
+    PIN19   P13(P15)                ExtInt          TIOCA5(1)
     NMI P35
     LED PA0                 MTIOC4A
 
@@ -233,6 +233,18 @@ Sample::
     (2018, 11, 8, 5, 10, 10, 14, 0)
 
 
+Servo control
+-------------
+
+Servo(1): PIN19
+Servo(2): PIN10
+
+Sample::
+
+    servo1 = pyb.Servo(1)
+    servo1.angle(45)
+
+
 WA-MIKAN board
 --------------
 
@@ -288,12 +300,6 @@ Sample::
 
 Limitations
 ===========
-
-
-Servo control
--------------
-
-Not implemented yet.
 
 
 CAN bus (controller area network)
