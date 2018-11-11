@@ -75,7 +75,7 @@
 
 // Whether to enable the PA0-PA3 servo driver, exposed as pyb.Servo
 #ifndef MICROPY_HW_ENABLE_SERVO
-#define MICROPY_HW_ENABLE_SERVO (0)
+#define MICROPY_HW_ENABLE_SERVO (1)
 #endif
 
 // Whether to enable a USR switch, exposed as pyb.Switch

@@ -24,45 +24,18 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef RX63N_SERVO_H_
+#define RX63N_SERVO_H_
 
-#ifndef TRUE
-#define TRUE    1
-#endif
+typedef int (*rx_servo_cb_t)();
 
-#ifndef FALSE
-#define FALSE   0
-#endif
+void rx_servo_set_callback(rx_servo_cb_t cb);
+void rx_servo_enable_it(void);
+void rx_servo_disable_it(void);
+void rx_servo_set_pulse(uint8_t pin_idx, uint32_t pulse);
+void rx_servo_start(uint8_t pin_idx);
+void rx_servo_stop(uint8_t pin_idx);
+void rx_servo_init(void);
+void rx_servo_deinit(void);
 
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#include "stdint.h"
-#include "stdbool.h"
-#include "iodefine.h"
-#include "rx63n_adc.h"
-#include "rx63n_config.h"
-#include "rx63n_dac.h"
-#include "rx63n_exti.h"
-#include "rx63n_flash.h"
-#include "rx63n_gpio.h"
-#include "rx63n_i2c.h"
-#include "rx63n_init.h"
-#include "rx63n_pwm.h"
-#include "rx63n_rtc.h"
-#include "rx63n_sci.h"
-#include "rx63n_spi.h"
-#include "rx63n_servo.h"
-#include "rx63n_timer.h"
-#include "rx63n_tpu.h"
-#include "rx63n_utils.h"
-#ifdef USE_DBG_PRINT
-#include "debug_printf.h"
-#endif
-
-#endif /* COMMON_H_ */
+#endif /* RX63N_SERVO_H_ */

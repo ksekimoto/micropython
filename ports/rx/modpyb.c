@@ -49,9 +49,7 @@
 #include "storage.h"
 #include "sdcard.h"
 #include "accel.h"
-#if 0
 #include "servo.h"
-#endif
 #include "dac.h"
 #include "lcd.h"
 #include "usb.h"
