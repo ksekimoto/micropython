@@ -43,8 +43,12 @@
 //
 // TIM2 and TIM5 have CH1-CH4 on PA0-PA3 respectively.  They are both 32-bit
 // counters with 16-bit prescaler.  TIM5 is used by this driver.
-
-#define PYB_SERVO_NUM (2)
+#if defined(GRCITRUS)
+#define PYB_SERVO_NUM (4)
+#endif
+#if defined(GRSAKURA)
+#define PYB_SERVO_NUM (6)
+#endif
 
 typedef struct _pyb_servo_obj_t {
     mp_obj_base_t base;
@@ -82,8 +86,20 @@ void servo_init(void) {
     }
 
     // assign servo objects to specific pins (must be some permutation of PA0-PA3)
+#if defined(GRCITRUS)
     pyb_servo_obj[0].pin = pin_P13;
     pyb_servo_obj[1].pin = pin_PC4;
+    pyb_servo_obj[2].pin = pin_PB3;
+    pyb_servo_obj[3].pin = pin_PB5;
+#endif
+#if defined(GRSAKURA)
+    pyb_servo_obj[0].pin = pin_P13;
+    pyb_servo_obj[1].pin = pin_PC4;
+    pyb_servo_obj[2].pin = pin_P22;
+    pyb_servo_obj[3].pin = pin_P23;
+    pyb_servo_obj[2].pin = pin_P24;
+    pyb_servo_obj[3].pin = pin_P25;
+#endif
 }
 
 void servo_timer_irq_callback(void) {

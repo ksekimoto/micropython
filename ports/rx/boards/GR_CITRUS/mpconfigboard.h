@@ -30,7 +30,7 @@
 //#define MICROPY_HW_I2C4_SDA (pin_PC6)
 
 // MMA accelerometer config
-#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
+//#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
 #define MICROPY_HW_SPI0_NAME "X"
