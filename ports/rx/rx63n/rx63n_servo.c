@@ -103,5 +103,7 @@ void rx_servo_init(void) {
 }
 
 void rx_servo_deinit(void) {
+    rx_servo_int_disable();
     rx_tpu_deinit();
+    rx_servo_cb = NULL;
 }

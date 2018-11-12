@@ -702,6 +702,9 @@ soft_reset_exit:
     #endif
 
     printf("PYB: soft reboot\n");
+    #if MICROPY_HW_ENABLE_SERVO
+    servo_deinit();
+    #endif
     #if MICROPY_PY_NETWORK
     mod_network_deinit();
     #endif

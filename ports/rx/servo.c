@@ -102,6 +102,10 @@ void servo_init(void) {
 #endif
 }
 
+void servo_deinit(void) {
+    rx_servo_deinit();
+}
+
 void servo_timer_irq_callback(void) {
     bool need_it = false;
     for (int i = 0; i < PYB_SERVO_NUM; i++) {
