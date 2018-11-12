@@ -237,7 +237,6 @@ SRC_C += ramdisk/FAT_0E00_005.c
 SRC_C += ramdisk/FAT_1000_100.c
 SRC_C += ramdisk/FAT_5000_041.c
 endif
-#SRC_C += $(MCU_SERIES)/util.c
 ifeq ($(DEBUG), 1)
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c

@@ -60,7 +60,6 @@ User Includes (Project Level Includes)
 /* Following header file defines USB HAL definitions. */
 #include "usb_hal.h"
 
-#include "rx63n/util.h"
 #include "common.h"
 
 /**********************************************************************
