@@ -573,7 +573,7 @@ soft_reset:
 #if defined(GRCITRUS)
     if (sdcard_is_present()) {
         // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
-        if (!mounted_flash || f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+        if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
             mounted_sdcard = init_sdcard_fs();
         }
     }

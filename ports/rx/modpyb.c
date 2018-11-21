@@ -235,6 +235,10 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #if MICROPY_HW_HAS_LCD
     { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
 #endif
+
+#if MICROPY_PY_PYB_TWITTER
+    { MP_ROM_QSTR(MP_QSTR_TWITTER), MP_ROM_PTR(&pyb_twitter_type) },
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(pyb_module_globals, pyb_module_globals_table);

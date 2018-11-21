@@ -300,8 +300,3 @@ void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
     /* Step 9 */
     sha1(step8data, b + 20, digest);
 }
-
-
-
-
-

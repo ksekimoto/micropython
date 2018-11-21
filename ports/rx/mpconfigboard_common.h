@@ -156,5 +156,9 @@
 #define MICROPY_HW_ENABLE_CAN (0)
 #endif
 
+#ifndef MICROPY_HW_HAS_ESP8266
+#define MICROPY_HW_HAS_ESP8266 (0)
+#endif
+
 // Pin definition header file
 #define MICROPY_PIN_DEFS_PORT_H "pin_defs_rx.h"

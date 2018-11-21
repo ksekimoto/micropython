@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../esp8266/urlencode.h"
+#include "urlencode.h"
 
 static char hex_to_num(char ch) {
     if (('0' <= ch) && (ch <= '9')) {
@@ -49,7 +49,7 @@ static int _isalnum(char ch) {
         return 0;
 }
 
-char *_url_encode(char *str, char *dst, int size) {
+char *url_encode(char *str, char *dst, int size) {
     char *pstr = str;
     char *pbuf = dst;
     if (size == 0)
@@ -58,21 +58,22 @@ char *_url_encode(char *str, char *dst, int size) {
     while (size && (*pstr)) {
         if (_isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
                 || *pstr == '~') {
-            *pbuf++ = *pstr;
+            *pbuf++ = *pstr;    /* copy one character */
             size--;
         } else if (*pstr == ' ') {
-            *pbuf++ = '+';
+            *pbuf++ = '+';      /* replace with '+' */
             size--;
         } else {
-            *pbuf++ = '%';
+            *pbuf++ = '%';      /* replace with '%' */
             size--;
             if (size == 0)
-                break;
+                break;          /* num(upper nibble) to hex */
             *pbuf++ = num_to_hex(*pstr >> 4);
             size--;
             if (size == 0)
-                break;
+                break;          /* num(lower nibble) to hex */
             *pbuf++ = num_to_hex(*pstr & 0xf);
+            size--;
         }
         pstr++;
     }
@@ -80,7 +81,31 @@ char *_url_encode(char *str, char *dst, int size) {
     return dst;
 }
 
-char *_url_decode(char *str, char *dst, int size) {
+int get_url_encode_size(char *str) {
+    int size = 0;
+    char *pstr = str;
+    while (*pstr) {
+        if (_isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
+                || *pstr == '~') {
+            size++;     /* copy one character */
+        } else if (*pstr == ' ') {
+            size++;     /* replace with '+' */
+        } else {
+            size++;     /* replace with '%' */
+            if (size == 0)
+                break;
+            size++;     /* num(upper nibble) to hex */
+            if (size == 0)
+                break;
+            size++;     /* num(lower nibble) to hex */
+        }
+        pstr++;
+    }
+    size++;             /*  '\0' */
+    return size;
+}
+
+char *url_decode(char *str, char *dst, int size) {
     char *pstr = str;
     char *pbuf = dst;
     if (size == 0)
@@ -104,6 +129,18 @@ char *_url_decode(char *str, char *dst, int size) {
     return dst;
 }
 
-
-
-
+int get_url_decode_size(char *str) {
+    int size = 0;
+    char *pstr = str;
+    while (*pstr) {
+        if (*pstr == '%') {
+            if (pstr[1] && pstr[2]) {
+                pstr += 2;
+            }
+        }
+        pstr++;
+        size++;
+    }
+    size++;
+    return size;
+}

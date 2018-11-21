@@ -32,7 +32,7 @@
 #include "rx63n_sci.h"
 
 #define SCI_CH_NUM 8
-#define SCI_BUF_SIZE 512
+#define SCI_BUF_SIZE 2048
 #define SCI_DEFAULT_PRIORITY 3
 #define SCI_DEFAULT_BAUD    115200
 
@@ -85,7 +85,7 @@ static const uint8_t sci_rx_pins[] = {
 };
 
 static volatile struct SCI_FIFO {
-    int tail, head, len, run;
+    int tail, head, len, busy;
     uint8_t buff[SCI_BUF_SIZE];
 };
 
@@ -135,6 +135,21 @@ void sci_tx_int_disable(int ch) {
     sci_tx_set_int(ch, 0);
 }
 
+void sci_te_set_int(int ch, int flag) {
+    int idx = (216 + ch * 3) / 8;
+    int bit = (0 +  ch * 3) & 7;
+    uint8_t mask = (1 << bit);
+    ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
+}
+
+void sci_te_int_enable(int ch) {
+    sci_te_set_int(ch, 1);
+}
+
+void sci_te_int_disable(int ch) {
+    sci_te_set_int(ch, 0);
+}
+
 #if defined(RX63N_SCI_ADDITIONAL)
 void sci_tx_enable(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
@@ -174,14 +189,47 @@ static void sci_isr_er(int ch) {
 static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
+    rx_disable_irq();
+    if (!tx_fifo[ch].busy) {
+        //sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
+        goto sci_isr_tx_exit;
+    }
+    if (tx_fifo[ch].len != 0) {
+        i = tx_fifo[ch].tail;
+        sci->TDR = tx_fifo[ch].buff[i++];
+        tx_fifo[ch].len--;
+        tx_fifo[ch].tail = i % SCI_BUF_SIZE;
+    }
+    if (tx_fifo[ch].len == 0) {
+        sci->SCR.BYTE |= 0x04; /* TEI set */
+    }
+sci_isr_tx_exit:
+    rx_enable_irq();
+#if 0
     if (tx_fifo[ch].len != 0) {
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
         tx_fifo[ch].len--;
         tx_fifo[ch].tail = i % SCI_BUF_SIZE;
     } else {
-        tx_fifo[ch].run = 0;
+        tx_fifo[ch].busy = 0;
     }
+#endif
+}
+
+static void sci_isr_te(int ch) {
+    volatile struct st_sci0 *sci = SCI[ch];
+    rx_disable_irq();
+    //if (!tx_fifo[ch].busy)
+    //    goto sci_isr_te_exit;
+    sci->SCR.BYTE &= ~0xa4; /* TIE, TE and TEI reset */
+    if (tx_fifo[ch].len == 0) {
+        tx_fifo[ch].busy = 0;
+    } else {
+        sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
+    }
+sci_isr_te_exit:
+    rx_enable_irq();
 }
 
 uint8_t sci_rx_ch(int ch) {
@@ -208,13 +256,27 @@ void sci_tx_ch(int ch, uint8_t c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     while (tx_fifo[ch].len == SCI_BUF_SIZE) {
+        ;
+    }
+    rx_disable_irq();
+    if (!tx_fifo[ch].busy) {
+        tx_fifo[ch].busy = 1;
+        sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
+    }
+    i = tx_fifo[ch].head;
+    tx_fifo[ch].buff[i++] = c;
+    tx_fifo[ch].head = i % SCI_BUF_SIZE;
+    tx_fifo[ch].len++;
+    rx_enable_irq();
+#if 0
+    while (tx_fifo[ch].len == SCI_BUF_SIZE) {
         while ((sci->SSR.BYTE & 0x04) == 0) ;
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
         tx_fifo[ch].len--;
         tx_fifo[ch].tail = i % SCI_BUF_SIZE;
     }
-    if (tx_fifo[ch].run) {
+    if (tx_fifo[ch].busy) {
         sci_tx_int_disable(ch);
         i = tx_fifo[ch].head;
         tx_fifo[ch].buff[i++] = c;
@@ -223,8 +285,9 @@ void sci_tx_ch(int ch, uint8_t c) {
         sci_tx_int_enable(ch);
     } else {
         sci->TDR = c;
-        tx_fifo[ch].run = 1;
+        tx_fifo[ch].busy = 1;
     }
+#endif
 }
 
 int sci_tx_wait(int ch) {
@@ -234,8 +297,8 @@ int sci_tx_wait(int ch) {
 void sci_tx_str(int ch, uint8_t *p) {
     uint8_t c;
     while ((c = *p++) != 0) {
-        if (c == '\n')
-            sci_tx_ch(ch, '\r');
+        //if (c == '\n')
+        //    sci_tx_ch(ch, '\r');
         sci_tx_ch(ch, c);
     }
 }
@@ -244,11 +307,11 @@ static void sci_fifo_init(int ch) {
     tx_fifo[ch].head = 0;
     tx_fifo[ch].tail = 0;
     tx_fifo[ch].len = 0;
-    tx_fifo[ch].run = 0;
+    tx_fifo[ch].busy = 0;
     rx_fifo[ch].head = 0;
     rx_fifo[ch].tail = 0;
     rx_fifo[ch].len = 0;
-    rx_fifo[ch].run = 0;
+    rx_fifo[ch].busy = 0;
 }
 
 void sci_int_priority(int ch, int priority) {
@@ -312,11 +375,13 @@ void sci_int_priority(int ch, int priority) {
 
 void sci_int_enable(int ch) {
     sci_tx_set_int(ch, 1);
+    sci_te_set_int(ch, 1);
     sci_rx_set_int(ch, 1);
 }
 
 void sci_int_disable(int ch) {
     sci_tx_set_int(ch, 0);
+    sci_te_set_int(ch, 1);
     sci_rx_set_int(ch, 0);
 }
 
@@ -409,9 +474,9 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
         sci->SMR.BYTE = 0x00;
         sci_set_baud(ch, baud);
         delay_ms(1);
-        sci->SCR.BYTE = 0xf0;
+        sci->SCR.BYTE = 0xd0;
         sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
-        sci_rx_int_enable(ch);
+        sci_int_enable(ch);
         sci_init_flag[ch] = true;
     }
 }
@@ -541,4 +606,45 @@ void INT_Excep_SCI11_TXI11(void) {
 }
 void INT_Excep_SCI12_TXI12(void) {
     sci_isr_tx(12);
+}
+
+/* tx interrupt */
+void INT_Excep_SCI0_TEI0(void) {
+    sci_isr_te(0);
+}
+void INT_Excep_SCI1_TEI1(void) {
+    sci_isr_te(1);
+}
+void INT_Excep_SCI2_TEI2(void) {
+    sci_isr_te(2);
+}
+void INT_Excep_SCI3_TEI3(void) {
+    sci_isr_te(3);
+}
+void INT_Excep_SCI4_TEI4(void) {
+    sci_isr_te(4);
+}
+void INT_Excep_SCI5_TEI5(void) {
+    sci_isr_te(5);
+}
+void INT_Excep_SCI6_TEI6(void) {
+    sci_isr_te(6);
+}
+void INT_Excep_SCI7_TEI7(void) {
+    sci_isr_te(7);
+}
+void INT_Excep_SCI8_TEI8(void) {
+    sci_isr_te(8);
+}
+void INT_Excep_SCI9_TEI9(void) {
+    sci_isr_te(9);
+}
+void INT_Excep_SCI10_TEI10(void) {
+    sci_isr_te(10);
+}
+void INT_Excep_SCI11_TEI11(void) {
+    sci_isr_te(11);
+}
+void INT_Excep_SCI12_TEI12(void) {
+    sci_isr_te(12);
 }

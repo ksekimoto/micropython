@@ -24,12 +24,25 @@
  * THE SOFTWARE.
  */
 
-#ifndef _URLENCODE_H_
-#define _URLENCODE_H_
+#ifndef STWITTER_H_
+#define STWITTER_H_
 
-char *url_encode(char *str, char *dst, int size);
-char *url_decode(char *str, char *dst, int size);
-int get_url_encode_size(char *str);
-int get_url_decode_size(char *str);
+#define OAUTH_SIGNATURE_METHOD  "HMAC-SHA1"
+#define OAUTH_VERSION           "1.0"
+#define TWITTER_API_UPDATE      "https://api.twitter.com/1.1/statuses/update.json"
+#define TWITTER_API_UPDATE_STR  "api.twitter.com/1.1/statuses/update.json"
+#define TWITTER_API_UPLOAD      "https://upload.twitter.com/1.1/media/upload.json"
 
-#endif /* _URLENCODE_H_ */
+typedef struct {
+	char *_cons_key;
+	char *_cons_sec;
+	char *_accs_key;
+	char *_accs_sec;
+} twitter_t;
+
+void twitter_api_init();
+void twitter_api_deinit();
+void twitter_api_set_keys(char *cons_key, char *cons_sec, char *accs_key, char *accs_sec);
+void twitter_api_statuses_update(char *str, char *media_id_string);
+
+#endif /* STWITTER_H_ */

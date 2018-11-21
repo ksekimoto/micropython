@@ -179,6 +179,7 @@
 // extra built in modules to add to the list of known ones
 extern const struct _mp_obj_module_t mp_module_mymodule;
 extern const struct _mp_obj_module_t mp_module_wifi;
+extern const struct _mp_obj_module_t mp_module_twitter;
 extern const struct _mp_obj_module_t machine_module;
 extern const struct _mp_obj_module_t pyb_module;
 extern const struct _mp_obj_module_t mp_module_ubinascii;
@@ -219,6 +220,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) }, \
     { MP_ROM_QSTR(MP_QSTR_wifi), MP_ROM_PTR(&mp_module_wifi) }, \
+    { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) }, \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \

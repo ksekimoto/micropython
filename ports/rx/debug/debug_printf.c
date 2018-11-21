@@ -27,15 +27,17 @@
 #include "stdarg.h"
 #include "common.h"
 
+#define DEBUG_PRINTF_BUF_SIZE   1024
+
 int vxsnprintf(char *buf, int buf_size, char *fmt, va_list args);
 
 int debug_printf(const void* format, ...)
 {
-    char buf[256];
+    char buf[DEBUG_PRINTF_BUF_SIZE];
     int len;
     va_list arg_ptr;
     va_start(arg_ptr, format);
-    len = vxsnprintf(buf, 255, format, arg_ptr);
+    len = vxsnprintf(buf, DEBUG_PRINTF_BUF_SIZE-1, format, arg_ptr);
     DEBUG_TXSTR(DEBUG_CH, (unsigned char*)buf);
     va_end(arg_ptr);
     return len;

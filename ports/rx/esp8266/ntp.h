@@ -30,6 +30,8 @@
 #define NTP_SEND_PORT   123
 #define NTP_LOCAL_PORT  8788
 #define NTP_PACKT_SIZE  48
+#define NTP_ERROR       0xffffffff;
+#define NTP_DEFAULT_SERVER  "ntp.nict.go.jp"
 
 uint32_t ntp(char *ipaddr, int tf);
 
