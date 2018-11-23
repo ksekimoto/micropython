@@ -12,6 +12,7 @@
 
 #FLASH_DEBUG = 1
 # Display erase and write log
+USE_FONT = 1
 
 USB_CDC = 1
 USB_MSC = 2
@@ -63,6 +64,9 @@ INC += -Iramdisk
 INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
+ifeq ($(USE_FONT), 1)
+INC += -Ifont
+endif
 
 #######################################################################
 # C flags.
@@ -242,6 +246,9 @@ endif
 ifeq ($(DEBUG), 1)
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
+endif
+ifeq ($(USE_FONT), 1)
+SRC_C += font/font.c
 endif
 
 SRC_S = $(MCU_SERIES)/startup_$(MCU_SERIES).S

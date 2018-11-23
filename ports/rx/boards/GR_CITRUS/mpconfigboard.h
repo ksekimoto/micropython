@@ -63,3 +63,7 @@
 #define MICROPY_PY_LWIP (1)
 
 #define MICROPY_HW_ENABLE_DAC   (1)
+
+#define MICROPY_HW_HAS_ESP8266  (1)
+#define MICROPY_PY_PYB_TWITTER  (1)
+#define MICROPY_PY_PYB_FONT     (1)

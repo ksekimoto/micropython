@@ -160,5 +160,13 @@
 #define MICROPY_HW_HAS_ESP8266 (0)
 #endif
 
+#ifndef MICROPY_HW_HAS_TWITTER
+#define MICROPY_HW_HAS_TWITTER (0)
+#endif
+
+#ifndef MICROPY_HW_HAS_FONT
+#define MICROPY_HW_HAS_FONT (0)
+#endif
+
 // Pin definition header file
 #define MICROPY_PIN_DEFS_PORT_H "pin_defs_rx.h"
