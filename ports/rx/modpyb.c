@@ -58,7 +58,12 @@
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
 #include "pwm.h"
+#if MICROPY_PY_PYB_FONT
 #include "font.h"
+#endif
+#if MICROPY_PY_PYB_LCDSPI
+#include "lcdspi.h"
+#endif
 
 #if 0
 /* Only debugging for STM32 Hard Fault */
@@ -240,6 +245,11 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 #if MICROPY_PY_PYB_FONT
     { MP_ROM_QSTR(MP_QSTR_FONT), MP_ROM_PTR(&pyb_font_type) },
 #endif
+
+#if MICROPY_PY_PYB_FONT
+    { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&pyb_lcdspi_type) },
+#endif
+
 };
 
 STATIC MP_DEFINE_CONST_DICT(pyb_module_globals, pyb_module_globals_table);

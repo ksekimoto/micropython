@@ -30,17 +30,20 @@
 #include "interrupt_handlers.h"
 #include "rx63n_gpio.h"
 
-void gpio_config(uint32_t pin, uint32_t mode, uint32_t pull, uint32_t alt) {
+//#define USE_BIT_OPERATION
+
+void gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     switch (mode) {
     case GPIO_MODE_INPUT:
-        _PMR(port) &= ~mask; /* GPIO */
-        _PDR(port) &= ~mask; /* input */
+        _PMR(port) &= ~mask;    /* GPIO */
+        _PDR(port) &= ~mask;    /* input */
         break;
     case GPIO_MODE_OUTPUT_PP:
-        _PMR(port) &= ~mask; /* GPIO */
-        _PDR(port) |= mask; /* output */
+        _PMR(port) &= ~mask;    /* GPIO */
+        _PCR(port) &= ~mask;    /* pullup clear */
+        _PDR(port) |= mask;     /* output */
         break;
     case GPIO_MODE_OUTPUT_OD:
         /* N-channel open drain */
@@ -81,21 +84,51 @@ void gpio_config(uint32_t pin, uint32_t mode, uint32_t pull, uint32_t alt) {
     }
 }
 
-void gpio_mode_output(uint32_t pin) {
-    uint8_t port = GPIO_PORT(pin);
-    uint8_t mask = GPIO_MASK(pin);
-    _PMR(port) &= ~mask;
-    _PDR(port) |= mask; /* output */
+#if defined(USE_BIT_OPERATION)
+void gpio_mode_output(uint8_t pin) {
+    uint32_t port = GPIO_PORT(pin);
+    uint32_t bit = GPIO_BIT(pin);
+    bit_clr(_PPMR(port), bit);  /* gpio */
+    bit_set(_PPDR(port), bit);  /* output */
+    bit_clr(_PPCR(port), bit);  /* pullup clear */
 }
 
-void gpio_mode_input(uint32_t pin) {
+void gpio_mode_input(uint8_t pin) {
+    uint32_t port = GPIO_PORT(pin);
+    uint32_t bit = GPIO_BIT(pin);
+    bit_clr(_PPMR(port), bit);  /* gpio */
+    bit_clr(_PPDR(port), bit);  /* output */
+}
+#else
+void gpio_mode_output(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    _PMR(port) &= ~mask;
-    _PDR(port) &= ~mask; /* input */
+    _PMR(port) &= ~mask;    /* gpio */
+    _PDR(port) |= mask;     /* output */
+    _PCR(port) &= ~mask;    /* pullup clear */
 }
 
-void gpio_write(uint32_t pin, uint32_t state) {
+void gpio_mode_input(uint8_t pin) {
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    _PMR(port) &= ~mask;    /* gpio */
+    _PDR(port) &= ~mask;    /* input */
+}
+#endif
+
+#if defined(USE_BIT_OPERATION)
+void gpio_write(uint8_t pin, uint8_t state) {
+    uint32_t port = GPIO_PORT(pin);
+    uint32_t bit = GPIO_BIT(pin);
+    bit_set(_PPDR(port), bit);   /* output */
+    if (state) {
+        bit_set(_PPODR(port), bit);
+    } else {
+        bit_clr(_PPODR(port), bit);
+    }
+}
+#else
+void gpio_write(uint8_t pin, uint8_t state) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     _PDR(port) |= mask; /* output */
@@ -105,15 +138,16 @@ void gpio_write(uint32_t pin, uint32_t state) {
         _PODR(port) &= ~mask;
     }
 }
+#endif
 
-void gpio_toggle(uint32_t pin) {
+void gpio_toggle(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     _PDR(port) |= mask; /* output */
     _PODR(port) ^= mask;
 }
 
-uint32_t gpio_read(uint32_t pin) {
+uint8_t gpio_read(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     return ((_PIDR(port) & mask) != 0) ? 1 : 0;

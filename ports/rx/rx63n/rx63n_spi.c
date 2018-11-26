@@ -63,15 +63,15 @@ static vp_rspi g_rspi[] = {
 };
 
 static uint8_t SPI_PINS[] = {
-    8*12+5,    // PC5: RSPCKA
-    8*12+6,    // PC6: MOSIA
-    8*12+7,    // PC7: MISOA
-    8*14+5,    // PE5: RSPCKB
-    8*14+6,    // PE6: MOSIB
-    8*14+7,    // PE7: MISOB
-    8*13+3,    // PD3: RSPCKC
-    8*13+1,    // PD1: MOSIC
-    8*13+2     // PD2: MISOC
+    PC5,    // PC5: RSPCKA
+    PC6,    // PC6: MOSIA
+    PC7,    // PC7: MISOA
+    PE5,    // PE5: RSPCKB
+    PE6,    // PE6: MOSIB
+    PE7,    // PE7: MISOB
+    PD3,    // PD3: RSPCKC
+    PD1,    // PD1: MOSIC
+    PD2     // PD2: MISOC
 };
 
 void rx_spi_get_pins(uint32_t ch, uint8_t *mosi, uint8_t *miso, uint8_t *clk) {
@@ -122,12 +122,12 @@ void rx_spi_set_bits(uint32_t ch, uint32_t bits) {
     }
 }
 
-void rx_spi_set_clk(uint32_t ch, uint32_t spi_clk) {
-    if (spi_clk == 0)
+void rx_spi_set_clk(uint32_t ch, uint32_t baud) {
+    if (baud == 0)
         return;
     vp_rspi prspi = g_rspi[ch];
     prspi->SPCR.BIT.SPE = 0;
-    prspi->SPBR = BCLK / 2 / spi_clk - 1;
+    prspi->SPBR = BCLK / 2 / baud - 1;
     prspi->SPCR.BIT.SPE = 1;
 }
 
@@ -271,10 +271,26 @@ void rx_spi_transfer(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count, ui
     }
 }
 
-void rx_spi_init(uint32_t ch, uint32_t cs, uint32_t speed, uint32_t bits,
-        uint32_t mode) {
+void rx_spi_start_xfer(uint32_t ch, uint16_t spcmd, uint8_t spbr) {
+    vp_rspi prspi = g_rspi[ch];
+    prspi->SPCR.BIT.SPE = 0; //Stop SPI
+    prspi->SPCMD0.WORD = spcmd;
+    prspi->SPBR = spbr;
+    prspi->SPCR.BIT.SPE = 1; //Start SPI
+}
+
+void rx_spi_end_xfer(uint32_t ch) {
+}
+
+void rx_spi_get_conf(uint32_t ch, uint16_t *spcmd, uint8_t *spbr) {
+    vp_rspi prspi = g_rspi[ch];
+    *spcmd = prspi->SPCMD0.WORD;
+    *spbr = prspi->SPBR;
+}
+
+void rx_spi_init(uint32_t ch, uint32_t cs, uint32_t baud, uint32_t bits, uint32_t mode) {
     rx_spi_set_spi_ch(ch);
-    rx_spi_set_clk(ch, speed);
+    rx_spi_set_clk(ch, baud);
     rx_spi_set_bits(ch, bits);
     gpio_mode_output(cs);
     gpio_write(cs, 1);

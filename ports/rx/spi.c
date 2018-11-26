@@ -30,6 +30,7 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "extmod/machine_spi.h"
+#include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
 #include "spi.h"

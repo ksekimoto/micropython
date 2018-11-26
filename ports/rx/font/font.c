@@ -147,7 +147,7 @@ static const FONT_TBL *fontTblList[] = {
  */
 
 #ifdef MISAKIFONT4X8
-static font_t MisakiFont4x8 = {
+font_t MisakiFont4x8 = {
     "MisakiFont4x8",
     FONT_ASCII,
     4, 8, 4, 8,
@@ -155,7 +155,7 @@ static font_t MisakiFont4x8 = {
 };
 #endif
 #ifdef MISAKIFONT6X12
-static font_t MisakiFont6x12 = {
+font_t MisakiFont6x12 = {
     "MisakiFont6x12",
     FONT_ASCII,
     6, 12, 6, 12,
@@ -163,7 +163,7 @@ static font_t MisakiFont6x12 = {
 };
 #endif
 #ifdef MISAKIFONT8X8
-static font_t MisakiFont8x8 = {
+font_t MisakiFont8x8 = {
     "MisakiFont8x8",
     FONT_UNICODE,
     8, 8, 8, 8,
@@ -171,7 +171,7 @@ static font_t MisakiFont8x8 = {
 };
 #endif
 #ifdef MISAKIFONT12X12
-static font_t MisakiFont12x12 = {
+font_t MisakiFont12x12 = {
     "MisakiFont12x12",
     FONT_UNICODE,
     12, 12, 12, 12,
@@ -179,7 +179,7 @@ static font_t MisakiFont12x12 = {
 };
 #endif
 
-static font_t *fontList[] = {
+font_t *fontList[] = {
 #ifdef MISAKIFONT4X8
     (font_t *)&MisakiFont4x8,
 #endif
@@ -375,6 +375,17 @@ bool find_font_id(int font_id) {
         }
     }
     return find;
+}
+
+font_t *get_font_by_id(int font_id) {
+    font_t *font = 0;
+    for (int i = 0; i < NUM_FONTS; i++) {
+        if (pyb_font_obj[i].font_id == font_id) {
+            font = pyb_font_obj[i].font;
+            break;
+        }
+    }
+    return font;
 }
 
 /******************************************************************************/

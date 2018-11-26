@@ -81,6 +81,11 @@
 #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
-#define MICROPY_PY_LWIP (1)
+//#define MICROPY_PY_LWIP (1)
 
 #define MICROPY_HW_ENABLE_DAC   (1)
+
+#define MICROPY_HW_HAS_ESP8266  (0)
+#define MICROPY_PY_PYB_TWITTER  (0)
+#define MICROPY_PY_PYB_FONT     (1)
+#define MICROPY_PY_PYB_LCDSPI   (1)

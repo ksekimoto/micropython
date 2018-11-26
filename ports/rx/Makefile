@@ -13,6 +13,7 @@
 #FLASH_DEBUG = 1
 # Display erase and write log
 USE_FONT = 1
+USE_LCD = 1
 
 USB_CDC = 1
 USB_MSC = 2
@@ -67,6 +68,10 @@ INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
+ifeq ($(USE_LCD), 1)
+INC += -Ilcd
+endif
+INC += -Isd
 
 #######################################################################
 # C flags.
@@ -250,6 +255,12 @@ endif
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
+ifeq ($(USE_LCD), 1)
+SRC_C += lcd/lcdspi.c
+SRC_C += lcd/jpeg.c
+SRC_C += lcd/picojpeg.c
+endif
+SRC_C += sd/sd.c
 
 SRC_S = $(MCU_SERIES)/startup_$(MCU_SERIES).S
 SRC_S += setjmp.S
@@ -344,10 +355,15 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
+
+ifeq ($(MICROPY_PY_LWIP),1)
 EXTMOD_SRC_C = $(addprefix extmod/,\
 	modlwip.c \
+	)
+endif
+EXTMOD_SRC_C += $(addprefix extmod/,\
 	modonewire.c \
-        )
+	)
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -393,6 +409,7 @@ SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
 	)
 endif
 
+ifeq ($(MICROPY_PY_LWIP),1)
 LWIP_DIR = lib/lwip/src
 INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
@@ -433,6 +450,8 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/ipv6/nd6.c \
 	netif/ethernet.c \
 	)
+endif
+
 OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))

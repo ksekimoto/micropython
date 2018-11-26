@@ -217,10 +217,18 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define NETWORK_BUILTIN_MODULE
 #endif
 
+#if MICROPY_HW_HAS_ESP8266
+#define WIFI_BUILTIN_MODULE                 { MP_ROM_QSTR(MP_QSTR_wifi), MP_ROM_PTR(&mp_module_wifi) },
+#define TWITTER_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) },
+#else
+#define WIFI_BUILTIN_MODULE
+#define TWITTER_BUILTIN_MODULE
+#endif
+
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) }, \
-    { MP_ROM_QSTR(MP_QSTR_wifi), MP_ROM_PTR(&mp_module_wifi) }, \
-    { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) }, \
+    WIFI_BUILTIN_MODULE \
+    TWITTER_BUILTIN_MODULE \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \

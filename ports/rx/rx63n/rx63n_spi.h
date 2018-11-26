@@ -91,6 +91,9 @@ void rx_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count);
 void rx_spi_transfer(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout);
 void rx_spi_init(uint32_t ch, uint32_t cs, uint32_t speed, uint32_t bits, uint32_t mode);
 void rx_spi_deinit(uint32_t ch, uint32_t cs);
+void rx_spi_start_xfer(uint32_t ch, uint16_t spcmd, uint8_t spbr);
+void rx_spi_end_xfer(uint32_t ch);
+void rx_spi_get_conf(uint32_t ch, uint16_t *spcmd, uint8_t *spbr);
 
 #ifdef __cplusplus
 }

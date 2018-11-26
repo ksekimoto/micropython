@@ -111,8 +111,9 @@ enum AF_INDEX {
 
 #define IS_GPIO_AF(AF)   ((AF) <= (uint8_t)0x0F)
 
-#define GPIO_PORT(pin)  ((uint8_t)(pin >> 3))
-#define GPIO_MASK(pin)  ((uint8_t)(1 << (pin & 7)))
+#define GPIO_PORT(pin)  (pin >> 3)
+#define GPIO_MASK(pin)  (1 << (pin & 7))
+#define GPIO_BIT(pin)   (pin & 7)
 
 #define _PXXPFS(port, bit)  (*(volatile uint8_t *)(0x0008c140 + port*8 + (bit)))
 #define _PDR(port)  (*(volatile uint8_t *)(0x0008c000 + port))
@@ -125,12 +126,39 @@ enum AF_INDEX {
 #define _DSCR(port) (*(volatile uint8_t *)(0x0008c0E0 + port))
 #define _MPC(pin)   (*(volatile uint8_t *)(0x0008c140 + pin))
 
-void gpio_config(uint32_t pin, uint32_t mode, uint32_t pull, uint32_t alt);
-void gpio_mode_output(uint32_t pin);
-void gpio_mode_input(uint32_t pin);
-void gpio_write(uint32_t pin, uint32_t state);
-void gpio_toggle(uint32_t pin);
-uint32_t gpio_read(uint32_t pin);
+#define _PPXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port*8 + (bit)))
+#define _PPDR(port)  ((volatile uint8_t *)(0x0008c000 + port))
+#define _PPODR(port) ((volatile uint8_t *)(0x0008c020 + port))
+#define _PPIDR(port) ((volatile uint8_t *)(0x0008c040 + port))
+#define _PPMR(port)  ((volatile uint8_t *)(0x0008c060 + port))
+#define _PODR0(port) ((volatile uint8_t *)(0x0008c080 + port*2))
+#define _PODR1(port) ((volatile uint8_t *)(0x0008c081 + port*2))
+#define _PPCR(port)  ((volatile uint8_t *)(0x0008c0C0 + port))
+#define _PDSCR(port) ((volatile uint8_t *)(0x0008c0E0 + port))
+#define _PMPC(pin)   ((volatile uint8_t *)(0x0008c140 + pin))
+
+/*
+ * asm volatile(
+    AssemblerTemplate
+    : OutputOperands
+    : InputOperands
+    : Clobbers)
+ */
+
+inline void bit_clr(uint8_t *port, uint32_t bit) {
+    __asm __volatile ( "bclr %1, [%0].b\n" : : "r" (port), "r" (bit) : );
+}
+
+inline void bit_set(uint8_t *port, uint32_t bit) {
+    __asm __volatile ( "bset %1, [%0].b\n" : : "r" (port), "r" (bit) : );
+}
+
+void gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt);
+void gpio_mode_output(uint8_t pin);
+void gpio_mode_input(uint8_t pin);
+void gpio_write(uint8_t pin, uint8_t state);
+void gpio_toggle(uint8_t pin);
+uint8_t gpio_read(uint8_t pin);
 
 #ifdef __cplusplus
 }

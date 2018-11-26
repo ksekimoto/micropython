@@ -71,5 +71,17 @@ typedef struct {
 } font_t;
 
 extern const mp_obj_type_t pyb_font_type;
+extern font_t *fontList[];
+extern font_t MisakiFont4x8;
+extern font_t MisakiFont8x8;
+extern font_t MisakiFont6x12;
+extern font_t MisakiFont12x12;
+
+int font_fontUnitX(font_t *font);
+int font_fontUnitY(font_t *font);
+int font_fontWidth(font_t *font, int c);
+int font_fontHeight(font_t *font, int c);
+int font_fontBytes(font_t *font, int c);
+unsigned char *font_fontData(font_t *font, int idx);
 
 #endif /* SFONT_H_ */
