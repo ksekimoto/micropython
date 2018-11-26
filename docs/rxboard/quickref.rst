@@ -107,16 +107,16 @@ GR-CITRUS Pin Information ::
     PIN4    PC2                     
     PIN5    P50(P34)WIFI-EN TRST
     PIN6    P52(P55)                     
-    PIN7    P32     SCI3-TX         ExtInt  MTIOC0C 
-    PIN8    P33     SCI3-RX TDO     ExtInt
+    PIN7    P32     SCI6-TX         ExtInt  MTIOC0C 
+    PIN8    P33     SCI6-RX TDO     ExtInt
     PIN9    P05(P26)DA              ExtInt (MTIOC2A)
     PIN10   PC4                                     TIOCC6(2)
     PIN11   PC6     SPI-MOSI        ExtInt  MTIOC3C TIOCA6
     PIN12   PC7     SPI-MISO        ExtInt  MTIOC3A TIOCB6
     PIN13   PC5     SPI-CLK                         TIOCD6
     PIN14   P40(P27)AD0     (TCK)   ExtInt
-    PIN15   P41(PB3)AD1             ExtInt (MTIOC0A)(TICOD3)
-    PIN16   P42(PB5)AD2             ExtInt          (TICOB4)
+    PIN15   P41(PB3)AD1             ExtInt (MTIOC0A)(TICOD3)(3)
+    PIN16   P42(PB5)AD2             ExtInt          (TICOB4)(4)
     PIN17   P43(PE1)AD3             ExtInt (MTIOC4C)(TIOCA9)
     PIN18   P12                     ExtInt
     PIN19   P13(P15)                ExtInt          TIOCA5(1)

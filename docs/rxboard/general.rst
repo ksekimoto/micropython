@@ -16,7 +16,7 @@ operating modes, internal functioning, etc.
 
 For your convenience, some of technical specifications are provided below:
 
-* Architecture: RX631（R5F5631FDDFP 100pin QFP）
+* Architecture: RX631(R5F5631FDDFP 100pin QFP)
 * CPU frequency: 96MHz
 * Total RAM available: 256KB (part of it reserved for system)
 * Internal FlashROM: 2MB
