@@ -32,7 +32,7 @@
 
 #include "led.h"
 #include "storage.h"
-//#include "irq.h"
+#include "irq.h"
 #include "common.h"
 
 #if MICROPY_HW_ENABLE_STORAGE

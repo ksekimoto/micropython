@@ -61,6 +61,8 @@
 
 #include "../esp8266/hmac.h"
 
+#if MICROPY_PY_PYB_TWITTER
+
 #define MAX_MESSAGE_LENGTH 2048
 
 /****************************************/
@@ -300,3 +302,5 @@ void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
     /* Step 9 */
     sha1(step8data, b + 20, digest);
 }
+
+#endif

@@ -41,6 +41,9 @@
 #include "wifi.h"
 #include "twitter.h"
 
+#if MICROPY_PY_PYB_TWITTER
+
+#define DEBUG_TWITTER_NO_WIFI
 #define DEBUG_TWITTER_AUTH_STR
 //#define DEBUG_TWITTER_STATUSES_UPDATE
 //#define DEBUG_UPLOAD
@@ -221,6 +224,20 @@ static void print_param_value(PARAM *p) {
 }
 #endif
 
+static int get_param_url_encode_size(PARAM *p) {
+    int size = 0;
+    while (p->key != NULL) {
+        size += get_url_encode_size(p->key);
+        size += get_url_encode_size("=");       /* = */
+        size += get_url_encode_size(p->value);
+        p++;
+        if (p->key != NULL) {
+            size += get_url_encode_size(",");   /* , */
+        }
+    }
+    return size;
+}
+
 static char *url_encode_static_buf(char *str) {
     if (get_url_encode_size(str) < ENCODE_BUF_MAX) {
         url_encode(str, encode_buf, ENCODE_BUF_MAX);
@@ -229,7 +246,6 @@ static char *url_encode_static_buf(char *str) {
     }
     return encode_buf;
 }
-
 
 static char *urlenccpy(char *dst, char *src) {
     int enc_size = get_url_encode_size(src) + 1;
@@ -263,11 +279,19 @@ static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2
     int sig_data_len;
     int sig_str_len;
     int size = 0;
+    int calc_sig_key_len =
+        get_url_encode_size(sec1) + get_url_encode_size(sec2) + 1;
+    int calc_param_len = get_param_url_encode_size(params);
+    int calc_sig_data_len =
+        get_url_encode_size(req_method) + get_url_encode_size(req_url) + 1 +
+        calc_param_len + 1;
+    /* sig key */
     url_encode(sec1, encode_buf, ENCODE_BUF_MAX);
     strcpy(sig_key, encode_buf);
     strcat(sig_key, "&");
     url_encode(sec2, encode_buf, ENCODE_BUF_MAX);
     strcat(sig_key, encode_buf);
+    /* params */
     strcpy(param_buf, "");
     while (params->key != NULL) {
         strcat(param_buf, params->key);
@@ -278,15 +302,19 @@ static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2
             strcat(param_buf, "&");
         }
     }
+    /* sig data */
     strcpy(sig_data, req_method);
     strcat(sig_data, "&");
     url_encode(req_url, encode_buf, ENCODE_BUF_MAX);
     strcat(sig_data, encode_buf);
     strcat(sig_data, "&");
     url_encode(param_buf, encode_buf, ENCODE_BUF_MAX);
+    debug_printf("param_len act:%d calc:%d\r\n", strlen(encode_buf), calc_param_len);
     strcat(sig_data, encode_buf);
     sig_key_len = strlen(sig_key);
     sig_data_len = strlen(sig_data);
+    debug_printf("sig_key_len act:%d calc:%d\r\n", sig_key_len, calc_sig_key_len);
+    debug_printf("sig_data_len act:%d calc:%d\r\n", sig_data_len, calc_sig_data_len);
     hmac_sha1((unsigned char *)sig_key,
         sig_key_len,
         (unsigned char *)sig_data,
@@ -314,8 +342,11 @@ static void create_oauth_params(char *oauth_str, PARAM *params) {
 
 static void _statuses_update(char *ckey, char *csec, char *akey, char *asec, char *str, char *media_id_string) {
     char timestamp_str[11];
+#if defined (DEBUG_TWITTER_NO_WIFI)
+    unsigned int timestamp = 1542801184;
+#else
     unsigned int timestamp = (unsigned int)ntp(NTP_URL, 1);
-    ;
+#endif
     //timestamp -= 2208988800;
     sprintf(timestamp_str, "%u", (unsigned int)timestamp);
     param_set_value((PARAM *)req_params, (char *)"oauth_consumer_key", (char *)ckey);
@@ -437,7 +468,6 @@ void twitter_api_statuses_update(char *str, char *media_id_string) {
     char *strDFname = (char *)NULL;
     char *head[3];
     int size;
-    int ret;
     twitter_t *t = &twitter_params;
     _statuses_update(t->_cons_key, t->_cons_sec, t->_accs_key, t->_accs_sec, str, media_id_string);
     head[0] = (char *)"User-Agent: gr-citurs";
@@ -454,7 +484,10 @@ void twitter_api_statuses_update(char *str, char *media_id_string) {
     url_encode(str, encode_buf, ENCODE_BUF_MAX);
     strcat(body, encode_buf);
     strcat(body, "\r\n");
-    ret = esp8266_post(TWITTER_API_UPDATE_STR, body, "RESPONSE.TXT", 3, head, 1);
+#if defined (DEBUG_TWITTER_NO_WIFI)
+#else
+    esp8266_post(TWITTER_API_UPDATE_STR, body, "RESPONSE.TXT", 3, head, 1);
+#endif
 #ifdef DEBUG_TWITTER_STATUSES_UPDATE
     debug_printf("statuses_update:ret=%d\r\n", ret);
 #endif
@@ -608,3 +641,4 @@ const mp_obj_module_t mp_module_twitter = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&mp_module_twitter_globals,
 };
+#endif

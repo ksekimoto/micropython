@@ -38,13 +38,17 @@
 #include "common.h"
 #include "ff.h"
 
+#if MICROPY_HW_HAS_ESP8266
+
 #define DEBUG_ESP8266_GET_DATA
 #define DEBUG_ESP8266_POST
 #define DEBUG_ESP8266_POST_HEADER
 #define DEBUG_ESP8266_POST_DATA
 //#define DEBUG_ESP8266_CHKOK
 
-extern FATFS *fatfs_sd;
+#if MICROPY_HW_HAS_SDCARD
+#include "sd.h"
+#endif
 
 #define WIFI_DATA_MAX    512
 
@@ -438,70 +442,7 @@ void esp8266_multiconnect(int mode) {
     get_data(WIFI_WAIT_MSEC);
 }
 
-bool sd_exists(char *fn) {
-    FRESULT res;
-    FILINFO fno;
-    res = f_stat(fatfs_sd, fn, &fno);
-    return (res == FR_OK);
-}
-
-bool sd_remove(char *fn) {
-    FRESULT res;
-    res = f_unlink(fatfs_sd, fn);
-    return (res == FR_OK);
-}
-
-bool sd_open(FIL *fp, char *fn, unsigned char mode) {
-    FRESULT res;
-    res = f_open(fatfs_sd, fp, fn, mode);
-    return (res == FR_OK);
-}
-
-int sd_read_byte(FIL *fp) {
-    unsigned char c;
-    int len = 0;
-    FRESULT res = f_read(fp, &c, 1, &len);
-    if (len == 0) {
-        return -1;
-    }
-    return (int)c;
-}
-
-int sd_read(FIL *fp, unsigned char *buf, int size) {
-    int len;
-    FRESULT res = f_read(fp, buf, size, &len);
-    return len;
-}
-
-int sd_write_byte(FIL *fp, unsigned char c) {
-    int len;
-    FRESULT res = f_write(fp, &c, 1, &len);
-    return len;
-}
-
-int sd_write(FIL *fp, unsigned char *buf, int size) {
-    int len;
-    FRESULT res = f_write(fp, buf, size, &len);
-    return len;
-}
-
-void sd_seek(FIL *fp, unsigned long pos) {
-    FSIZE_t ofs = (FSIZE_t)pos;
-    FRESULT res = f_lseek(fp, ofs);
-}
-
-unsigned long sd_size(FIL *fp) {
-    return (unsigned long)f_size(fp);
-}
-
-void sd_flush(FIL *fp) {
-    f_sync(fp);
-}
-
-void sd_close(FIL *fp) {
-    f_close(fp);
-}
-
+#if MICROPY_HW_HAS_SDCARD
 //**************************************************
 // ファイルに含まれる+IPDデータを削除します
 // ipd: ipdデータ列
@@ -815,6 +756,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
     //Serial.println((const char*)wifi_data);
     return 1;
 }
+#endif
 
 //**************************************************
 // http GETプロトコルを送信する: WiFi.httpGet
@@ -1144,6 +1086,7 @@ int esp8266_recv(int num, char *recv_buf, int *recv_cnt) {
     return 1;
 }
 
+#if MICROPY_HW_HAS_SDCARD
 //**************************************************
 // http POSTとしてSDカードのファイルをPOSTします: WiFi.httpPostSD
 //  WiFi.httpPostSD( URL, Headers, Filename, Filename )
@@ -1381,6 +1324,7 @@ int esp8266_post_sd(char *strURL, char *strSFname, char *strDFname, int n,
     get_data(WIFI_WAIT_MSEC);
     return 1;
 }
+#endif
 
 //**************************************************
 // http POSTする: WiFi.httpPost
@@ -1533,12 +1477,14 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
     }
     //****** 送信終了 ******
     //****** 受信開始 ******
+#if MICROPY_HW_HAS_SDCARD
     if (sd_exists(tmpFilename)) {
         sd_remove(tmpFilename);
     }
     if (!sd_open(&fp, tmpFilename, FA_WRITE | FA_CREATE_NEW)) {
         return 6;
     }
+#endif
     unsigned long times;
     unsigned int wait_msec = WIFI_WAIT_MSEC;
     unsigned char recv[2];
@@ -1552,15 +1498,20 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
             for (int i = 0; i < len; i++) {
                 //esp8266_serial_read();
                 recv[0] = (unsigned char)esp8266_serial_read();
+#if MICROPY_HW_HAS_SDCARD
                 sd_write(&fp, (unsigned char*)recv, 1);
+#endif
             }
             times = millis();
             wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
         }
     }
+#if MICROPY_HW_HAS_SDCARD
     sd_flush(&fp);
     sd_close(&fp);
+#endif
     //****** 受信終了 ******
+#if MICROPY_HW_HAS_SDCARD
     if (strDFname) {
         //受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
         int ret = cut_garbage_data("\r\n+IPD,4,", tmpFilename,
@@ -1569,6 +1520,7 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
             return 7;
         }
     }
+#endif
     //****** AT+CIPCLOSE コマンド ******
     esp8266_serial_println("AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
@@ -1617,4 +1569,6 @@ int esp8266_init(void) {
     }
     return 1;
 }
+
+#endif
 

@@ -37,6 +37,8 @@
 #include "ntp.h"
 #include "wifi.h"
 
+#if MICROPY_HW_HAS_ESP8266
+
 // ===== micropyhton function in module definition
 
 STATIC mp_obj_t wifi_init(void) {
@@ -177,6 +179,7 @@ STATIC mp_obj_t wifi_https_get(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_https_get_obj, 1, 2, wifi_https_get);
 
+#if MICROPY_HW_HAS_SDCARD
 STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
     unsigned char **header = (unsigned char **)NULL;
     mp_obj_t *items;
@@ -236,6 +239,7 @@ STATIC mp_obj_t wifi_https_get_sd(size_t n_args, const mp_obj_t *args) {
     return mp_obj_new_int(ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_https_get_sd_obj, 2, 3, wifi_https_get_sd);
+#endif
 
 STATIC mp_obj_t wifi_udpopen(size_t n_args, const mp_obj_t *args) {
     esp8266_udpopen(mp_obj_get_int(args[0]),
@@ -246,6 +250,7 @@ STATIC mp_obj_t wifi_udpopen(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_udpopen_obj, 4, 4, wifi_udpopen);
 
+#if MICROPY_HW_HAS_SDCARD
 /* http_post_sd */
 /* url */
 /* header */
@@ -309,6 +314,7 @@ STATIC mp_obj_t wifi_https_post_sd(size_t n_args, const mp_obj_t *args) {
     return mp_obj_new_int(ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_https_post_sd_obj, 4, 4, wifi_https_post_sd);
+#endif
 
 /* http_post */
 /* url */
@@ -434,11 +440,15 @@ STATIC const mp_map_elem_t wifi_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_multiconnect), (mp_obj_t)&wifi_multiconnect_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_get), (mp_obj_t)&wifi_http_get_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_get), (mp_obj_t)&wifi_https_get_obj },
+#if MICROPY_HW_HAS_SDCARD
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_get_sd), (mp_obj_t)&wifi_http_get_sd_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_get_sd), (mp_obj_t)&wifi_https_get_sd_obj },
+#endif
     { MP_OBJ_NEW_QSTR(MP_QSTR_udpopen), (mp_obj_t)&wifi_udpopen_obj },
+#if MICROPY_HW_HAS_SDCARD
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_post_sd), (mp_obj_t)&wifi_http_post_sd_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_post_sd), (mp_obj_t)&wifi_https_post_sd_obj },
+#endif
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_post), (mp_obj_t)&wifi_http_post_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_post), (mp_obj_t)&wifi_https_post_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_cclose), (mp_obj_t)&wifi_cclose_obj },
@@ -455,3 +465,5 @@ const mp_obj_module_t mp_module_wifi = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&mp_module_wifi_globals,
 };
+
+#endif

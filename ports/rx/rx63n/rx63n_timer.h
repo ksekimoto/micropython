@@ -50,6 +50,7 @@ void cmt_timer_set_period(unsigned int ch, unsigned long period);
 
 void udelay_init(void);
 void udelay(int m);
+void mdelay(int m);
 unsigned long utick(void);
 unsigned long mtick(void);
 

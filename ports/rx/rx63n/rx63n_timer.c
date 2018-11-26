@@ -264,6 +264,10 @@ void udelay(int m) {
     }
 }
 
+void mdelay(int m) {
+    udelay(m*1000);
+}
+
 unsigned long utick(void) {
     return cmt_count[DELAY_CH] * 10;
 }

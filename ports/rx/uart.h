@@ -40,6 +40,7 @@ typedef enum {
     PYB_UART_10 = 10,
     PYB_UART_11 = 11,
     PYB_UART_12 = 12,
+    PYB_UART_NONE = 100,
 } pyb_uart_t;
 
 typedef struct _pyb_uart_obj_t pyb_uart_obj_t;

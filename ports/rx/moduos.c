@@ -37,7 +37,7 @@
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "genhdr/mpversion.h"
-//#include "rng.h"
+#include "rng.h"
 #include "uart.h"
 #include "portmodules.h"
 

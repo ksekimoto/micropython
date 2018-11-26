@@ -31,8 +31,16 @@
 #include "pendsv.h"
 #include "rx63n_sci.h"
 
-#define SCI_CH_NUM 8
-#define SCI_BUF_SIZE 2048
+#if defined(GRCITRUS)
+#define SCI_CH_NUM 6
+#define SCI_BUF_SIZE 1024
+#elif defined(GRSAKURA)
+#define SCI_CH_NUM 4
+#define SCI_BUF_SIZE 512
+#else
+#define SCI_CH_NUM 4
+#define SCI_BUF_SIZE 512
+#endif
 #define SCI_DEFAULT_PRIORITY 3
 #define SCI_DEFAULT_BAUD    115200
 
@@ -53,35 +61,35 @@ static volatile struct st_sci0 *SCI[] = {
 };
 
 static const uint8_t sci_tx_pins[] = {
-    0x2 * 8 + 0,    /* ch 0 P20 */
-    0x1 * 8 + 6,    /* ch 1 P16 */
-    0x5 * 8 + 0,    /* ch 2 P50 */
-    0x2 * 8 + 3,    /* ch 3 P23 */
-    0xff,           /* ch 4 */
-    0xc * 8 + 3,    /* ch 5 PC3 */
-    0x3 * 8 + 2 ,   /* ch 6 P32 */
-    0xff,           /* ch 7 */
-    0xff,           /* ch 8 */
-    0xff,           /* ch 9 */
-    0xff,           /* ch 10 */
-    0xff,           /* ch 11 */
-    0xff,           /* ch 12 */
+    P20,    /* ch 0 P20 */
+    P16,    /* ch 1 P16 */
+    P50,    /* ch 2 P50 */
+    P23,    /* ch 3 P23 */
+    0xff,   /* ch 4 */
+    PC3,    /* ch 5 PC3 */
+    P32 ,   /* ch 6 P32 */
+    0xff,   /* ch 7 */
+    0xff,   /* ch 8 */
+    0xff,   /* ch 9 */
+    0xff,   /* ch 10 */
+    0xff,   /* ch 11 */
+    0xff,   /* ch 12 */
 };
 
 static const uint8_t sci_rx_pins[] = {
-    0x2 * 8 + 1,    /* ch 0 P21 */
-    0x1 * 8 + 5,    /* ch 1 P15 */
-    0x5 * 8 + 2,    /* ch 2 P52 */
-    0x2 * 8 + 5,    /* ch 3 P25 */
-    0xff,           /* ch 4 */
-    0xc * 8 + 2,    /* ch 5 PC2 */
-    0x3 * 8 + 3,    /* ch 6 P33 */
-    0xff,           /* ch 7 */
-    0xff,           /* ch 8 */
-    0xff,           /* ch 9 */
-    0xff,           /* ch 10 */
-    0xff,           /* ch 11 */
-    0xff,           /* ch 12 */
+    P21,    /* ch 0 P21 */
+    P15,    /* ch 1 P15 */
+    P52,    /* ch 2 P52 */
+    P25,    /* ch 3 P25 */
+    0xff,   /* ch 4 */
+    PC2,    /* ch 5 PC2 */
+    P33,    /* ch 6 P33 */
+    0xff,   /* ch 7 */
+    0xff,   /* ch 8 */
+    0xff,   /* ch 9 */
+    0xff,   /* ch 10 */
+    0xff,   /* ch 11 */
+    0xff,   /* ch 12 */
 };
 
 static volatile struct SCI_FIFO {

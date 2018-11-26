@@ -29,7 +29,7 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
-//#include "irq.h"
+#include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
 //#include "dma.h"

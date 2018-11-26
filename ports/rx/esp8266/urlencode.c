@@ -92,16 +92,12 @@ int get_url_encode_size(char *str) {
             size++;     /* replace with '+' */
         } else {
             size++;     /* replace with '%' */
-            if (size == 0)
-                break;
             size++;     /* num(upper nibble) to hex */
-            if (size == 0)
-                break;
             size++;     /* num(lower nibble) to hex */
         }
         pstr++;
     }
-    size++;             /*  '\0' */
+    //size++;           /* doesnot include '\0' */
     return size;
 }
 

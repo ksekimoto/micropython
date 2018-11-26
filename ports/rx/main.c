@@ -577,9 +577,18 @@ soft_reset:
             mounted_sdcard = init_sdcard_fs();
         }
     }
-#endif
-#if defined(GRSAKURA)
-    mounted_sdcard = init_sdcard_fs();
+#elif defined(GRSAKURA)
+    // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
+    if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+        mounted_sdcard = init_sdcard_fs();
+    }
+#else
+    if (sdcard_is_present()) {
+        // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
+        if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+            mounted_sdcard = init_sdcard_fs();
+        }
+    }
 #endif
     #endif
 

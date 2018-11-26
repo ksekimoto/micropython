@@ -29,6 +29,7 @@
 #include "../esp8266/esp8266.h"
 #include "common.h"
 
+#if MICROPY_HW_HAS_ESP8266
 //#define DEBUG_NTP
 
 static unsigned char ntp_send[NTP_PACKT_SIZE] = {
@@ -81,3 +82,4 @@ uint32_t ntp(char *ipaddr, int tf) {
     return time;
 }
 
+#endif

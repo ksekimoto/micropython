@@ -33,10 +33,7 @@
 #include "py/mphal.h"
 #include "extmod/virtpin.h"
 #include "pin.h"
-
-// ====================================================================
-// Pin
-// ====================================================================
+#include "extint.h"
 
 /// \moduleref pyb
 /// \class Pin - control I/O pins
@@ -517,7 +514,7 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_value),   MP_ROM_PTR(&pin_value_obj) },
     { MP_ROM_QSTR(MP_QSTR_off),     MP_ROM_PTR(&pin_off_obj) },
     { MP_ROM_QSTR(MP_QSTR_on),      MP_ROM_PTR(&pin_on_obj) },
-    // { MP_ROM_QSTR(MP_QSTR_irq),     MP_ROM_PTR(&pin_irq_obj) },
+    //{ MP_ROM_QSTR(MP_QSTR_irq),     MP_ROM_PTR(&pin_irq_obj) },
 
     // Legacy names as used by pyb.Pin
     { MP_ROM_QSTR(MP_QSTR_low),     MP_ROM_PTR(&pin_off_obj) },
