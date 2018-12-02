@@ -26,6 +26,8 @@
 #ifndef MICROPY_INCLUDED_RX_SPI_H
 #define MICROPY_INCLUDED_RX_SPI_H
 
+#define SPI_NUM_CH  3
+
 #define SPI_DIRECTION_2LINES 0
 #define SPI_NSS_SOFT    1
 #define SPI_MODE_MASTER    0x00000000
@@ -35,7 +37,7 @@ typedef struct _spi_t {
     uint32_t    ch;
 } spi_t;
 
-extern const spi_t spi_obj[3];
+extern const spi_t spi_obj[SPI_NUM_CH];
 extern const mp_obj_type_t pyb_spi_type;
 extern const mp_obj_type_t machine_soft_spi_type;
 extern const mp_obj_type_t machine_hard_spi_type;

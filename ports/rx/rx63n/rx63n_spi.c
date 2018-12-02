@@ -113,12 +113,12 @@ inline volatile static bool rx_spi_chk_ir(uint32_t ch, int bit) {
 
 void rx_spi_set_bits(uint32_t ch, uint32_t bits) {
     vp_rspi prspi = g_rspi[ch];
-    if (bits == 16) {
-        //prspi->SPCMD0.WORD |= 0xEF80; // Command Reg: SPI mode: MODE0, 16bit, MSB first
-        prspi->SPCMD0.WORD |= 0x0F00; // Command Reg: SPI mode: MODE0, 16bit, MSB first
-    } else {
-        //prspi->SPCMD0.WORD |= 0xE780; // Command Reg: SPI mode: MODE0, 8bit, MSB first
-        prspi->SPCMD0.WORD |= 0x0700; // Command Reg: SPI mode: MODE0, 8bit, MSB first
+    if (bits == 8) {
+        prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) | 0x0700; // Command Reg: SPI mode: 8bit
+    } else if (bits == 16) {
+        prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) | 0x0f00; // Command Reg: SPI mode: 16bit
+    } else if (bits == 32) {
+        prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) | 0x0300; // Command Reg: SPI mode: 32bit
     }
 }
 
@@ -185,7 +185,7 @@ void rx_spi_reset_spi_pin(uint32_t ch) {
     rx_spi_set_PMR(pinMISO, 0);
 }
 
-void rx_spi_set_spi_ch(uint32_t ch) {
+void rx_spi_set_spi_ch(uint32_t ch, uint32_t polarity, uint32_t phase) {
     vp_rspi prspi = g_rspi[ch];
     SYSTEM.PRCR.WORD = 0xA502;
     rx_spi_set_MSTP(ch, 0);
@@ -200,8 +200,16 @@ void rx_spi_set_spi_ch(uint32_t ch) {
     prspi->SPSCR.BYTE = 0;      /* Disable sequence control */
     prspi->SPDCR.BYTE = 0x20;   /* SPLW=1 long access */
     prspi->SPCMD0.WORD = 0x0700;/* LSBF=0, SPB=7, BRDV=0, CPOL=0, CPHA=0 */
-    //prspi->SPCMD0.BIT.CPOL = 1; /* CPOL(Clock Polarity) */
-    //prspi->SPCMD0.BIT.CPHA = 1; /* CPHA(Clock Phase) */
+    if (polarity == 0) {
+        prspi->SPCMD0.BIT.CPOL = 0; /* CPOL(Clock Polarity) */
+    } else {
+        prspi->SPCMD0.BIT.CPOL = 1; /* CPOL(Clock Polarity) */
+    }
+    if (phase == 0) {
+        prspi->SPCMD0.BIT.CPHA = 0; /* CPHA(Clock Phase) */
+    } else {
+        prspi->SPCMD0.BIT.CPHA = 1; /* CPHA(Clock Phase) */
+    }
     prspi->SPCR.BYTE = 0xC8;    /* Start SPI in master mode */
     prspi->SPCR2.BYTE = 0;
 }
@@ -222,7 +230,7 @@ uint8_t rx_spi_write_byte(uint32_t ch, uint8_t b) {
     return (uint8_t)(prspi->SPDR.LONG);
 }
 
-void rx_spi_write_bytes(uint32_t ch, uint8_t *buf, uint32_t count) {
+void rx_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
     uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
     while (count--) {
@@ -234,17 +242,41 @@ void rx_spi_write_bytes(uint32_t ch, uint8_t *buf, uint32_t count) {
     }
 }
 
-void rx_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src,
-        uint32_t count) {
+void rx_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
+    uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 16);
     while (count--) {
         rx_spi_set_ir(ch, 0);
-        prspi->SPDR.LONG = (uint32_t)(*src);
+        prspi->SPDR.LONG = (uint32_t)(*buf++);
         while (rx_spi_chk_ir(ch, 0))
             ;
-        *dst = (uint16_t)(prspi->SPDR.LONG);
-        src++;
-        dst++;
+        dummy = prspi->SPDR.LONG;
+    }
+    rx_spi_set_bits(ch, 8);
+}
+
+void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
+    uint32_t dummy;
+    vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 32);
+    while (count--) {
+        rx_spi_set_ir(ch, 0);
+        prspi->SPDR.LONG = (uint32_t)(*buf++);
+        while (rx_spi_chk_ir(ch, 0))
+            ;
+        dummy = prspi->SPDR.LONG;
+    }
+    rx_spi_set_bits(ch, 8);
+}
+
+void rx_spi_write_bytes(uint32_t ch, uint8_t *buf, uint32_t count) {
+    if ((((uint32_t)buf & 3) == 0) && ((count & 3) == 0)) {
+        rx_spi_write_bytes32(ch, (uint32_t *)buf, count >> 2);
+    } else if ((((uint32_t)buf & 1) == 0) && ((count & 1) == 0)) {
+        rx_spi_write_bytes16(ch, (uint16_t *)buf, count >> 1);
+    } else {
+        rx_spi_write_bytes(ch, buf, count);
     }
 }
 
@@ -261,11 +293,42 @@ void rx_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
     }
 }
 
+void rx_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src, uint32_t count) {
+    vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 16);
+    while (count--) {
+        rx_spi_set_ir(ch, 0);
+        prspi->SPDR.LONG = (uint32_t)(*src);
+        while (rx_spi_chk_ir(ch, 0))
+            ;
+        *dst = (uint16_t)(prspi->SPDR.LONG);
+        src++;
+        dst++;
+    }
+    rx_spi_set_bits(ch, 8);
+}
+
+void rx_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count) {
+    vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 32);
+    while (count--) {
+        rx_spi_set_ir(ch, 0);
+        prspi->SPDR.LONG = (uint32_t)(*src);
+        while (rx_spi_chk_ir(ch, 0))
+            ;
+        *dst = (uint32_t)(prspi->SPDR.LONG);
+        src++;
+        dst++;
+    }
+    rx_spi_set_bits(ch, 8);
+}
 void rx_spi_transfer(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout) {
     if (dst == (uint8_t *)NULL) {
         rx_spi_write_bytes(ch, src, count);
-    //} else if ((((uint32_t)dst & 1) == 0) && (((uint32_t)src & 1) == 0) && ((count & 1) == 0)) {
-    //    rx_spi_transfer16(ch, dst, src, count);
+    } else if ((((uint32_t)dst & 3) == 0) && (((uint32_t)src & 3) == 0) && ((count & 3) == 0)) {
+        rx_spi_transfer32(ch, (uint32_t *)dst, (uint32_t *)src, count >> 2);
+    } else if ((((uint32_t)dst & 1) == 0) && (((uint32_t)src & 1) == 0) && ((count & 1) == 0)) {
+        rx_spi_transfer16(ch, (uint16_t *)dst, (uint16_t *)src, count >> 1);
     } else {
         rx_spi_transfer8(ch, dst, src, count);
     }
@@ -289,7 +352,9 @@ void rx_spi_get_conf(uint32_t ch, uint16_t *spcmd, uint8_t *spbr) {
 }
 
 void rx_spi_init(uint32_t ch, uint32_t cs, uint32_t baud, uint32_t bits, uint32_t mode) {
-    rx_spi_set_spi_ch(ch);
+    uint32_t polarity = mode & 1;
+    uint32_t phase = (mode & 2) >> 1;
+    rx_spi_set_spi_ch(ch, polarity, phase);
     rx_spi_set_clk(ch, baud);
     rx_spi_set_bits(ch, bits);
     gpio_mode_output(cs);

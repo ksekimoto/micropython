@@ -61,7 +61,7 @@
 ///     spi.send_recv(buf, buf)              # send/recv 4 bytes from/to buf
 
 /* So far, only ch is used. */
-const spi_t spi_obj[3] = {
+const spi_t spi_obj[SPI_NUM_CH] = {
 };
 
 void spi_init0(void) {
@@ -72,10 +72,6 @@ STATIC int spi_find(mp_obj_t id) {
         // given a string id
         const char *port = mp_obj_str_get_str(id);
         if (0) {
-        #ifdef MICROPY_HW_SPI0_NAME
-        } else if (strcmp(port, MICROPY_HW_SPI0_NAME) == 0) {
-            return 0;
-        #endif
         #ifdef MICROPY_HW_SPI1_NAME
         } else if (strcmp(port, MICROPY_HW_SPI1_NAME) == 0) {
             return 1;
@@ -84,13 +80,17 @@ STATIC int spi_find(mp_obj_t id) {
         } else if (strcmp(port, MICROPY_HW_SPI2_NAME) == 0) {
             return 2;
         #endif
+        #ifdef MICROPY_HW_SPI3_NAME
+        } else if (strcmp(port, MICROPY_HW_SPI3_NAME) == 0) {
+            return 3;
+        #endif
         }
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
             "SPI(%s) doesn't exist", port));
     } else {
         // given an integer id
         int spi_id = mp_obj_get_int(id);
-        if (spi_id >= 0 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
+        if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
             return spi_id;
         }
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
@@ -113,20 +113,8 @@ void spi_init(const spi_t *self, bool enable_nss_pin) {
     const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
     if (0) {
-    #if defined(MICROPY_HW_SPI0_SCK)
-    } else if (self->ch == 0) {
-        #if defined(MICROPY_HW_SPI0_NSS)
-        pins[0] = MICROPY_HW_SPI0_NSS;
-        #endif
-        pins[1] = MICROPY_HW_SPI0_SCK;
-        #if defined(MICROPY_HW_SPI3_MISO)
-        pins[2] = MICROPY_HW_SPI0_MISO;
-        #endif
-        pins[3] = MICROPY_HW_SPI0_MOSI;
-        rx_spi_init(self->ch, 0, 4000000, 8, 0);
-    #endif
     #if defined(MICROPY_HW_SPI1_SCK)
-    } else if (self->ch == 1) {
+    } else if (self->ch == 0) {
         #if defined(MICROPY_HW_SPI1_NSS)
         pins[0] = MICROPY_HW_SPI1_NSS;
         #endif
@@ -138,7 +126,7 @@ void spi_init(const spi_t *self, bool enable_nss_pin) {
         rx_spi_init(self->ch, 0, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
-    } else if (self->ch == 2) {
+    } else if (self->ch == 1) {
         #if defined(MICROPY_HW_SPI2_NSS)
         pins[0] = MICROPY_HW_SPI2_NSS;
         #endif
@@ -147,6 +135,18 @@ void spi_init(const spi_t *self, bool enable_nss_pin) {
         pins[2] = MICROPY_HW_SPI2_MISO;
         #endif
         pins[3] = MICROPY_HW_SPI2_MOSI;
+        rx_spi_init(self->ch, 0, 4000000, 8, 0);
+    #endif
+    #if defined(MICROPY_HW_SPI3_SCK)
+    } else if (self->ch == 3) {
+        #if defined(MICROPY_HW_SPI0_NSS)
+        pins[0] = MICROPY_HW_SPI3_NSS;
+        #endif
+        pins[1] = MICROPY_HW_SPI3_SCK;
+        #if defined(MICROPY_HW_SPI3_MISO)
+        pins[2] = MICROPY_HW_SPI3_MISO;
+        #endif
+        pins[3] = MICROPY_HW_SPI3_MOSI;
         rx_spi_init(self->ch, 0, 4000000, 8, 0);
     #endif
     } else {
@@ -158,13 +158,13 @@ void spi_init(const spi_t *self, bool enable_nss_pin) {
 
 void spi_deinit(const spi_t *spi_obj) {
     if (0) {
-    #if defined(MICROPY_HW_SPI0_SCK)
+    #if defined(MICROPY_HW_SPI1_SCK)
     } else if (spi_obj->ch == 0) {
     #endif
-    #if defined(MICROPY_HW_SPI1_SCK)
+    #if defined(MICROPY_HW_SPI2_SCK)
     } else if (spi_obj->ch == 1) {
     #endif
-    #if defined(MICROPY_HW_SPI2_SCK)
+    #if defined(MICROPY_HW_SPI3_SCK)
     } else if (spi_obj->ch == 2) {
     #endif
     }
@@ -208,7 +208,6 @@ STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     spi_print(print, self->spi, true);
 }
 
-
 /// \method init(mode, baudrate=328125, *, polarity=1, phase=0, bits=8, firstbit=SPI.MSB, ti=False, crc=None)
 ///
 /// Initialise the SPI bus with the given parameters:
@@ -234,9 +233,13 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
+    // set the SPI configuration values
+    uint32_t mode = args[0].u_int;
     spi_set_params(self->spi, args[2].u_int, args[1].u_int, args[3].u_int, args[4].u_int,
         args[6].u_int, args[8].u_int);
+    uint32_t direction = args[5].u_int;
     uint32_t nss = args[7].u_int;
+    // ToDo
     // init the SPI bus
     spi_init(self->spi, nss != SPI_NSS_SOFT);
 
