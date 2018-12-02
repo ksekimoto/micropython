@@ -59,6 +59,14 @@
 /*   Sort out endian tolerance. Currently little endian.        */
 /****************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+
+#include "py/nlr.h"
+#include "py/obj.h"
+#include "py/runtime.h"
+#include "py/binary.h"
+#include "portmodules.h"
 #include "../esp8266/hmac.h"
 
 #if MICROPY_PY_PYB_TWITTER

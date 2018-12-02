@@ -24,7 +24,15 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "py/nlr.h"
+#include "py/obj.h"
+#include "py/runtime.h"
+#include "py/binary.h"
+#include "portmodules.h"
+
 #include "../esp8266/ntp.h"
 #include "../esp8266/esp8266.h"
 #include "common.h"

@@ -1,5 +1,7 @@
 # Select the board to build for: if not given on the command line,
-# then default to PYBV10.
+# then default to GR_CITURS
+
+DEBUG_VERBOSE = 1
 
 #USE_NEW_USBLIB = 1
 # Use developing usb library instead of stable one for testing
@@ -12,6 +14,8 @@
 
 #FLASH_DEBUG = 1
 # Display erase and write log
+
+
 USE_FONT = 1
 USE_LCD = 1
 
@@ -20,8 +24,8 @@ USB_MSC = 2
 USB_CDC_MSC = 3
 USB_MODE = 3
 
-#BOARD ?= GR_CITRUS
-BOARD ?= GR_SAKURA
+BOARD ?= GR_CITRUS
+#BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
 endif
@@ -103,6 +107,10 @@ ifeq ($(BOARD),GR_SAKURA_DD)
 CFLAGS += -DGRSAKURA
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
+
+ifeq ($(DEBUG_VERBOSE), 1)
+CLAGS += -DMICROPY_DEBUG_VERBOSE=1
+endif
 
 ifeq ($(TEST_RAMDISK), 1)
 CFLAGS += -DDEBUG_USE_RAMDISK
