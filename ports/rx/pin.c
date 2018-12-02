@@ -348,7 +348,11 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
 
     // get pull mode
     uint pull = GPIO_NOPULL;
-    if (args[1].u_obj != mp_const_none) {
+    if (args[1].u_obj == mp_const_true) {
+        pull = GPIO_PULLUP;
+    } else if (args[1].u_obj == mp_const_false) {
+        pull = GPIO_PULLDOWN;
+    } else if (args[1].u_obj != mp_const_none) {
         pull = mp_obj_get_int(args[1].u_obj);
     }
     if (!IS_GPIO_PULL(pull)) {
@@ -365,7 +369,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid pin af: %d", af));
     }
 #endif
-
+    mp_hal_pin_config(self, mode, pull, -1);
     // if given, set the pin value before initialising to prevent glitches
     if (args[3].u_obj != MP_OBJ_NULL) {
         mp_hal_pin_write(self, mp_obj_is_true(args[3].u_obj));
