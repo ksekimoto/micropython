@@ -128,6 +128,14 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
     return (uint8_t*)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
 }
 
+void flash_cache_commit(void) {
+    if (flash_flags & FLASH_FLAG_DIRTY) {
+        if (((long)mtick() - flash_tick_counter_last_write) > 5000) {
+            flash_bdev_irq_handler();
+        }
+    }
+}
+
 static uint8_t *flash_cache_get_addr_for_read(uint32_t flash_addr) {
     uint32_t flash_sector_start;
     uint32_t flash_sector_size;

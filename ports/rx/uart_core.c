@@ -31,6 +31,8 @@
 
 #define MP_USBCDC
 
+void flash_cache_commit(void);
+
 /*
  * Core UART functions to implement for a port
  */
@@ -38,6 +40,7 @@
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
     int c = 0;
+    flash_cache_commit();
 #if defined(MP_USBCDC)
     c = usbcdc_read();
 #else

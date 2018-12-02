@@ -53,8 +53,11 @@ NORETURN void mp_hal_raise(HAL_StatusTypeDef status) {
     mp_raise_OSError(mp_hal_status_to_errno_table[status]);
 }
 
+void flash_cache_commit(void);
+
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
+        flash_cache_commit();
 #if 0
 #ifdef USE_HOST_MODE
         pyb_usb_host_process();
