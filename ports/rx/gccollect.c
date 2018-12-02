@@ -37,15 +37,15 @@ uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {
     // get current time, in case we want to time the GC
-    #if 1
-    uint32_t start = mp_hal_ticks_ms();
+    #if 0
+    uint32_t start = mp_hal_ticks_us();
     #endif
 
     // start the GC
     gc_collect_start();
 
     // get the registers and the sp
-    uintptr_t regs[12]; /* r4,...,r15 */
+    uintptr_t regs[17]; /* r0,...,r15 and psw */
     uintptr_t sp = gc_helper_get_regs_and_sp(regs);
 
     // trace the stack, including the registers (since they live on the stack in this function)
@@ -63,9 +63,9 @@ void gc_collect(void) {
     // end the GC
     gc_collect_end();
 
-    #if 1
+    #if 0
     // print GC info
-    uint32_t ticks = mp_hal_ticks_ms() - start;
+    uint32_t ticks = mp_hal_ticks_us() - start;
     gc_info_t info;
     gc_info(&info);
     printf("GC@%lu %lums\n", start, ticks);

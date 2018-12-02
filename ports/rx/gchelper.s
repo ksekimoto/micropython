@@ -2,11 +2,12 @@
     .text
 
     .align  4
+# uint gc_helper_get_regs_and_sp(r1=uint regs[17])
     .global _gc_helper_get_regs_and_sp
     .type   _gc_helper_get_regs_and_sp, @function
 _gc_helper_get_regs_and_sp:
     # store regs into given array
-    push    r0
+    push    r2
     mov.l   r0, 00[r1]
     mov.l   r1, 04[r1]
     mov.l   r2, 08[r1]
@@ -23,9 +24,10 @@ _gc_helper_get_regs_and_sp:
     mov.l   r13, 52[r1]
     mov.l   r14, 56[r1]
     mov.l   r15, 60[r1]
-    mvfc    psw, r0
-    mov.l   r0, 64[r1]
-    pop     r0
+    mvfc    psw, r2
+    mov.l   r2, 64[r1]
+    pop     r2
+    mov.l   r0, r1
     # return the sp
     rts
 
