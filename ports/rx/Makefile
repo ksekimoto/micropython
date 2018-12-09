@@ -1,29 +1,5 @@
 # Select the board to build for: if not given on the command line,
 # then default to GR_CITURS
-
-DEBUG_VERBOSE = 1
-
-#USE_NEW_USBLIB = 1
-# Use developing usb library instead of stable one for testing
-
-#TEST_RAMDISK = 1
-# Use ramdisk instead of CPU internal flash for testing the related codes
-
-#FLASH_SKIP = 1
-# To avoid flash operation during debugging
-
-#FLASH_DEBUG = 1
-# Display erase and write log
-
-
-USE_FONT = 1
-USE_LCD = 1
-
-USB_CDC = 1
-USB_MSC = 2
-USB_CDC_MSC = 3
-USB_MODE = 3
-
 BOARD ?= GR_CITRUS
 #BOARD ?= GR_SAKURA
 ifeq ($(wildcard boards/$(BOARD)/.),)
@@ -33,6 +9,35 @@ endif
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
 
+# enable debug_printf
+#USE_DBG_PRINT = 1
+
+# enable micropython debug flag
+#MICROPY_DEBUG_VERBOSE = 1
+
+# Use developing usb library instead of stable one for testing
+#USE_NEW_USBLIB = 1
+
+# Use ramdisk instead of CPU internal flash for testing the related codes
+#TEST_RAMDISK = 1
+
+# To avoid flash operation during debugging
+#FLASH_SKIP = 1
+
+# Display erase and write log
+#FLASH_DEBUG = 1
+
+# Select USB device type
+USB_CDC = 1
+USB_MSC = 2
+USB_CDC_MSC = 3
+USB_MODE = 3
+
+# Include modules
+USE_FONT = 1
+USE_LCD = 1
+
+# Frozon module dir
 FROZEN_DIR = modules
 
 include ../../py/mkenv.mk
@@ -86,7 +91,7 @@ CFLAGS += $(INC) -w -std=c99 -nostdlib $(COPT)
 
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
-CFLAGS += -Os -g -DUSE_DBG_PRINT
+CFLAGS += -Os -g
 #CFLAGS += -Os -g
 else
 CFLAGS += -Os -DNDEBUG
@@ -108,8 +113,12 @@ CFLAGS += -DGRSAKURA
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
-ifeq ($(DEBUG_VERBOSE), 1)
-CLAGS += -DMICROPY_DEBUG_VERBOSE=1
+ifeq ($(USE_DBG_PRINT), 1)
+CFLAGS += -DUSE_DBG_PRINT
+endif
+
+ifeq ($(MICROPY_DEBUG_VERBOSE), 1)
+CFLAGS += -DMICROPY_DEBUG_VERBOSE=1
 endif
 
 ifeq ($(TEST_RAMDISK), 1)
@@ -256,10 +265,8 @@ SRC_C += ramdisk/FAT_0E00_005.c
 SRC_C += ramdisk/FAT_1000_100.c
 SRC_C += ramdisk/FAT_5000_041.c
 endif
-ifeq ($(DEBUG), 1)
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
-endif
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
