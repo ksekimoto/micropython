@@ -27,6 +27,10 @@
 #ifndef STWITTER_H_
 #define STWITTER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OAUTH_SIGNATURE_METHOD  "HMAC-SHA1"
 #define OAUTH_VERSION           "1.0"
 #define TWITTER_API_UPDATE      "https://api.twitter.com/1.1/statuses/update.json"
@@ -44,5 +48,9 @@ void twitter_api_init();
 void twitter_api_deinit();
 void twitter_api_set_keys(char *cons_key, char *cons_sec, char *accs_key, char *accs_sec);
 void twitter_api_statuses_update(char *str, char *media_id_string);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* STWITTER_H_ */

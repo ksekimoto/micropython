@@ -27,7 +27,15 @@
 #ifndef _BASE64ENCODE_H_
 #define _BASE64ENCODE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *base64_encode(const unsigned char *data, int input_length, char *encoded_data, int *output_length);
 char *base64_decode(const unsigned char *data, int input_length, char *decoded_data, int *output_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _BASE64ENCODE_H_ */

@@ -27,6 +27,10 @@
 #ifndef _NTP_H_
 #define _NTP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NTP_SEND_PORT   123
 #define NTP_LOCAL_PORT  8788
 #define NTP_PACKT_SIZE  48
@@ -34,5 +38,9 @@
 #define NTP_DEFAULT_SERVER  "ntp.nict.go.jp"
 
 uint32_t ntp(char *ipaddr, int tf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NTP_H_ */

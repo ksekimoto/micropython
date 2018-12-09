@@ -27,9 +27,17 @@
 #ifndef _URLENCODE_H_
 #define _URLENCODE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *url_encode(char *str, char *dst, int size);
 char *url_decode(char *str, char *dst, int size);
 int get_url_encode_size(char *str);
 int get_url_decode_size(char *str);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _URLENCODE_H_ */
