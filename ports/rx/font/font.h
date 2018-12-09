@@ -27,6 +27,10 @@
 #ifndef SFONT_H_
 #define SFONT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     FONT_ASCII = 1,
     FONT_UNICODE = 2,
@@ -83,5 +87,9 @@ int font_fontWidth(font_t *font, int c);
 int font_fontHeight(font_t *font, int c);
 int font_fontBytes(font_t *font, int c);
 unsigned char *font_fontData(font_t *font, int idx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SFONT_H_ */

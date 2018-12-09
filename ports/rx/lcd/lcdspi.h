@@ -14,6 +14,10 @@
 //#include "PCF8833.h"
 //#include "ST7735.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb
 // v2: rrrrrggg gggbbbbb
@@ -98,5 +102,9 @@ void SPISW_LCD_cmd8_1(uint8_t dat);
 void SPISW_LCD_dat8_1(uint8_t dat);
 
 extern const mp_obj_type_t pyb_lcdspi_type;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SLCDSPI_H_ */

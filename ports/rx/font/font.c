@@ -31,8 +31,10 @@
 
 #define MISAKIFONT4X8
 #define MISAKIFONT6X12
+#if MICROPY_PY_PYB_UNICODE_FONT
 #define MISAKIFONT8X8
 #define MISAKIFONT12X12
+#endif
 
 #include "font.h"
 
