@@ -11,6 +11,10 @@
 *.jpg binary
 *.dxf binary
 *.mpy binary
+*.bin binary
+*.dat binary
+*.exe binary
+*.com bibary
 
 # These should also not be modified by git.
 tests/basics/string_cr_conversion.py -text
