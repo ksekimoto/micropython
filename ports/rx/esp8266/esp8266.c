@@ -48,11 +48,22 @@
 
 #if MICROPY_HW_HAS_ESP8266
 
-#define DEBUG_ESP8266_GET_DATA
-#define DEBUG_ESP8266_POST
-#define DEBUG_ESP8266_POST_HEADER
-#define DEBUG_ESP8266_POST_DATA
+//#define DEBUG_ESP8266
+//#define DEBUG_ESP8266_GET_DATA
+//#define DEBUG_ESP8266_POST
+//#define DEBUG_ESP8266_POST_HEADER
+//#define DEBUG_ESP8266_POST_DATA
 //#define DEBUG_ESP8266_CHKOK
+
+#ifdef DEBUG_ESP8266
+#  define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
+#  define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
+#  define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
+#else
+#  define DEBUG_PRINT(m,v)      // do nothing
+#  define DEBUG_PRINT1(s)       // do nothing
+#  define DEBUG_PRINTLN1(s)     // do nothing
+#endif
 
 #if MICROPY_HW_HAS_SDCARD
 #include "sd.h"
@@ -597,7 +608,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
         sd_write(&fp, (unsigned char*)"GET /", 5);
         //httpsかチェック
         if (ssl) {
-            DBG_PRINT1("AT+CIPSSLSIZE=4096");
+            //DBG_PRINT1("AT+CIPSSLSIZE=4096");
             esp8266_serial_println("AT+CIPSSLSIZE=4096");
             get_data(WIFI_WAIT_MSEC);
         }
@@ -675,7 +686,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //Serial.print("httpServer Connect: ");
@@ -697,7 +708,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //Serial.print("> Waiting: ");
@@ -719,7 +730,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
                 || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-            DBG_PRINT1("WIFI ERR");
+            //DBG_PRINT1("WIFI ERR");
             return 0;
         }
         //Serial.print("Send Finish: ");
@@ -758,7 +769,7 @@ int esp8266_get_sd(char *strURL, char *strFname, int n, char **head, int ssl) {
         return 7;
     }
     //****** AT+CIPCLOSE コマンド ******
-    DBG_PRINT1("AT+CIPCLOSE=4");
+    //DBG_PRINT1("AT+CIPCLOSE=4");
     esp8266_serial_println("AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
     //Serial.println((const char*)wifi_data);
@@ -785,7 +796,7 @@ int esp8266_get(unsigned char *strURL, unsigned char **hes, int n, int ssl) {
 
     //httpsかチェック
     if (ssl) {
-        DBG_PRINT1("AT+CIPSSLSIZE=4096");
+        //DBG_PRINT1("AT+CIPSSLSIZE=4096");
         esp8266_serial_println("AT+CIPSSLSIZE=4096");
         get_data(WIFI_WAIT_MSEC);
     }
@@ -833,7 +844,7 @@ int esp8266_get(unsigned char *strURL, unsigned char **hes, int n, int ssl) {
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //****** AT+CIPSEND コマンド ******
@@ -870,14 +881,14 @@ int esp8266_get(unsigned char *strURL, unsigned char **hes, int n, int ssl) {
     strcat(sData, "\r\n");
     //送信データサイズ取得
     len = strlen(sData);
-    DBG_PRINT1((const char *)sData);
+    //DBG_PRINT1((const char *)sData);
     esp8266_serial_print("AT+CIPSEND=4,");
     esp8266_serial_printiln(len);
     //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //****** 送信データ受付モードになったので、http GETデータを送信する ******
@@ -887,7 +898,7 @@ int esp8266_get(unsigned char *strURL, unsigned char **hes, int n, int ssl) {
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
                 || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-            DBG_PRINT1("WIFI ERR");
+            //DBG_PRINT1("WIFI ERR");
             return 0;
         }
     }
@@ -1139,7 +1150,7 @@ int esp8266_post_sd(char *strURL, char *strSFname, char *strDFname, int n,
         sd_write(&fp, (unsigned char*)"POST /", 6);
         //httpsかチェック
         if (ssl) {
-            DBG_PRINT1("AT+CIPSSLSIZE=4096");
+            //DBG_PRINT1("AT+CIPSSLSIZE=4096");
             esp8266_serial_println("AT+CIPSSLSIZE=4096");
             get_data(WIFI_WAIT_MSEC);
         }
@@ -1225,7 +1236,7 @@ int esp8266_post_sd(char *strURL, char *strSFname, char *strDFname, int n,
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //Serial.print("httpServer Connect: ");
@@ -1247,7 +1258,7 @@ int esp8266_post_sd(char *strURL, char *strSFname, char *strDFname, int n,
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-        DBG_PRINT1("WIFI ERR");
+        //DBG_PRINT1("WIFI ERR");
         return 0;
     }
     //Serial.print("> Waiting: ");
@@ -1280,7 +1291,7 @@ int esp8266_post_sd(char *strURL, char *strSFname, char *strDFname, int n,
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
                 || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
-            DBG_PRINT1("WIFI ERR");
+            //DBG_PRINT1("WIFI ERR");
             return 0;
         }
         //Serial.print("Send Finish: ");
@@ -1410,7 +1421,9 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
+#ifdef DEBUG_ESP8266
         debug_printf("WIFI ERR 1\r\n");
+#endif
         return 0;
     }
     //****** AT+CIPSEND コマンド ******
@@ -1460,7 +1473,9 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
             || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
+#ifdef DEBUG_ESP8266
         debug_printf("WIFI ERR 2\r\n");
+#endif
         return 0;
     }
     //****** 送信データ受付モードになったので、http POSTデータを送信する ******
@@ -1479,7 +1494,9 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char*)wifi_data) - 2] == 'K'
                 || wifi_data[strlen((const char*)wifi_data) - 3] == 'K')) {
+#ifdef DEBUG_ESP8266
             debug_printf("WIFI ERR 3\r\n");
+#endif
             return 0;
         }
     }

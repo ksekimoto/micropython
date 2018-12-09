@@ -43,8 +43,8 @@
 
 #if MICROPY_PY_PYB_TWITTER
 
-#define DEBUG_TWITTER_NO_WIFI
-#define DEBUG_TWITTER_AUTH_STR
+//#define DEBUG_TWITTER_NO_WIFI
+//#define DEBUG_TWITTER_AUTH_STR
 //#define DEBUG_TWITTER_STATUSES_UPDATE
 //#define DEBUG_UPLOAD
 //#define DEBUG_HTTP_POST
@@ -242,7 +242,9 @@ static char *url_encode_static_buf(char *str) {
     if (get_url_encode_size(str) < ENCODE_BUF_MAX) {
         url_encode(str, encode_buf, ENCODE_BUF_MAX);
     } else {
+#ifdef DEBUG_TWITTER
         debug_printf("ERR: encode buf short!\r\n");
+#endif
     }
     return encode_buf;
 }
@@ -255,7 +257,9 @@ static char *urlenccpy(char *dst, char *src) {
         strcpy(dst, enc);
         free(enc);
     } else {
+#ifdef DEBUG_TWITTER
         debug_printf("ERR: malloc failed!\r\n");
+#endif
     }
     return dst;
 }
@@ -268,7 +272,9 @@ static char *urlenccat(char *dst, char *src) {
         strcat(dst, enc);
         free(enc);
     } else {
+#ifdef DEBUG_TWITTER
         debug_printf("ERR: malloc failed!\r\n");
+#endif
     }
     return dst;
 }
@@ -309,12 +315,16 @@ static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2
     strcat(sig_data, encode_buf);
     strcat(sig_data, "&");
     url_encode(param_buf, encode_buf, ENCODE_BUF_MAX);
+#ifdef DEBUG_TWITTER
     debug_printf("param_len act:%d calc:%d\r\n", strlen(encode_buf), calc_param_len);
+#endif
     strcat(sig_data, encode_buf);
     sig_key_len = strlen(sig_key);
     sig_data_len = strlen(sig_data);
+#ifdef DEBUG_TWITTER
     debug_printf("sig_key_len act:%d calc:%d\r\n", sig_key_len, calc_sig_key_len);
     debug_printf("sig_data_len act:%d calc:%d\r\n", sig_data_len, calc_sig_data_len);
+#endif
     hmac_sha1((unsigned char *)sig_key,
         sig_key_len,
         (unsigned char *)sig_data,
@@ -363,7 +373,9 @@ static void _statuses_update(char *ckey, char *csec, char *akey, char *asec, cha
         (char *)"POST",
         (char *)TWITTER_API_UPDATE,
         req_params);
+#ifdef DEBUG_TWITTER
     debug_printf("sig_str: %s\r\n", sig_str);
+#endif
     if ((media_id_string != NULL) && (strlen(media_id_string) > 0)) {
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"oauth_consumer_key", (char *)ckey);
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"oauth_nonce", (char *)timestamp_str);
@@ -479,7 +491,9 @@ void twitter_api_statuses_update(char *str, char *media_id_string) {
     }
     strcpy(head[2], (char *)STR_AUTHORIZATION);
     strcat(head[2], auth_str);
+#ifdef DEBUG_TWITTER
     debug_printf("Header[2]: %s\r\n", head[2]);
+#endif
     strcpy(body, "status=");
     url_encode(str, encode_buf, ENCODE_BUF_MAX);
     strcat(body, encode_buf);

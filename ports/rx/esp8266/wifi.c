@@ -33,11 +33,22 @@
 #include "py/binary.h"
 #include "portmodules.h"
 
+#include "common.h"
 #include "esp8266.h"
 #include "ntp.h"
 #include "wifi.h"
 
 #if MICROPY_HW_HAS_ESP8266
+
+#ifdef DEBUG_WIFI
+#  define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
+#  define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
+#  define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
+#else
+#  define DEBUG_PRINT(m,v)      // do nothing
+#  define DEBUG_PRINT1(s)       // do nothing
+#  define DEBUG_PRINTLN1(s)     // do nothing
+#endif
 
 // ===== micropyhton function in module definition
 
