@@ -26,28 +26,27 @@
 
 #include "iodefine.h"
 
-static void usb_clock_init(void)
-{
+static void usb_clock_init(void) {
     volatile int i;
-    SYSTEM.PRCR.WORD = 0xA503;                 // Protect register (protect off)
-    if (SYSTEM.RSTSR0.BIT.DPSRSTF == 1) { // Reset status register (Deep software standby reset check)
+    SYSTEM.PRCR.WORD = 0xA503;              // Protect register (protect off)
+    if (SYSTEM.RSTSR0.BIT.DPSRSTF == 1) {   // Reset status register (Deep software standby reset check)
         if (SYSTEM.DPSIFR2.BIT.DUSBIF == 1) { // Deep standby interrupt flag register2
-            SYSTEM.DPSIFR2.BIT.DUSBIF = 0;      // Clear USB Request
+            SYSTEM.DPSIFR2.BIT.DUSBIF = 0;  // Clear USB Request
         }
         PORT3.PMR.BIT.B6 = 1;               // Port mode register
         PORT3.PMR.BIT.B7 = 1;               // Port mode register
         SYSTEM.MOSCCR.BYTE = 0x00;          // Main clock oscillator is operated
         SYSTEM.MOSCWTCR.BYTE = 0x0D;        // 131072 state
         SYSTEM.SOSCCR.BYTE = 0x01;          // Sub clock Oscillator is stopped
-        SYSTEM.PLLCR.WORD = 0x0F00;     // PLIDIV = 12MHz(/1), STC = 192MHz(*16)
+        SYSTEM.PLLCR.WORD = 0x0F00;         // PLIDIV = 12MHz(/1), STC = 192MHz(*16)
         SYSTEM.PLLCR2.BYTE = 0x00;          // PLL enable
         SYSTEM.PLLWTCR.BYTE = 0x0F;         // 4194304cycle(Default)
         for (i = 0; i < 600; i++) {
         }
-        SYSTEM.SCKCR.LONG = 0x21032222; // ICK(96MHz)=PLL/2,BCK(24MHz)=PLL/8,FCK,PCK(48MHz)=PLL/4
+        SYSTEM.SCKCR.LONG = 0x21032222;     // ICK(96MHz)=PLL/2,BCK(24MHz)=PLL/8,FCK,PCK(48MHz)=PLL/4
         SYSTEM.SCKCR3.WORD = 0x0400;        // PLL
         SYSTEM.SCKCR2.BIT.UCK = 3;          // USB clock : 48MHz
-        SYSTEM.MSTPCRA.LONG = 0x7FFFFFFF; // Module stop control register (Disable ACSE)
+        SYSTEM.MSTPCRA.LONG = 0x7FFFFFFF;   // Module stop control register (Disable ACSE)
         SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;    // Enable USB0 module
         SYSTEM.SYSCR0.WORD = 0x5A03;        // External Bus Enable
         PORT5.PMR.BIT.B3 = 1;
@@ -77,8 +76,7 @@ static void usb_clock_init(void)
     }
 }
 
-void bootstrap(void)
-{
+void bootstrap(void) {
     //SYSTEM.SCKCR.LONG = 0x21032200;     /* clock init: ICK=PLL/2, BCLK=PLL/8, PCLK=PLL/4 */
     usb_clock_init();
     MPC.PWPR.BIT.B0WI = 0;
