@@ -27,6 +27,10 @@
 #ifndef RX63N_TPU_H_
 #define RX63N_TPU_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TPU_UNIT_SIZE   2
 #define TPU_CHANNEL_SIZE    12
 #define TPU_DEFAULT_FREQ    (1000.0f)
@@ -92,5 +96,9 @@ void rx_tpu_pin_init(uint8_t pin_idx);
 void rx_tpu_pin_deinit(uint8_t pin_idx);
 void rx_tpu_init(void);
 void rx_tpu_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RX63N_TPU_H_ */

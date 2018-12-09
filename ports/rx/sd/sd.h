@@ -29,6 +29,10 @@
 
 #include "ff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool sd_exists(char *fn);
 bool sd_remove(char *fn);
 bool sd_open(FIL *fp, char *fn, unsigned char mode);
@@ -42,5 +46,9 @@ void sd_flush(FIL *fp);
 void sd_close(FIL *fp);
 
 extern FATFS *fatfs_sd;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SD_H_ */

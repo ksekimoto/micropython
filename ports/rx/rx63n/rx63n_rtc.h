@@ -27,6 +27,10 @@
 #ifndef RX63N_RTC_H_
 #define RX63N_RTC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RTC_PERIOD_MINUTE   0x00
 #define RTC_PERIOD_SECOND   0x01
 
@@ -51,5 +55,9 @@ int rx_rtc_get_second(void);
 int rx_rtc_get_weekday(void);
 void rx_rtc_init(void);
 void rx_rtc_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RX63N_RTC_H_ */

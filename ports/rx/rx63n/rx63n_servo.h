@@ -27,6 +27,10 @@
 #ifndef RX63N_SERVO_H_
 #define RX63N_SERVO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*rx_servo_cb_t)();
 
 void rx_servo_set_callback(rx_servo_cb_t cb);
@@ -37,5 +41,9 @@ void rx_servo_start(uint8_t pin_idx);
 void rx_servo_stop(uint8_t pin_idx);
 void rx_servo_init(void);
 void rx_servo_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RX63N_SERVO_H_ */

@@ -19,6 +19,10 @@
 #ifndef INTERRUPT_HANDLERS_H
 #define INTERRUPT_HANDLERS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Exception(Supervisor Instruction)
 void INT_Excep_SuperVisorInst(void) __attribute__ ((interrupt));
 
@@ -718,5 +722,9 @@ void INT_Excep_IEB_IEBINT(void) __attribute__ ((interrupt));
 //;Power On Reset PC
 extern void PowerON_Reset_PC(void) __attribute__ ((interrupt));
 //;<<VECTOR DATA END (POWER ON RESET)>>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

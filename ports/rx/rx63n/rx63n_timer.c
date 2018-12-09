@@ -137,6 +137,7 @@ void cmt_timer_init(unsigned int ch) {
     case 3:
         ICU.IPR[0x07].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
+        break;
     default:
         break;
     }
@@ -158,6 +159,7 @@ void cmt_timer_deinit(unsigned int ch) {
         break;
     case 3:
         ICU.IER[0x03].BIT.IEN7 = 0;         // IER disable
+        break;
     default:
         break;
     }

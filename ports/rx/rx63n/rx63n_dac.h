@@ -27,9 +27,17 @@
 #ifndef RX63N_DAC_H_
 #define RX63N_DAC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint8_t rx_dac_get_channel(uint8_t pin_idx);
 void rx_dac_write(uint8_t pin_idx, uint16_t value);
 void rx_dac_init(uint8_t pin_idx);
 void rx_dac_deinit(uint8_t pin_idx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RX63N_DAC_H_ */

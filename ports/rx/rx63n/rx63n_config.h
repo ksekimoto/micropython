@@ -37,8 +37,10 @@ extern "C" {
 #define UART_TxStr sci_tx_str
 #define PCLK    48000000
 
+#if defined(USE_DBG_PRINT)
 #define DEBUG_CH SCI_CH
 #define DEBUG_TXSTR sci_tx_str
+#endif
 
 void rx63n_init(void);
 void bootstrap(void);
