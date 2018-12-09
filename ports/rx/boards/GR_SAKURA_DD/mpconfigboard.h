@@ -22,7 +22,7 @@
 #define MICROPY_HW_UART5_RX         (pin_PC2)
 #define MICROPY_HW_UART6_TX         (pin_P33)
 #define MICROPY_HW_UART6_RX         (pin_P32)
-#define MICROPY_HW_UART_REPL        PYB_UART_0
+//#define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
@@ -41,21 +41,21 @@
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
-#define MICROPY_HW_SPI0_NAME "X"
-#define MICROPY_HW_SPI0_NSS  (pin_PC4)
-#define MICROPY_HW_SPI0_SCK  (pin_PC5)
-#define MICROPY_HW_SPI0_MISO (pin_PC7)
-#define MICROPY_HW_SPI0_MOSI (pin_PC6)
-#define MICROPY_HW_SPI1_NAME "Y"
-#define MICROPY_HW_SPI1_NSS  (pin_PE4)
-#define MICROPY_HW_SPI1_SCK  (pin_PE1)
-#define MICROPY_HW_SPI1_MISO (pin_PE3)
-#define MICROPY_HW_SPI1_MOSI (pin_PE2)
-#define MICROPY_HW_SPI2_NAME "Z"
-#define MICROPY_HW_SPI2_NSS  (pin_PD4)
-#define MICROPY_HW_SPI2_SCK  (pin_PD3)
-#define MICROPY_HW_SPI2_MISO (pin_PD2)
-#define MICROPY_HW_SPI2_MOSI (pin_PD1)
+#define MICROPY_HW_SPI1_NAME "X"
+#define MICROPY_HW_SPI1_NSS  (pin_PC4)
+#define MICROPY_HW_SPI1_SCK  (pin_PC5)
+#define MICROPY_HW_SPI1_MISO (pin_PC7)
+#define MICROPY_HW_SPI1_MOSI (pin_PC6)
+#define MICROPY_HW_SPI2_NAME "Y"
+#define MICROPY_HW_SPI2_NSS  (pin_PE4)
+#define MICROPY_HW_SPI2_SCK  (pin_PE1)
+#define MICROPY_HW_SPI2_MISO (pin_PE3)
+#define MICROPY_HW_SPI2_MOSI (pin_PE2)
+#define MICROPY_HW_SPI3_NAME "Z"
+#define MICROPY_HW_SPI3_NSS  (pin_PD4)
+#define MICROPY_HW_SPI3_SCK  (pin_PD3)
+#define MICROPY_HW_SPI3_MISO (pin_PD2)
+#define MICROPY_HW_SPI3_MOSI (pin_PD1)
 
 // USRSW is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW_PIN        (pin_PA7)
@@ -85,7 +85,8 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP8266  (0)
-#define MICROPY_PY_PYB_TWITTER  (0)
-#define MICROPY_PY_PYB_FONT     (1)
-#define MICROPY_PY_PYB_LCDSPI   (1)
+#define MICROPY_HW_HAS_ESP8266      (1)
+#define MICROPY_PY_PYB_TWITTER      (1)
+#define MICROPY_PY_PYB_FONT         (1)
+#define MICROPY_PY_PYB_UNICODE_FONT (0)
+#define MICROPY_PY_PYB_LCDSPI       (1)

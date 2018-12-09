@@ -22,7 +22,7 @@
 #define MICROPY_HW_UART5_RX         (pin_PC2)
 #define MICROPY_HW_UART6_TX         (pin_P33)
 #define MICROPY_HW_UART6_RX         (pin_P32)
-#define MICROPY_HW_UART_REPL        PYB_UART_0
+//#define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
@@ -85,7 +85,7 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP8266  (0)
-#define MICROPY_PY_PYB_TWITTER  (0)
-#define MICROPY_PY_PYB_FONT     (1)
-#define MICROPY_PY_PYB_LCDSPI   (1)
+#define MICROPY_HW_HAS_ESP8266      (0)
+#define MICROPY_PY_PYB_TWITTER      (0)
+#define MICROPY_PY_PYB_UNICODE_FONT (0)
+#define MICROPY_PY_PYB_LCDSPI       (1)
