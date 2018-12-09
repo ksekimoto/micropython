@@ -27,7 +27,15 @@
 #ifndef _HMAC_H_
 #define _HMAC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
         int data_length, unsigned char *digest);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _HMAC_H_ */
