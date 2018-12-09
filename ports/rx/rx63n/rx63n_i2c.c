@@ -49,17 +49,17 @@ xaction_t *current_xaction;
 xaction_unit_t *current_xaction_unit;
 
 static const uint8_t i2c_scl_pins[] = {
-    0x1 * 8 + 0x2,      /* P12 */
-    0x2 * 8 + 0x1,      /* P21 */
-    0x1 * 8 + 0x6,      /* P16 */
-    0xc * 8 + 0x0,      /* PC0 */
+    P12,      /* P12 */
+    P21,      /* P21 */
+    P16,      /* P16 */
+    PC0,      /* PC0 */
 };
 
 static const uint8_t i2c_sda_pins[] = {
-    0x1 * 8 + 0x3,      /* P13 */
-    0x2 * 8 + 0x0,      /* P20 */
-    0x1 * 8 + 0x7,      /* P17 */
-    0xc * 8 + 0x1,      /* PC1 */
+    P13,      /* P13 */
+    P20,      /* P20 */
+    P17,      /* P17 */
+    PC1,      /* PC1 */
 };
 
 riic_t *RIIC[] = {
@@ -73,8 +73,7 @@ static uint8_t pclk_div[8] = {
     1, 2, 4, 8, 16, 32, 64, 128
 };
 
-void  rx_i2c_get_pins(uint32_t ch, uint8_t *scl, uint8_t *sda)
-{
+void  rx_i2c_get_pins(uint32_t ch, uint8_t *scl, uint8_t *sda) {
     *scl = i2c_scl_pins[ch];
     *sda = i2c_sda_pins[ch];
 }
@@ -100,8 +99,7 @@ static void rx_i2c_clear_line(uint32_t ch) {
 }
 
 #if defined(DEBUG_I2C_REG_DUMP)
-static void i2c_reg_dump(uint32_t ch)
-{
+static void i2c_reg_dump(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
     debug_printf("CR1=%02X CR2=%02X MR1=%02X MR2=%02X MR3=%02X\r\n",
         riicp->ICCR1.BYTE, riicp->ICCR2.BYTE, riicp->ICMR1.BYTE, riicp->ICMR3.BYTE, riicp->ICMR3.BYTE);
@@ -280,8 +278,7 @@ static void rx_i2c_power(uint32_t ch) {
     SYSTEM.PRCR.WORD = 0xA500;
 }
 
-void rx_i2c_init(uint32_t ch)
-{
+void rx_i2c_init(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
 
     rx_i2c_power(ch);
@@ -323,8 +320,7 @@ void rx_i2c_init(uint32_t ch)
     return;
 }
 
-void rx_i2c_deinit(uint32_t ch)
-{
+void rx_i2c_deinit(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
 
     riicp->ICIER.BYTE = 0;           // I2C interrupt disable
@@ -335,8 +331,7 @@ void rx_i2c_deinit(uint32_t ch)
     return;
 }
 
-void rx_i2c_read_last_byte(uint32_t ch)
-{
+void rx_i2c_read_last_byte(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
     xaction_t *xaction = current_xaction;
     xaction_unit_t *unit = &xaction->units[xaction->m_current];
@@ -360,8 +355,7 @@ void rx_i2c_read_last_byte(uint32_t ch)
     }
 }
 
-void rx_i2c_stop_confition(uint32_t ch)
-{
+void rx_i2c_stop_confition(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
     riicp->ICSR2.BIT.NACKF = 0;
     riicp->ICSR2.BIT.STOP = 0;
@@ -381,8 +375,7 @@ void rx_i2c_stop_confition(uint32_t ch)
 #endif
 }
 
-void rx_i2c_abort(uint32_t ch)
-{
+void rx_i2c_abort(uint32_t ch) {
     uint8_t dummy;
     riic_t *riicp = RIIC[ch];
     xaction_t *xaction = current_xaction;
@@ -479,8 +472,7 @@ void rx_i2c_xaction_start(uint32_t ch, xaction_t *xaction, bool repeated_start) 
     }
 }
 
-void rx_i2c_xaction_stop(uint32_t ch)
-{
+void rx_i2c_xaction_stop(uint32_t ch) {
     riic_t *riicp = RIIC[ch];
 
     rx_i2c_ir(ch, 0);
