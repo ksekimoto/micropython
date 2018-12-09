@@ -222,7 +222,7 @@ static void sd_write_buf(uint8_t token, uint8_t *buf, uint32_t len) {
     uint8_t res;
     gpio_write(sd_cs ,0);
     res = rx_spi_write_byte(sd_ch, token);
-    rx_spi_write_bytes(sd_ch, buf, len);
+    rx_spi_write_bytes8(sd_ch, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);
     rx_spi_write_byte(sd_ch, 0xff);
     if ((rx_spi_write_byte(sd_ch, 0xff) & 0x1f) != 0x05) {
