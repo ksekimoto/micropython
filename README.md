@@ -44,6 +44,7 @@ Major components in this repository:
   HTML documentation is available at http://docs.micropython.org.
 
 Additional components:
+- ports/rx/ -- a version of MicroPython that runs on the Renesas RX63N/RX631 boards.
 - ports/bare-arm/ -- a bare minimum version of MicroPython for ARM MCUs. Used
   mostly to control code size.
 - ports/teensy/ -- a version of MicroPython that runs on the Teensy 3.1
@@ -162,6 +163,51 @@ This will use the included `tools/pydfu.py` script.  If flashing the firmware
 does not work it may be because you don't have the correct permissions, and
 need to use `sudo make deploy`.
 See the README.md file in the ports/stm32/ directory for further details.
+
+The RX version
+-----------------
+
+The "rx" port requires an Renesas GCC for RX compiler, rx-elf-gcc, and 
+associated bin-utils. :
+https://gcc-renesas.com/rx-download-toolchains/ 
+
+To build:
+
+    $ git submodule update --init
+    $ cd ports/rx
+    $ make BOARD=GR_CITURS
+
+The supported boards are
+
+    GR_CITRUS (http://gadget.renesas.com/en/product/citrus.html )
+
+<p align="center">
+  <img src="http://gadget.renesas.com/en/product/images/gr-citrus.jpg" alt="GR-CITRUS"/>
+</p>
+
+    GR_SAKURA (http://gadget.renesas.com/en/product/sakura.html )
+
+<p align="center">
+  <img src="http://gadget.renesas.com/en/product/images/gr-sakura.jpg" alt="GR-SAKURA"/>
+</p>
+
+The compiled elf/mot/bin binary files are created under 
+build-'board name' folder
+
+    firmware.elf
+    firmware.mot
+    firmware.bin
+
+You can flash the mot file by using Renesas Flash Development Toolkit:
+https://www.renesas.com/us/en/products/software-tools/tools/programmer/flash-development-toolkit-programming-gui.html#productInfo
+
+Also you can flash the firmware.bin for USB MAS Storage firmware via
+Drag and Drop on Windows Explorer.
+To build the bin file, you need to specify "BOARD=BOARDNAME_DD", such as
+"BOARD=GR_CITRUS_DD" or "BOARD=GR_SAKURA_DD". 
+
+At default, 256KB of flash drive is allocated from internal flash ROM 
+area (0xFFFA0000-0xFFFDFFFF).
 
 Contributing
 ------------

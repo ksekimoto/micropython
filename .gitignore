@@ -42,3 +42,11 @@ user.props
 # Generated rst files
 ######################
 genrst/
+/.cproject
+/.project
+/ports/rx/build-GR_CITRUS
+/ports/rx/build-GR_CITRUS_DD
+/ports/rx/build-GR_SAKURA_DD
+/ports/rx/usb/wip
+/ports/rx/build-GR_SAKURA
+/.settings
