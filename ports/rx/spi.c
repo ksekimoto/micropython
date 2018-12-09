@@ -61,7 +61,10 @@
 ///     spi.send_recv(buf, buf)              # send/recv 4 bytes from/to buf
 
 /* So far, only ch is used. */
-const spi_t spi_obj[SPI_NUM_CH] = {
+static spi_t spi_obj[SPI_NUM_CH] = {
+    {0, 8},
+    {1, 8},
+    {2, 8},
 };
 
 void spi_init0(void) {
@@ -177,10 +180,7 @@ void spi_deinit(const spi_t *spi_obj) {
 #define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
 STATIC void spi_transfer(const spi_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
-    // Note: there seems to be a problem sending 1 byte using DMA the first
-    // time directly after the SPI/DMA is initialised.  The cause of this is
-    // unknown but we sidestep the issue by using polling for 1 byte transfer.
-    rx_spi_transfer(self->ch, dest, src, (uint32_t)len, timeout);
+    rx_spi_transfer(self->ch, self->bits, dest, src, (uint32_t)len, timeout);
 }
 
 STATIC void spi_print(const mp_print_t *print, const spi_t *spi_obj, bool legacy) {
@@ -194,10 +194,10 @@ STATIC void spi_print(const mp_print_t *print, const spi_t *spi_obj, bool legacy
 
 typedef struct _pyb_spi_obj_t {
     mp_obj_base_t base;
-    const spi_t *spi;
+    spi_t *spi;
 } pyb_spi_obj_t;
 
-STATIC const pyb_spi_obj_t pyb_spi_obj[] = {
+STATIC pyb_spi_obj_t pyb_spi_obj[] = {
     {{&pyb_spi_type}, &spi_obj[0]},
     {{&pyb_spi_type}, &spi_obj[1]},
     {{&pyb_spi_type}, &spi_obj[2]},
@@ -214,7 +214,7 @@ STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 ///
 ///   - `mode` must be either `SPI.MASTER` or `SPI.SLAVE`.
 ///   - `baudrate` is the SCK clock rate (only sensible for a master).
-STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pyb_spi_init_helper(pyb_spi_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode,     MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 328125} },
@@ -233,6 +233,7 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
+    self->spi->bits = args[6].u_int;
     // set the SPI configuration values
     uint32_t mode = args[0].u_int;
     spi_set_params(self->spi, args[2].u_int, args[1].u_int, args[3].u_int, args[4].u_int,
@@ -487,7 +488,7 @@ const mp_obj_type_t pyb_spi_type = {
 
 typedef struct _machine_hard_spi_obj_t {
     mp_obj_base_t base;
-    const spi_t *spi;
+    spi_t *spi;
 } machine_hard_spi_obj_t;
 
 STATIC const machine_hard_spi_obj_t machine_hard_spi_obj[] = {
@@ -545,16 +546,17 @@ STATIC void machine_hard_spi_init(mp_obj_base_t *self_in, size_t n_args, const m
 
     enum { ARG_baudrate, ARG_polarity, ARG_phase, ARG_bits, ARG_firstbit };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_baudrate, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_polarity, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_bits,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_firstbit, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_baudrate, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 115200} },
+        { MP_QSTR_polarity, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_bits,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 8} },
+        { MP_QSTR_firstbit, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // set the SPI configuration values
+    self->spi->bits = args[ARG_bits].u_int;
     spi_set_params(self->spi, 0xffffffff, args[ARG_baudrate].u_int,
         args[ARG_polarity].u_int, args[ARG_phase].u_int, args[ARG_bits].u_int,
         args[ARG_firstbit].u_int);

@@ -35,9 +35,10 @@
 
 typedef struct _spi_t {
     uint32_t    ch;
+    uint32_t    bits;
 } spi_t;
 
-extern const spi_t spi_obj[SPI_NUM_CH];
+//extern spi_t spi_obj[SPI_NUM_CH];
 extern const mp_obj_type_t pyb_spi_type;
 extern const mp_obj_type_t machine_soft_spi_type;
 extern const mp_obj_type_t machine_hard_spi_type;
