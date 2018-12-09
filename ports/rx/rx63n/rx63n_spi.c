@@ -233,6 +233,7 @@ uint8_t rx_spi_write_byte(uint32_t ch, uint8_t b) {
 void rx_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
     uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 8);
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*buf++);
@@ -270,18 +271,19 @@ void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
     rx_spi_set_bits(ch, 8);
 }
 
-void rx_spi_write_bytes(uint32_t ch, uint8_t *buf, uint32_t count) {
-    if ((((uint32_t)buf & 3) == 0) && ((count & 3) == 0)) {
-        rx_spi_write_bytes32(ch, (uint32_t *)buf, count >> 2);
-    } else if ((((uint32_t)buf & 1) == 0) && ((count & 1) == 0)) {
+void rx_spi_write_bytes(uint32_t ch, uint32_t bits, uint8_t *buf, uint32_t count) {
+    if (bits == 8) {
+        rx_spi_write_bytes8(ch, buf, count);
+    } else if (bits == 16) {
         rx_spi_write_bytes16(ch, (uint16_t *)buf, count >> 1);
-    } else {
-        rx_spi_write_bytes(ch, buf, count);
+    } else if (bits == 32) {
+        rx_spi_write_bytes32(ch, (uint32_t *)buf, count >> 2);
     }
 }
 
 void rx_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
     vp_rspi prspi = g_rspi[ch];
+    rx_spi_set_bits(ch, 8);
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*src);
@@ -322,15 +324,14 @@ void rx_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
     }
     rx_spi_set_bits(ch, 8);
 }
-void rx_spi_transfer(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout) {
-    if (dst == (uint8_t *)NULL) {
-        rx_spi_write_bytes(ch, src, count);
-    } else if ((((uint32_t)dst & 3) == 0) && (((uint32_t)src & 3) == 0) && ((count & 3) == 0)) {
-        rx_spi_transfer32(ch, (uint32_t *)dst, (uint32_t *)src, count >> 2);
-    } else if ((((uint32_t)dst & 1) == 0) && (((uint32_t)src & 1) == 0) && ((count & 1) == 0)) {
-        rx_spi_transfer16(ch, (uint16_t *)dst, (uint16_t *)src, count >> 1);
-    } else {
+
+void rx_spi_transfer(uint32_t ch, uint32_t bits, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout) {
+    if (bits == 8) {
         rx_spi_transfer8(ch, dst, src, count);
+    } else if (bits == 16) {
+        rx_spi_transfer16(ch, (uint16_t *)dst, (uint16_t *)src, count >> 1);
+    } else if (bits == 32) {
+        rx_spi_transfer32(ch, (uint32_t *)dst, (uint32_t *)src, count >> 2);
     }
 }
 
