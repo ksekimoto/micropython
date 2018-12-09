@@ -264,7 +264,12 @@ void sci_tx_ch(int ch, uint8_t c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     while (tx_fifo[ch].len == SCI_BUF_SIZE) {
-        ;
+        rx_disable_irq();
+        i = tx_fifo[ch].tail;
+        sci->TDR = tx_fifo[ch].buff[i++];
+        tx_fifo[ch].len--;
+        tx_fifo[ch].tail = i % SCI_BUF_SIZE;
+        rx_enable_irq();
     }
     rx_disable_irq();
     if (!tx_fifo[ch].busy) {
