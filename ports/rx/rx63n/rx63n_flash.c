@@ -92,8 +92,7 @@
 // From Renesas sample
 ////////////////////////////////////////////////////////////////////////////
 
-void fcu_Interrupt_Disable(void)
-{
+void fcu_Interrupt_Disable(void) {
     FLASH.FRDYIE.BYTE &= ~(1 << 0);
 #if 0
     FLASH.FAEINT.uint8_t &= ~(1 << 7);
@@ -110,8 +109,7 @@ void fcu_Interrupt_Disable(void)
     ICU.IER[0x02].BIT.IEN7 = 0;     // FRDYI IEN
 }
 
-void fcu_Reset(void)
-{
+void fcu_Reset(void) {
     volatile unsigned long count;
     FLASH.FRESETR.WORD = 0xCC01;
     count = WAIT_TRESW2;
@@ -119,8 +117,7 @@ void fcu_Reset(void)
     FLASH.FRESETR.WORD = 0xCC00;
 }
 
-bool fcu_Transition_RomRead_Mode(volatile unsigned char *command_addr)
-{
+bool fcu_Transition_RomRead_Mode(volatile unsigned char *command_addr) {
     unsigned long count;
     count = WAIT_TE16K;
     while (FLASH.FSTATR0.BIT.FRDY == 0) {
@@ -149,8 +146,7 @@ bool fcu_Transition_RomRead_Mode(volatile unsigned char *command_addr)
     return true;
 }
 
-bool fcu_Transition_RomPE_Mode(unsigned int flash_addr)
-{
+bool fcu_Transition_RomPE_Mode(unsigned int flash_addr) {
     FLASH.FENTRYR.WORD = 0xAA00;
     while (0x0000 != FLASH.FENTRYR.WORD) ;
 #if defined(RX62N)
@@ -182,8 +178,7 @@ bool fcu_Transition_RomPE_Mode(unsigned int flash_addr)
     return true;
 }
 
-bool fcu_Transfer_Firmware(volatile unsigned char *command_addr)
-{
+bool fcu_Transfer_Firmware(volatile unsigned char *command_addr) {
     if (FLASH.FENTRYR.WORD != 0x0000) {
         if (!fcu_Transition_RomRead_Mode(command_addr))
             return false;
@@ -193,8 +188,7 @@ bool fcu_Transfer_Firmware(volatile unsigned char *command_addr)
     return true;
 }
 
-bool fcu_Notify_Peripheral_Clock(volatile unsigned char *command_addr)
-{
+bool fcu_Notify_Peripheral_Clock(volatile unsigned char *command_addr) {
     unsigned long count;
     FLASH.PCKAR.WORD = PCKA_48MHZ;
     *command_addr = 0xE9;
@@ -217,8 +211,7 @@ bool fcu_Notify_Peripheral_Clock(volatile unsigned char *command_addr)
     return true;
 }
 
-bool fcu_Erase(volatile unsigned char *command_addr)
-{
+bool fcu_Erase(volatile unsigned char *command_addr) {
     unsigned long count;
     //FLASH.FWEPROR.uint8_t = 0x01;
     FLASH.FPROTR.WORD = 0x5501;
@@ -239,8 +232,7 @@ bool fcu_Erase(volatile unsigned char *command_addr)
     return true;
 }
 
-bool fcu_Write(volatile unsigned char *command_addr, unsigned short *flash_addr, unsigned short *buf_addr)
-{
+bool fcu_Write(volatile unsigned char *command_addr, unsigned short *flash_addr, unsigned short *buf_addr) {
     unsigned long cycle_cnt;
     unsigned long count;
     //FLASH.FWEPROR.uint8_t = 0x01;
@@ -290,8 +282,7 @@ uint8_t fFWLoaded = 0;
 uint8_t flash_buf[FLASH_BUF_SIZE]  __attribute__((aligned (2)));
 
 
-static void wait(volatile int count)
-{
+static void wait(volatile int count) {
     while (count-- > 0) {
         __asm__ __volatile__ ("nop");
         __asm__ __volatile__ ("nop");
@@ -299,16 +290,14 @@ static void wait(volatile int count)
     }
 }
 
-void *lmemset(void *dst, int c, size_t len)
-{
+void *lmemset(void *dst, int c, size_t len) {
     char *p;
     for (p = (char *)dst; len > 0; len--)
         *(p++) = c;
     return (void *)dst;
 }
 
-void *lmemcpy(void *dst, const void *src, size_t len)
-{
+void *lmemcpy(void *dst, const void *src, size_t len) {
     char *d = (char *)dst;
     const char *s = (const char *)src;
     for (; len > 0; len--)
@@ -316,8 +305,7 @@ void *lmemcpy(void *dst, const void *src, size_t len)
     return (void *)dst;
 }
 
-int lmemcmp(const void *p1, const void *p2, size_t len)
-{
+int lmemcmp(const void *p1, const void *p2, size_t len) {
     unsigned char *a, *b;
     size_t i;
 
@@ -333,8 +321,7 @@ int lmemcmp(const void *p1, const void *p2, size_t len)
     return (int)0;
 }
 
-uint32_t sector_size(uint32_t addr)
-{
+uint32_t sector_size(uint32_t addr) {
     if (addr >= 0xFFFF8000)
         return REGION0_SECTOR_SIZE;
     else if (addr >= 0xFFF80000)
@@ -345,8 +332,7 @@ uint32_t sector_size(uint32_t addr)
         return REGION3_SECTOR_SIZE;
 }
 
-uint32_t sector_start(uint32_t addr)
-{
+uint32_t sector_start(uint32_t addr) {
     if (addr >= 0xFFFF8000)
         return (addr & ~(REGION0_SECTOR_SIZE - 1));
     else if (addr >= 0xFFF80000)
@@ -357,8 +343,7 @@ uint32_t sector_start(uint32_t addr)
         return (addr & ~(REGION3_SECTOR_SIZE - 1));
 }
 
-uint32_t sector_index(uint32_t addr)
-{
+uint32_t sector_index(uint32_t addr) {
     if (addr >= 0xFFFF8000)
         return (7 - ((addr - 0xFFFF8000) / REGION0_SECTOR_SIZE));
     else if (addr >= 0xFFF80000)
@@ -369,8 +354,7 @@ uint32_t sector_index(uint32_t addr)
         return (69 - ((addr - 0xFFE0000) / REGION3_SECTOR_SIZE));
 }
 
-bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff)
-{
+bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) {
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_Read)
     debug_printf("Read(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
 #endif
@@ -382,13 +366,11 @@ bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, 
     return TRUE;
 }
 
-bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite)
-{
+bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite) {
     return internal_flash_writex(addr, NumBytes, pSectorBuff, ReadModifyWrite, TRUE);
 }
 
-bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr)
-{
+bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr) {
     __asm__ __volatile__ ("clrpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     //debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
@@ -481,8 +463,7 @@ WriteX_exit:
     return false;
 }
 
-bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes)
-{
+bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes) {
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_Memset)
     debug_printf("Memset(addr=%x, num=%x, data=%x)\r\n", addr, NumBytes, Data);
 #endif
@@ -491,8 +472,7 @@ bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes)
     return internal_flash_writex(addr, NumBytes, (uint8_t *)&chipData, TRUE, FALSE);
 }
 
-bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bool debug)
-{
+bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bool debug) {
     if (debug) {
 #if defined(DEBUG_FLASH)
         //debug_printf("IsBlockErased(addr=%x, len=%x)\r\n", addr, BlockLength);
@@ -517,14 +497,12 @@ bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bo
     return flag;
 }
 
-bool internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength)
-{
+bool internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength) {
     return _internal_flash_isblockerased(addr, BlockLength, TRUE);
 }
 
 // erase one page
-bool internal_flash_eraseblock(unsigned char *addr)
-{
+bool internal_flash_eraseblock(unsigned char *addr) {
     __asm__ __volatile__ ("clrpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     //debug_printf("EraseBlock(addr=%x)\r\n", addr);
@@ -584,4 +562,3 @@ EraseBlock_exit:
 #endif
     return false;
 }
-
