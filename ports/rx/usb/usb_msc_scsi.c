@@ -65,7 +65,7 @@ Defines
 
 /*Optional CMD support (Comment out to not support)*/
 #define SUPPORT_SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL_CMD
-//#define SUPPORT_MODE_SENSE_CMD
+#define SUPPORT_MODE_SENSE_CMD
 
 #define SCSI_BUF_SIZE   0x4000
 static uint8_t scsi_buf[SCSI_BUF_SIZE] __attribute__((aligned(16)));
@@ -287,6 +287,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			uint8_t Length = SCSI_INQUIRY_RESPONSE_SIZE;
 			
 			DEBUG_MSG_LOW(("SCSI: INQUIRY cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI INQUIRY\r\n");
+#endif
 		
 			/*The size of the data response required is stored within the command*/
 			AllocationLength = (uint8_t)((*_pCDB)[4]);
@@ -313,6 +316,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			
 			/*REQUEST_SENSE*/
 			DEBUG_MSG_LOW( ("SCSI: REQUEST_SENSE cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI REQUEST_SENSE\r\n");
+#endif
 			/*Host has requested the SCSI sense data*/
 			
 			/*The size of the data response required is stored within the command*/
@@ -340,6 +346,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 		{
 			/*READ CAPACITY(10)*/
 			DEBUG_MSG_LOW(("SCSI: READ_CAPACITY10 cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI READ_CAPACITY10\r\n");
+#endif
 			
 			/*This has a data stage IN*/
 			*_pPhaseNext = SCSI_PHASE_DATA_IN;
@@ -359,6 +368,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			assert(LUN == 0); 
 				
 			DEBUG_MSG_LOW(("SCSI: SCSI_ID_READ10 cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI READ10\r\n");
+#endif
 			
 			/*This is the block to start reading from */
 			LogicalBlockAddress |= ((uint32_t)(*_pCDB)[2] << 24);
@@ -425,6 +437,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 		{
 			/*TEST_UNIT_READY*/
 			DEBUG_MSG_MID(("SCSI: TEST_UNIT_READY cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI TEST_UNIT_READY\r\n");
+#endif
 			
 			/*No data transport*/
 			/*If not ready return an error so a command failed CSW is sent*/
@@ -445,6 +460,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			assert(LUN == 0); /*Only suppporting a single Logical unit*/
 			
 			DEBUG_MSG_LOW(("SCSI: SCSI_ID_WRITE10 cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI WRITE10\r\n");
+#endif
 			
 			/*This is the block to start reading from */
 			LogicalBlockAddress |= ((uint32_t)(*_pCDB)[2] << 24);
@@ -522,6 +540,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			
 			/*VERIFY(10)*/
 			DEBUG_MSG_LOW(("SCSI: SCSI_ID_VERIFY10 cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI VERIFY10\r\n");
+#endif
 			
 			/*We only support this if ByteChk = 0 (NO Data sent from host)
 			and LUN = 0*/
@@ -548,6 +569,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 			{
 				/*Don't support */
 				DEBUG_MSG_LOW(("SCSI: Not Supported (ByteChk = 1)\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI NOT SUPPORTED\r\n");
+#endif
 				
 				/*Set SCSI Sense data*/
 				g_SCSI_SENSE_DATA.SenseKey = 0x05; 	/*ILLEGAL REQUEST*/
@@ -568,6 +592,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 		{
 			/*PREVENT_ALLOW_MEDIUM_REMOVAL*/
 			DEBUG_MSG_LOW(("SCSI: PREVENT_ALLOW_MEDIUM_REMOVAL cmd received.\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI PREVENT_ALLOW_MEDIUM_REMOVAL\r\n");
+#endif
 			
 			/*Is this a Prevent or Allow request?*/
 			if(0 == ((*_pCDB)[4] & 0x01))
@@ -624,6 +651,9 @@ SCSI_ERROR SCSI_ProcessCmd(uint8_t(*_pCDB)[SCSI_CDB_SIZE], SCSI_PHASE* _pPhaseNe
 		{
 			/*Command not supported/recognised*/		
 			DEBUG_MSG_LOW(("*** CMD Not supported ***\r\n"));
+#if defined(DEBUG_USB_MSC)
+            debug_printf("SCSI CMD not supported: %2x\r\n", cmdID);
+#endif
 			
 			#ifndef SUPPORT_SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL_CMD
 			if(SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL == cmdID)
