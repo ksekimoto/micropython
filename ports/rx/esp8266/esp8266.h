@@ -27,6 +27,10 @@
 #ifndef _ESP8266_H_
 #define _ESP8266_H_  1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define  WIFI_SERIAL    6   /* sci6 */
 #define  WIFI_BAUDRATE  115200
 //#define  WIFI_CTS     15
@@ -55,5 +59,9 @@ int esp8266_post(char *strURL, char *strData, char *strDFname, int n, char **hea
 int esp8266_init(void);
 char *esp8266_data_ptr(void);
 int esp8266_data_len(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ESP8266_H */
