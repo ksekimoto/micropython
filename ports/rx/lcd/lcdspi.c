@@ -73,7 +73,8 @@ static lcdspi_pins_t lcdspi_pins_def = {
     &pin_P52_obj,   /* reset */
     &pin_P50_obj,   /* rs */
 };
-#else if defined(GRSAKURA)
+#endif
+#if defined(GRSAKURA)
 /* Aitendo M0_1114_basic_shield */
 static uint8_t _clkPin = P33;
 static uint8_t _doutPin = P32;
@@ -97,6 +98,23 @@ static lcdspi_pins_t lcdspi_pins_def = {
     &pin_P24_obj,   /* cs */
     &pin_P25_obj,   /* reset */
     &pin_P23_obj,   /* rs */
+};
+#endif
+#if defined(GRROSE)
+static uint8_t _clkPin = PC5;
+static uint8_t _doutPin = PC6;
+static uint8_t _csPin = PC7;
+static uint8_t _dinPin = PC4;
+static uint8_t _resetPin = P52;
+static uint8_t _rsPin = P50;
+
+static lcdspi_pins_t lcdspi_pins_def = {
+    &pin_PC5_obj,   /* clk */
+    &pin_PC6_obj,   /* mosi */
+    &pin_PC7_obj,   /* miso */
+    &pin_PC4_obj,   /* cs */
+    &pin_P52_obj,   /* reset */
+    &pin_P50_obj,   /* rs */
 };
 #endif
 
