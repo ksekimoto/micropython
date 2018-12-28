@@ -26,28 +26,64 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "common.h"
-#include "iodefine.h"
+#include "..\rx63n\iodefine.h"
+#include "rx65n_adc.h"
+#include "rx65n_config.h"
+#include "rx65n_dac.h"
+#include "rx65n_exti.h"
+#include "rx65n_flash.h"
+#include "rx65n_gpio.h"
+#include "rx65n_i2c.h"
+#include "rx65n_init.h"
+#include "rx65n_int.h"
+#include "rx65n_pwm.h"
+#include "rx65n_rtc.h"
+#include "rx65n_sci.h"
+#include "rx65n_spi.h"
+#include "rx65n_servo.h"
+#include "rx65n_timer.h"
+#include "rx65n_tpu.h"
+#include "rx65n_utils.h"
+#ifdef USE_DBG_PRINT
+#include "debug_printf.h"
+#endif
 #include "interrupt_handlers.h"
-#include "rx63n_flash.h"
+#include "rx65n_flash.h"
 
 #define RX63N
+
+//#if defined(RX63N)
+#define FLASH_TYPE_2
+//#endif
+
+//#if defined(RX64M)
+//#define FLASH_TYPE_3
+//#endif
+
+//#if defined(RX65N)
+//#define FLASH_TYPE_4
+//#endif
 
 ////////////////////////////////////////////////////////////////////////////
 // For Debugging
 ////////////////////////////////////////////////////////////////////////////
 //#define DEBUG_FLASH
-//#define DEBUG_FLASH_ERROR
+#define DEBUG_FLASH_ERROR
 //#define DEBUG_FLASH_SKIP
 //#define DEBUG_FLASH_WriteX
 //#define DEBUG_FLASH_EraseBlock
 //#define DEBUG_FLASH_Read
 //#define DEBUG_FLASH_Memset
 
+/*
+ * Flash Type 2
+ */
+
 ////////////////////////////////////////////////////////////////////////////
 // From Renesas sample
 ////////////////////////////////////////////////////////////////////////////
 
+#if defined(FLASH_TYPE_2)
 #if defined(RX63N)
 #define ROM_AREA_0  (0x00F80000)
 #define ROM_AREA_1  (0x00F00000)
@@ -111,7 +147,7 @@ void fcu_Reset(void) {
     FLASH.FRESETR.WORD = 0xCC00;
 }
 
-bool fcu_Transition_RomRead_Mode(volatile unsigned char *command_addr) {
+bool FLASH_SECTION fcu_Transition_RomRead_Mode(volatile unsigned char *command_addr) {
     unsigned long count;
     count = WAIT_TE16K;
     while (FLASH.FSTATR0.BIT.FRDY == 0) {
@@ -255,6 +291,11 @@ bool fcu_Write(volatile unsigned char *command_addr, unsigned short *flash_addr,
     }
     return true;
 }
+#endif
+
+////////////////////////////////////////////////////////////////////////////
+// Common
+////////////////////////////////////////////////////////////////////////////
 
 #define REGION3_SECTOR_SIZE 0x10000     // 64K
 #define REGION3_SECTOR_MAX  16
@@ -272,7 +313,6 @@ bool fcu_Write(volatile unsigned char *command_addr, unsigned short *flash_addr,
 #define FLASH_BUF_ADDR_MASK 0xffffff80
 #define FLASH_BUF_OFF_MASK  0x0000007f
 
-uint8_t fFWLoaded = 0;
 uint8_t flash_buf[FLASH_BUF_SIZE]  __attribute__((aligned (2)));
 
 static void wait(volatile int count) {
@@ -372,6 +412,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
 #endif
     uint32_t error_code = 0;
 #ifndef DEBUG_FLASH_SKIP
+#if defined(FLASH_TYPE_2)
     bool flag;
     unsigned char *command_addr = (unsigned char *)((uint32_t)addr & 0x00FFFFFF);
     //FLASH_BEGIN_PROGRAMMING_FAST() ;
@@ -443,6 +484,106 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
     //FLASH_END_PROGRAMMING_FAST("", addr);
 WriteX_exit:
 #endif
+#if defined(FLASH_TYPE_3)
+    uint32_t error_code = 0;
+    bool flag;
+    //FLASH_BEGIN_PROGRAMMING_FAST() ;
+    uint32_t sector, count;
+    uint32_t startAddress;
+    uint32_t offset;
+    uint32_t endAddress;
+    uint32_t i;
+    uint32_t sec_size;
+    uint32_t mask;
+    uint8_t *buf_addr;
+    if (ReadModifyWrite == TRUE) {
+        sec_size = sector_size(Address);
+        mask = sec_size - 1;
+        startAddress = Address & ~mask;
+        offset = Address & mask;
+        endAddress = Address + NumBytes;
+        while (startAddress < endAddress) {
+            buf_addr = (uint8_t *)&TEMP_MEMORY[0];
+            sec_size = sector_size(Address);
+            memcpy(buf_addr, (void *)startAddress, sec_size);
+            EraseBlock(context, Address);
+            if (NumBytes + offset > sec_size) {
+                count = sec_size - offset;
+                NumBytes -= count;
+            } else
+                count = NumBytes;
+            // overwrite data from src addr to flash buffer
+            if (fIncrementDataPtr)
+                memcpy(buf_addr + offset, pSectorBuff, count);
+            else
+                memset(buf_addr + offset, (int)*pSectorBuff, count);
+            i = sec_size / FLASH_BUF_SIZE;
+            while (i-- > 0) {
+                flash_err_t err;
+                FLASH_BEGIN_PROGRAMMING_FAST();
+                {
+                    GLOBAL_LOCK(irq);
+                    err = flash_api_write((uint32_t)(buf_addr), startAddress, FLASH_BUF_SIZE);
+                }
+                if (FLASH_SUCCESS != err) {
+                    error_code = (uint32_t)err;
+                    break;
+                }
+                FLASH_END_PROGRAMMING_FAST("", Address);
+                startAddress += FLASH_BUF_SIZE;
+                buf_addr += FLASH_BUF_SIZE;
+            }
+            if (fIncrementDataPtr) {
+                flag = (lmemcmp((const void *)(Address), (const void *)(((uint8_t *)&TEMP_MEMORY[0]) + offset), count) == 0);
+                if (!flag) {
+                    error_code = 15;
+                    break;
+                }
+            }
+            offset = 0;
+            pSectorBuff += count;
+        }
+    } else {
+        GLOBAL_LOCK(irq);
+        startAddress = Address & FLASH_BUF_ADDR_MASK;
+        offset = Address & FLASH_BUF_OFF_MASK;
+        endAddress = Address + NumBytes;
+        buf_addr = (uint8_t *)&flash_buf[0];
+        while (startAddress < endAddress) {
+            memset(buf_addr, 0xff, FLASH_BUF_SIZE);
+            if (NumBytes + offset > FLASH_BUF_SIZE) {
+                count = FLASH_BUF_SIZE - offset;
+                NumBytes -= count;
+            } else
+                count = NumBytes;
+            // overwrite data from src addr to flash buffer
+            if (fIncrementDataPtr)
+                memcpy(buf_addr + offset, pSectorBuff, count);
+            else
+                memset(buf_addr + offset, (int)*pSectorBuff, count);
+            FLASH_BEGIN_PROGRAMMING_FAST();
+            flash_err_t err = flash_api_write((uint32_t)(buf_addr), startAddress, FLASH_BUF_SIZE);
+            if (FLASH_SUCCESS != err) {
+                error_code = (uint32_t)err;
+                break;
+            }
+            FLASH_END_PROGRAMMING_FAST("", Address);
+            if (fIncrementDataPtr) {
+                flag = (lmemcmp((const void *)(startAddress + offset), (const void *)(buf_addr + offset), count) == 0);
+                if (!flag) {
+                    error_code = 15;
+                    break;
+                }
+            }
+            offset = 0;
+            startAddress += FLASH_BUF_SIZE;
+            pSectorBuff += count;
+        }
+    }
+//FLASH_END_PROGRAMMING_FAST("", Address);
+    WriteX_exit:
+#endif
+#endif
     __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     //debug_printf("WriteX() error_code=%x\r\n", error_code);
@@ -504,6 +645,7 @@ bool internal_flash_eraseblock(unsigned char *addr) {
     uint32_t error_code = 0;
     bool flag;
 #ifndef DEBUG_FLASH_SKIP
+#if defined(FLASH_TYPE_2)
     unsigned char *command_addr = (unsigned char *)((uint32_t)addr & 0x00FFFFFF);
     unsigned long block_size  = (unsigned long)sector_size((uint32_t)addr);
 
@@ -543,6 +685,10 @@ bool internal_flash_eraseblock(unsigned char *addr) {
     //FLASH_END_PROGRAMMING_FAST("", addr);
 EraseBlock_exit:
 #endif
+#if defined(FLASH_TYPE_3)
+    flash_api_erase((uint32_t)addr, 1);
+#endif
+#endif
     __asm__ __volatile__ ("setpsw i");
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     //debug_printf("EraseBlock() error_code=%x\r\n", error_code);
@@ -558,5 +704,10 @@ EraseBlock_exit:
 
 void internal_flash_init(void)
 {
+#if defined(FLASH_TYPE_2)
     fcu_Reset();
+#endif
+#if defined(FLASH_TYPE_3)
+    flash_api_open();
+#endif
 }

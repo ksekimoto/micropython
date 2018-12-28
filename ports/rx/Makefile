@@ -2,6 +2,7 @@
 # then default to GR_CITURS
 BOARD ?= GR_CITRUS
 #BOARD ?= GR_SAKURA
+#BOARD ?= GR_ROSE
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
 endif
@@ -55,6 +56,20 @@ FROZEN_MPY_DIR ?= modules
 include $(TOP)/py/py.mk
 
 #######################################################################
+# MCU configuration
+#######################################################################
+
+ifeq ($(MCU_SERIES),RX63N)
+MCU_SERIES_LOW = rx63n
+MCU_SERIES_CAP = RX63N
+endif
+
+ifeq ($(MCU_SERIES),RX65N)
+MCU_SERIES_LOW = rx65n
+MCU_SERIES_CAP = RX65N
+endif
+
+#######################################################################
 # Compiler configuration
 #######################################################################
 GCCDIR = /d/cross/GNURX-ELF-4.8.4.201701/rx-elf/rx-elf
@@ -67,7 +82,7 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -I$(MCU_SERIES)
+INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
 INC += -Idebug
 INC += -Iramdisk
@@ -97,8 +112,9 @@ else
 CFLAGS += -Os -DNDEBUG
 endif
 
-CFLAGS += -D$(MCU_SERIES)
-CFLAGS += -DCONFIG_$(MCU_SERIES)
+CFLAGS += -D$(MCU_SERIES_CAP)
+CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
+CFLAGS += -D__RX_LITTLE_ENDIAN__
 ifeq ($(BOARD),GR_CITRUS)
 CFLAGS += -DGRCITRUS
 endif
@@ -110,6 +126,12 @@ CFLAGS += -DGRSAKURA
 endif
 ifeq ($(BOARD),GR_SAKURA_DD)
 CFLAGS += -DGRSAKURA
+endif
+ifeq ($(BOARD),GR_ROSE)
+CFLAGS += -DGRROSE
+endif
+ifeq ($(BOARD),GR_ROSE_DD)
+CFLAGS += -DGRROSE
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
@@ -224,25 +246,26 @@ SRC_C += esp8266/ntp.c
 SRC_C += esp8266/twitter.c
 SRC_C += esp8266/urlencode.c
 SRC_C += esp8266/wifi.c
-SRC_C += $(MCU_SERIES)/sbrk.c
-SRC_C += $(MCU_SERIES)/interrupt_handlers.c
-SRC_C += $(MCU_SERIES)/vector_table.c
-SRC_C += $(MCU_SERIES)/bootstrap.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_adc.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_dac.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_flash.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_i2c.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_pwm.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_rtc.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_servo.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_tpu.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
+SRC_C += $(MCU_SERIES_LOW)/sbrk.c
+SRC_C += $(MCU_SERIES_LOW)/interrupt_handlers.c
+SRC_C += $(MCU_SERIES_LOW)/vector_table.c
+SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_adc.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_dac.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_exti.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_flash.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_gpio.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_i2c.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_init.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_int.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_sci.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_pwm.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_rtc.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_servo.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_spi.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_timer.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_tpu.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_utils.c
 ifeq ($(USE_NEW_USBLIB), 1)
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_cdc.c
@@ -277,7 +300,7 @@ SRC_C += lcd/picojpeg.c
 endif
 SRC_C += sd/sd.c
 
-SRC_S = $(MCU_SERIES)/startup_$(MCU_SERIES).S
+SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
@@ -507,8 +530,8 @@ $(BUILD)/firmware.elf: $(OBJ)
 
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = boards/$(BOARD)/pins.csv
-AF_FILE = boards/$(MCU_SERIES)_af.csv
-PREFIX_FILE = boards/$(MCU_SERIES)_prefix.c
+AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
+PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
 GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
 GEN_PINS_QSTR = $(BUILD)/pins_qstr.h

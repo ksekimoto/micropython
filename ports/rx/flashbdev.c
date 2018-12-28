@@ -58,6 +58,14 @@ STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(16))); // 16k
 #define FLASH_MEM_SEG1_START_ADDR (0xfffa0000)  // sector 1
 #define FLASH_MEM_SEG1_NUM_BLOCKS (512)         // sectors 1,2,...,64: 256K
 
+#elif defined(GRROSE)
+
+STATIC byte flash_cache_mem[0x8000] __attribute__((aligned(16))); // 16k
+#define CACHE_MEM_START_ADDR (&flash_cache_mem[0])
+#define FLASH_SECTOR_SIZE_MAX (0x8000)          // 32k max due to size of cache buffer
+#define FLASH_MEM_SEG1_START_ADDR (0xfffa0000)  // sector 1
+#define FLASH_MEM_SEG1_NUM_BLOCKS (512)         // sectors 1,2,...,64: 256K
+
 #else
 #error "no internal flash storage support for this MCU"
 #endif

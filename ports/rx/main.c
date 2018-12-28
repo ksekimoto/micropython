@@ -448,7 +448,12 @@ static int chk_kbd_interrupt(int d)
 void main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers
 
+#if defined(RX63N)
     rx63n_init();
+#endif
+#if defined(RX65N)
+    rx65n_init();
+#endif
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif
