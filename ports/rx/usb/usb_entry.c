@@ -25,6 +25,9 @@
  */
 
 #include "interrupt_handlers.h"
+#if defined(RX65N)
+#define IODEFINE_H_HISTORY
+#endif
 #include "iodefine.h"
 #include "usb_hal.h"
 #include "usb_cdc.h"
@@ -33,6 +36,14 @@
 #include "pendsv.h"
 #include "usbdescriptors.h"
 #include "usb_entry.h"
+
+#if defined(RX63N)
+#define USBIO   USB0
+#endif
+
+#if defined(RX65N)
+#define USBIO   USB0
+#endif
 
 #define PID_NAK     0
 #define PID_BUF     1
@@ -83,25 +94,25 @@ void ReadBulkOUTPacketCDC(void) {
     /*Read data using D1FIFO*/
     /*NOTE: This probably will have already been selected if using BRDY interrupt.*/
     do {
-        USB0.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
-    } while (USB0.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT_CDC);
+        USBIO.D1FIFOSEL.BIT.CURPIPE = PIPE_BULK_OUT_CDC;
+    } while (USBIO.D1FIFOSEL.BIT.CURPIPE != PIPE_BULK_OUT_CDC);
     /*Set PID to BUF*/
-    USB0.PIPE1CTR.BIT.PID = PID_BUF;
+    USBIO.PIPE1CTR.BIT.PID = PID_BUF;
     /*Wait for buffer to be ready*/
-    while (USB0.D1FIFOCTR.BIT.FRDY == 0) {
+    while (USBIO.D1FIFOCTR.BIT.FRDY == 0) {
         ;
     }
     /*Set Read Count Mode - so DTLN count will decrement as data read from buffer*/
-    USB0.D1FIFOSEL.BIT.RCNT = 1;
+    USBIO.D1FIFOSEL.BIT.RCNT = 1;
     /*Read length of data */
-    DataLength = USB0.D1FIFOCTR.BIT.DTLN;
+    DataLength = USBIO.D1FIFOCTR.BIT.DTLN;
     if (DataLength == 0) {
-        USB0.D1FIFOCTR.BIT.BCLR = 1;
+        USBIO.D1FIFOCTR.BIT.BCLR = 1;
         return;
     }
     while (DataLength != 0) {
         /*Read from the FIFO*/
-        uint16_t c = USB0.D1FIFO.WORD;
+        uint16_t c = USBIO.D1FIFO.WORD;
         if (DataLength >= 2) {
             /*Save first byte*/
             if (usb_callback) {
@@ -135,30 +146,30 @@ void WriteBulkINPacketCDC(void) {
     /*Write data to Bulk IN pipe using D0FIFO*/
     /*Select pipe (Check this happens before continuing)*/
     /*Set 8 bit access*/
-    USB0.D0FIFOSEL.BIT.MBW = 0;
+    USBIO.D0FIFOSEL.BIT.MBW = 0;
     do {
-        USB0.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN_CDC;
-    } while (USB0.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN_CDC);
+        USBIO.D0FIFOSEL.BIT.CURPIPE = PIPE_BULK_IN_CDC;
+    } while (USBIO.D0FIFOSEL.BIT.CURPIPE != PIPE_BULK_IN_CDC);
     /*Wait for buffer to be ready*/
-    while (USB0.D0FIFOCTR.BIT.FRDY == 0) {
+    while (USBIO.D0FIFOCTR.BIT.FRDY == 0) {
         ;
     }
     /* Write data to the IN Fifo until have written a full packet
      or we have no more data to write */
     while ((Count < BULK_IN_PACKET_SIZE) && tx_buf_available()) {
-        USB0.D0FIFO.WORD = (unsigned short)tx_read_buf();
+        USBIO.D0FIFO.WORD = (unsigned short)tx_read_buf();
         Count++;
     }
     /*Send the packet */
     /*Set PID to BUF*/
-    USB0.PIPE2CTR.BIT.PID = PID_BUF;
+    USBIO.PIPE2CTR.BIT.PID = PID_BUF;
     /*If we have not written a full packets worth to the buffer then need to
      signal that the buffer is now ready to be sent, set the buffer valid flag (BVAL).*/
     if (Count != BULK_IN_PACKET_SIZE) {
-        USB0.D0FIFOCTR.BIT.BVAL = 1;
+        USBIO.D0FIFOCTR.BIT.BVAL = 1;
     }
     if (!tx_buf_available()) {
-        USB0.BRDYENB.BIT.PIPE2BRDYE = 0;
+        USBIO.BRDYENB.BIT.PIPE2BRDYE = 0;
     }
 }
 
@@ -167,11 +178,11 @@ void usbcdc_write(uint8_t c) {
 
     if (_begin) {
         if (i != tx_buf_tail) {
-            USB0.INTENB0.BIT.BRDYE = 0;
+            USBIO.INTENB0.BIT.BRDYE = 0;
             tx_buf[tx_buf_head] = c;
             tx_buf_head = i;
-            USB0.INTENB0.BIT.BRDYE = 1;
-            USB0.BRDYENB.BIT.PIPE2BRDYE = 1;
+            USBIO.INTENB0.BIT.BRDYE = 1;
+            USBIO.BRDYENB.BIT.PIPE2BRDYE = 1;
         }
     } else {
         if (USBCDC_IsConnected()) {
@@ -214,11 +225,4 @@ void usb_init(void) {
     //err = USBMSC_Init();
 }
 
-void INT_Excep_USB0_USBI0(void) {
-    if (USB0.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
-        USBHALInterruptHandler();
-    } else if (USB0.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
-        //InterruptHandler_USBHost();
-    }
-}
 

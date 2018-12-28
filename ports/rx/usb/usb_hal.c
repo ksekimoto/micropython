@@ -53,8 +53,11 @@ System Includes
 /*******************************************************************************
 User Includes (Project Level Includes)
 *******************************************************************************/
-/* Defines RX63N port registers */
-#include "rx63n/iodefine.h"
+/* Defines port registers */
+#if defined(RX65N)
+#define IODEFINE_H_HISTORY
+#endif
+#include "iodefine.h"
 /* Following header file defines common USB definitions. */
 #include "usb_common.h"
 /* Following header file defines USB HAL definitions. */
@@ -245,7 +248,13 @@ All access to USB peripheral registers is made through this.*/
 #endif
 
 /*NOTE USB0 is defined in iodefine.h file*/
-#define USBIO USB0
+#if defined(RX63N)
+#define USBIO   USB0
+#endif
+
+#if defined(RX65N)
+#define USBIO   USB0
+#endif
 /*HW Initalisation for USB 0 function*/
 static void HW_Init_Module0(void);
 
@@ -254,12 +263,38 @@ static void HW_Init_Module0(void);
 Function implementation
 ***********************************************************************/
 
+#if defined(RX63N)
+void INT_Excep_USBIO_USBI0(void) {
+    if (USBIO.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
+        USBHALInterruptHandler();
+    } else if (USBIO.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
+        //InterruptHandler_USBHost();
+    }
+}
+#endif
+
+#if (defined(RX64M) || defined(RX65N))
+//void __attribute__ ((interrupt)) INT_Excep_USB0_D0FIFO0(void) { }
+//void __attribute__ ((interrupt)) INT_Excep_USB0_D1FIFO0(void) { }
+//void __attribute__ ((interrupt)) INT_Excep_USB0_USBR0(void)
+//{
+//    USBHALInterruptHandler();
+//}
+//void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB189(void)
+//{
+//    USBHALInterruptHandler();
+//    ICU.PIBR7.BYTE |= 0x40;
+//}
+
 /*USB0 interrupt handler*/
 //#pragma interrupt Interrupt_USBI0(vect=VECT_USB0_USBI0)
-void Interrupt_USBI0(void)
+//void Interrupt_USBI0(void) __attribute__((interrupt(".rvectors", VECT(PERIB, INTB137)), used));
+void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB137(void)
 {
-//    USBHALInterruptHandler();         //REA: ONR:20150204 Commented this out
+    USBHALInterruptHandler();
 }
+
+#endif
 
 /*******************************************************************************
 * Outline       : USBHAL_Init
@@ -355,9 +390,9 @@ USB_ERR USBHAL_Disable(void)
 
     /*Stop the selected USB module*/
     #ifdef USB_MODULE_1
-        MSTP(USB1) = 1;
+        SYSTEM.MSTPCRB.BIT.MSTPB18 = 1u;
     #else
-        MSTP(USB0) = 1;
+        SYSTEM.MSTPCRB.BIT.MSTPB19 = 1u;
     #endif
 
     return USB_ERR_OK;
@@ -2036,6 +2071,9 @@ static void HandleVBus(void)
         /*Reset HAL*/
         USBHAL_Reset();
 
+#if defined(GRROSE)
+        USBIO.SYSCFG.BIT.DPRPU = 1;
+#endif
         /*Call Registered Callback to tell that cable is connected*/
         /*NOTE: Moved until Set Address has been recieved as more important for
         user to know when enumerated that just vbus change.*/
@@ -2080,7 +2118,8 @@ static void HandleDVST(void)
             DEBUG_MSG_LOW(("USBHAL: Entered Default State\r\n"));
 
             /*Has a bus reset just occured*/
-            if(USBIO.DVSTCTR0.BIT.RHST == 4)
+            //if(USBIO.DVSTCTR0.BIT.RHST == 4)
+    		if((USBIO.DVSTCTR0.BIT.RHST == 1)||(USBIO.DVSTCTR0.BIT.RHST == 2) )    //KAEDE
             {
                 DEBUG_MSG_LOW(("USBHAL: USB BUS RESET\r\n"));
 
@@ -2390,59 +2429,43 @@ End HW_Init function
 **********************************************************************/
 static void HW_Init_Module0(void)
 {
-#if 0
-    /* Enable write to PFSWE bit */
+    /* Enable writing to MPC pin function control registers */
     MPC.PWPR.BIT.B0WI = 0;
-    /* Disable write protection to PFS registers */
     MPC.PWPR.BIT.PFSWE = 1;
-#endif
 
-    /* Enable port1 pins 4 an 6 for USB peripheral function */
-//#ifdef defined(GRSAKURA)
-//    assignPinFunction(PIN_IO32, 0x11, 0, 0);	// P14
-//    assignPinFunction(PIN_IO34, 0x11, 0, 0);	// P16
-//#elif defined(GRCITRUS)
-//    assignPinFunction(PIN_IO41, 0x11, 0, 0);	// P14
-//    assignPinFunction(PIN_IO42, 0x11, 0, 0);	// P16
-//#else
-//    assignPinFunction(PIN_IO32, 0x11, 0, 0);	// P14
-//    assignPinFunction(PIN_IO34, 0x11, 0, 0);	// P16
-//#endif
-    MPC.PWPR.BIT.B0WI = 0u;   // enable write PFSWE bit
-    MPC.PWPR.BIT.PFSWE = 1u;   // enable write PFS register
-    PORT1.PMR.BIT.B6 = 0;       // P16 IO
-    PORT1.PDR.BIT.B6 = 1;       // P16 output
-    PORT1.PCR.BIT.B6 = 1;       // P16 pullup
-    MPC.P16PFS.BIT.PSEL = 0x11; // P16
-    PORT1.PMR.BIT.B6 = 1;       // P16 Peripheral
-    PORT1.PMR.BIT.B4 = 0;       // P14 IO
-    PORT1.PDR.BIT.B4 = 0;       // P14 input
-    PORT1.PCR.BIT.B4 = 1;       // P14 pullup
-    MPC.P14PFS.BIT.PSEL = 0x11; // USB0_OVRCURA pin
-    PORT1.PMR.BIT.B4 = 1;       // P14 Peripheral
+    /* Set USB0_VBUS pin */
+    MPC.P16PFS.BYTE = 0x11U;
+    PORT1.PMR.BIT.B6 = 1U;
+//    USB.DPUSR0R.BIT.FIXPHY0 = 0u;
 
-    /* Use the USB0_DPUPE pin for peripheral functions */
-    PORT1.PMR.BIT.B4 = 1;
-    /*Set Port P14(USB0DPUPE) as output direction*/
-    PORT1.PDR.BIT.B4 = 0;
-
-    /* Use the USB0_VBUS pin for peripheral functions */
-    PORT1.PMR.BIT.B6 = 1;
-    /*Set Port P16(USB0_VBUS) as input direction*/
-    PORT1.PDR.BIT.B6 = 0;
-
+#if defined(RX63N)
     /*Enable USB interrupts at high level*/
     ICU.IER[IER_USB0_USBI0].BIT.IEN3 = 1;
     /*Set interrupt priority*/
     ICU.IPR[IPR_USB0_USBI0].BIT.IPR = USB_HAL_INTERRUPT_PROIRITY;
     /*Clear USB0 interrupt flag*/
     ICU.IR[IR_USB0_USBI0].BIT.IR = 0;
-
+#endif
+#if (defined(RX64M) || defined(RX65N))
+    ICU.SLIBXR137.BYTE = 62;
+    /*Enable USB interrupts at high level*/
+    ICU.IER[IER_PERIB_INTB137].BIT.IEN1 = 1;
+    /*Set interrupt priority*/
+    ICU.IPR[IPR_PERIB_INTB137].BIT.IPR = USB_HAL_INTERRUPT_PROIRITY;
+    /*Clear USB0 interrupt flag*/
+    ICU.IR[IR_PERIB_INTB137].BIT.IR = 0;
+#endif
     #ifdef USB_MODULE_1
-        MSTP(USB1) = 0;
+        SYSTEM.MSTPCRB.BIT.MSTPB18 = 0u;
     #else
-        MSTP(USB0) = 0;
+        SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;
     #endif
+
+        /* Disable writing to MPC pin function control registers */
+        MPC.PWPR.BIT.PFSWE = 0U;
+        MPC.PWPR.BIT.B0WI = 1U;
+
+
 }
 /**********************************************************************
 End HW_Init_Module0 function
