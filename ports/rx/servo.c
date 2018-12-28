@@ -49,6 +49,9 @@
 #if defined(GRSAKURA)
 #define PYB_SERVO_NUM (6)
 #endif
+#if defined(GRROSE)
+#define PYB_SERVO_NUM (6)
+#endif
 
 typedef struct _pyb_servo_obj_t {
     mp_obj_base_t base;
