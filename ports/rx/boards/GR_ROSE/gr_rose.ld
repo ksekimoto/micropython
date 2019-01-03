@@ -103,10 +103,10 @@ SECTIONS
 	{
 		_ustack = .;
 	} > RAM
-	.heapmax 0x3F000 : AT (0x3F000)
+	.heapmax 0xE0000 : AT (0xEF000)
 	{
 		_heapmax = .;
-	} > RAM
+	} > RAMHI
 
 	.data 0x1000 : AT (_mdata)
 	{
@@ -121,20 +121,20 @@ SECTIONS
 		_edata = .;
 	} > RAM
 
-#	._RX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._RX_DESC)
-#	} > RAM
-#	._TX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._TX_DESC)
-#	} > RAM
-#	._ETHERNET_BUFFERS : 
-#	{
-#		*(._ETHERNET_BUFFERS)
-#	} > RAM
+	._RX_DESC : 
+	{
+		. = ALIGN(32);
+		*(._RX_DESC)
+	} > RAM
+	._TX_DESC : 
+	{
+		. = ALIGN(32);
+		*(._TX_DESC)
+	} > RAM
+	._ETHERNET_BUFFERS : 
+	{
+		*(._ETHERNET_BUFFERS)
+	} > RAM
 
 	.bss : 
 	{
@@ -148,11 +148,11 @@ SECTIONS
 		*(B_2)
 		_ebss = .;
 		_end = .;
-	} > RAM
+	} > RAMHI
 	.gcc_exc : 
 	{
 		*(.gcc_exc)
-	} > RAM
+	} > RAMHI
 }
 /* produce a link error if there is not this amount of RAM for these sections */
 /* _minimum_stack_size = 2K; */
@@ -164,8 +164,8 @@ SECTIONS
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 /* RAM extents for the garbage collector */
-_ram_start = ORIGIN(RAM);
-_ram_end = ORIGIN(RAM) + LENGTH(RAM);
-_heap_start = _ebss; /* heap starts just after statically allocated memory */
-_heap_end = 0x0003e000; /* tunable */
+_ram_start = ORIGIN(RAMHI);
+_ram_end = ORIGIN(RAMHI) + LENGTH(RAMHI);
+_heap_start = 0x0008000;	/* heap starts just after statically allocated memory */
+_heap_end = 0x000e0000;		/* tunable */
 

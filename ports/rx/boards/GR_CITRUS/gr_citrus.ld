@@ -119,21 +119,6 @@ SECTIONS
 		_edata = .;
 	} > RAM
 
-#	._RX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._RX_DESC)
-#	} > RAM
-#	._TX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._TX_DESC)
-#	} > RAM
-#	._ETHERNET_BUFFERS : 
-#	{
-#		*(._ETHERNET_BUFFERS)
-#	} > RAM
-
 	.bss : 
 	{
 		_sbss = .;

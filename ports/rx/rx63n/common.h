@@ -48,6 +48,7 @@
 #include "rx63n_adc.h"
 #include "rx63n_config.h"
 #include "rx63n_dac.h"
+#include "rx63n_ether.h"
 #include "rx63n_exti.h"
 #include "rx63n_flash.h"
 #include "rx63n_gpio.h"

@@ -69,6 +69,14 @@
 
 STATIC uint32_t reset_cause;
 
+void get_unique_id(uint8_t *id) {
+    uint32_t *p = (uint32_t *)id;
+    p[0] = *(uint32_t *)(MP_HAL_UNIQUE_ID_ADDRESS + 0);
+    p[1] = *(uint32_t *)(MP_HAL_UNIQUE_ID_ADDRESS + 4);
+    p[2] = *(uint32_t *)(MP_HAL_UNIQUE_ID_ADDRESS + 6);
+    p[3] = *(uint32_t *)(MP_HAL_UNIQUE_ID_ADDRESS + 12);
+}
+
 void machine_init(void) {
 }
 
@@ -82,7 +90,8 @@ void machine_deinit(void) {
 STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     // get and print unique id; 128 bits
     {
-        byte *id = (byte*)MP_HAL_UNIQUE_ID_ADDRESS;
+        uint8_t id[16];
+        get_unique_id(&id);
         printf("ID=%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x\n",
             id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7],
             id[8], id[9], id[10], id[11], id[12], id[13], id[14], id[15]);
@@ -150,7 +159,8 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj, 0, 1, machine_info);
 
 // Returns a string of 16 bytes (128 bits), which is the unique ID for the MCU.
 STATIC mp_obj_t machine_unique_id(void) {
-    byte *id = (byte*)MP_HAL_UNIQUE_ID_ADDRESS;
+    uint8_t id[16];
+    get_unique_id(&id);
     return mp_obj_new_bytes(id, 16);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);

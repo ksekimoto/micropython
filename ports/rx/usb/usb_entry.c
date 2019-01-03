@@ -225,4 +225,12 @@ void usb_init(void) {
     //err = USBMSC_Init();
 }
 
-
+#if defined(RX63N)
+void __attribute__ ((interrupt)) INT_Excep_USB0_USBI0(void) {
+    if (USB0.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
+        USBHALInterruptHandler();
+    } else if (USB0.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
+        //InterruptHandler_USBHost();
+    }
+}
+#endif

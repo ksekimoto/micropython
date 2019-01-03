@@ -118,7 +118,13 @@
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (13)
 
+#if defined(RX63N)
 #define MP_HAL_UNIQUE_ID_ADDRESS (0xFEFFFAC0)
+#elif defined(RX65N)
+#define MP_HAL_UNIQUE_ID_ADDRESS (0xFE7F7D90)
+#else
+#error "MP_HAL_UNIQUE_ID_ADDRESS should be defined."
+#endif
 
 // Configure HSE for bypass or oscillator
 #if MICROPY_HW_CLK_USE_BYPASS

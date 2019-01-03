@@ -49,6 +49,7 @@
 #include "rx65n_config.h"
 #include "rx65n_dac.h"
 #include "rx65n_exti.h"
+#include "rx65n_ether.h"
 #include "rx65n_flash.h"
 #include "rx65n_gpio.h"
 #include "rx65n_i2c.h"

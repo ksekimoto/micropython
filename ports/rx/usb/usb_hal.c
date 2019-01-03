@@ -249,7 +249,7 @@ All access to USB peripheral registers is made through this.*/
 
 /*NOTE USB0 is defined in iodefine.h file*/
 #if defined(RX63N)
-#define USBIO   USB0
+#define USBIO USB0
 #endif
 
 #if defined(RX65N)
@@ -264,13 +264,15 @@ Function implementation
 ***********************************************************************/
 
 #if defined(RX63N)
-void INT_Excep_USBIO_USBI0(void) {
+#if 0
+void __attribute__ ((interrupt)) INT_Excep_USBIO_USBI0(void) {
     if (USBIO.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
         USBHALInterruptHandler();
     } else if (USBIO.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
         //InterruptHandler_USBHost();
     }
 }
+#endif
 #endif
 
 #if (defined(RX64M) || defined(RX65N))
@@ -295,6 +297,13 @@ void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB137(void)
 }
 
 #endif
+
+/*USB0 interrupt handler*/
+//#pragma interrupt Interrupt_USBI0(vect=VECT_USB0_USBI0)
+void Interrupt_USBI0(void)
+{
+//    USBHALInterruptHandler();         //REA: ONR:20150204 Commented this out
+}
 
 /*******************************************************************************
 * Outline       : USBHAL_Init
@@ -390,9 +399,9 @@ USB_ERR USBHAL_Disable(void)
 
     /*Stop the selected USB module*/
     #ifdef USB_MODULE_1
-        SYSTEM.MSTPCRB.BIT.MSTPB18 = 1u;
+        MSTP(USB1) = 1;
     #else
-        SYSTEM.MSTPCRB.BIT.MSTPB19 = 1u;
+        MSTP(USB0) = 1;
     #endif
 
     return USB_ERR_OK;
@@ -2118,8 +2127,12 @@ static void HandleDVST(void)
             DEBUG_MSG_LOW(("USBHAL: Entered Default State\r\n"));
 
             /*Has a bus reset just occured*/
-            //if(USBIO.DVSTCTR0.BIT.RHST == 4)
-    		if((USBIO.DVSTCTR0.BIT.RHST == 1)||(USBIO.DVSTCTR0.BIT.RHST == 2) )    //KAEDE
+#if defined(RX63N)
+            if(USBIO.DVSTCTR0.BIT.RHST == 4)
+#endif
+#if defined(RX64M) || defined(RX65N)
+            if((USBIO.DVSTCTR0.BIT.RHST == 1)||(USBIO.DVSTCTR0.BIT.RHST == 2) )    //KAEDE
+#endif
             {
                 DEBUG_MSG_LOW(("USBHAL: USB BUS RESET\r\n"));
 
@@ -2429,6 +2442,31 @@ End HW_Init function
 **********************************************************************/
 static void HW_Init_Module0(void)
 {
+#if defined(RX63N)
+    MPC.PWPR.BIT.B0WI = 0u;   // enable write PFSWE bit
+    MPC.PWPR.BIT.PFSWE = 1u;   // enable write PFS register
+    PORT1.PMR.BIT.B6 = 0;       // P16 IO
+    PORT1.PDR.BIT.B6 = 1;       // P16 output
+    PORT1.PCR.BIT.B6 = 1;       // P16 pullup
+    MPC.P16PFS.BIT.PSEL = 0x11; // P16
+    PORT1.PMR.BIT.B6 = 1;       // P16 Peripheral
+    PORT1.PMR.BIT.B4 = 0;       // P14 IO
+    PORT1.PDR.BIT.B4 = 0;       // P14 input
+    PORT1.PCR.BIT.B4 = 1;       // P14 pullup
+    MPC.P14PFS.BIT.PSEL = 0x11; // USB0_OVRCURA pin
+    PORT1.PMR.BIT.B4 = 1;       // P14 Peripheral
+
+    /* Use the USB0_DPUPE pin for peripheral functions */
+    PORT1.PMR.BIT.B4 = 1;
+    /*Set Port P14(USB0DPUPE) as output direction*/
+    PORT1.PDR.BIT.B4 = 0;
+
+    /* Use the USB0_VBUS pin for peripheral functions */
+    PORT1.PMR.BIT.B6 = 1;
+    /*Set Port P16(USB0_VBUS) as input direction*/
+    PORT1.PDR.BIT.B6 = 0;
+#endif
+#if defined(RX64M) || defined(RX65N)
     /* Enable writing to MPC pin function control registers */
     MPC.PWPR.BIT.B0WI = 0;
     MPC.PWPR.BIT.PFSWE = 1;
@@ -2437,7 +2475,7 @@ static void HW_Init_Module0(void)
     MPC.P16PFS.BYTE = 0x11U;
     PORT1.PMR.BIT.B6 = 1U;
 //    USB.DPUSR0R.BIT.FIXPHY0 = 0u;
-
+#endif
 #if defined(RX63N)
     /*Enable USB interrupts at high level*/
     ICU.IER[IER_USB0_USBI0].BIT.IEN3 = 1;
@@ -2456,9 +2494,9 @@ static void HW_Init_Module0(void)
     ICU.IR[IR_PERIB_INTB137].BIT.IR = 0;
 #endif
     #ifdef USB_MODULE_1
-        SYSTEM.MSTPCRB.BIT.MSTPB18 = 0u;
+        MSTP(USB1) = 0;
     #else
-        SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;
+        MSTP(USB0) = 0;
     #endif
 
         /* Disable writing to MPC pin function control registers */

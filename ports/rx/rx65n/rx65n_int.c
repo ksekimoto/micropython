@@ -168,10 +168,17 @@ void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL0(void) {
     }
 }
 
+extern struct netif *g_netif;
+
 // ICU GROUPAL1
 // vec: 113
 void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL1(void) {
-
+    //rx_ether_int();
+    if (1 == ICU.GRPAL1.BIT.IS4) {
+        if (g_netif != NULL) {
+            ethernetif_input(g_netif);
+        }
+    }
 }
 
 void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB110(void)

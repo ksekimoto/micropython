@@ -24,33 +24,13 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "common.h"
-#include "iodefine.h"
+#ifndef PORTS_RX_ETHERNETIF_H_
+#define PORTS_RX_ETHERNETIF_H_
 
-#if 0
-void USBHALInterruptHandler(void);
+err_t low_level_output(struct netif *netif, struct pbuf *p);
+void ethernetif_input(struct netif *netif);
+err_t ethernetif_init(struct netif *netif);
+void ethernetif_set_link(struct netif *netif);
+err_t ethernetif_update_config(struct netif *netif);
 
-void __attribute__ ((interrupt)) INT_Excep_USB0_USBI0(void) {
-    if (USB0.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
-        USBHALInterruptHandler();
-    } else if (USB0.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
-        //InterruptHandler_USBHost();
-    }
-}
-#endif
-
-#if defined(GRCITRUS)
-
-#else
-
-extern struct netif *g_netif;
-
-void __attribute__ ((interrupt)) INT_Excep_ETHER_EINT(void) {
-    if (g_netif != NULL) {
-        ethernetif_input(g_netif);
-    }
-}
-
-#endif
+#endif /* PORTS_RX_ETHERNETIF_H_ */

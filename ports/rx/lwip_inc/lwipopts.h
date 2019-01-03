@@ -31,14 +31,14 @@ extern uint32_t rng_get(void);
 // lwip takes 15800 bytes; TCP d/l: 380k/s local, 7.2k/s remote
 // TCP u/l is very slow
 
-#if 0
+#if defined(RX63N)
 // lwip takes 19159 bytes; TCP d/l and u/l are around 320k/s on local network
 #define MEM_SIZE (5000)
 #define TCP_WND (4 * TCP_MSS)
 #define TCP_SND_BUF (4 * TCP_MSS)
 #endif
 
-#if 1
+#if defined(RX64M) || defined(RX65N)
 // lwip takes 26700 bytes; TCP dl/ul are around 750/600 k/s on local network
 #define MEM_SIZE (8000)
 #define TCP_MSS (800)
@@ -57,5 +57,12 @@ extern uint32_t rng_get(void);
 #endif
 
 typedef uint32_t sys_prot_t;
+
+#if !defined(MICROPY_PY_LWIP)
+// For now, we can simply define this as a macro for the timer code. But this function isn't
+// universal and other ports will need to do something else. It may be necessary to move
+// things like this into a port-provided header file.
+#define sys_now mp_hal_ticks_ms
+#endif
 
 #endif // MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H

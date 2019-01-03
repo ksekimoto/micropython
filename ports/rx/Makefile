@@ -11,7 +11,7 @@ endif
 BUILD ?= build-$(BOARD)
 
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -89,6 +89,8 @@ INC += -Iramdisk
 INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
+INC += -I$(TOP)/lib/lwip/src/include
+INC += -Ilwip_inc
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
@@ -195,6 +197,7 @@ SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += dac.c
+SRC_C += ethernetif.c
 SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -206,6 +209,7 @@ SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
+SRC_C += modnwrxeth.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 SRC_C += modpyb.c
@@ -217,6 +221,7 @@ SRC_C += mpthreadport.c
 SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
+SRC_C += phy.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
@@ -252,6 +257,7 @@ SRC_C += $(MCU_SERIES_LOW)/vector_table.c
 SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
 SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_adc.c
 SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_dac.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_ether.c
 SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_exti.c
 SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_flash.c
 SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_gpio.c
@@ -393,15 +399,17 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
-
-ifeq ($(MICROPY_PY_LWIP),1)
-EXTMOD_SRC_C = $(addprefix extmod/,\
-	modlwip.c \
-	)
 endif
-EXTMOD_SRC_C += $(addprefix extmod/,\
+
+EXTMOD_SRC_C = $(addprefix extmod/,\
 	modonewire.c \
 	)
+
+#ifeq ($(MICROPY_PY_LWIP),1)
+EXTMOD_SRC_C += $(addprefix extmod/,\
+	modlwip.c \
+	)
+#endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -447,7 +455,7 @@ SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
 	)
 endif
 
-ifeq ($(MICROPY_PY_LWIP),1)
+#ifeq ($(MICROPY_PY_LWIP),1)
 LWIP_DIR = lib/lwip/src
 INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
@@ -488,7 +496,7 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/ipv6/nd6.c \
 	netif/ethernet.c \
 	)
-endif
+#endif
 
 OBJ =
 OBJ += $(PY_O)
@@ -502,7 +510,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 
-#ifneq ($(FROZEN_DIR),)
+ifneq ($(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
 # and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
 CFLAGS += -DMICROPY_MODULE_FROZEN_STR

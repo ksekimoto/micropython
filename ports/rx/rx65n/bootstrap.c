@@ -28,6 +28,97 @@
 #include <stdint.h>
 #include "iodefine.h"
 
+#if defined(GRROSE)
+static inline void rx_ethernet_enable(void)
+{
+    SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
+    SYSTEM.MSTPCRB.BIT.MSTPB15 = 0;     /* EtherC, EDMAC */
+    //BSC.BEREN.BIT.TOEN = 1;
+    SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
+}
+
+static inline void rx_ethernet_disable(void)
+{
+    SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
+    SYSTEM.MSTPCRB.BIT.MSTPB15 = 1;     /* EtherC, EDMAC */
+    SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
+}
+
+static inline void rx_ethernet_RMII_mode(void)
+{
+    /* ==== RMII Pins setting ==== */
+    /*
+    Pin Functions : Port
+    --------------------
+    ET0_MDIO       : PA3
+    ET0_MDC        : PA4
+    ET0_LINKSTA    : PA5
+    RMII0_RXD1     : PB0    P74
+    RMII0_RXD0     : PB1    P75
+    REF50CK0       : PB2    P76
+    RMII0_RX_ER    : PB3    P77
+    RMII0_TXD_EN   : PB4    P80
+    RMII0_TXD0     : PB5    P81
+    RMII0_TXD1     : PB6    P82
+    RMII0_CRS_DV   : PB7    P83
+    */
+    /* Clear PDR and PMR */
+    PORTA.PDR.BIT.B3 = 0;
+    PORTA.PDR.BIT.B4 = 0;
+    PORTA.PDR.BIT.B5 = 0;
+    PORTB.PDR.BIT.B0 = 0;
+    PORTB.PDR.BIT.B1 = 0;
+    PORTB.PDR.BIT.B2 = 0;
+    PORTB.PDR.BIT.B3 = 0;
+    PORTB.PDR.BIT.B4 = 0;
+    PORTB.PDR.BIT.B5 = 0;
+    PORTB.PDR.BIT.B6 = 0;
+    PORTB.PDR.BIT.B7 = 0;
+
+    PORTA.PMR.BIT.B3 = 0;
+    PORTA.PMR.BIT.B4 = 0;
+    PORTA.PMR.BIT.B5 = 0;
+    PORTB.PMR.BIT.B0 = 0;
+    PORTB.PMR.BIT.B1 = 0;
+    PORTB.PMR.BIT.B2 = 0;
+    PORTB.PMR.BIT.B3 = 0;
+    PORTB.PMR.BIT.B4 = 0;
+    PORTB.PMR.BIT.B5 = 0;
+    PORTB.PMR.BIT.B6 = 0;
+    PORTB.PMR.BIT.B7 = 0;
+    /* Write protect off */
+    MPC.PWPR.BYTE = 0x00;       /* PWPR.PFSWE write protect off */
+    MPC.PWPR.BYTE = 0x40;       /* PFS register write protect off */
+    MPC.PA3PFS.BYTE = 0x11;
+    MPC.PA4PFS.BYTE = 0x11;
+    MPC.PA5PFS.BYTE = 0x11;
+    MPC.PB0PFS.BYTE = 0x12;
+    MPC.PB1PFS.BYTE = 0x12;
+    MPC.PB2PFS.BYTE = 0x12;
+    MPC.PB3PFS.BYTE = 0x12;
+    MPC.PB4PFS.BYTE = 0x12;
+    MPC.PB5PFS.BYTE = 0x12;
+    MPC.PB6PFS.BYTE = 0x12;
+    MPC.PB7PFS.BYTE = 0x12;
+    /* Write protect on */
+    MPC.PWPR.BYTE = 0x80;       /* PFS register write protect on */
+    /* Select ethernet mode */
+    MPC.PFENET.BIT.PHYMODE0 = 0; /* RMII mode */
+    /* Switch to the selected input/output function */
+    PORTA.PMR.BIT.B3 = 1;
+    PORTA.PMR.BIT.B4 = 1;
+    PORTA.PMR.BIT.B5 = 1;
+    PORTB.PMR.BIT.B0 = 1;
+    PORTB.PMR.BIT.B1 = 1;
+    PORTB.PMR.BIT.B2 = 1;
+    PORTB.PMR.BIT.B3 = 1;
+    PORTB.PMR.BIT.B4 = 1;
+    PORTB.PMR.BIT.B5 = 1;
+    PORTB.PMR.BIT.B6 = 1;
+    PORTB.PMR.BIT.B7 = 1;
+}
+#endif
+
 #if defined(RX63N)
 static void clock_init(void) {
     volatile int i;
@@ -326,6 +417,10 @@ void bootstrap(void) {
     // bsp_interrupt_open();
     /* Initialize register protection functionality. */
     // bsp_register_protect_open();
+#if defined(GRROSE)
+    rx_ethernet_enable();
+    rx_ethernet_RMII_mode();
+#endif
 }
 
 #endif
