@@ -31,10 +31,10 @@
 extern "C" {
 #endif
 
-char *url_encode(char *str, char *dst, int size);
-char *url_decode(char *str, char *dst, int size);
-int get_url_encode_size(char *str);
-int get_url_decode_size(char *str);
+char *url_encode(const char *str, char *dst, int size);
+char *url_decode(const char *str, char *dst, int size);
+int get_url_encode_size(const char *str);
+int get_url_decode_size(const char *str);
 
 #ifdef __cplusplus
 }

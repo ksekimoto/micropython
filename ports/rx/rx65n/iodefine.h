@@ -14722,11 +14722,9 @@ typedef struct st_mtu1 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif
@@ -14885,11 +14883,9 @@ typedef struct st_mtu2 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif
@@ -28346,11 +28342,9 @@ typedef struct st_tpu1 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif
@@ -28466,11 +28460,9 @@ typedef struct st_tpu2 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif
@@ -28721,11 +28713,9 @@ typedef struct st_tpu4 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif
@@ -28842,11 +28832,9 @@ typedef struct st_tpu5 {
 #ifdef __RX_LITTLE_ENDIAN__
 			unsigned char TPSC : 3;
 			unsigned char CKEG : 2;
-			unsigned char CCLR : 2;
-			unsigned char  : 1;
+			unsigned char CCLR : 3;
 #else
-			unsigned char  : 1;
-			unsigned char CCLR : 2;
+			unsigned char CCLR : 3;
 			unsigned char CKEG : 2;
 			unsigned char TPSC : 3;
 #endif

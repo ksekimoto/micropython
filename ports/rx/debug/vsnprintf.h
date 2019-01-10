@@ -21,31 +21,11 @@
 // OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 // WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-// EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "stdarg.h"
-#include "common.h"
-#include "vsnprintf.h"
+#ifndef VSNPRINTF_H_
+#define VSNPRINTF_H_
 
-#define DEBUG_PRINTF_BUF_SIZE   1024
+int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args);
 
-#if defined(USE_DBG_PRINT)
-#if defined(DEBUG_CH)
-int debug_printf(const void* format, ...) {
-    char buf[DEBUG_PRINTF_BUF_SIZE];
-    int len;
-    va_list arg_ptr;
-    va_start(arg_ptr, format);
-    len = vxsnprintf(buf, (size_t)(DEBUG_PRINTF_BUF_SIZE-1), format, arg_ptr);
-    DEBUG_TXSTR(DEBUG_CH, (unsigned char*)buf);
-    va_end(arg_ptr);
-    return len;
-}
-#else
-#error "DEBUG_CH is not defined"
-#endif
-#else
-//int debug_printf(const void* format, ...) {
-//}
-#endif
+#endif /* VSNPRINTF_H_ */

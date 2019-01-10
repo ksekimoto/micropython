@@ -51,28 +51,28 @@ static inline uint32_t adc_get_internal_channel(uint32_t channel) {
     return channel;
 }
 
-STATIC bool is_adcx_channel(int channel) {
-    return true;
-}
+//STATIC bool is_adcx_channel(int channel) {
+//    return true;
+//}
 
-STATIC void adc_wait_for_eoc_or_timeout(int32_t timeout) {
-}
+//STATIC void adc_wait_for_eoc_or_timeout(int32_t timeout) {
+//}
 
-STATIC void adcx_clock_enable(void) {
-}
+//STATIC void adcx_clock_enable(void) {
+//}
 
-STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
-}
+//STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
+//}
 
-STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
-}
+//STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
+//}
 
-STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
-}
+//STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
+//}
 
-STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
-    return 1;
-}
+//STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
+//    return 1;
+//}
 
 STATIC uint32_t adc_config_and_read_channel(ADC_HandleTypeDef *adcHandle, uint32_t channel) {
     return 1;
@@ -159,6 +159,7 @@ typedef struct _pyb_adc_all_obj_t {
 } pyb_adc_all_obj_t;
 
 void adc_init_all(pyb_adc_all_obj_t *adc_all, uint32_t resolution, uint32_t en_mask) {
+    // ToDo
 }
 
 int adc_get_resolution(ADC_HandleTypeDef *adcHandle) {
@@ -202,7 +203,7 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
     if (n_args > 1) {
         en_mask =  mp_obj_get_int(args[1]);
     }
-    //adc_init_all(o, res, en_mask);
+    adc_init_all(o, res, en_mask);
     return MP_OBJ_FROM_PTR(o);
 }
 

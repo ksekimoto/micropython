@@ -157,12 +157,12 @@ void rx_adc12_enable(uint8_t pin) {
 }
 
 bool rx_adc_enable(uint8_t pin) {
-    int resolution;
     if (rx_adc_get_channel(pin) == -1) {
         return false;
     }
-    resolution = rx_adc_get_resolution(pin);
 #if defined(RX_ADC10)
+    int resolution;
+    resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
         rx_adc10_enable(pin);
     } else {
@@ -203,12 +203,12 @@ void rx_adc12_disable(uint8_t pin) {
 }
 
 bool rx_adc_disable(uint8_t pin) {
-    int resolution;
     if (rx_adc_get_channel(pin) == -1) {
         return false;
     }
-    resolution = rx_adc_get_resolution(pin);
 #if defined(RX_ADC10)
+    int resolution;
+    resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
         rx_adc10_disable(pin);
     } else {
@@ -253,8 +253,8 @@ uint16_t rx_adc12_read(uint8_t pin) {
 
 uint16_t rx_adc_read(uint8_t pin) {
     uint16_t value16;
-    int resolution = rx_adc_get_resolution(pin);
 #if defined(RX_ADC10)
+    int resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
         value16 = rx_adc10_read(pin);
     } else {

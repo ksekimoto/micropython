@@ -38,7 +38,9 @@ extern "C" {
 #define PCLK    48000000
 
 #if defined(USE_DBG_PRINT)
+#if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
+#endif
 #define DEBUG_TXSTR sci_tx_str
 #endif
 

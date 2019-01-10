@@ -104,7 +104,7 @@ static const uint8_t sci_rx_pins[] = {
     0xff,   /* ch 12 */
 };
 
-static volatile struct SCI_FIFO {
+struct SCI_FIFO {
     int tail, head, len, busy;
     uint8_t buff[SCI_BUF_SIZE];
 };
@@ -395,7 +395,7 @@ void sci_isr_te(int ch) {
     } else {
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
     }
-sci_isr_te_exit:
+//sci_isr_te_exit:
     rx_enable_irq();
 }
 
@@ -733,9 +733,7 @@ void sci_init(int ch, int baud) {
 }
 
 void sci_deinit(int ch) {
-    volatile struct st_sci0 *sci;
     if (sci_init_flag[ch]) {
-        sci = SCI[ch];
         sci_init_flag[ch] = false;
         sci_int_disable(ch);
         SYSTEM.PRCR.WORD = 0xA502;

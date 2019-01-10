@@ -366,6 +366,8 @@ STATIC bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     }
 }
 
+#if 0
+// ToDo: check if this function is needed?
 // Waits at most timeout milliseconds for UART flag to be set.
 // Returns true if flag is/was set, false on timeout.
 STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
@@ -382,6 +384,7 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
         }
     }
 }
+#endif
 
 // src - a pointer to the data to send (16-bit aligned for 9-bit chars)
 // num_chars - number of characters to send (9-bit chars count for 2 bytes from src)
@@ -650,7 +653,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_readchar_obj, pyb_uart_readchar);
 
 // uart.sendbreak()
 STATIC mp_obj_t pyb_uart_sendbreak(mp_obj_t self_in) {
-    pyb_uart_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    //pyb_uart_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // ToDo: implementation
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_sendbreak_obj, pyb_uart_sendbreak);

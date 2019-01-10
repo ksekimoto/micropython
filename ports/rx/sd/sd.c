@@ -30,20 +30,20 @@
 #include "sd.h"
 
 #if MICROPY_HW_HAS_SDCARD
-bool sd_exists(char *fn) {
+bool sd_exists(const char *fn) {
     FRESULT res;
     FILINFO fno;
     res = f_stat(fatfs_sd, fn, &fno);
     return (res == FR_OK);
 }
 
-bool sd_remove(char *fn) {
+bool sd_remove(const char *fn) {
     FRESULT res;
     res = f_unlink(fatfs_sd, fn);
     return (res == FR_OK);
 }
 
-bool sd_open(FIL *fp, char *fn, unsigned char mode) {
+bool sd_open(FIL *fp, const char *fn, uint8_t mode) {
     FRESULT res;
     res = f_open(fatfs_sd, fp, fn, mode);
     return (res == FR_OK);
@@ -51,35 +51,35 @@ bool sd_open(FIL *fp, char *fn, unsigned char mode) {
 
 int sd_read_byte(FIL *fp) {
     unsigned char c;
-    int len = 0;
-    FRESULT res = f_read(fp, &c, 1, &len);
+    uint len = 0;
+    f_read(fp, (void *)&c, (uint)1, (uint *)&len);
     if (len == 0) {
         return -1;
     }
     return (int)c;
 }
 
-int sd_read(FIL *fp, unsigned char *buf, int size) {
-    int len;
-    FRESULT res = f_read(fp, buf, size, &len);
+int sd_read(FIL *fp, void *buf, uint size) {
+    uint len;
+    f_read(fp, buf, size, (uint *) &len);
     return len;
 }
 
 int sd_write_byte(FIL *fp, unsigned char c) {
-    int len;
-    FRESULT res = f_write(fp, &c, 1, &len);
+    uint len;
+    f_write(fp, (void *)&c, (uint)1, (uint *)&len);
     return len;
 }
 
-int sd_write(FIL *fp, unsigned char *buf, int size) {
-    int len;
-    FRESULT res = f_write(fp, buf, size, &len);
+int sd_write(FIL *fp, const void *buf, uint size) {
+    uint len;
+    f_write(fp, (void *)buf, (uint)size, (uint *)&len);
     return len;
 }
 
 void sd_seek(FIL *fp, unsigned long pos) {
     FSIZE_t ofs = (FSIZE_t)pos;
-    FRESULT res = f_lseek(fp, ofs);
+    f_lseek(fp, ofs);
 }
 
 unsigned long sd_size(FIL *fp) {

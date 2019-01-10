@@ -24,6 +24,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include "iodefine.h"
 #include "rx63n_timer.h"
 
@@ -145,7 +146,6 @@ void cmt_timer_init(unsigned int ch) {
 }
 
 void cmt_timer_deinit(unsigned int ch) {
-    volatile struct st_cmt0 *cmtn = CMTN[ch];
     cmt_count[ch] = 0L;
     switch (ch) {
     case 0:
@@ -168,18 +168,16 @@ void cmt_timer_deinit(unsigned int ch) {
 }
 
 void cmt_timer_disable_clk(unsigned int ch) {
-    volatile struct st_cmt0 *cmtn = CMTN[ch];
     CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
 }
 
 void cmt_timer_eable_clk(unsigned int ch) {
-    volatile struct st_cmt0 *cmtn = CMTN[ch];
     CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
 }
 
 unsigned int cmt_timer_get_prescale(unsigned int ch) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
-    unsigned int prescale;
+    unsigned int prescale = 0;
     switch (cmtn->CMCR.WORD) {
     case 0x40:
         prescale = 8;
@@ -199,7 +197,7 @@ unsigned int cmt_timer_get_prescale(unsigned int ch) {
 
 void cmt_timer_set_prescale(unsigned int ch, unsigned int prescale) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
-    unsigned short val;
+    unsigned short val = 0;
     switch (prescale) {
     case 8:
         val = 0x40;

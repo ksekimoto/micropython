@@ -42,8 +42,9 @@
 #define NULL 0
 #endif
 
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "iodefine.h"
 #include "rx65n_adc.h"
 #include "rx65n_config.h"

@@ -55,6 +55,7 @@ int rx_rtc_get_second(void);
 int rx_rtc_get_weekday(void);
 void rx_rtc_init(void);
 void rx_rtc_deinit(void);
+void rx_rtc_set_time(rtc_t *time);
 
 #ifdef __cplusplus
 }

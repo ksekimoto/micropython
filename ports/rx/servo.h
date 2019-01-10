@@ -27,6 +27,7 @@
 #define MICROPY_INCLUDED_RX_SERVO_H
 
 void servo_init(void);
+void servo_deinit(void);
 void servo_timer_irq_callback(void);
 
 extern const mp_obj_type_t pyb_servo_type;

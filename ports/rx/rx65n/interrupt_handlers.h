@@ -7,6 +7,15 @@
 #ifndef INTERRUPT_HANDLERS_H
 #define INTERRUPT_HANDLERS_H
 
+#if defined(__GNUC__)
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Exception(Supervisor Instruction)
 #pragma interrupt (Excep_SuperVisorInst)
 void INT_Excep_SuperVisorInst(void) __attribute__ ((interrupt));
@@ -960,5 +969,13 @@ void INT_Excep_PERIA_INTA255(void) __attribute__ ((interrupt));
 //;Power On Reset PC
 extern void PowerON_Reset(void) __attribute__ ((interrupt));                                                                                                                
 //;<<VECTOR DATA END (POWER ON RESET)>>
+
+#ifdef __cplusplus
+}
+#endif
+
+#pragma GCC diagnostic push
+
+#endif  // __GNUC__
 
 #endif

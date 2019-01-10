@@ -91,7 +91,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     // get and print unique id; 128 bits
     {
         uint8_t id[16];
-        get_unique_id(&id);
+        get_unique_id((uint8_t *)&id);
         printf("ID=%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x\n",
             id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7],
             id[8], id[9], id[10], id[11], id[12], id[13], id[14], id[15]);
@@ -115,7 +115,8 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     {
         size_t n_pool, n_qstr, n_str_data_bytes, n_total_bytes;
         qstr_pool_info(&n_pool, &n_qstr, &n_str_data_bytes, &n_total_bytes);
-        printf("qstr:\n  n_pool=%u\n  n_qstr=%u\n  n_str_data_bytes=%u\n  n_total_bytes=%u\n", n_pool, n_qstr, n_str_data_bytes, n_total_bytes);
+        printf("qstr:\n  n_pool=%u\n  n_qstr=%u\n  n_str_data_bytes=%u\n  n_total_bytes=%u\n",
+            (int)n_pool, (int)n_qstr, (int)n_str_data_bytes, (int)n_total_bytes);
     }
 
     // GC info
@@ -123,9 +124,9 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
         gc_info_t info;
         gc_info(&info);
         printf("GC:\n");
-        printf("  %u total\n", info.total);
-        printf("  %u : %u\n", info.used, info.free);
-        printf("  1=%u 2=%u m=%u\n", info.num_1block, info.num_2block, info.max_block);
+        printf("  %u total\n", (int)info.total);
+        printf("  %u : %u\n", (int)info.used, (int)info.free);
+        printf("  1=%u 2=%u m=%u\n", (int)info.num_1block, (int)info.num_2block, (int)info.max_block);
     }
 
     // free space on flash
@@ -160,7 +161,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj, 0, 1, machine_info);
 // Returns a string of 16 bytes (128 bits), which is the unique ID for the MCU.
 STATIC mp_obj_t machine_unique_id(void) {
     uint8_t id[16];
-    get_unique_id(&id);
+    get_unique_id((uint8_t *)&id);
     return mp_obj_new_bytes(id, 16);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);
@@ -215,9 +216,9 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
         mp_raise_NotImplementedError("machine.freq set not supported yet");
         return mp_const_none;
 
-    fail:;
-        void NORETURN __fatal_error(const char *msg);
-        __fatal_error("can't change freq");
+    //fail:;
+    //    void NORETURN __fatal_error(const char *msg);
+    //    __fatal_error("can't change freq");
     }
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj, 0, 4, machine_freq);

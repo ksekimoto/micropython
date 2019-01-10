@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2016 Paul Sokolovsky
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,33 +24,33 @@
  * THE SOFTWARE.
  */
 
-#ifndef STWITTER_H_
-#define STWITTER_H_
+#ifndef PORTS_RX_POSIX_HELPERS_H_
+#define PORTS_RX_POSIX_HELPERS_H_
 
-#ifdef __cplusplus
-extern "C" {
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
+#include <signal.h>
+
+uint32_t ntohl(uint32_t netlong);
+uint32_t htonl(uint32_t netlong);
+
+#ifndef _TIMEVAL_DEFINED
+#define _TIMEVAL_DEFINED
+struct timeval {
+  time_t      tv_sec;
+  suseconds_t tv_usec;
+};
 #endif
 
-#define OAUTH_SIGNATURE_METHOD  "HMAC-SHA1"
-#define OAUTH_VERSION           "1.0"
-#define TWITTER_API_UPDATE      "https://api.twitter.com/1.1/statuses/update.json"
-#define TWITTER_API_UPDATE_STR  "api.twitter.com/1.1/statuses/update.json"
-#define TWITTER_API_UPLOAD      "https://upload.twitter.com/1.1/media/upload.json"
+time_t time(time_t *t);
+time_t mktime(void *tm);
+struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
+int gettimeofday(struct timeval *tv , void *tz);
+sighandler_t signal (int sig, sighandler_t handler);
 
-typedef struct {
-	const char *_cons_key;
-	const char *_cons_sec;
-	const char *_accs_key;
-	const char *_accs_sec;
-} twitter_t;
+int atoi(const char *s);
+char *itoa(int num, char *str, int base);
 
-void twitter_api_init();
-void twitter_api_deinit();
-void twitter_api_set_keys(const char *cons_key, const char *cons_sec, const char *accs_key, const char *accs_sec);
-void twitter_api_statuses_update(const char *str, const char *media_id_string);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* STWITTER_H_ */
+#endif /* PORTS_RX_POSIX_HELPERS_H_ */

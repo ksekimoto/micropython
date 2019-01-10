@@ -101,6 +101,9 @@ void SPISW_LCD_dat8_0(uint8_t dat);
 void SPISW_LCD_cmd8_1(uint8_t dat);
 void SPISW_LCD_dat8_1(uint8_t dat);
 
+void lcdspi_bitbltex565(lcdspi_t *lcdspi, int x, int y, int width, int height, uint16_t *data);
+void lcdspi_bitbltex(lcdspi_t *lcdspi, int x, int y, int width, int height, uint16_t *data);
+
 extern const mp_obj_type_t pyb_lcdspi_type;
 
 #ifdef __cplusplus

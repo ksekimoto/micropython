@@ -577,12 +577,12 @@ void rx_pwm_set_channel_params(uint8_t pin_idx, int channel, float freq, float d
         }
         break;
     default:
-        return false;
+        return;
     }
 #ifdef DEBUG_PWM
     debug_printf("Dt/D/P %04x/%06x/%06x\r\n", (UINT16)duration_ticks, duration, period);
 #endif
-    return true;
+    return;
 }
 
 void rx_pwm_set_freq(uint8_t pin_idx, float freq) {

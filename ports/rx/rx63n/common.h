@@ -54,6 +54,7 @@
 #include "rx63n_gpio.h"
 #include "rx63n_i2c.h"
 #include "rx63n_init.h"
+#include "rx63n_int.h"
 #include "rx63n_pwm.h"
 #include "rx63n_rtc.h"
 #include "rx63n_sci.h"

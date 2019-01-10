@@ -87,6 +87,7 @@ int font_fontWidth(font_t *font, int c);
 int font_fontHeight(font_t *font, int c);
 int font_fontBytes(font_t *font, int c);
 unsigned char *font_fontData(font_t *font, int idx);
+bool find_font_id(int font_id);
 
 #ifdef __cplusplus
 }

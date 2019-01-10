@@ -25,6 +25,9 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include "py/runtime.h"
+#include "py/mphal.h"
 #include "common.h"
 #include "sd.h"
 #include "jpeg.h"
@@ -94,7 +97,7 @@ unsigned char pjpeg_need_bytes_callback(unsigned char* pBuf, unsigned char buf_s
     DEBUG_PRINT("FileSize", g_nInFileSize);
     DEBUG_PRINT("FileOfs", g_nInFileOfs);
 #endif
-    sd_read(&g_pInFile, (char *)pBuf, n);
+    sd_read(&g_pInFile, (unsigned char *)pBuf, n);
     *pBytes_actually_read = (unsigned char)(n);
     g_nInFileOfs += n;
     return 0;

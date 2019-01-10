@@ -105,6 +105,7 @@ static bool FLASH_SECTION fcu_flash_stop(void) {
     return true;
 }
 
+#if 0
 static bool FLASH_SECTION fcu_flash_reset(void) {
     if (FLASH.FASTAT.BIT.CFAE == 1) {
         FLASH.FASTAT.BIT.CFAE = 0;
@@ -117,6 +118,7 @@ static bool FLASH_SECTION fcu_flash_reset(void) {
     }
     return true;
 }
+#endif
 
 static bool FLASH_SECTION fcu_flash_pe_mode_enter(void) {
     bool ret = true;
@@ -163,12 +165,12 @@ static bool FLASH_SECTION fcu_flash_pe_mode_exit(void) {
 
 
 bool FLASH_SECTION fcu_Notify_Peripheral_Clock(void) {
-    bool flag= true;
+    bool flag = true;
     FLASH.FPCKAR.WORD = PCKA_60MHZ;
     if (FLASH.FASTAT.BIT.CMDLK == 1) {
         flag = fcu_flash_stop();
     }
-    return true;
+    return flag;
 }
 
 static void FLASH_SECTION fcu_flash_int_disable(void) {
@@ -206,7 +208,7 @@ static bool FLASH_SECTION fcu_flash_write(uint16_t *buf_addr, uint16_t *flash_ad
         num = 0x40;
     }
 
-    FLASH.FSADDR.LONG = flash_addr;
+    FLASH.FSADDR.LONG = (long)flash_addr;
     *cmd_area = (uint8_t)FLASH_FACI_CMD_PROGRAM;
     *cmd_area = (uint8_t)num;
 
@@ -242,6 +244,7 @@ static bool FLASH_SECTION fcu_flash_write(uint16_t *buf_addr, uint16_t *flash_ad
 
 uint8_t flash_buf[FLASH_BUF_SIZE]  __attribute__((aligned (2)));
 
+#if 0
 static void FLASH_SECTION wait(volatile int count) {
     while (count-- > 0) {
         __asm__ __volatile__ ("nop");
@@ -249,6 +252,7 @@ static void FLASH_SECTION wait(volatile int count) {
         __asm__ __volatile__ ("nop");
     }
 }
+#endif
 
 void * FLASH_SECTION lmemset(void *dst, int c, size_t len) {
     char *p;
@@ -328,13 +332,13 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
     uint32_t error_code = 0;
 #ifndef DEBUG_FLASH_SKIP
     bool flag;
-    uint32_t sector, count;
+    uint32_t count;
     uint32_t startaddr  = (uint32_t)addr & FLASH_BUF_ADDR_MASK;
     uint32_t offset = (uint32_t)addr & FLASH_BUF_OFF_MASK;
     uint32_t endaddr = (uint32_t)addr + NumBytes;
     while (startaddr < endaddr) {
         // copy from dst rom addr to flash buffer to keep current data
-        memcpy(flash_buf, (void *)startaddr, FLASH_BUF_SIZE);
+        lmemcpy(flash_buf, (void *)startaddr, FLASH_BUF_SIZE);
         //memset(flash_buf, 0xff, FLASH_BUF_SIZE);
         if (NumBytes + offset > FLASH_BUF_SIZE) {
             count = FLASH_BUF_SIZE - offset;
@@ -342,10 +346,11 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
         } else
             count = NumBytes;
         // overwrite data from src addr to flash buffer
-        if (fIncrementDataPtr)
-            memcpy(flash_buf + offset, pSectorBuff, count);
-        else
-            memset(flash_buf + offset, (int)*pSectorBuff, count);
+        if (fIncrementDataPtr) {
+            lmemcpy(flash_buf + offset, pSectorBuff, count);
+        } else {
+            lmemset(flash_buf + offset, (int)*pSectorBuff, count);
+        }
         unsigned short *flash_addr  = (unsigned short *)((uint32_t)startaddr);
         unsigned short *buf_addr = (unsigned short *)&flash_buf[0];
         fcu_flash_int_disable();
@@ -372,7 +377,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             goto WriteX_exit;
         }
         if (fIncrementDataPtr) {
-            flag= (memcmp((void *)(startaddr+offset), flash_buf+offset, count) == 0);
+            flag= (lmemcmp((void *)(startaddr+offset), flash_buf+offset, count) == 0);
             if (!flag) {
                 error_code = 6;
                 break;
@@ -402,7 +407,7 @@ bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes)
     debug_printf("Memset(addr=%x, num=%x, data=%x)\r\n", addr, NumBytes, Data);
 #endif
     CHIP_WORD chipData;
-    memset(&chipData, Data, sizeof(CHIP_WORD));
+    lmemset(&chipData, Data, sizeof(CHIP_WORD));
     return internal_flash_writex(addr, NumBytes, (uint8_t *)&chipData, TRUE, FALSE);
 }
 

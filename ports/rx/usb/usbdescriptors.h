@@ -68,7 +68,7 @@ extern const DESCRIPTOR gStringDescriptorManufacturer;
 extern const DESCRIPTOR gStringDescriptorProduct;
 extern const DESCRIPTOR gStringDescriptorSerialNum;
 
-#define USB_CDC_MSC
+//#define USB_CDC_MSC
 
 /* FILENAME_USBDESCRIPTORS_H */
 #endif

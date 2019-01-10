@@ -67,3 +67,4 @@ void mp_hal_pin_config(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint3
 bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint8_t fn, uint8_t unit);
 void mp_hal_pin_config_speed(mp_hal_pin_obj_t pin_obj, uint32_t speed);
 
+void mp_hal_set_interrupt_char(int c); // -1 to disable

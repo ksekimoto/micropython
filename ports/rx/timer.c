@@ -161,7 +161,7 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
         mp_obj_t freq_args[2];
         freq_args[0] = self;
         freq_args[1] = args[ARG_freq].u_obj;
-        pyb_timer_freq(2, &freq_args);
+        pyb_timer_freq(2, (const mp_obj_t *)&freq_args);
     } else {
         mp_raise_TypeError("must specify either freq, period, or prescaler and period");
     }

@@ -49,8 +49,8 @@ static int _isalnum(char ch) {
         return 0;
 }
 
-char *url_encode(char *str, char *dst, int size) {
-    char *pstr = str;
+char *url_encode(const char *str, char *dst, int size) {
+    char *pstr = (char *)str;
     char *pbuf = dst;
     if (size == 0)
         return dst;
@@ -81,9 +81,9 @@ char *url_encode(char *str, char *dst, int size) {
     return dst;
 }
 
-int get_url_encode_size(char *str) {
+int get_url_encode_size(const char *str) {
     int size = 0;
-    char *pstr = str;
+    char *pstr = (char *)str;
     while (*pstr) {
         if (_isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
                 || *pstr == '~') {
@@ -101,8 +101,8 @@ int get_url_encode_size(char *str) {
     return size;
 }
 
-char *url_decode(char *str, char *dst, int size) {
-    char *pstr = str;
+char *url_decode(const char *str, char *dst, int size) {
+    char *pstr = (char *)str;
     char *pbuf = dst;
     if (size == 0)
         return dst;
@@ -125,9 +125,9 @@ char *url_decode(char *str, char *dst, int size) {
     return dst;
 }
 
-int get_url_decode_size(char *str) {
+int get_url_decode_size(const char *str) {
     int size = 0;
-    char *pstr = str;
+    char *pstr = (char *)str;
     while (*pstr) {
         if (*pstr == '%') {
             if (pstr[1] && pstr[2]) {

@@ -34,17 +34,12 @@
 uint32_t irq_stats[FPU_IRQn + 1] = {0};
 #endif
 
-void __attribute__((noreturn)) __WFI(void) {
-    __asm__("wait");
-}
-
 /// \function wfi()
 /// Wait for an interrupt.
 /// This executies a `wfi` instruction which reduces power consumption
 /// of the MCU until an interrupt occurs, at which point execution continues.
 STATIC mp_obj_t pyb_wfi(void) {
-    //__WFI();
-    __asm__("wait");
+    __WFI();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(pyb_wfi_obj, pyb_wfi);
@@ -65,7 +60,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(pyb_disable_irq_obj, pyb_disable_irq);
 /// If `state` is `False` then IRQs are disabled.  The most common use of
 /// this function is to pass it the value returned by `disable_irq` to
 /// exit a critical section.
-STATIC mp_obj_t pyb_enable_irq(uint n_args, const mp_obj_t *arg) {
+STATIC mp_obj_t pyb_enable_irq(size_t n_args, const mp_obj_t *arg) {
     enable_irq((n_args == 0 || mp_obj_is_true(arg[0])) ? IRQ_STATE_ENABLED : IRQ_STATE_DISABLED);
     return mp_const_none;
 }

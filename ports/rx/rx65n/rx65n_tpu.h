@@ -84,6 +84,8 @@ void rx_tpu_int_ier(uint8_t tpu_pin, int flag);
 void rx_tpu_channel_int_enable(uint8_t channel, uint8_t bit);
 void rx_tpu_channel_int_disable(uint8_t channel, uint8_t bit);
 uint8_t rx_tpu_get_tpu_channel(uint8_t pin_idx);
+uint32_t rx_tpu_get_clock_dev(int channel, float freq);
+void rx_tpu_set_clock(int channel, uint32_t clkdev);
 void rx_tpu_set_default_freq(float freq);
 void rx_tpu_set_freq(uint8_t pin_idx, float freq);
 float rx_tpu_get_freq(uint8_t pin_idx);

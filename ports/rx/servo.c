@@ -143,8 +143,8 @@ void servo_timer_irq_callback(void) {
 }
 
 STATIC void servo_init_channel(pyb_servo_obj_t *s) {
-    static const uint8_t channel_table[PYB_SERVO_NUM] = {0, 1};
-    uint8_t tpu_channel = rx_tpu_get_tpu_channel(s->pin->pin);
+    //static const uint8_t channel_table[PYB_SERVO_NUM] = {0, 1};
+    //uint8_t tpu_channel = rx_tpu_get_tpu_channel(s->pin->pin);
     rx_servo_set_pulse(s->pin->pin, s->pulse_cur);
     rx_tpu_pin_init(s->pin->pin);
 }
@@ -171,7 +171,7 @@ STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
 MP_DEFINE_CONST_FUN_OBJ_2(pyb_servo_set_obj, pyb_servo_set);
 
 STATIC mp_obj_t pyb_pwm_set(mp_obj_t period, mp_obj_t pulse) {
-    int pe = mp_obj_get_int(period);
+    //int pe = mp_obj_get_int(period);
     int pu = mp_obj_get_int(pulse);
     // Not used?
     rx_servo_set_pulse(pyb_servo_obj[0].pin->pin, pu);

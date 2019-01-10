@@ -48,6 +48,7 @@ Function Prototypes
 extern "C" {
 #endif
 
+USB_ERR USBCDCMSC_Init(void);
 USB_ERR USBCDC_Init(void);
 bool USBCDC_IsConnected(void);
 USB_ERR USBCDC_WriteString(const char* const _sz);

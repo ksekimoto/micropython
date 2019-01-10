@@ -49,7 +49,7 @@ static unsigned char ntp_send[NTP_PACKT_SIZE] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-uint32_t ntp(char *ipaddr, int tf) {
+uint32_t ntp(const char *ipaddr, int tf) {
     static unsigned char ntp_recv[60];
     int cnt;
     int ret;

@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "vsnprintf.h"
+
+#if defined(USE_DBG_PRINT)
 
 #define NO_FLOAT
 
@@ -62,13 +65,13 @@ static unsigned int put_s_buf(char *buf, char *s, int width, unsigned int buf_si
     }
     for (; *s != 0; s++, width--) {
         if (buf_size-- == 0)
-            return -1;
+        return -1;
         *buf++ = *s;
         size++;
     }
     for (; width > 0; width--) {
         if (buf_size-- == 0)
-            return -1;
+        return -1;
         *buf++ = ' ';
         size++;
     }
@@ -87,8 +90,9 @@ static unsigned int put_c_buf(char *buf, char c, int width, unsigned int buf_siz
     if (buf_size > 0) {
         if (width > 0) {
             width--;    // decrease for one character
-            if (width > (int)buf_size)
+            if (width > (int)buf_size) {
                 width = (int)buf_size;
+            }
             memset(buf, ' ', width);
             buf += width;
             size += width;
@@ -217,50 +221,56 @@ static int put_f_buf(char *buf, const char *fmt, double f, int width, int adp, i
     int size = 0;
     int negativeflag = 0;
 
-    if (zeroflag)
+    if (zeroflag) {
         z = '0';
-    else
+    } else {
         z = ' ';
+    }
     base = 10L;
     if (f < 0) {
         f = -f;
         negativeflag = 1;
     }
-    for (i = 0; i < adp; i++)
+    for (i = 0; i < adp; i++) {
         f *= 10.0;
+    }
     l = (long long)f;
     p = tmp;
     t = (char *)sdigit_str;
     do {
-        if (adp == 0)
+        if (adp == 0) {
             *p++ = '.';
+        }
         width--;
         adp--;
         *p++ = t[l % base];
         l /= base;
-    } while (l != 0);
+    }while (l != 0);
     if (!zeroflag && negativeflag) {
         width--;
         *p++ = '-';
     }
     if (zeroflag && negativeflag) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = '-';
         size++;
         width--;
     }
     for (; width > 0; width--) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = z;
         size++;
     }
     while (p > tmp) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = *--p;
         size++;
@@ -280,9 +290,10 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
     int len = 0;
     int zeroflag = 0;
     int minusflag = 0;
-    int widthflag = 0;
     int shortflag = 0;
+#ifndef NO_FLOAT
     double f;
+#endif
 
     for (; *fmt != '\0'; fmt++) {
         p = *fmt;
@@ -293,7 +304,6 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
             vxsnprintf_0: if (p == '%') {
                 goto vxsnprintf_next;
             } else if (p == '*') {
-                widthflag = 1;
                 fmt++;
                 p = *fmt;
                 n = (unsigned long)va_arg(args, long);
@@ -314,91 +324,98 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
             if (isdigit(p)) {
                 n = *fmt++ - '0';
 #if MORETHAN10
-                while (isdigit(*fmt))
+                while (isdigit(*fmt)) {
                     n = n * 10 + (*fmt++ - '0');
+                }
 #endif
                 if (*fmt == '.') {
                     fmt++;
                     if (isdigit(*fmt)) {
                         m = *fmt++ - '0';
 #if MORETHAN10
-                        while (isdigit(*fmt))
+                        while (isdigit(*fmt)) {
                             m = m * 10 + (*fmt++ - '0');
+                        }
                     }
                 }
                 p = *fmt;
 #endif
-            } else if (n == 0)
+            } else if (n == 0) {
                 n = -1;
+            }
 
             switch(p) {
-            case 'I':
-                if (('6' == *(fmt + 1)) && ('4' == *(fmt + 2))) {
-                    vv = (unsigned long long)va_arg(args, long long);
-                    fmt += 3;
-                    size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                case 'I':
+                    if (('6' == *(fmt + 1)) && ('4' == *(fmt + 2))) {
+                        vv = (unsigned long long)va_arg(args, long long);
+                        fmt += 3;
+                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                    }
+                    break;
+                case 'l': {
+                    char p1 = *(fmt + 1);
+                    char p2 = *(fmt + 2);
+                    if ((p1 == 'd') || (p1 == 'u') || (p1 == 'x') || (p1 == 'X')) {
+                        vv = (unsigned long long)va_arg(args, long);
+                        fmt += 1;
+                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                    } else if ((p1 == 'l') && ((p2 == 'd') || (p2 == 'u') || (p2 == 'x') || (p2 == 'X'))) {
+                        vv = (unsigned long long)va_arg(args, long long);
+                        fmt += 2;
+                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                    }
+                    break;
                 }
-                break;
-            case 'l': {
-                char p1 = *(fmt + 1);
-                char p2 = *(fmt + 2);
-                if ((p1 == 'd') || (p1 == 'u') || (p1 == 'x') || (p1 == 'X')) {
-                    vv = (unsigned long long)va_arg(args, long);
-                    fmt += 1;
-                    size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
-                } else if ((p1 == 'l') && ((p2 == 'd') || (p2 == 'u') || (p2 == 'x') || (p2 == 'X'))) {
-                    vv = (unsigned long long)va_arg(args, long long);
-                    fmt += 2;
-                    size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
-                }
-            }
-                break;
-            case 's':
-                v = (unsigned long)va_arg(args, long);
-                size = put_s_buf(buf, (char *)v, n, buf_size, minusflag);
-                break;
-            case 'c':
-                v = (unsigned long)va_arg(args, long);
-                size = put_c_buf(buf, (char)v, n, buf_size);
-                break;
-            case 'd':
-                size = put_n_buf(buf, fmt, (long long)va_arg(args, long), n, zeroflag, buf_size);
-                break;
-            case 'h':
-                shortflag = 1;
-                fmt++;
-                p = *fmt;
-                goto vxsnprintf_0;
-            case 'b':
-            case 'u':
-            case 'o':
-            case 'x':
-            case 'e':
-            case 'O':
-            case 'X':
-                if (shortflag)
-                    v = (unsigned long)(va_arg(args, long) & 0xffff);
-                else
+                case 's':
                     v = (unsigned long)va_arg(args, long);
-                size = put_n_buf(buf, fmt, (long long)v, n, zeroflag, buf_size);
-                break;
+                    size = put_s_buf(buf, (char *)v, n, buf_size, minusflag);
+                    break;
+                case 'c':
+                    v = (unsigned long)va_arg(args, long);
+                    size = put_c_buf(buf, (char)v, n, buf_size);
+                    break;
+                case 'd':
+                    size = put_n_buf(buf, fmt, (long long)va_arg(args, long), n, zeroflag, buf_size);
+                    break;
+                case 'h':
+                    shortflag = 1;
+                    fmt++;
+                    p = *fmt;
+                    goto vxsnprintf_0;
+                case 'b':
+                case 'u':
+                case 'o':
+                case 'x':
+                case 'e':
+                case 'O':
+                case 'X':
+                    if (shortflag) {
+                        v = (unsigned long)(va_arg(args, long) & 0xffff);
+                    } else {
+                        v = (unsigned long)va_arg(args, long);
+                    }
+                    size = put_n_buf(buf, fmt, (long long)v, n, zeroflag, buf_size);
+                    break;
 #ifndef NO_FLOAT
-            case 'f':
-                f = (float)va_arg(args, double);
-                size = put_f_buf(buf, fmt, f, n, m, zeroflag, buf_size);
-                break;
+                case 'f':
+                    f = (float)va_arg(args, double);
+                    size = put_f_buf(buf, fmt, f, n, m, zeroflag, buf_size);
+                    break;
 #endif
             }
-            if (size < 0)
+            if (size < 0) {
                 return -1;
+            }
             if (size) {
                 buf += size;
                 len += size;
                 buf_size -= size;
             }
         } else {
-            vxsnprintf_next: if (buf_size == 0)
+vxsnprintf_next:
+            if (buf_size == 0) {
                 return -1;
+            }
             *buf++ = p;
             len++;
             buf_size--;
@@ -407,3 +424,5 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
     *buf++ = '\0';
     return len;
 }
+
+#endif

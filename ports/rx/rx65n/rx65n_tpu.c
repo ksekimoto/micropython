@@ -30,6 +30,7 @@
 
 typedef struct st_tpu0* tpu_reg_t;
 
+#if 0
 static tpu_reg_t TPU_REG[] = {
     (tpu_reg_t)0x88108,
     (tpu_reg_t)0x88108,
@@ -44,6 +45,7 @@ static tpu_reg_t TPU_REG[] = {
     (tpu_reg_t)0x8817C,
     (tpu_reg_t)0x8817C
 };
+#endif
 
 #define TPU_IPR_VEC(tpu_pin)    (126 + (uint32_t)tpu_pin)
 #define TPU_IER_VEC(tpu_pin)    ((126 + (uint32_t)tpu_pin) /8)
@@ -876,12 +878,12 @@ void rx_tpu_set_channel_params(uint8_t pin_idx, int channel, float freq, float d
         break;
 #endif
     default:
-        return false;
+        break;
     }
 #ifdef DEBUG_PWM
     debug_printf("Dt/D/P %04x/%06x/%06x\r\n", (UINT16)duration_ticks, duration, period);
 #endif
-    return true;
+    return;
 }
 
 void rx_tpu_set_default_freq(float freq) {

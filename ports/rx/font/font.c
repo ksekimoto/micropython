@@ -25,6 +25,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "common.h"
@@ -300,6 +301,8 @@ unsigned char *font_fontData(font_t *font, int idx) {
     }
 }
 
+#if 0
+// ToDo: implement python method for cnv_u8_to_u16
 /*
  * convert utf8 string to unicode string
  */
@@ -355,6 +358,7 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
     DEBUG_PRINT("len", idst)
     *dlen = idst;
 }
+#endif
 
 int get_font_by_name(char *name) {
     int idx = 0;
@@ -383,7 +387,7 @@ font_t *get_font_by_id(int font_id) {
     font_t *font = 0;
     for (int i = 0; i < NUM_FONTS; i++) {
         if (pyb_font_obj[i].font_id == font_id) {
-            font = pyb_font_obj[i].font;
+            font = (font_t *)pyb_font_obj[i].font;
             break;
         }
     }
@@ -422,8 +426,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_font_height_obj, pyb_font_height);
 STATIC mp_obj_t pyb_font_data(mp_obj_t self_in, mp_obj_t idx) {
     pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int font_idx = mp_obj_get_int(idx);
-    int font_bytes = font_fontBytes(self->font, font_idx);
-    unsigned char *font_data = font_fontData(self->font, font_idx);
+    int font_bytes = font_fontBytes((font_t*)self->font, font_idx);
+    unsigned char *font_data = font_fontData((font_t*)self->font, font_idx);
     return mp_obj_new_bytearray_by_ref((size_t)font_bytes, (void *)font_data);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_font_data_obj, pyb_font_data);

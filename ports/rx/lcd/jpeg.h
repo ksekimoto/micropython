@@ -60,4 +60,10 @@ typedef struct {
 
 extern jpeg_t jpeg;
 
+void jpeg_init(jpeg_t *jpeg);
+void jpeg_deinit(jpeg_t *jpeg);
+int jpeg_decode(jpeg_t *jpeg, char *filename, int split);
+int jpeg_decode_mcu(jpeg_t *jpeg);
+int jpeg_read(jpeg_t *jpeg);
+
 #endif

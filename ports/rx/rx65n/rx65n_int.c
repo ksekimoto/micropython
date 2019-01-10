@@ -26,12 +26,15 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "py/runtime.h"
+#include "py/mphal.h"
 #include "common.h"
 #include "iodefine.h"
+#include "usb_hal.h"
 
 #if (defined(RX64M) || defined(RX65N))
-extern void sci_isr_te(int ch);
-extern void sci_isr_er(int ch);
+//extern void sci_isr_te(int ch);
+//extern void sci_isr_er(int ch);
 
 void set_int_state_groupbl0(int flag) {
     IEN(ICU, GROUPBL0) = 0;
@@ -168,17 +171,18 @@ void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL0(void) {
     }
 }
 
-extern struct netif *g_netif;
+#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+
+#endif
 
 // ICU GROUPAL1
 // vec: 113
 void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL1(void) {
-    //rx_ether_int();
+#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
     if (1 == ICU.GRPAL1.BIT.IS4) {
-        if (g_netif != NULL) {
-            ethernetif_input(g_netif);
-        }
+        rx_ether_input_callback();
     }
+#endif // MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 }
 
 void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB110(void)
