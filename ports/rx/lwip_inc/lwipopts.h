@@ -1,7 +1,11 @@
 #ifndef MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
 #define MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
 
+#include <stdio.h>
 #include <stdint.h>
+#include "py/runtime.h"
+#include "py/mphal.h"
+#include "common.h"
 
 #define NO_SYS                          1
 #define SYS_LIGHTWEIGHT_PROT            1
@@ -16,6 +20,7 @@
 #define LWIP_STATS                      0
 #define LWIP_NETIF_HOSTNAME             1
 
+#define LWIP_IPV4                       1
 #define LWIP_IPV6                       0
 #define LWIP_DHCP                       1
 #define LWIP_DHCP_CHECK_LINK_UP         1

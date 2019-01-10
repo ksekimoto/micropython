@@ -25,7 +25,7 @@
 #define MICROPY_HW_UART6_TX         (pin_P32)
 #define MICROPY_HW_UART6_RX         (pin_P33)
 #define MICROPY_HW_UART6_DIR        (pin_P34)
-//#define MICROPY_HW_UART_REPL        PYB_UART_1
+#define MICROPY_HW_UART_REPL        PYB_UART_1
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
@@ -71,7 +71,8 @@
 //#define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 //#define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
-#define MICROPY_PY_LWIP (1)
+// Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
+//#define MICROPY_PY_LWIP (1)
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
@@ -80,3 +81,7 @@
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
+// Add MICRO_SSL_MBEDTLS=1 as a parameter of make command when adding MBEDTLS
+//#define MICROPY_SSL_MBEDTLS         (1)
+// Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module
+//#define MICROPY_PY_USSL             (1)

@@ -71,12 +71,17 @@
 //#define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 //#define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
-#define MICROPY_PY_LWIP (1)
+// Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
+//#define MICROPY_PY_LWIP (1)
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP8266      (1)
-#define MICROPY_PY_PYB_TWITTER      (1)
+#define MICROPY_HW_HAS_ESP8266      (0)
+#define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
+// Add MICRO_SSL_MBEDTLS=1 as a parameter of make command when adding MBEDTLS
+//#define MICROPY_SSL_MBEDTLS         (1)
+// Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module
+//#define MICROPY_PY_USSL             (1)

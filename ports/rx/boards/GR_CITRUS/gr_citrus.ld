@@ -149,6 +149,6 @@ _estack = ORIGIN(RAM) + LENGTH(RAM);
 /* RAM extents for the garbage collector */
 _ram_start = ORIGIN(RAM);
 _ram_end = ORIGIN(RAM) + LENGTH(RAM);
-_heap_start = _ebss; /* heap starts just after statically allocated memory */
-_heap_end = 0x0003e000; /* tunable */
+_heap_start = _ebss;	/* heap starts just after statically allocated memory */
+_heap_end = 0x0003e800; /* tunable */
 

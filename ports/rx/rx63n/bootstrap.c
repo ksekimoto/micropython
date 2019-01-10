@@ -24,7 +24,8 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdint.h"
+#include <stdio.h>
+#include <stdint.h>
 #include "iodefine.h"
 
 #if defined(GRSAKURA)

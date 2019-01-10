@@ -91,6 +91,7 @@ INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 INC += -I$(TOP)/lib/lwip/src/include
 INC += -Ilwip_inc
+INC += -I$(TOP)/lib/mbedtls/include
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
@@ -103,7 +104,9 @@ INC += -Isd
 # C flags.
 #######################################################################
 #CFLAGS += $(INC) -Wall -Werror -std=c99 -nostdlib $(COPT)
-CFLAGS += $(INC) -w -std=c99 -nostdlib $(COPT)
+CFLAGS += -Wall -Werror -Wno-missing-braces
+#CFLAGS += -w
+CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
 
 ifeq ($(DEBUG), 1)
@@ -176,6 +179,18 @@ endif
 #define USB_CDC
 #define USB_MSC
 
+ifeq ($(MICROPY_PY_LWIP),1)
+CFLAGS += -DMICROPY_PY_LWIP=1
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS += -DMICROPY_SSL_MBEDTLS=1
+endif
+
+ifeq ($(MICROPY_PY_USSL),1)
+CFLAGS += -DMICROPY_PY_USSL=1
+endif
+
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -183,7 +198,7 @@ endif
 #LINC += $(GCCDIR)/lib/gcc/rx-elf/$(GCCVER)
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
-#LFFLAGS += -nostdlib
+LDFLAGS += -nostdlib
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
 LDFLAGS += -Wl,-Map=$@.map
@@ -225,6 +240,7 @@ SRC_C += phy.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
+SRC_C += posix_helpers.c
 SRC_C += pwm.c
 SRC_C += pyb_i2c.c
 SRC_C += pybthread.c
@@ -251,7 +267,7 @@ SRC_C += esp8266/ntp.c
 SRC_C += esp8266/twitter.c
 SRC_C += esp8266/urlencode.c
 SRC_C += esp8266/wifi.c
-SRC_C += $(MCU_SERIES_LOW)/sbrk.c
+#SRC_C += $(MCU_SERIES_LOW)/sbrk.c
 SRC_C += $(MCU_SERIES_LOW)/interrupt_handlers.c
 SRC_C += $(MCU_SERIES_LOW)/vector_table.c
 SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
@@ -296,6 +312,7 @@ SRC_C += ramdisk/FAT_5000_041.c
 endif
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
+SRC_C += debug/division.c
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
@@ -405,11 +422,11 @@ EXTMOD_SRC_C = $(addprefix extmod/,\
 	modonewire.c \
 	)
 
-#ifeq ($(MICROPY_PY_LWIP),1)
+ifeq ($(MICROPY_PY_LWIP),1)
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	modlwip.c \
 	)
-#endif
+endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -455,7 +472,7 @@ SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
 	)
 endif
 
-#ifeq ($(MICROPY_PY_LWIP),1)
+ifeq ($(MICROPY_PY_LWIP),1)
 LWIP_DIR = lib/lwip/src
 INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
@@ -496,7 +513,89 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/ipv6/nd6.c \
 	netif/ethernet.c \
 	)
-#endif
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+CFLAGS += -DMBEDTLS_DEBUG_C
+SRC_MOD += $(addprefix lib/,\
+	mbedtls/library/aes.c \
+	mbedtls/library/aesni.c \
+	mbedtls/library/arc4.c \
+	mbedtls/library/aria.c \
+	mbedtls/library/asn1parse.c \
+	mbedtls/library/asn1write.c \
+	mbedtls/library/base64.c \
+	mbedtls/library/bignum.c \
+	mbedtls/library/blowfish.c \
+	mbedtls/library/camellia.c \
+	mbedtls/library/ccm.c \
+	mbedtls/library/certs.c \
+	mbedtls/library/chacha20.c \
+	mbedtls/library/chachapoly.c \
+	mbedtls/library/cipher_wrap.c \
+	mbedtls/library/cipher.c \
+	mbedtls/library/cmac.c \
+	mbedtls/library/ctr_drbg.c \
+	mbedtls/library/debug.c \
+	mbedtls/library/des.c \
+	mbedtls/library/dhm.c \
+	mbedtls/library/ecdh.c \
+	mbedtls/library/ecdsa.c \
+	mbedtls/library/ecjpake.c \
+	mbedtls/library/ecp.c \
+	mbedtls/library/ecp_curves.c \
+	mbedtls/library/entropy.c \
+	mbedtls/library/entropy_poll.c \
+	mbedtls/library/error.c \
+	mbedtls/library/gcm.c \
+	mbedtls/library/havege.c \
+	mbedtls/library/hmac_drbg.c \
+	mbedtls/library/md.c \
+	mbedtls/library/md_wrap.c \
+	mbedtls/library/md2.c \
+	mbedtls/library/md4.c \
+	mbedtls/library/md5.c \
+	mbedtls/library/memory_buffer_alloc.c \
+	mbedtls/library/oid.c \
+	mbedtls/library/padlock.c \
+	mbedtls/library/pem.c \
+	mbedtls/library/pk.c \
+	mbedtls/library/pk_wrap.c \
+	mbedtls/library/pkcs11.c \
+	mbedtls/library/pkcs12.c \
+	mbedtls/library/pkcs5.c \
+	mbedtls/library/pkparse.c \
+	mbedtls/library/pkwrite.c \
+	mbedtls/library/platform.c \
+	mbedtls/library/platform_util.c \
+	mbedtls/library/poly1305.c \
+	mbedtls/library/ripemd160.c \
+	mbedtls/library/rsa.c \
+	mbedtls/library/rsa_internal.c \
+	mbedtls/library/sha1.c \
+	mbedtls/library/sha256.c \
+	mbedtls/library/sha512.c \
+	mbedtls/library/ssl_cache.c \
+	mbedtls/library/ssl_ciphersuites.c \
+	mbedtls/library/ssl_cli.c \
+	mbedtls/library/ssl_cookie.c \
+	mbedtls/library/ssl_srv.c \
+	mbedtls/library/ssl_ticket.c \
+	mbedtls/library/ssl_tls.c \
+	mbedtls/library/threading.c \
+	mbedtls/library/timing.c \
+	mbedtls/library/version.c \
+	mbedtls/library/version_features.c \
+	mbedtls/library/x509.c \
+	mbedtls/library/x509_create.c \
+	mbedtls/library/x509_crl.c \
+	mbedtls/library/x509_crt.c \
+	mbedtls/library/x509_csr.c \
+	mbedtls/library/x509write_crt.c \
+	mbedtls/library/x509write_csr.c \
+)
+endif
 
 OBJ =
 OBJ += $(PY_O)

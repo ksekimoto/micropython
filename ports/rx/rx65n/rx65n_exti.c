@@ -190,7 +190,6 @@ void exti_callback(uint32_t irq_no) {
 
 void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
         uint32_t irq_priority) {
-    uint8_t mask = 1 << (pin & 7);
     uint8_t mask2 = 1 << (irq_no & 7);
     uint16_t mask3 = 3 << ((irq_no & 7) * 2);
     cond = (cond & 0x3) << 2;

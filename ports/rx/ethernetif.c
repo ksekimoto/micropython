@@ -54,9 +54,11 @@
 #include "common.h"
 #include "phy.h"
 #include "modmachine.h"
+#include "ethernetif.h"
 
 //#define DEBUG_ETHERNETIF
 
+extern struct netif *g_netif;
 extern struct ei_device le0;
 extern int8_t tmpbuf[];
 
@@ -109,7 +111,7 @@ low_level_init(struct netif *netif)
     uint8_t macaddress[6];
 #if defined(RX65N)
     uint8_t id[16];
-    get_unique_id(&id);
+    get_unique_id((uint8_t *)&id);
     macaddress[0] = 0;
     macaddress[1] = id[11];
     macaddress[2] = id[12];
@@ -120,13 +122,17 @@ low_level_init(struct netif *netif)
     uint32_t tick = utick();
     macaddress[0] = 0;
     macaddress[1] = 0;
-    *(uint32_t *)&macaddress[2] = tick;
+    macaddress[2] = (uint8_t)(tick >> 24);
+    macaddress[3] = (uint8_t)(tick >> 16);
+    macaddress[4] = (uint8_t)(tick >> 8);
+    macaddress[5] = (uint8_t)(tick);
 #endif
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
     memcpy(&netif->hwaddr, &macaddress, ETHARP_HWADDR_LEN);
     netif->mtu = 1500;
     netif->flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP | NETIF_FLAG_ETHERNET;
-    rx_ether_init(&macaddress);
+    rx_ether_init((uint8_t *)&macaddress);
+    rx_ether_input_set_callback((RX_ETHER_INPUT_CB)ethernetif_input_cb);
     rx_ether_start();
 }
 
@@ -201,7 +207,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
 static struct pbuf *
 low_level_input(struct netif *netif)
 {
-  struct pbuf *p = NULL, *q = NULL;
+  struct pbuf *p = NULL;
   bool flag = true;
   int32_t recvd;
   int32_t readcount = 0;
@@ -301,11 +307,11 @@ low_level_input(struct netif *netif)
 void
 ethernetif_input(struct netif *netif)
 {
-  struct ethernetif *ethernetif;
-  struct eth_hdr *ethhdr;
+  //struct ethernetif *ethernetif;
+  //struct eth_hdr *ethhdr;
   struct pbuf *p;
 
-  ethernetif = netif->state;
+  //ethernetif = netif->state;
 
   /* move received packet into a new pbuf */
   p = low_level_input(netif);
@@ -318,6 +324,12 @@ ethernetif_input(struct netif *netif)
       p = NULL;
     }
   }
+}
+
+void ethernetif_input_cb(void) {
+    if (g_netif != NULL) {
+        ethernetif_input(g_netif);
+    }
 }
 
 /**
@@ -395,9 +407,6 @@ ethernetif_update_config(struct netif *netif) {
 #if defined(DEBUG_ETHERNETIF)
   debug_printf("ethernetif_update_config\r\n");
 #endif
-  uint32_t tickstart = 0;
-  uint32_t regvalue = 0;
-
   if(netif_is_link_up(netif))
   {
     /* Auto-Negotiation */

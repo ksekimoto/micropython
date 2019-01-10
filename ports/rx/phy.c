@@ -32,7 +32,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 
-#if MICROPY_HW_HAS_ETHERNET
+#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 
 #include "common.h"
 #include "phy.h"
@@ -95,7 +95,7 @@ static bool phy_verify_id(void) {
 }
 
 static bool phy_set_auto_negotiate(void) {
-    uint16_t reg;
+    uint32_t reg;
     volatile uint32_t count;
     phy_write(AN_ADVERTISEMENT_REG, 0x01E1);
     phy_write(BASIC_MODE_CONTROL_REG, 0x1200);

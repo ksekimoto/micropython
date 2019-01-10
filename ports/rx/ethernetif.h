@@ -32,5 +32,6 @@ void ethernetif_input(struct netif *netif);
 err_t ethernetif_init(struct netif *netif);
 void ethernetif_set_link(struct netif *netif);
 err_t ethernetif_update_config(struct netif *netif);
+void ethernetif_input_cb(void);
 
 #endif /* PORTS_RX_ETHERNETIF_H_ */

@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "py/runtime.h"
+#include "py/mphal.h"
 #include "common.h"
 #include "iodefine.h"
 
@@ -45,12 +47,12 @@ void __attribute__ ((interrupt)) INT_Excep_USB0_USBI0(void) {
 
 #else
 
-extern struct netif *g_netif;
+#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 
 void __attribute__ ((interrupt)) INT_Excep_ETHER_EINT(void) {
-    if (g_netif != NULL) {
-        ethernetif_input(g_netif);
-    }
+    rx_ether_input_callback();
 }
 
-#endif
+#endif // MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+
+#endif // GRCITRUS

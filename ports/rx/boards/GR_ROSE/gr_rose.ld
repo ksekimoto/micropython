@@ -95,15 +95,15 @@ SECTIONS
     _sidata = __end_of_text__;
     _sdataonrom = .; 
 	
-	.istack 0x40000 : AT (0x40000)
+	.istack 0x860000 : AT (0x860000)
 	{
 		_istack = .;
-	} > RAM
-	.ustack 0x3FF00 : AT (0x3FF00)
+	} > RAMHI
+	.ustack 0x85FC00 : AT (0x85FC00)
 	{
 		_ustack = .;
-	} > RAM
-	.heapmax 0xE0000 : AT (0xEF000)
+	} > RAMHI
+	.heapmax 0x85C000 : AT (0x85C000)
 	{
 		_heapmax = .;
 	} > RAMHI
@@ -161,11 +161,11 @@ SECTIONS
 /* Define tho top end of the stack.  The stack is full descending so begins just
    above last byte of RAM.  Note that EABI requires the stack to be 8-byte
    aligned for a call. */
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+_estack = ORIGIN(RAMHI) + LENGTH(RAMHI);
 
 /* RAM extents for the garbage collector */
 _ram_start = ORIGIN(RAMHI);
 _ram_end = ORIGIN(RAMHI) + LENGTH(RAMHI);
-_heap_start = 0x0008000;	/* heap starts just after statically allocated memory */
-_heap_end = 0x000e0000;		/* tunable */
+_heap_start = _ebss;	/* heap starts just after statically allocated memory */
+_heap_end = 0x85A000;	/* tunable */
 

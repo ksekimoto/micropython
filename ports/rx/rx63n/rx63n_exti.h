@@ -60,7 +60,7 @@ extern "C" {
 
 #define DEFAULT_INT_PRIORITY    0x05
 
-typedef void (*EXTI_FUNC)(uint32_t);
+typedef void (*EXTI_FUNC)(void *);
 
 uint8_t exti_find_pin_irq(uint8_t idx);
 void exti_enable(uint32_t pin);

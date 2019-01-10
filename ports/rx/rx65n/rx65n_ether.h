@@ -90,8 +90,8 @@ struct ei_device {
 #define ETH_RMII_MODE   0
 #define ETH_MII_MODE    1
 #define ETH_MODE_SEL    ETH_RMII_MODE
-#define BUFSIZE         1536
-#define ENTRY           4
+#define ETH_BUF_SIZE    1536
+#define ETH_BUF_NUM     4
 
 #define ACT     0x80000000
 #define DL      0x40000000
@@ -152,9 +152,16 @@ struct ei_device {
 void rx_ether_int(void);
 void rx_ether_init(uint8_t *hwaddr);
 void rx_ether_start(void);
+void rx_ether_deinit(void);
 bool rx_ether_phy_write(uint32_t phy_addr, uint32_t reg_addr, uint32_t data, uint32_t retry);
 bool rx_ether_phy_read(uint32_t phy_addr, uint32_t reg_addr, uint32_t *data, uint32_t retry);
 void rx_ether_set_link_speed(bool speed, bool fullduplex);
+int32_t rx_ether_fifo_write(ethfifo *p, int8_t buf[], int32_t size);
+int32_t rx_ether_fifo_read(ethfifo *p, int8_t buf[]);
+
+typedef void (*RX_ETHER_INPUT_CB)(void);
+void rx_ether_input_set_callback(RX_ETHER_INPUT_CB func);
+void rx_ether_input_callback(void);
 
 #ifdef __cplusplus
 }

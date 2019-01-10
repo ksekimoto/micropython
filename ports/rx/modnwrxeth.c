@@ -46,6 +46,7 @@
 #include "lwip/dns.h"
 #include "lwip/igmp.h"
 #include "lwip/dhcp.h"
+#include "lwip/timeouts.h"
 #include "lwip/prot/dhcp.h"
 #include "netif/etharp.h"
 #include "ethernetif.h"
@@ -63,6 +64,10 @@ typedef struct {
 const mp_obj_type_t mod_network_nic_type_rx_ether;
 
 STATIC rx_ether_obj_t rx_ether_obj;
+
+//u32_t sys_now(void) {
+//    return (u32_t)mp_hal_ticks_ms();
+//}
 
 STATIC void rx_ether_lwip_poll(void *self_in) {
     rx_ether_obj_t *self = self_in;
@@ -144,7 +149,7 @@ STATIC mp_obj_t rx_ether_lwip_ifconfig(size_t n_args, const mp_obj_t *args) {
 
     if (n_args == 1) {
         // get
-        ip_addr_t *dns = dns_getserver(0);
+        const ip_addr_t *dns = dns_getserver(0);
         mp_obj_t tuple[4] = {
             netutils_format_ipv4_addr((uint8_t*)&self->netif.ip_addr, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)&self->netif.netmask, NETUTILS_BIG),

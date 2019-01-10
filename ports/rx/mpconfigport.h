@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
+#include "common.h"
 
 // memory allocation policies
 #define MICROPY_ALLOC_PATH_MAX      (128)
@@ -219,9 +220,13 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 
 #if MICROPY_HW_HAS_ESP8266
 #define WIFI_BUILTIN_MODULE                 { MP_ROM_QSTR(MP_QSTR_wifi), MP_ROM_PTR(&mp_module_wifi) },
-#define TWITTER_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) },
 #else
 #define WIFI_BUILTIN_MODULE
+#endif
+
+#if MICROPY_PY_PYB_TWITTER && (MICROPY_PY_NETWORK || MICROPY_HW_HAS_ESP8266)
+#define TWITTER_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) },
+#else
 #define TWITTER_BUILTIN_MODULE
 #endif
 
@@ -318,6 +323,10 @@ typedef unsigned int mp_uint_t; // must be pointer size
 typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
+
+static inline void __WFI(void) {
+    __asm__("wait");
+}
 
 // We have inlined IRQ functions for efficiency (they are generally
 // 1 machine instruction).

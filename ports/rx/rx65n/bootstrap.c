@@ -257,7 +257,6 @@ static void clock_source_select (void)
 {
     volatile uint8_t i;
     volatile uint8_t dummy;
-    volatile uint8_t tmp;
 
     SYSTEM.MOFCR.BIT.MOFXIN = 0;
     SYSTEM.MOFCR.BIT.MOSEL = BSP_CFG_MAIN_CLOCK_SOURCE;
@@ -294,6 +293,7 @@ static void clock_source_select (void)
         RTC.RCR4.BIT.RCKSEL = 0;
         for (i = 0; i < 4; i++) {
             dummy = RTC.RCR4.BYTE;
+            dummy;
         }
         if (0 != RTC.RCR4.BIT.RCKSEL) {
             __asm("nop");
@@ -301,6 +301,7 @@ static void clock_source_select (void)
         RTC.RCR3.BIT.RTCEN = 0;
         for (i = 0; i < 4; i++) {
             dummy = RTC.RCR3.BYTE;
+            dummy;
         }
         if (0 != RTC.RCR3.BIT.RTCEN) {
             __asm("nop");

@@ -67,68 +67,76 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "py/runtime.h"
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
 #include "rx63n_ether.h"
+#include "phy.h"
 
 #if defined(GRCITRUS)
 
 #else
 
-#define ALIGN(X,Y) ( (X+Y-1)/Y*Y )
-#define ALIGNED_BUFSIZE ALIGN(BUFSIZE,32)
+#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 
-static ethfifo RX_DESC_SECTION rxdesc[ENTRY] __attribute__((aligned(32)));
-static ethfifo TX_DESC_SECTION txdesc[ENTRY] __attribute__((aligned(32)));
-static int8_t  RX_DESC_SECTION rxbuf[ENTRY][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
-static int8_t  TX_DESC_SECTION txbuf[ENTRY][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
+#define ALIGN(X,Y) ( (X+Y-1)/Y*Y )
+#define ALIGNED_BUFSIZE ALIGN(ETH_BUF_SIZE,32)
+
+static ethfifo RX_DESC_SECTION rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
+static ethfifo TX_DESC_SECTION txdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
+static int8_t  RX_DESC_SECTION rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
+static int8_t  TX_DESC_SECTION txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
 int8_t tmpbuf[ALIGNED_BUFSIZE] __attribute__((aligned(32)));
+
+static RX_ETHER_INPUT_CB rx_ether_input_cb = (RX_ETHER_INPUT_CB)0;
 
 /**
  * Ethernet device driver control structure initialization
  */
 struct ei_device le0 =
 {
-        (int8_t *)"eth0",       /* device name */
-        0,            /* open */
-        0,            /* Tx_act */
-        0,            /* Rx_act */
-        0,            /* txing */
-        0,            /* irq lock */
-        0,            /* dmaing */
-        0,            /* current receive discripter */
-        0,            /* current transmit discripter */
-        0,            /* save irq */
-        {
-                0,          /* rx packets */
-                0,          /* tx packets */
-                0,          /* rx errors */
-                0,          /* tx errors */
-                0,          /* rx dropped */
-                0,          /* tx dropped */
-                0,          /* multicast */
-                0,          /* collisions */
+    (int8_t *)"eth0",   /* device name */
+    0,      /* open */
+    0,      /* Tx_act */
+    0,      /* Rx_act */
+    0,      /* txing */
+    0,      /* irq lock */
+    0,      /* dmaing */
+    0,      /* current receive discripter */
+    0,      /* current transmit discripter */
+    0,      /* save irq */
+    {
+        0,  /* rx packets */
+        0,  /* tx packets */
+        0,  /* rx errors */
+        0,  /* tx errors */
+        0,  /* rx dropped */
+        0,  /* tx dropped */
+        0,  /* multicast */
+        0,  /* collisions */
 
-                0,          /* rx length errors */
-                0,          /* rx over errors */
-                0,          /* rx CRC errors */
-                0,          /* rx frame errors */
-                0,          /* rx fifo errors */
-                0,          /* rx missed errors */
+        0,  /* rx length errors */
+        0,  /* rx over errors */
+        0,  /* rx CRC errors */
+        0,  /* rx frame errors */
+        0,  /* rx fifo errors */
+        0,  /* rx missed errors */
 
-                0,          /* tx aborted errors */
-                0,          /* tx carrier errors */
-                0,          /* tx fifo errors */
-                0,          /* tx heartbeat errors */
-                0           /* tx window errors */
-        },
-        0,            /* MAC 0 */
-        0,            /* MAC 1 */
-        0,            /* MAC 2 */
-        0,            /* MAC 3 */
-        0,            /* MAC 4 */
-        0             /* MAC 5 */
+        0,  /* tx aborted errors */
+        0,  /* tx carrier errors */
+        0,  /* tx fifo errors */
+        0,  /* tx heartbeat errors */
+        0   /* tx window errors */
+    },
+    {
+        0,  /* MAC 0 */
+        0,  /* MAC 1 */
+        0,  /* MAC 2 */
+        0,  /* MAC 3 */
+        0,  /* MAC 4 */
+        0   /* MAC 5 */
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -275,6 +283,7 @@ static void rx_phy_write(uint16_t phy_addr, uint16_t reg_addr, uint16_t data) {
     rx_enable_irq();
 }
 
+#if 0
 static int16_t rx_phy_init(uint16_t phy_addr) {
     uint16_t reg;
     uint32_t count;
@@ -317,6 +326,7 @@ static int16_t phy_set_autonegotiate(uint16_t phy_addr) {
         return ((int16_t)rx_phy_read(phy_addr, AN_LINK_PARTNER_ABILITY_REG));
     }
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////
 /// fifo operations
@@ -326,7 +336,7 @@ void rx_ether_fifo_init(ethfifo p[], uint32_t status) {
     ethfifo *current = 0;
     int32_t i, j;
 
-    for (i = 0; i < ENTRY; i++) {
+    for (i = 0; i < ETH_BUF_NUM; i++) {
         current = &p[i];
         if (status == 0) {
             current->buf_p = (uint8_t *)&txbuf[i][0];
@@ -509,6 +519,19 @@ void rx_ether_deinit(void) {
     le0.open = 0;
     ETHERC.ECMR.LONG = 0x00000000;        // disable TE and RE
     le0.irqlock = 1;
+    rx_ether_input_cb = (RX_ETHER_INPUT_CB)0;
 }
 
-#endif
+void rx_ether_input_set_callback(RX_ETHER_INPUT_CB func) {
+    rx_ether_input_cb = func;
+}
+
+void rx_ether_input_callback(void) {
+    if (rx_ether_input_cb) {
+        (*rx_ether_input_cb)();
+    }
+}
+
+#endif // ICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+
+#endif // GRCITRUS
