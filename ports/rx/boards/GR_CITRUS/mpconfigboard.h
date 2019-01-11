@@ -8,6 +8,7 @@
 #define MICROPY_HW_HAS_SDCARD       (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
+#define MICROPY_HW_HAS_ETHERNET     (0)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
