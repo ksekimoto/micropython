@@ -105,6 +105,12 @@ void machine_init(void) {
         reset_cause = PYB_RESET_DEEPSLEEP;
         PWR->CPUCR |= PWR_CPUCR_CSSF;
     } else
+    #elif defined(STM32L4)
+    if (PWR->SR1 & PWR_SR1_SBF) {
+        // came out of standby
+        reset_cause = PYB_RESET_DEEPSLEEP;
+        PWR->SCR |= PWR_SCR_CSBF;
+    } else
     #endif
     {
         // get reset cause from RCC flags
@@ -330,11 +336,7 @@ STATIC mp_obj_t machine_sleep(void) {
 MP_DEFINE_CONST_FUN_OBJ_0(machine_sleep_obj, machine_sleep);
 
 STATIC mp_obj_t machine_deepsleep(void) {
-    #if defined(STM32L4)
-    printf("machine.deepsleep not supported yet\n");
-    #else
     powerctrl_enter_standby_mode();
-    #endif
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_deepsleep_obj, machine_deepsleep);
