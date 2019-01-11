@@ -130,5 +130,19 @@ USB_ERR USBCORE_Init(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
                      CB_ERROR _fpCBError
                      );
 
+USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
+                     const uint8_t* _Product, uint16_t _ProductSize,
+                     const uint8_t* _Serial, uint16_t _SerialSize,
+                     const uint8_t* _DeviceDescriptor, uint16_t _DeviceDescriptorSize,
+                     const uint8_t* _ConfigDescriptor, uint16_t _ConfigDescriptorSize,
+                     CB_SETUP_PACKET _fpCBSetupPacket,
+                     CB_DONE_OUT _fpCBControlOut,
+                     CB_CABLE _fpCBCable,
+                     CB_ERROR _fpCBError,
+                     CB_SETUP_PACKET _fpCBSetupPacket2,
+                     CB_DONE_OUT _fpCBControlOut2,
+                     CB_CABLE _fpCBCable2,
+                     CB_ERROR _fpCBError2);
+
 /*USB_CORE_H*/
 #endif

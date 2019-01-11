@@ -28,7 +28,7 @@
 #include "iodefine.h"
 #include "rx63n_gpio.h"
 
-static rx_dac_pins[] = {
+static uint8_t rx_dac_pins[] = {
     P03,
     P05,
 };

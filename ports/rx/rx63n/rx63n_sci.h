@@ -31,14 +31,18 @@ extern "C" {
 #endif
 
 void sci_init(int ch, int baud);
+void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud);
 void sci_set_baud(int ch, int baud);
 uint8_t sci_rx_ch(int ch);
 int sci_rx_any(int ch);
+int sci_tx_wait(int ch);
 void sci_tx_ch(int ch, unsigned char c);
 void sci_tx_str(int ch, unsigned char *p);
 void sci_deinit(int ch);
 typedef int (*SCI_CALLBACK)(int d);
 void sci_rx_set_callback(int ch, SCI_CALLBACK callback);
+void sci_isr_te(int ch);
+void sci_isr_er(int ch);
 
 #ifdef __cplusplus
 }

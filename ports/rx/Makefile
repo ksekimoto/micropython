@@ -2,6 +2,7 @@
 # then default to GR_CITURS
 BOARD ?= GR_CITRUS
 #BOARD ?= GR_SAKURA
+#BOARD ?= GR_ROSE
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
 endif
@@ -10,7 +11,7 @@ endif
 BUILD ?= build-$(BOARD)
 
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -55,6 +56,20 @@ FROZEN_MPY_DIR ?= modules
 include $(TOP)/py/py.mk
 
 #######################################################################
+# MCU configuration
+#######################################################################
+
+ifeq ($(MCU_SERIES),RX63N)
+MCU_SERIES_LOW = rx63n
+MCU_SERIES_CAP = RX63N
+endif
+
+ifeq ($(MCU_SERIES),RX65N)
+MCU_SERIES_LOW = rx65n
+MCU_SERIES_CAP = RX65N
+endif
+
+#######################################################################
 # Compiler configuration
 #######################################################################
 GCCDIR = /d/cross/GNURX-ELF-4.8.4.201701/rx-elf/rx-elf
@@ -67,13 +82,16 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -I$(MCU_SERIES)
+INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
+INC += -I$(TOP)/lib/lwip/src/include
+INC += -Ilwip_inc
+INC += -I$(TOP)/lib/mbedtls/include
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
@@ -86,7 +104,9 @@ INC += -Isd
 # C flags.
 #######################################################################
 #CFLAGS += $(INC) -Wall -Werror -std=c99 -nostdlib $(COPT)
-CFLAGS += $(INC) -w -std=c99 -nostdlib $(COPT)
+CFLAGS += -Wall -Werror -Wno-missing-braces
+#CFLAGS += -w
+CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
 
 ifeq ($(DEBUG), 1)
@@ -97,8 +117,9 @@ else
 CFLAGS += -Os -DNDEBUG
 endif
 
-CFLAGS += -D$(MCU_SERIES)
-CFLAGS += -DCONFIG_$(MCU_SERIES)
+CFLAGS += -D$(MCU_SERIES_CAP)
+CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
+CFLAGS += -D__RX_LITTLE_ENDIAN__
 ifeq ($(BOARD),GR_CITRUS)
 CFLAGS += -DGRCITRUS
 endif
@@ -110,6 +131,12 @@ CFLAGS += -DGRSAKURA
 endif
 ifeq ($(BOARD),GR_SAKURA_DD)
 CFLAGS += -DGRSAKURA
+endif
+ifeq ($(BOARD),GR_ROSE)
+CFLAGS += -DGRROSE
+endif
+ifeq ($(BOARD),GR_ROSE_DD)
+CFLAGS += -DGRROSE
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
@@ -152,6 +179,18 @@ endif
 #define USB_CDC
 #define USB_MSC
 
+ifeq ($(MICROPY_PY_LWIP),1)
+CFLAGS += -DMICROPY_PY_LWIP=1
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS += -DMICROPY_SSL_MBEDTLS=1
+endif
+
+ifeq ($(MICROPY_PY_USSL),1)
+CFLAGS += -DMICROPY_PY_USSL=1
+endif
+
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -159,7 +198,7 @@ endif
 #LINC += $(GCCDIR)/lib/gcc/rx-elf/$(GCCVER)
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
-#LFFLAGS += -nostdlib
+LDFLAGS += -nostdlib
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
 LDFLAGS += -Wl,-Map=$@.map
@@ -173,6 +212,7 @@ SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += dac.c
+SRC_C += ethernetif.c
 SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -184,6 +224,7 @@ SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
+SRC_C += modnwrxeth.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 SRC_C += modpyb.c
@@ -195,9 +236,11 @@ SRC_C += mpthreadport.c
 SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
+SRC_C += phy.c
 SRC_C += pin.c
 SRC_C += pin_defs_rx.c
 SRC_C += pin_named_pins.c
+SRC_C += posix_helpers.c
 SRC_C += pwm.c
 SRC_C += pyb_i2c.c
 SRC_C += pybthread.c
@@ -224,25 +267,27 @@ SRC_C += esp8266/ntp.c
 SRC_C += esp8266/twitter.c
 SRC_C += esp8266/urlencode.c
 SRC_C += esp8266/wifi.c
-SRC_C += $(MCU_SERIES)/sbrk.c
-SRC_C += $(MCU_SERIES)/interrupt_handlers.c
-SRC_C += $(MCU_SERIES)/vector_table.c
-SRC_C += $(MCU_SERIES)/bootstrap.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_adc.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_dac.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_exti.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_flash.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_gpio.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_i2c.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_init.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_sci.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_pwm.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_rtc.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_servo.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_spi.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_timer.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_tpu.c
-SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_utils.c
+#SRC_C += $(MCU_SERIES_LOW)/sbrk.c
+SRC_C += $(MCU_SERIES_LOW)/interrupt_handlers.c
+SRC_C += $(MCU_SERIES_LOW)/vector_table.c
+SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_adc.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_dac.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_ether.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_exti.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_flash.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_gpio.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_i2c.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_init.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_int.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_sci.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_pwm.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_rtc.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_servo.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_spi.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_timer.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_tpu.c
+SRC_C += $(MCU_SERIES_LOW)/$(MCU_SERIES_LOW)_utils.c
 ifeq ($(USE_NEW_USBLIB), 1)
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb.c
 SRC_C += $(MCU_SERIES)/$(MCU_SERIES)_usb_cdc.c
@@ -267,6 +312,7 @@ SRC_C += ramdisk/FAT_5000_041.c
 endif
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
+SRC_C += debug/division.c
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
@@ -277,7 +323,7 @@ SRC_C += lcd/picojpeg.c
 endif
 SRC_C += sd/sd.c
 
-SRC_S = $(MCU_SERIES)/startup_$(MCU_SERIES).S
+SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
@@ -370,15 +416,17 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 SRC_LIBM += lib/libm/ef_sqrt.c
+endif
+
+EXTMOD_SRC_C = $(addprefix extmod/,\
+	modonewire.c \
+	)
 
 ifeq ($(MICROPY_PY_LWIP),1)
-EXTMOD_SRC_C = $(addprefix extmod/,\
+EXTMOD_SRC_C += $(addprefix extmod/,\
 	modlwip.c \
 	)
 endif
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	modonewire.c \
-	)
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -467,6 +515,88 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	)
 endif
 
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+CFLAGS += -DMBEDTLS_DEBUG_C
+SRC_MOD += $(addprefix lib/,\
+	mbedtls/library/aes.c \
+	mbedtls/library/aesni.c \
+	mbedtls/library/arc4.c \
+	mbedtls/library/aria.c \
+	mbedtls/library/asn1parse.c \
+	mbedtls/library/asn1write.c \
+	mbedtls/library/base64.c \
+	mbedtls/library/bignum.c \
+	mbedtls/library/blowfish.c \
+	mbedtls/library/camellia.c \
+	mbedtls/library/ccm.c \
+	mbedtls/library/certs.c \
+	mbedtls/library/chacha20.c \
+	mbedtls/library/chachapoly.c \
+	mbedtls/library/cipher_wrap.c \
+	mbedtls/library/cipher.c \
+	mbedtls/library/cmac.c \
+	mbedtls/library/ctr_drbg.c \
+	mbedtls/library/debug.c \
+	mbedtls/library/des.c \
+	mbedtls/library/dhm.c \
+	mbedtls/library/ecdh.c \
+	mbedtls/library/ecdsa.c \
+	mbedtls/library/ecjpake.c \
+	mbedtls/library/ecp.c \
+	mbedtls/library/ecp_curves.c \
+	mbedtls/library/entropy.c \
+	mbedtls/library/entropy_poll.c \
+	mbedtls/library/error.c \
+	mbedtls/library/gcm.c \
+	mbedtls/library/havege.c \
+	mbedtls/library/hmac_drbg.c \
+	mbedtls/library/md.c \
+	mbedtls/library/md_wrap.c \
+	mbedtls/library/md2.c \
+	mbedtls/library/md4.c \
+	mbedtls/library/md5.c \
+	mbedtls/library/memory_buffer_alloc.c \
+	mbedtls/library/oid.c \
+	mbedtls/library/padlock.c \
+	mbedtls/library/pem.c \
+	mbedtls/library/pk.c \
+	mbedtls/library/pk_wrap.c \
+	mbedtls/library/pkcs11.c \
+	mbedtls/library/pkcs12.c \
+	mbedtls/library/pkcs5.c \
+	mbedtls/library/pkparse.c \
+	mbedtls/library/pkwrite.c \
+	mbedtls/library/platform.c \
+	mbedtls/library/platform_util.c \
+	mbedtls/library/poly1305.c \
+	mbedtls/library/ripemd160.c \
+	mbedtls/library/rsa.c \
+	mbedtls/library/rsa_internal.c \
+	mbedtls/library/sha1.c \
+	mbedtls/library/sha256.c \
+	mbedtls/library/sha512.c \
+	mbedtls/library/ssl_cache.c \
+	mbedtls/library/ssl_ciphersuites.c \
+	mbedtls/library/ssl_cli.c \
+	mbedtls/library/ssl_cookie.c \
+	mbedtls/library/ssl_srv.c \
+	mbedtls/library/ssl_ticket.c \
+	mbedtls/library/ssl_tls.c \
+	mbedtls/library/threading.c \
+	mbedtls/library/timing.c \
+	mbedtls/library/version.c \
+	mbedtls/library/version_features.c \
+	mbedtls/library/x509.c \
+	mbedtls/library/x509_create.c \
+	mbedtls/library/x509_crl.c \
+	mbedtls/library/x509_crt.c \
+	mbedtls/library/x509_csr.c \
+	mbedtls/library/x509write_crt.c \
+	mbedtls/library/x509write_csr.c \
+)
+endif
+
 OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
@@ -479,7 +609,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 
-#ifneq ($(FROZEN_DIR),)
+ifneq ($(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
 # and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
 CFLAGS += -DMICROPY_MODULE_FROZEN_STR
@@ -507,8 +637,8 @@ $(BUILD)/firmware.elf: $(OBJ)
 
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = boards/$(BOARD)/pins.csv
-AF_FILE = boards/$(MCU_SERIES)_af.csv
-PREFIX_FILE = boards/$(MCU_SERIES)_prefix.c
+AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
+PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
 GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
 GEN_PINS_QSTR = $(BUILD)/pins_qstr.h

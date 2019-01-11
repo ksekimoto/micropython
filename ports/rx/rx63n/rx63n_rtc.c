@@ -56,6 +56,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "iodefine.h"
 #include "common.h"
 #include "rx63n_rtc.h"
@@ -134,7 +135,6 @@ void rx_rtc_set_alarm_time(int hour, int min, int week_flag) {
     IPR(RTC, ALM)= 3u;
     IEN(RTC, ALM)= 1u;
     IR(RTC, ALM)= 0u;
-    return true;
 }
 
 /*

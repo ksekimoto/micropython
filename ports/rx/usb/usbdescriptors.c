@@ -59,6 +59,9 @@ Defines
 #elif defined(GRCITRUS)
 #define VID 0x2A50
 #define PID 0x0277
+#elif defined(GRROSE)
+#define VID 0x045B
+#define PID 0x025A
 #endif
 /***********************************************************************************
 Variables

@@ -31,7 +31,9 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "extmod/misc.h"
-#include "common.h"
+#include "usb.h"
+#include "uart.h"
+#include "usb_entry.h"
 
 typedef enum
 {
@@ -74,15 +76,15 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
             return c;
         }
         #endif
+        if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
+            return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
+        }
         #if MICROPY_HW_ENABLE_RX_USB
         byte c;
         if ((c = usbcdc_read()) != -1) {
             return c;
         }
         #endif
-        if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
-            return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
-        }
         int dupterm_c = mp_uos_dupterm_rx_chr();
         if (dupterm_c >= 0) {
             return dupterm_c;
@@ -110,7 +112,7 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     #if MICROPY_HW_ENABLE_RX_USB
     uint8_t *p = (uint8_t *)str;
     while (len--) {
-        usbcdc_write(*str++);
+        usbcdc_write(*p++);
     }
     #endif
     mp_uos_dupterm_tx_strn(str, len);

@@ -31,7 +31,8 @@
 extern "C" {
 #endif
 
-typedef void (*CMT_TIMER_FUNC)(uint32_t);
+#include <stdint.h>
+typedef void (*CMT_TIMER_FUNC)(void *);
 
 void cmt_timer_init(unsigned int ch);
 void cmt_timer_deinit(unsigned int ch);

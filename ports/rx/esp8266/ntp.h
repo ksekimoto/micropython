@@ -37,7 +37,7 @@ extern "C" {
 #define NTP_ERROR       0xffffffff;
 #define NTP_DEFAULT_SERVER  "ntp.nict.go.jp"
 
-uint32_t ntp(char *ipaddr, int tf);
+uint32_t ntp(const char *ipaddr, int tf);
 
 #ifdef __cplusplus
 }

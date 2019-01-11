@@ -86,7 +86,7 @@ static void rx_spi_set_MSTP(uint32_t ch, int bit) {
         SYSTEM.MSTPCRB.BIT.MSTPB17 = bit;
         break;
     case 1:
-        SYSTEM.MSTPCRB.BIT.MSTPB18 = bit;
+        SYSTEM.MSTPCRB.BIT.MSTPB16 = bit;
         break;
     default:
         SYSTEM.MSTPCRC.BIT.MSTPC22 = bit;
@@ -103,11 +103,11 @@ static void rx_spi_set_PMR(uint8_t pin, uint32_t value) {
         _PMR(port) &= ~(1 << bit);
 }
 
-inline volatile static void rx_spi_set_ir(uint32_t ch, int bit) {
+inline static void rx_spi_set_ir(uint32_t ch, int bit) {
     g_spri[ch]->IR = bit;
 }
 
-inline volatile static bool rx_spi_chk_ir(uint32_t ch, int bit) {
+inline static bool rx_spi_chk_ir(uint32_t ch, int bit) {
     return (g_spri[ch]->IR == bit);
 }
 
@@ -231,7 +231,6 @@ uint8_t rx_spi_write_byte(uint32_t ch, uint8_t b) {
 }
 
 void rx_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
-    uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
     rx_spi_set_bits(ch, 8);
     while (count--) {
@@ -239,12 +238,11 @@ void rx_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
         prspi->SPDR.LONG = (uint32_t)(*buf++);
         while (rx_spi_chk_ir(ch, 0))
             ;
-        dummy = prspi->SPDR.LONG;
+        prspi->SPDR.LONG;
     }
 }
 
 void rx_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
-    uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
     rx_spi_set_bits(ch, 16);
     while (count--) {
@@ -252,13 +250,12 @@ void rx_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
         prspi->SPDR.LONG = (uint32_t)(*buf++);
         while (rx_spi_chk_ir(ch, 0))
             ;
-        dummy = prspi->SPDR.LONG;
+        prspi->SPDR.LONG;
     }
     rx_spi_set_bits(ch, 8);
 }
 
 void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
-    uint32_t dummy;
     vp_rspi prspi = g_rspi[ch];
     rx_spi_set_bits(ch, 32);
     while (count--) {
@@ -266,7 +263,7 @@ void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
         prspi->SPDR.LONG = (uint32_t)(*buf++);
         while (rx_spi_chk_ir(ch, 0))
             ;
-        dummy = prspi->SPDR.LONG;
+        prspi->SPDR.LONG;
     }
     rx_spi_set_bits(ch, 8);
 }

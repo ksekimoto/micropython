@@ -4297,8 +4297,7 @@ struct st_mtu1 {
         struct {
             unsigned char TPSC:3;
             unsigned char CKEG:2;
-            unsigned char CCLR:2;
-            unsigned char :1;
+            unsigned char CCLR:3;
         } BIT;
     } TCR;
     union {
@@ -4369,8 +4368,7 @@ struct st_mtu2 {
         struct {
             unsigned char TPSC:3;
             unsigned char CKEG:2;
-            unsigned char CCLR:2;
-            unsigned char :1;
+            unsigned char CCLR:3;
         } BIT;
     } TCR;
     union {
@@ -15004,8 +15002,7 @@ struct st_mtu1 {
     union {
         unsigned char BYTE;
         struct {
-            unsigned char :1;
-            unsigned char CCLR:2;
+            unsigned char CCLR:3;
             unsigned char CKEG:2;
             unsigned char TPSC:3;
         } BIT;

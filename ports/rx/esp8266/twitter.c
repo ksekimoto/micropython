@@ -39,10 +39,13 @@
 #include "urlencode.h"
 #include "hmac.h"
 #include "wifi.h"
+#include "ntp.h"
+#include "posix_helpers.h"
 #include "twitter.h"
 
 #if MICROPY_PY_PYB_TWITTER
 
+#define DEBUG_TWITTER
 //#define DEBUG_TWITTER_NO_WIFI
 //#define DEBUG_TWITTER_AUTH_STR
 //#define DEBUG_TWITTER_STATUSES_UPDATE
@@ -224,6 +227,7 @@ static void print_param_value(PARAM *p) {
 }
 #endif
 
+#ifdef DEBUG_TWITTER
 static int get_param_url_encode_size(PARAM *p) {
     int size = 0;
     while (p->key != NULL) {
@@ -237,7 +241,9 @@ static int get_param_url_encode_size(PARAM *p) {
     }
     return size;
 }
+#endif
 
+#if 0
 static char *url_encode_static_buf(char *str) {
     if (get_url_encode_size(str) < ENCODE_BUF_MAX) {
         url_encode(str, encode_buf, ENCODE_BUF_MAX);
@@ -278,19 +284,21 @@ static char *urlenccat(char *dst, char *src) {
     }
     return dst;
 }
+#endif
 
 static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2,
     char *req_method, char *req_url, PARAM *params) {
     int sig_key_len;
     int sig_data_len;
     int sig_str_len;
-    int size = 0;
+#ifdef DEBUG_TWITTER
     int calc_sig_key_len =
         get_url_encode_size(sec1) + get_url_encode_size(sec2) + 1;
     int calc_param_len = get_param_url_encode_size(params);
     int calc_sig_data_len =
         get_url_encode_size(req_method) + get_url_encode_size(req_url) + 1 +
         calc_param_len + 1;
+#endif
     /* sig key */
     url_encode(sec1, encode_buf, ENCODE_BUF_MAX);
     strcpy(sig_key, encode_buf);
@@ -350,7 +358,8 @@ static void create_oauth_params(char *oauth_str, PARAM *params) {
     strcat(oauth_str, param_buf);
 }
 
-static void _statuses_update(char *ckey, char *csec, char *akey, char *asec, char *str, char *media_id_string) {
+static void _statuses_update(const char *ckey, const char *csec, const char *akey, const char *asec,
+    const char *str, const char *media_id_string) {
     char timestamp_str[11];
 #if defined (DEBUG_TWITTER_NO_WIFI)
     unsigned int timestamp = 1542801184;
@@ -358,7 +367,8 @@ static void _statuses_update(char *ckey, char *csec, char *akey, char *asec, cha
     unsigned int timestamp = (unsigned int)ntp(NTP_URL, 1);
 #endif
     //timestamp -= 2208988800;
-    sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    //sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    itoa((unsigned int)timestamp, timestamp_str, 10);
     param_set_value((PARAM *)req_params, (char *)"oauth_consumer_key", (char *)ckey);
     param_set_value((PARAM *)req_params, (char *)"oauth_nonce", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_timestamp", (char *)timestamp_str);
@@ -469,15 +479,14 @@ void twitter_api_init() {
 void twitter_api_deinit() {
 }
 
-void twitter_api_set_keys(char *cons_key, char *cons_sec, char *accs_key, char *accs_sec) {
+void twitter_api_set_keys(const char *cons_key, const char *cons_sec, const char *accs_key, const char *accs_sec) {
     twitter_params._cons_key = cons_key;
     twitter_params._cons_sec = cons_sec;
     twitter_params._accs_key = accs_key;
     twitter_params._accs_sec = accs_sec;
 }
 
-void twitter_api_statuses_update(char *str, char *media_id_string) {
-    char *strDFname = (char *)NULL;
+void twitter_api_statuses_update(const char *str, const char *media_id_string) {
     char *head[3];
     int size;
     twitter_t *t = &twitter_params;
@@ -522,7 +531,8 @@ static void _upload(NetworkInterface *iface, char *ckey, char *csec, char *akey,
     NTPClient ntp( iface);
     unsigned int timestamp = (unsigned int)ntp.get_timestamp();
     //timestamp -= 2208988800;
-    sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    //sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    itoa((unsigned int)timestamp, timestamp_str, 10);
     param_set_value((PARAM *)req_params, (char *)"oauth_consumer_key", (char *)ckey);
     param_set_value((PARAM *)req_params, (char *)"oauth_nonce", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_timestamp", (char *)timestamp_str);

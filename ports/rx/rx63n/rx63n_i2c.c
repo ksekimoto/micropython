@@ -31,6 +31,7 @@
 #include "interrupt_handlers.h"
 #include "rx63n_i2c.h"
 
+#if 0
 //#define DEBUG_I2C
 //#define DEBUG_I2C_REG_DUMP
 //#define DEBUG_I2C_CLK
@@ -648,3 +649,4 @@ void __attribute__ ((interrupt)) INT_Excep_RIIC3_TEI3(void) { rx_i2c_ictei_isr(3
 #ifdef __cplusplus
 }
 #endif
+#endif // if 0

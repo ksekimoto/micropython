@@ -89,11 +89,13 @@ STATIC mp_obj_t wifi_connect(mp_obj_t ssid, mp_obj_t pass) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(wifi_connect_obj, wifi_connect);
 
+#if 0
 STATIC mp_obj_t wifi_softap(mp_obj_t ssid, mp_obj_t pass, mp_obj_t ch, mp_obj_t enc) {
     esp8266_softap(mp_obj_str_get_str(ssid), mp_obj_str_get_str(pass), mp_obj_get_int(ch), mp_obj_get_int(enc));
     return mp_const_none;
 }
 //STATIC MP_DEFINE_CONST_FUN_OBJ_4(wifi_softap_obj, wifi_softap);
+#endif
 
 STATIC mp_obj_t wifi_connectedip(void) {
     esp8266_connectedip();
@@ -113,11 +115,13 @@ STATIC mp_obj_t wifi_ipconfig(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(wifi_ipconfig_obj, wifi_ipconfig);
 
+#if 0
 STATIC mp_obj_t wifi_bypass(void) {
     esp8266_bypass();
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(wifi_bypass_obj, wifi_bypass);
+#endif
 
 STATIC mp_obj_t wifi_disconnect(void) {
     esp8266_disconnect();
@@ -133,7 +137,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(wifi_multiconnect_obj, wifi_multiconnect);
 
 // esp8266_get(unsigned char *strURL, unsigned char **hes, int n, int ssl)
 STATIC mp_obj_t wifi_http_get(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
@@ -141,12 +145,12 @@ STATIC mp_obj_t wifi_http_get(size_t n_args, const mp_obj_t *args) {
     if (n_args == 2) {
         mp_obj_get_array(args[1], (size_t *)&len, &items);
         if (len > 0) {
-            header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+            header = (char **)malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
             for (i = 0; i < len; i++) {
-                header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+                header[i] = (char *)mp_obj_str_get_str(items[i]);
             }
         }
     }
@@ -162,7 +166,7 @@ STATIC mp_obj_t wifi_http_get(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_http_get_obj, 1, 2, wifi_http_get);
 
 STATIC mp_obj_t wifi_https_get(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
@@ -170,12 +174,12 @@ STATIC mp_obj_t wifi_https_get(size_t n_args, const mp_obj_t *args) {
     if (n_args == 2) {
         mp_obj_get_array(args[1], (size_t *)&len, &items);
         if (len > 0) {
-            header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+            header = (char **)malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
             for (i = 0; i < len; i++) {
-                header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+                header[i] = (char *)mp_obj_str_get_str(items[i]);
             }
         }
     }
@@ -192,7 +196,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_https_get_obj, 1, 2, wifi_https_
 
 #if MICROPY_HW_HAS_SDCARD
 STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
@@ -200,19 +204,19 @@ STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
     if (n_args == 3) {
         mp_obj_get_array(args[2], (size_t *)&len, &items);
         if (len > 0) {
-            header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+            header = (char **)malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
             for (i = 0; i < len; i++) {
-                header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+                header[i] = (char *)mp_obj_str_get_str(items[i]);
             }
         }
     }
     ret = esp8266_get_sd(mp_obj_str_get_str(args[0]),   /* url */
         mp_obj_str_get_str(args[1]),
-        header,
         len,
+        header,
         0);
     if (header != 0) {
         free(header);
@@ -222,7 +226,7 @@ STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_http_get_sd_obj, 2, 3, wifi_http_get_sd);
 
 STATIC mp_obj_t wifi_https_get_sd(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
@@ -230,19 +234,19 @@ STATIC mp_obj_t wifi_https_get_sd(size_t n_args, const mp_obj_t *args) {
     if (n_args == 3) {
         mp_obj_get_array(args[2], (size_t *)&len, &items);
         if (len > 0) {
-            header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+            header = (char **)malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
             for (i = 0; i < len; i++) {
-                header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+                header[i] = (char *)mp_obj_str_get_str(items[i]);
             }
         }
     }
     ret = esp8266_get_sd(mp_obj_str_get_str(args[0]),   /* url */
         mp_obj_str_get_str(args[1]),
-        header,
         len,
+        header,
         1);
     if (header != 0) {
         free(header);
@@ -268,19 +272,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_udpopen_obj, 4, 4, wifi_udpopen)
 /* src file */
 /* dst file */
 STATIC mp_obj_t wifi_http_post_sd(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+        header = (char **)malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
         for (i = 0; i < len; i++) {
-            header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+            header[i] = (char *)mp_obj_str_get_str(items[i]);
         }
     }
     ret = esp8266_post_sd(mp_obj_str_get_str(args[0]),  /* url */
@@ -300,19 +304,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_http_post_sd_obj, 4, 4, wifi_htt
 /* src file */
 /* dst file */
 STATIC mp_obj_t wifi_https_post_sd(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+        header = (char **)malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
         for (i = 0; i < len; i++) {
-            header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+            header[i] = (char *)mp_obj_str_get_str(items[i]);
         }
     }
     ret = esp8266_post_sd(mp_obj_str_get_str(args[0]),  /* url */
@@ -333,24 +337,24 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_https_post_sd_obj, 4, 4, wifi_ht
 /* data */
 /* dst file */
 STATIC mp_obj_t wifi_http_post(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+        header = (char **)malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
         for (i = 0; i < len; i++) {
-            header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+            header[i] = (char *)mp_obj_str_get_str(items[i]);
         }
     }
-    ret = esp8266_post(mp_obj_str_get_str(args[0]), /* url */
-        mp_obj_str_get_str(args[2]),            /* src file */
-        mp_obj_str_get_str(args[3]),            /* dst file */
+    ret = esp8266_post(mp_obj_str_get_str(args[0]),
+        (char *)mp_obj_str_get_str(args[2]),
+        mp_obj_str_get_str(args[3]),
         len, header, 0);
     if (header != 0) {
         free(header);
@@ -365,24 +369,24 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(wifi_http_post_obj, 4, 4, wifi_http_p
 /* data */
 /* dst file */
 STATIC mp_obj_t wifi_https_post(size_t n_args, const mp_obj_t *args) {
-    unsigned char **header = (unsigned char **)NULL;
+    char **header = (char **)NULL;
     mp_obj_t *items;
     int len = 0;
     int i;
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (unsigned char **)malloc(len * sizeof(unsigned char *));
+        header = (char **)malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
         for (i = 0; i < len; i++) {
-            header[i] = (unsigned char *)mp_obj_str_get_str(items[i]);
+            header[i] = (char *)mp_obj_str_get_str(items[i]);
         }
     }
-    ret = esp8266_post(mp_obj_str_get_str(args[0]), /* url */
-        mp_obj_str_get_str(args[2]),                /* src file */
-        mp_obj_str_get_str(args[3]),                /* dst file */
+    ret = esp8266_post(mp_obj_str_get_str(args[0]),
+        (char *)mp_obj_str_get_str(args[2]),
+        mp_obj_str_get_str(args[3]),
         len, header, 1);
     if (header != 0) {
         free(header);
@@ -398,13 +402,14 @@ STATIC mp_obj_t wifi_cclose(mp_obj_t mode) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(wifi_cclose_obj, wifi_cclose);
 
 STATIC mp_obj_t wifi_send(mp_obj_t num, mp_obj_t data, mp_obj_t size) {
-    esp8266_send(mp_obj_get_int(num), mp_obj_str_get_str(data), mp_obj_get_int(size));
+    esp8266_send(mp_obj_get_int(num), (char *)mp_obj_str_get_str(data), mp_obj_get_int(size));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(wifi_send_obj, wifi_send);
 
 STATIC mp_obj_t wifi_recv(mp_obj_t num, mp_obj_t data, mp_obj_t size) {
-    esp8266_recv(mp_obj_get_int(num), mp_obj_str_get_str(data), mp_obj_get_int(size));
+    int len = mp_obj_get_int(size);
+    esp8266_recv(mp_obj_get_int(num), (char *)mp_obj_str_get_str(data), &len);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(wifi_recv_obj, wifi_recv);
@@ -446,7 +451,7 @@ STATIC const mp_map_elem_t wifi_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_connectedip), (mp_obj_t)&wifi_connectedip_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_dhcp), (mp_obj_t)&wifi_dhcp_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_ipconfig), (mp_obj_t)&wifi_ipconfig_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_bypass), (mp_obj_t)&wifi_bypass_obj },
+//    { MP_OBJ_NEW_QSTR(MP_QSTR_bypass), (mp_obj_t)&wifi_bypass_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_disconnect), (mp_obj_t)&wifi_disconnect_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_multiconnect), (mp_obj_t)&wifi_multiconnect_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_get), (mp_obj_t)&wifi_http_get_obj },

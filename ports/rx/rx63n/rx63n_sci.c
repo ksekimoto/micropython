@@ -92,7 +92,7 @@ static const uint8_t sci_rx_pins[] = {
     0xff,   /* ch 12 */
 };
 
-static volatile struct SCI_FIFO {
+struct SCI_FIFO {
     int tail, head, len, busy;
     uint8_t buff[SCI_BUF_SIZE];
 };
@@ -102,9 +102,9 @@ static SCI_CALLBACK sci_callback[SCI_CH_NUM] = {0};
 static volatile struct SCI_FIFO tx_fifo[SCI_CH_NUM];
 static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
-static void delay_ms(volatile unsigned int ms) {
-    ms *= 1000;
-    while (ms-- > 0)
+static void delay_us(volatile unsigned int us) {
+    us *= 60;
+    while (us-- > 0)
         ;
 }
 
@@ -188,10 +188,17 @@ static void sci_isr_rx(int ch) {
     }
 }
 
-static void sci_isr_er(int ch) {
+void sci_isr_er(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     sci->RDR;
-    sci->SSR.BYTE = 0x84;
+    //sci->SSR.BYTE = 0x84;
+    while (0 != (sci->SSR.BYTE & 0x38)) {
+        sci->RDR;
+        sci->SSR.BYTE = (sci->SSR.BYTE & ~0x38) | 0xc0;
+        if (0 != (sci->SSR.BYTE & 0x38)) {
+            __asm__ __volatile__("nop");
+        }
+    }
 }
 
 static void sci_isr_tx(int ch) {
@@ -225,7 +232,7 @@ sci_isr_tx_exit:
 #endif
 }
 
-static void sci_isr_te(int ch) {
+void sci_isr_te(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     rx_disable_irq();
     //if (!tx_fifo[ch].busy)
@@ -236,7 +243,7 @@ static void sci_isr_te(int ch) {
     } else {
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
     }
-sci_isr_te_exit:
+//sci_isr_te_exit:
     rx_enable_irq();
 }
 
@@ -465,6 +472,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
 
     if (!sci_init_flag[ch]) {
         sci_fifo_init(ch);
+        rx_disable_irq();
         SYSTEM.PRCR.WORD = 0xA502;
         MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
         MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
@@ -486,10 +494,11 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
         sci->SCR.BYTE = 0;
         sci->SMR.BYTE = 0x00;
         sci_set_baud(ch, baud);
-        delay_ms(1);
+        delay_us(10);
         sci->SCR.BYTE = 0xd0;
         sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
         sci_int_enable(ch);
+        rx_enable_irq();
         sci_init_flag[ch] = true;
     }
 }
@@ -503,9 +512,7 @@ void sci_init(int ch, int baud) {
 }
 
 void sci_deinit(int ch) {
-    volatile struct st_sci0 *sci;
     if (sci_init_flag[ch]) {
-        sci = SCI[ch];
         sci_init_flag[ch] = false;
         sci_int_disable(ch);
         SYSTEM.PRCR.WORD = 0xA502;

@@ -33,13 +33,13 @@
 extern "C" {
 #endif
 
-bool sd_exists(char *fn);
-bool sd_remove(char *fn);
-bool sd_open(FIL *fp, char *fn, unsigned char mode);
+bool sd_exists(const char *fn);
+bool sd_remove(const char *fn);
+bool sd_open(FIL *fp, const char *fn, uint8_t mode);
 int sd_read_byte(FIL *fp);
-int sd_read(FIL *fp, unsigned char *buf, int size);
+int sd_read(FIL *fp, void *buf, uint size);
 int sd_write_byte(FIL *fp, unsigned char c);
-int sd_write(FIL *fp, unsigned char *buf, int size);
+int sd_write(FIL *fp, const void *buf, uint size);
 void sd_seek(FIL *fp, unsigned long pos);
 unsigned long sd_size(FIL *fp);
 void sd_flush(FIL *fp);

@@ -7,7 +7,7 @@
     .global  EntryPoint
     .global _startup
 
-    .extern _main
+    .extern _rx_main
     .extern _RelocatableVectors
 
     .section i.EntryPoint, "ax", %progbits
@@ -39,7 +39,7 @@ _startup:
 
 	mvtc	#10000h, psw
 
-	bsr.a	_main
+	bsr.a	_rx_main
 	bsr.a 	_exit
 
 _exit:

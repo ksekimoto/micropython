@@ -107,7 +107,7 @@
 #define SD_ERR_EIO          5
 #define SD_ERR              -1
 
-static uint32_t sd_handle = NULL;
+static uint32_t sd_handle = 0;
 static uint8_t sd_ch = MICROPY_HW_SDCARD_SPI_CH;
 static uint8_t sd_cs = 0;
 static uint8_t sd_csd[16];
@@ -219,9 +219,8 @@ static void sd_readinto(uint8_t *buf, uint32_t len) {
 }
 
 static void sd_write_buf(uint8_t token, uint8_t *buf, uint32_t len) {
-    uint8_t res;
     gpio_write(sd_cs ,0);
-    res = rx_spi_write_byte(sd_ch, token);
+    rx_spi_write_byte(sd_ch, token);
     rx_spi_write_bytes8(sd_ch, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);
     rx_spi_write_byte(sd_ch, 0xff);
@@ -238,9 +237,8 @@ static void sd_write_buf(uint8_t token, uint8_t *buf, uint32_t len) {
 }
 
 static void sd_write_token(uint8_t token) {
-    uint8_t res;
     gpio_write(sd_cs ,0);
-    res = rx_spi_write_byte(sd_ch, token);
+    rx_spi_write_byte(sd_ch, token);
     rx_spi_write_byte(sd_ch, 0xff);
     while (rx_spi_write_byte(sd_ch, 0xff) == 0) {
         ;
@@ -283,7 +281,7 @@ static void sd_init_card_v2(void) {
 #endif
 
 static void sd_get_sector_count(void) {
-    uint32_t csize;
+    uint32_t csize = 0;
     uint32_t n;
 
     if (sd_cmd(CMD9, 0) == 0) {
@@ -331,8 +329,6 @@ static void sd_get_sector_block_size(void) {
 uint8_t sd_init_card(void) {
     uint8_t n, cmd, ty, ocr[4];
     uint32_t timeout;
-    uint32_t c_size;
-    uint32_t c_size_mult;
 
     gpio_write(sd_cs, 1);
     rx_spi_init(sd_ch, sd_cs, 100000, 8, 0);
@@ -388,7 +384,7 @@ uint8_t sd_init_card(void) {
 }
 
 void sdcard_init(void) {
-    sd_handle = NULL;
+    sd_handle = 0;
     //sd_ch = MICROPY_HW_SDCARD_SPI_CH;
     //sd_cs = MICROPY_HW_SDCARD_SPI_CS;
     //gpio_mode_input(MICROPY_HW_SDCARD_CHK);
@@ -421,11 +417,11 @@ void sdcard_power_off(void) {
     if (!sd_handle) {
         return;
     }
-    sd_handle = NULL;
+    sd_handle = 0;
 }
 
 uint64_t sdcard_get_capacity_in_bytes(void) {
-    if (sd_handle == NULL) {
+    if (sd_handle == 0) {
         return (uint64_t)0;
     }
     return (uint64_t)sd_sectors * (uint64_t)sd_blocksize;
@@ -463,7 +459,7 @@ static uint32_t sd_readblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
 
 mp_uint_t sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
     // check that SD card is initialised
-    if (sd_handle == NULL) {
+    if (sd_handle == 0) {
         return SD_ERR;
     }
     uint32_t err = SD_OK;
@@ -499,7 +495,7 @@ static uint32_t sd_writeblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
 
 mp_uint_t sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
     // check that SD card is initialised
-    if (sd_handle == NULL) {
+    if (sd_handle == 0) {
         return SD_ERR;
     }
 
@@ -542,7 +538,7 @@ STATIC mp_obj_t sd_power(mp_obj_t self, mp_obj_t state) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(sd_power_obj, sd_power);
 
 STATIC mp_obj_t sd_info(mp_obj_t self) {
-    if (sd_handle == NULL) {
+    if (sd_handle == 0) {
         return mp_const_none;
     }
     mp_obj_t tuple[3] = {

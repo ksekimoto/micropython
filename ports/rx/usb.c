@@ -28,10 +28,15 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "py/objstr.h"
+#include "py/runtime.h"
+#include "py/stream.h"
+#include "py/mperrno.h"
+#include "py/mphal.h"
+#include "bufhelper.h"
 #include "usb.h"
 
 pyb_usb_storage_medium_t pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_NONE;
-
 
 void pyb_usb_init0(void) {
     mp_hal_set_interrupt_char(-1);

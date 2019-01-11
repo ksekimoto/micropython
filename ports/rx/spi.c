@@ -113,43 +113,44 @@ STATIC void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baud
 
 // TODO allow to take a list of pins to use
 void spi_init(const spi_t *self, bool enable_nss_pin) {
-    const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
+    // ToDo: implement using pins definition
+    //const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
     if (0) {
     #if defined(MICROPY_HW_SPI1_SCK)
     } else if (self->ch == 0) {
-        #if defined(MICROPY_HW_SPI1_NSS)
-        pins[0] = MICROPY_HW_SPI1_NSS;
-        #endif
-        pins[1] = MICROPY_HW_SPI1_SCK;
-        #if defined(MICROPY_HW_SPI1_MISO)
-        pins[2] = MICROPY_HW_SPI1_MISO;
-        #endif
-        pins[3] = MICROPY_HW_SPI1_MOSI;
+        //#if defined(MICROPY_HW_SPI1_NSS)
+        //pins[0] = MICROPY_HW_SPI1_NSS;
+        //#endif
+        //pins[1] = MICROPY_HW_SPI1_SCK;
+        //#if defined(MICROPY_HW_SPI1_MISO)
+        //pins[2] = MICROPY_HW_SPI1_MISO;
+        //#endif
+        //pins[3] = MICROPY_HW_SPI1_MOSI;
         rx_spi_init(self->ch, 0, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
     } else if (self->ch == 1) {
-        #if defined(MICROPY_HW_SPI2_NSS)
-        pins[0] = MICROPY_HW_SPI2_NSS;
-        #endif
-        pins[1] = MICROPY_HW_SPI2_SCK;
-        #if defined(MICROPY_HW_SPI2_MISO)
-        pins[2] = MICROPY_HW_SPI2_MISO;
-        #endif
-        pins[3] = MICROPY_HW_SPI2_MOSI;
+        //#if defined(MICROPY_HW_SPI2_NSS)
+        //pins[0] = MICROPY_HW_SPI2_NSS;
+        //#endif
+        //pins[1] = MICROPY_HW_SPI2_SCK;
+        //#if defined(MICROPY_HW_SPI2_MISO)
+        //pins[2] = MICROPY_HW_SPI2_MISO;
+        //#endif
+        //pins[3] = MICROPY_HW_SPI2_MOSI;
         rx_spi_init(self->ch, 0, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI3_SCK)
     } else if (self->ch == 3) {
-        #if defined(MICROPY_HW_SPI0_NSS)
-        pins[0] = MICROPY_HW_SPI3_NSS;
-        #endif
-        pins[1] = MICROPY_HW_SPI3_SCK;
-        #if defined(MICROPY_HW_SPI3_MISO)
-        pins[2] = MICROPY_HW_SPI3_MISO;
-        #endif
-        pins[3] = MICROPY_HW_SPI3_MOSI;
+        //#if defined(MICROPY_HW_SPI0_NSS)
+        //pins[0] = MICROPY_HW_SPI3_NSS;
+        //#endif
+        //pins[1] = MICROPY_HW_SPI3_SCK;
+        //#if defined(MICROPY_HW_SPI3_MISO)
+        //pins[2] = MICROPY_HW_SPI3_MISO;
+        //#endif
+        //pins[3] = MICROPY_HW_SPI3_MOSI;
         rx_spi_init(self->ch, 0, 4000000, 8, 0);
     #endif
     } else {
@@ -180,7 +181,7 @@ void spi_deinit(const spi_t *spi_obj) {
 #define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
 STATIC void spi_transfer(const spi_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
-    rx_spi_transfer(self->ch, self->bits, dest, src, (uint32_t)len, timeout);
+    rx_spi_transfer(self->ch, self->bits, dest, (uint8_t *)src, (uint32_t)len, timeout);
 }
 
 STATIC void spi_print(const mp_print_t *print, const spi_t *spi_obj, bool legacy) {
@@ -235,10 +236,12 @@ STATIC mp_obj_t pyb_spi_init_helper(pyb_spi_obj_t *self, size_t n_args, const mp
 
     self->spi->bits = args[6].u_int;
     // set the SPI configuration values
-    uint32_t mode = args[0].u_int;
+    // ToDo: implement mode
+    //uint32_t mode = args[0].u_int;
     spi_set_params(self->spi, args[2].u_int, args[1].u_int, args[3].u_int, args[4].u_int,
         args[6].u_int, args[8].u_int);
-    uint32_t direction = args[5].u_int;
+    // ToDo: implement direction
+    //uint32_t direction = args[5].u_int;
     uint32_t nss = args[7].u_int;
     // ToDo
     // init the SPI bus
@@ -270,7 +273,7 @@ STATIC mp_obj_t pyb_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_
     int spi_id = spi_find(args[0]);
 
     // get SPI object
-    const pyb_spi_obj_t *spi_obj = &pyb_spi_obj[spi_id - 1];
+    pyb_spi_obj_t *spi_obj = &pyb_spi_obj[spi_id - 1];
 
     if (n_args > 1 || n_kw > 0) {
         // start the peripheral

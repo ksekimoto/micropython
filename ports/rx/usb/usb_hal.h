@@ -108,8 +108,9 @@ typedef struct USBHAL_CONFIG
 /***********************************************************************************
 * Function Prototypes
 ***********************************************************************************/
-USB_ERR USBHAL_Init(CB_SETUP _fpSetup, CB_CABLE _fpCable,
-                     CB_ERROR _fpError);
+USB_ERR USBHAL_Init(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError);
+USB_ERR USBHAL_Init2(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError,
+    CB_SETUP _fpSetup2, CB_CABLE _fpCable2, CB_ERROR _fpError2);
 
 USB_ERR USBHAL_Disable(void);
 
@@ -124,6 +125,8 @@ USB_ERR USBHAL_Control_OUT(uint16_t _NumBytes, uint8_t* _Buffer, CB_DONE_OUT _CB
 /*Bulk*/
 USB_ERR USBHAL_Bulk_IN_MSC(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone);
 USB_ERR USBHAL_Bulk_OUT_MSC(uint32_t _NumBytes, uint8_t* _Buffer, CB_DONE_OUT _CBDone);
+USB_ERR USBHAL_Bulk_IN_CDC(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone);
+USB_ERR USBHAL_Bulk_OUT_CDC(uint32_t _NumBytes, uint8_t* _Buffer, CB_DONE_OUT _CBDone);
 
 /*Interrupt*/
 USB_ERR USBHAL_Interrupt_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone);

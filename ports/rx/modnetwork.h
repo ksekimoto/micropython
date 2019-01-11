@@ -48,6 +48,8 @@ extern const mp_obj_type_t mod_network_nic_type_wiznet5k;
 
 mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_obj_t *args);
 
+extern const mod_network_nic_type_t mod_network_nic_type_rx_ether;
+
 #else
 
 struct _mod_network_socket_obj_t;

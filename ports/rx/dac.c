@@ -134,7 +134,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_dac_init_obj, 1, pyb_dac_init);
 /// \method deinit()
 /// Turn off the DAC, enable other use of pin.
 STATIC mp_obj_t pyb_dac_deinit(mp_obj_t self_in) {
-    pyb_dac_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    //pyb_dac_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // ToDo: add dac_deinit()
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_dac_deinit_obj, pyb_dac_deinit);

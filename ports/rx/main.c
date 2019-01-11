@@ -25,25 +25,23 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "py/compile.h"
 #include "py/runtime.h"
-#include "py/repl.h"
+#include "py/stackctrl.h"
 #include "py/gc.h"
-#include "py/mperrno.h"
-#include "lib/utils/pyexec.h"
 #include "py/mphal.h"
-#include "common.h"
-
 #include "lib/mp-readline/readline.h"
+#include "lib/utils/pyexec.h"
 #include "lib/oofatfs/ff.h"
+#include "lwip/init.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 
-//#include "pybthread.h"
+#include "systick.h"
+#include "pendsv.h"
+#include "pybthread.h"
 #include "gccollect.h"
 #include "modmachine.h"
 #include "i2c.h"
@@ -55,8 +53,16 @@
 #include "extint.h"
 #include "usrsw.h"
 #include "usb.h"
+#include "rtc.h"
 #include "storage.h"
 #include "sdcard.h"
+//#include "sdram.h"
+#include "rng.h"
+#include "accel.h"
+#include "servo.h"
+#include "dac.h"
+//#include "can.h"
+#include "modnetwork.h"
 #include "usb_entry.h"
 
 #if MICROPY_KBD_EXCEPTION
@@ -99,7 +105,7 @@ void NORETURN __fatal_error(const char *msg) {
         }
         if (i >= 16) {
             // to conserve power
-            //__WFI();
+            __WFI();
         }
     }
 }
@@ -445,10 +451,15 @@ static int chk_kbd_interrupt(int d)
 #endif
 
 
-void main(uint32_t reset_mode) {
+void rx_main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers
 
+#if defined(RX63N)
     rx63n_init();
+#endif
+#if defined(RX65N)
+    rx65n_init();
+#endif
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif
@@ -512,7 +523,16 @@ soft_reset:
     mp_stack_set_limit((char*)&estack - (char*)&heap_end - 1024);
 
     // GC init
+    #if MICROPY_HW_SDRAM_SIZE
+    sdram_init();
+    #if MICROPY_HW_SDRAM_STARTUP_TEST
+    sdram_test(true);
+    #endif
+
+    gc_init(sdram_start(), sdram_end());
+    #else
     gc_init(&heap_start, &heap_end);
+    #endif
 
     #if MICROPY_ENABLE_PYSTACK
     static mp_obj_t pystack[384];
@@ -650,6 +670,12 @@ soft_reset:
 #if MICROPY_KBD_EXCEPTION
     usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
 #endif
+
+    #if MICROPY_HW_HAS_MMA7660
+    // MMA accel: init and reset
+    accel_init();
+    #endif
+
     #if MICROPY_HW_ENABLE_SERVO
     servo_init();
     #endif
