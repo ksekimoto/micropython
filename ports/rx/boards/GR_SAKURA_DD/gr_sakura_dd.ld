@@ -115,20 +115,20 @@ SECTIONS
 		_edata = .;
 	} > RAM
 
-#	._RX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._RX_DESC)
-#	} > RAM
-#	._TX_DESC : 
-#	{
-#		. = ALIGN(32);
-#		*(._TX_DESC)
-#	} > RAM
-#	._ETHERNET_BUFFERS : 
-#	{
-#		*(._ETHERNET_BUFFERS)
-#	} > RAM
+	._RX_DESC : 
+	{
+		. = ALIGN(32);
+		*(._RX_DESC)
+	} > RAM
+	._TX_DESC : 
+	{
+		. = ALIGN(32);
+		*(._TX_DESC)
+	} > RAM
+	._ETHERNET_BUFFERS : 
+	{
+		*(._ETHERNET_BUFFERS)
+	} > RAM
 
 	.bss : 
 	{
@@ -161,5 +161,5 @@ _estack = ORIGIN(RAM) + LENGTH(RAM);
 _ram_start = ORIGIN(RAM);
 _ram_end = ORIGIN(RAM) + LENGTH(RAM);
 _heap_start = _ebss; /* heap starts just after statically allocated memory */
-_heap_end = 0x0001e000; /* tunable */
+_heap_end = 0x0001e800; /* tunable */
 

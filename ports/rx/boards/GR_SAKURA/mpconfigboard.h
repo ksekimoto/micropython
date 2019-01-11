@@ -8,6 +8,7 @@
 #define MICROPY_HW_HAS_SDCARD       (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
+#define MICROPY_HW_HAS_ETHERNET     (1)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
@@ -81,6 +82,7 @@
 #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
+// Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
 //#define MICROPY_PY_LWIP (1)
 
 #define MICROPY_HW_ENABLE_DAC   (1)
