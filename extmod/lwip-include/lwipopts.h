@@ -30,6 +30,6 @@ typedef uint32_t sys_prot_t;
 // For now, we can simply define this as a macro for the timer code. But this function isn't
 // universal and other ports will need to do something else. It may be necessary to move
 // things like this into a port-provided header file.
-#define sys_now mp_hal_ticks_ms
+//#define sys_now mp_hal_ticks_ms
 
 #endif // MICROPY_INCLUDED_EXTMOD_LWIP_INCLUDE_LWIPOPTS_H
