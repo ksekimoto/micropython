@@ -1,11 +1,9 @@
 # Per default everything gets normalized and gets LF line endings on checkout.
 * text eol=lf
-
 # These will always have CRLF line endings on checkout.
 *.vcxproj text eol=crlf
 *.props text eol=crlf
 *.bat text eol=crlf
-
 # These are binary so should never be modified by git.
 *.png binary
 *.jpg binary
@@ -16,7 +14,6 @@
 *.exe binary
 *.com bibary
 *.pdf binary
-
 # These should also not be modified by git.
 tests/basics/string_cr_conversion.py -text
 tests/basics/string_crlf_conversion.py -text
@@ -28,3 +25,11 @@ ports/cc3200/hal/des.c -text
 ports/cc3200/hal/i2s.c -text
 ports/cc3200/hal/i2s.h -text
 ports/cc3200/version.h -text
+'*.bin' filter=lfs diff=lfs merge=lfs -text
+'*.gz' filter=lfs diff=lfs merge=lfs -text
+'*.mot' filter=lfs diff=lfs merge=lfs -text
+'*.pdf' filter=lfs diff=lfs merge=lfs -text
+'*.png' filter=lfs diff=lfs merge=lfs -text
+'*.jpg' filter=lfs diff=lfs merge=lfs -text
+'*.dxf' filter=lfs diff=lfs merge=lfs -text
+'*.mpy' filter=lfs diff=lfs merge=lfs -text
