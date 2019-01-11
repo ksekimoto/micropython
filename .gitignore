@@ -50,3 +50,5 @@ genrst/
 /ports/rx/usb/wip
 /ports/rx/build-GR_SAKURA
 /.settings
+/ports/rx/build-GR_ROSE
+/ports/rx/build-GR_ROSE_DD
