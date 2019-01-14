@@ -49,3 +49,6 @@ genrst/
 /docs/_build
 /ports/rx/build-GR_ROSE
 /ports/rx/build-GR_ROSE_DD
+/.cproject
+/.project
+/.settings
