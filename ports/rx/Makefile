@@ -91,7 +91,13 @@ INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 INC += -I$(TOP)/lib/lwip/src/include
 INC += -Ilwip_inc
+INC += -Ilwip_utils
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
 INC += -I$(TOP)/lib/mbedtls/include
+endif
+ifeq ($(MICROPY_SSL_AXTLS),1)
+INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
+endif
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
@@ -191,6 +197,11 @@ ifeq ($(MICROPY_PY_USSL),1)
 CFLAGS += -DMICROPY_PY_USSL=1
 endif
 
+ifeq ($(MICROPY_SSL_AXTLS),1)
+CFLAGS += -DMICROPY_SSL_AXTLS
+CFLAGS += -DMICROPY_STREAMS_POSIX_API
+endif
+
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -198,7 +209,7 @@ endif
 #LINC += $(GCCDIR)/lib/gcc/rx-elf/$(GCCVER)
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
-LDFLAGS += -nostdlib
+#LDFLAGS += -nostdlib
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
 LDFLAGS += -Wl,-Map=$@.map
@@ -513,11 +524,11 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/ipv6/nd6.c \
 	netif/ethernet.c \
 	)
+#SRC_MOD += lwip_utils/lwip_utils.c
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
-CFLAGS += -DMBEDTLS_DEBUG_C
 SRC_MOD += $(addprefix lib/,\
 	mbedtls/library/aes.c \
 	mbedtls/library/aesni.c \

@@ -47,3 +47,5 @@ genrst/
 /ports/rx/build-GR_SAKURA_DD
 /ports/rx/build-GR_CITRUS_DD
 /docs/_build
+/ports/rx/build-GR_ROSE
+/ports/rx/build-GR_ROSE_DD

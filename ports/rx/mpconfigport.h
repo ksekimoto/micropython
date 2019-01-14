@@ -394,6 +394,9 @@ static inline mp_uint_t disable_irq(void) {
 #define malloc(n) m_malloc(n)
 #define free(p) m_free(p)
 #define realloc(p, n) m_realloc(p, n)
+#if MICROPY_SSL_AXTLS
+#define alloca(size) m_malloc(size)
+#endif
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>

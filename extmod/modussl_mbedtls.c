@@ -63,6 +63,51 @@ struct ssl_args {
     mp_arg_val_t server_hostname;
 };
 
+#define DEBUG_CLEINT_KEY
+
+#if defined(DEBUG_CLEINT_KEY)
+
+#define GlobalSign_Root_CA
+#define GeoTrust_Global_CA
+#define DigiCert_Global_Root_CA
+#define DigiCert_High_Assurance_EV_Root_CA
+
+static const char CERT_PEM[] =
+#include "cacert.h"
+;
+
+static const char KEY_PEM[] =
+    "-----BEGIN RSA PRIVATE KEY-----\n"
+    "MIIEogIBAAKCAQEA6ZwvBa1lew8qnDPqEeAlM2fBSuL+wpaYJyov31PDjh2iaE1v\n"
+    "j88YWAi1EC9XPUKVbNsbbG8OXTXmjjcdQUG1Q6I8fgw40aCwKgOiGYd1bCCpQXz2\n"
+    "i4QrF03X1qWq9TXevAr7vDnbFrLm8QvxYHwVkE8v4vw8COfBY2mpN2ZAuhB7FrSV\n"
+    "MmxP/jFaJLj1W/XJik89uWGsGEfigGPSuWbNyRc5O3rhLCsVoQtiPUgYHxQba9bP\n"
+    "pJjozIVlywU+QhPH8n8SmFXygoqon/e+sJRJTnXVnJmkdETS//6QhesmbveUJ4f6\n"
+    "Bb3XzIA2f6iS+iUjlCSdkxM15lmrjHvaGBi9/wIDAQABAoIBAET5XlDYz3u0EKqq\n"
+    "EVRRz+oLmmCYAQxHFomJxTS1MKoHSept4qCdTty/RWaP87wcqq3HS6OKbr1KqtYW\n"
+    "o8aetfxQLHgy95u9TAY7qGLNQfg49IBnewvabDanPzEbHQzlaOwwef8rPerHy7Qk\n"
+    "CJKqUFuZZdQpETi35LuLePDoeff1UVZwUJYElWjUx249fQzdSyp7MLRnbZozbIZy\n"
+    "+KikyHVR0icBJNHV0U2Ij0ibtoKoIWUlcBlRkAvSbsaiNo0MaujiTVETzHo/Y+3B\n"
+    "XeOgSx7HLeEraD7sF0qLZ4WdSQUQYHPkqhm/PPM1OGRSr7dHeXhyNbrm0eYYr41N\n"
+    "sYIhzQECgYEA97wGVpBsG5OW3xgsD5qSxNcXFImo0+PRlGKxi8+LmgbBky7Uvx0v\n"
+    "+acs2AiW8GtCjYBS+W2Sx+ovQ9MUNgo024tGi9Eg7kUtTjKtgQYYQ7nTImmvow2D\n"
+    "QSeIq4r5szy+gFABWbYQ7NsbsL4EjgYS2N4RgD6tul0MkpygAmm/xD8CgYEA8WeE\n"
+    "sGE2HHpYOLNQteJ7z5kSfiDSxnSI2A2rF3nVDISFOwjSUs+uJhDdZCrcuEZRnq2/\n"
+    "FzDIq58svc2yyFqMBmVnzsiskYkD8VbcfV5NyVEvZ8HH4T+JvIRckkeIto7/4KNp\n"
+    "VctpMpBqKeuDNWAlA/weTgcZgWX4KmaRbSfVlkECgYBzPT3dirUfZtpp0P6+C3N2\n"
+    "qW+NGDQ2zOUzF23r0ZHpBneJleFVPaiRg5iyrdw43kxJMoZmjPgYkvGFpWzjboAE\n"
+    "GJeqdo/RBtD6bUyUllc3OfvjKDKRsLl7134V/kIFhJ5BZfYa2zyoUYxh/SJ1RpIB\n"
+    "29tcQsvhw2MT2FP+i16vVQKBgDwNQ13ZIOvep3mbadWFPMV8z7PemHBT5wLQC6Kw\n"
+    "ZQZTJQ11eVSuYyUHBvv3CacxnvY5RJMRSKog07F3rSTYGYMx0KwJEZy2l+t+byUk\n"
+    "w3b0IjXOZ9mpw6rIxnqBHwpC8nZAUGDOVCIG+NHqy14Ix8yA+EzyyS5+Xki18TFV\n"
+    "OnXBAoGAfOuqbdJjij9MvUI41dn93fgReDtkXyWrx0Uli/HbYSYwB2LKy+m0szPS\n"
+    "JJs2D+eB2qdaAXfmjAY7q+14/B4mtG6ddcHZrwWGDdYbFgmtWhiMoGrmhyTF6Jdo\n"
+    "5QvuWJwdMGuYiiIS4yZ7ay9K/gi486dhWy94A6rdNwPTldLV6cc=\n"
+    "-----END RSA PRIVATE KEY-----\n"
+;
+
+#endif
+
 STATIC const mp_obj_type_t ussl_socket_type;
 
 #ifdef MBEDTLS_DEBUG_C
@@ -129,7 +174,7 @@ STATIC mp_obj_ssl_socket_t *socket_new(mp_obj_t sock, struct ssl_args *args) {
     mbedtls_ctr_drbg_init(&o->ctr_drbg);
     #ifdef MBEDTLS_DEBUG_C
     // Debug level (0-4)
-    mbedtls_debug_set_threshold(0);
+    mbedtls_debug_set_threshold(2);
     #endif
 
     mbedtls_entropy_init(&o->entropy);
@@ -184,6 +229,24 @@ STATIC mp_obj_ssl_socket_t *socket_new(mp_obj_t sock, struct ssl_args *args) {
         ret = mbedtls_ssl_conf_own_cert(&o->conf, &o->cert, &o->pkey);
         assert(ret == 0);
     }
+
+#if defined(DEBUG_CLEINT_KEY)
+    {
+        size_t key_len;
+        const byte *key = (const byte *)KEY_PEM;
+        key_len = (size_t)strlen((const char *)key);
+        // len should include terminating null
+        ret = mbedtls_pk_parse_key(&o->pkey, key, key_len + 1, NULL, 0);
+        assert(ret == 0);
+
+        size_t cert_len;
+        const byte *cert = (const byte*)CERT_PEM;
+        // len should include terminating null
+        cert_len = (size_t)strlen((const char *)cert);
+        ret = mbedtls_x509_crt_parse(&o->cert, cert, cert_len + 1);
+        assert(ret == 0);
+    }
+#endif
 
     while ((ret = mbedtls_ssl_handshake(&o->ssl)) != 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {

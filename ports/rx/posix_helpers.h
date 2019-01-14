@@ -44,9 +44,9 @@ struct timeval {
 };
 #endif
 
-time_t time(time_t *t);
-time_t mktime(void *tm);
-struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
+//time_t time(time_t *t);
+//time_t mktime(void *tm);
+//struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
 int gettimeofday(struct timeval *tv , void *tz);
 sighandler_t signal (int sig, sighandler_t handler);
 
