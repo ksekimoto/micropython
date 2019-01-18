@@ -38,6 +38,10 @@ USB_MODE = 3
 USE_FONT = 1
 USE_LCD = 1
 
+# LWIP version
+#LWIP_VER ?= 1
+LWIP_VER ?= 2
+
 # Frozon module dir
 FROZEN_DIR = modules
 
@@ -89,9 +93,14 @@ INC += -Iramdisk
 INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
+ifeq ($(MICROPY_PY_LWIP),1)
+ifeq ($(LWIP_VER),1)
+INC += -I$(TOP)/lib/lwip/src/include/ipv4
+else
 INC += -I$(TOP)/lib/lwip/src/include
-INC += -Ilwip_inc
-INC += -Ilwip_utils
+endif
+INC += -Ilwip_inc -Ilwip_utils
+endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 INC += -I$(TOP)/lib/mbedtls/include
 endif
@@ -187,6 +196,7 @@ endif
 
 ifeq ($(MICROPY_PY_LWIP),1)
 CFLAGS += -DMICROPY_PY_LWIP=1
+CFLAGS += -DLWIP_VER=$(LWIP_VER)
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -209,7 +219,7 @@ endif
 #LINC += $(GCCDIR)/lib/gcc/rx-elf/$(GCCVER)
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
-#LDFLAGS += -nostdlib
+LDFLAGS += -nostdlib
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
 LDFLAGS += -Wl,-Map=$@.map
@@ -487,6 +497,8 @@ ifeq ($(MICROPY_PY_LWIP),1)
 LWIP_DIR = lib/lwip/src
 INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
+ifneq ($(LWIP_VER),1)
+CFLAGS += -DLWIP_VER=2
 SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/def.c \
 	core/dns.c \
@@ -523,8 +535,56 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/ipv6/mld6.c \
 	core/ipv6/nd6.c \
 	netif/ethernet.c \
+	api/err.c \
 	)
+else
+
+# LWIP v1.x
+LWIP_DIR = lib/lwip/src
+INC += -I$(TOP)/$(LWIP_DIR)/include/ipv4 -I$(TOP)/$(LWIP_DIR)/include/lwip -I$(TOP)/$(LWIP_DIR)/include/proto -I$(TOP)/extmod/lwip-include
+CFLAGS += -DMICROPY_PY_LWIP=1
+CFLAGS += -DLWIP_VER=1
+CFLAGS += -Wno-unused-variable
+CFLAGS += -Wno-implicit-function-declaration
+CFLAGS += -Wno-unused-but-set-variable
+CFLAGS += -Wno-address
+SRC_MOD += extmod/modlwip.c lib/netutils/netutils.c
+SRC_MOD += $(addprefix $(LWIP_DIR)/,\
+	core/def.c \
+	core/dhcp.c \
+	core/dns.c \
+	core/init.c \
+	core/mem.c \
+	core/memp.c \
+	core/netif.c \
+	core/pbuf.c \
+	core/raw.c \
+	core/stats.c \
+	core/sys.c \
+	core/tcp.c \
+	core/tcp_in.c \
+	core/tcp_out.c \
+	core/timers.c \
+	core/udp.c \
+	core/ipv4/autoip.c \
+	core/ipv4/icmp.c \
+	core/ipv4/igmp.c \
+	core/ipv4/inet.c \
+	core/ipv4/inet_chksum.c \
+	core/ipv4/ip_addr.c \
+	core/ipv4/ip.c \
+	core/ipv4/ip_frag.c \
+	netif/etharp.c \
+	)
+#ifeq ($(MICROPY_PY_LWIP_SLIP),1)
+#CFLAGS_MOD += -DMICROPY_PY_LWIP_SLIP=1
+#SRC_MOD += $(LWIP_DIR)/netif/slipif.c
+#endif
+
+endif
+#SRC_MOD += apps/sntp/sntp.c \
 #SRC_MOD += lwip_utils/lwip_utils.c
+#SRC_MOD += lwip_utils/sntp_example.c
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
