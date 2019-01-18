@@ -46,9 +46,13 @@
 #include "lwip/dns.h"
 #include "lwip/igmp.h"
 #include "lwip/dhcp.h"
+#include "netif/etharp.h"
+#include "lwip/dhcp.h"
+#if (LWIP_VER == 1)
+#else
 #include "lwip/timeouts.h"
 #include "lwip/prot/dhcp.h"
-#include "netif/etharp.h"
+#endif
 #include "ethernetif.h"
 
 struct netif *g_netif;
@@ -149,15 +153,44 @@ STATIC mp_obj_t rx_ether_lwip_ifconfig(size_t n_args, const mp_obj_t *args) {
 
     if (n_args == 1) {
         // get
+#if (LWIP_VER == 1)
+        ip_addr_t dns = dns_getserver(0);
+#else
         const ip_addr_t *dns = dns_getserver(0);
+#endif
         mp_obj_t tuple[4] = {
             netutils_format_ipv4_addr((uint8_t*)&self->netif.ip_addr, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)&self->netif.netmask, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)&self->netif.gw, NETUTILS_BIG),
+#if (LWIP_VER == 1)
+            netutils_format_ipv4_addr((uint8_t*)&dns, NETUTILS_BIG),
+#else
             netutils_format_ipv4_addr((uint8_t*)dns, NETUTILS_BIG),
+#endif
         };
         return mp_obj_new_tuple(4, tuple);
     } else if (args[1] == MP_OBJ_NEW_QSTR(MP_QSTR_dhcp)) {
+#if (LWIP_VER == 1)
+        dhcp_set_struct(&self->netif, &self->dhcp_struct);
+        dhcp_start(&self->netif);
+
+        // wait for dhcp to get IP address
+        //uint32_t start = mp_hal_ticks_ms();
+        //while (self->netif.dhcp->state != DHCP_BOUND && mp_hal_ticks_ms() - start < 8000) {
+        //    mp_hal_delay_ms(100);
+        //}
+        //if (self->netif.dhcp->state != DHCP_BOUND) {
+        //    mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
+        //}
+        uint32_t start = mp_hal_ticks_ms();
+        while ((self->netif.ip_addr.addr == 0) && (mp_hal_ticks_ms() - start < 12000)) {
+            sys_check_timeouts();
+        }
+        if (self->netif.ip_addr.addr == 0) {
+            mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
+        }
+
+#else
         dhcp_set_struct(&self->netif, &self->dhcp_struct);
         dhcp_start(&self->netif);
 
@@ -168,6 +201,7 @@ STATIC mp_obj_t rx_ether_lwip_ifconfig(size_t n_args, const mp_obj_t *args) {
         if (self->netif.ip_addr.addr == 0) {
             mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
         }
+#endif
         return mp_const_none;
     } else {
         // set

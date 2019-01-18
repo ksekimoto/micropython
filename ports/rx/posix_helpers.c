@@ -33,17 +33,8 @@
 #include "py/mphal.h"
 #include "py/gc.h"
 
-#if MICROPY_PY_LWIP
-#include "lwip_utils.h"
-#endif
-
 #include "rng.h"
 #include "posix_helpers.h"
-
-//#define DEBUG_TIME
-//#define DEBUG_GMTIM
-//#define DEBUG_MKTIME
-//#define DEBUG_GETTIMEOFDAY
 
 // Functions for external libs like axTLS, BerkeleyDB, etc.
 
@@ -93,29 +84,16 @@ uint32_t htonl(uint32_t netlong) {
 
 time_t time(time_t *t) {
     // ToDo: implementation
-#if defined(DEBUG_TIME)
-    debug_printf("time\r\n");
-#endif
-//#if MICROPY_PY_LWIP
-//    return get_sntp_time();
-//#else
     return mp_hal_ticks_ms() / 1000;
-//#endif
 }
 
 time_t mktime(void *tm) {
     // ToDo: implementation
-#if defined(DEBUG_MKTIME)
-    debug_printf("mktime\r\n");
-#endif
     return 0;
 }
 
 struct tm *gmtime(const time_t *timer, struct tm *tmbuf) {
     // ToDo: implementation
-#if defined(DEBUG_GMTIME)
-    debug_printf("gmtime\r\n");
-#endif
     return tmbuf;
 }
 
@@ -129,18 +107,13 @@ struct timeval {
 
 int gettimeofday(struct timeval *tv , void *tz) {
     // ToDo: implementation
-#if defined(DEBUG_GETTIMEOFDAY)
-    debug_printf("gettimeofday\r\n");
-#endif
-    return mp_hal_ticks_ms();
+   return 0;
 }
 
-#if !MICROPY_SSL_AXTLS
 sighandler_t signal (int sig, sighandler_t handler) {
     // ToDo: implementation
     return (sighandler_t)handler;
 }
-#endif
 
 int atoi(const char *s) {
     int result = 0, sign = 1;
@@ -198,4 +171,26 @@ int rand(void) {
     return (int)rng_get();
 }
 
+int rand_r(int seed) {
+    return (int)rng_get();
+}
+
+void __attribute__((noreturn)) abort(void) {
+    __asm__ __volatile__ ("nop");
+    while (1) {
+        ;
+    }
+}
+
+char *strncpy(char *dst, const char *src, size_t len) {
+    char *q = (char *)dst;
+    const char *p = (const char *)src;
+    char ch;
+    while (len--) {
+        *q++ = ch = *p++;
+        if (!ch)
+            break;
+    }
+    return dst;
+}
 
