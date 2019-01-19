@@ -582,9 +582,10 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 #endif
 
 endif
-#SRC_MOD += apps/sntp/sntp.c \
-#SRC_MOD += lwip_utils/lwip_utils.c
-#SRC_MOD += lwip_utils/sntp_example.c
+SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
+SRC_MOD += lwip_utils/sntp_client.c
+SRC_MOD += strftime.c
+SRC_MOD += time_utils.c
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)

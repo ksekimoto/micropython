@@ -54,6 +54,7 @@
 #include "lwip/prot/dhcp.h"
 #endif
 #include "ethernetif.h"
+#include "sntp_client.h"
 
 struct netif *g_netif;
 
@@ -202,6 +203,7 @@ STATIC mp_obj_t rx_ether_lwip_ifconfig(size_t n_args, const mp_obj_t *args) {
             mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
         }
 #endif
+        sntp_client_init();
         return mp_const_none;
     } else {
         // set

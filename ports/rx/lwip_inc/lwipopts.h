@@ -9,8 +9,8 @@
 #include "py/mphal.h"
 #include "common.h"
 
-#define LWIP_DEBUG                      LWIP_DBG_ON
-#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
+//#define LWIP_DEBUG                      LWIP_DBG_ON
+//#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
 //#define DHCP_DEBUG                      LWIP_DBG_ON
 //#define DNS_DEBUG                       LWIP_DBG_ON
 //#define SNTP_DEBUG                      LWIP_DBG_ON
@@ -32,13 +32,13 @@
 
 #define SO_REUSE                        1
 
-//#define SNTP_STARTUP_DELAY              0
-//#define SNTP_SERVER_DNS                 1
+//#define SNTP_STARTUP_DELAY              1       // when setting 1, never worked
+#define SNTP_SERVER_DNS                 1       // necessary for sntp_setservername()
 //#define SNTP_GET_SERVERS_FROM_DHCP      0
 //#define SNTP_MAX_SERVERS                3
 //#define SNTP_SUPPORT_MULTIPLE_SERVERS   1
 
-//#define SNTP_SET_SYSTEM_TIME_US(a, b)   sntp_set_system_time(a, b)
+#define SNTP_SET_SYSTEM_TIME_US(a, b)   sntp_set_system_time(a, b)
 
 //#define TCP_OVERSIZE_DBGCHECK           1
 //#define LWIP_CHECKSUM_ON_COPY           1
@@ -88,7 +88,7 @@ typedef uint32_t sys_prot_t;
 
 #include "lwip/arch.h"
 #if !(LWIP_VER == 1)
-#include "sntp_example.h"
+#include "sntp_client.h"
 #endif
 
 #endif // MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
