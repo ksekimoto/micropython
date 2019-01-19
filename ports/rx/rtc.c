@@ -86,7 +86,7 @@ STATIC mp_obj_t pyb_rtc_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
 // force rtc to re-initialise
 mp_obj_t pyb_rtc_init(mp_obj_t self_in) {
-    //rx_rtc_init();
+    rx_rtc_init();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_init_obj, pyb_rtc_init);
