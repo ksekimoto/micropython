@@ -57,7 +57,7 @@
 #include "modmachine.h"
 #include "ethernetif.h"
 
-#define DEBUG_ETHERNETIF
+//#define DEBUG_ETHERNETIF
 
 extern struct netif *g_netif;
 extern struct ei_device le0;
