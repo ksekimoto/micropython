@@ -32,7 +32,7 @@
 #include "rx63n_sci.h"
 
 #if defined(GRCITRUS)
-#define SCI_CH_NUM 6
+#define SCI_CH_NUM 7
 #define SCI_BUF_SIZE 1024
 #elif defined(GRSAKURA)
 #define SCI_CH_NUM 4
@@ -98,7 +98,7 @@ struct SCI_FIFO {
 };
 
 static bool sci_init_flag[SCI_CH_NUM] = {false};
-static SCI_CALLBACK sci_callback[SCI_CH_NUM] = {0};
+static SCI_CALLBACK sci_callback[SCI_CH_NUM] = {};
 static volatile struct SCI_FIFO tx_fifo[SCI_CH_NUM];
 static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
@@ -472,6 +472,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
 
     if (!sci_init_flag[ch]) {
         sci_fifo_init(ch);
+        sci_callback[ch] = 0;
         rx_disable_irq();
         SYSTEM.PRCR.WORD = 0xA502;
         MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
@@ -521,6 +522,7 @@ void sci_deinit(int ch) {
         sci_module_stop(ch);
         //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
         SYSTEM.PRCR.WORD = 0xA500;
+        sci_callback[ch] = 0;
     }
 }
 
