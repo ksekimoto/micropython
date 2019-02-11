@@ -139,6 +139,9 @@ STATIC const mp_rom_map_elem_t mp_module_network_globals_table[] = {
     #if MICROPY_PY_CC3K
     { MP_ROM_QSTR(MP_QSTR_CC3K), MP_ROM_PTR(&mod_network_nic_type_cc3k) },
     #endif
+    #if MICROPY_PY_ESP8266
+    { MP_ROM_QSTR(MP_QSTR_ESP8266), MP_ROM_PTR(&mod_network_nic_type_esp8266) },
+    #endif
 
     { MP_ROM_QSTR(MP_QSTR_route), MP_ROM_PTR(&network_route_obj) },
 };

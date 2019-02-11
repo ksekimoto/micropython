@@ -107,6 +107,9 @@ endif
 ifeq ($(MICROPY_SSL_AXTLS),1)
 INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
 endif
+ifeq ($(MICROPY_PY_ESP8266),1)
+INC += -I$(TOP)/drivers/esp8266/inc
+endif
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
@@ -248,6 +251,10 @@ SRC_C += modnetwork.c
 SRC_C += modnwrxeth.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
+ifeq ($(MICROPY_PY_ESP8266),1)
+CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function
+SRC_C += modnwesp8266.c
+endif
 SRC_C += modpyb.c
 SRC_C += moduos.c
 SRC_C += modusocket.c
@@ -343,6 +350,8 @@ SRC_C += lcd/jpeg.c
 SRC_C += lcd/picojpeg.c
 endif
 SRC_C += sd/sd.c
+SRC_C += strftime.c
+SRC_C += time_utils.c
 
 SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
@@ -493,6 +502,17 @@ SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
 	)
 endif
 
+# for ESP8266 module
+ifeq ($(MICROPY_PY_ESP8266),1)
+ESP8266_DIR=drivers/esp8266
+INC += -I$(TOP)/$(ESP8266_DIR)/inc
+CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
+#SRC_MOD += modnwesp8266.c
+SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
+	esp8266_driver.c \
+	)
+endif
+
 ifeq ($(MICROPY_PY_LWIP),1)
 LWIP_DIR = lib/lwip/src
 INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
@@ -584,8 +604,6 @@ SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 endif
 SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
 SRC_MOD += lwip_utils/sntp_client.c
-SRC_MOD += strftime.c
-SRC_MOD += time_utils.c
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)

@@ -355,6 +355,26 @@ STATIC const mp_rom_map_elem_t socket_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(socket_locals_dict, socket_locals_dict_table);
 
+STATIC mp_uint_t socket_read(mp_obj_t self_in, void *buf, mp_uint_t size, int *errcode) {
+    mod_network_socket_obj_t *socket = MP_OBJ_TO_PTR(self_in);
+    if (socket->nic == MP_OBJ_NULL) {
+        // not connected
+        mp_raise_OSError(MP_ENOTCONN);
+    }
+    mp_uint_t ret = socket->nic_type->recv(socket, (byte*)buf, size, errcode);
+    return ret;
+}
+
+STATIC mp_uint_t socket_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
+    mod_network_socket_obj_t *socket = MP_OBJ_TO_PTR(self_in);
+    if (socket->nic == MP_OBJ_NULL) {
+        // not connected
+        mp_raise_OSError(MP_EPIPE);
+    }
+    mp_uint_t ret = socket->nic_type->send(socket, buf, size, errcode);
+    return ret;
+}
+
 mp_uint_t socket_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t arg, int *errcode) {
     mod_network_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (request == MP_STREAM_CLOSE) {
@@ -368,6 +388,8 @@ mp_uint_t socket_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t arg, int *
 }
 
 STATIC const mp_stream_p_t socket_stream_p = {
+    .read = socket_read,
+    .write = socket_write,
     .ioctl = socket_ioctl,
     .is_text = false,
 };

@@ -88,10 +88,14 @@ typedef struct _mod_network_socket_obj_t {
         } u_param;
         mp_uint_t u_state;
     };
+//#if MICROPY_PY_ESP8266
+    mp_uint_t handle;
+//#endif
 } mod_network_socket_obj_t;
 
 extern const mod_network_nic_type_t mod_network_nic_type_wiznet5k;
 extern const mod_network_nic_type_t mod_network_nic_type_cc3k;
+extern const mod_network_nic_type_t mod_network_nic_type_esp8266;
 
 #endif
 
