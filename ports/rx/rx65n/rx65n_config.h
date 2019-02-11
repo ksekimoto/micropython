@@ -41,7 +41,11 @@ extern "C" {
 #if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
 #endif
-#define DEBUG_TXSTR sci_tx_str
+#define DEBUG_TXSTR(s)  sci_tx_str(DEBUG_CH, (unsigned char *)s)
+#define DEBUG_TXCH(c)   sci_tx_ch(DEBUG_CH, c)
+#else
+#define DEBUG_TXSTR(s)
+#define DEBUG_TXCH(c)
 #endif
 
 void rx65n_init(void);

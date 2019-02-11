@@ -38,7 +38,7 @@ int debug_printf(const void* format, ...) {
     va_list arg_ptr;
     va_start(arg_ptr, format);
     len = vxsnprintf(buf, (size_t)(DEBUG_PRINTF_BUF_SIZE-1), format, arg_ptr);
-    DEBUG_TXSTR(DEBUG_CH, (unsigned char*)buf);
+    DEBUG_TXSTR((unsigned char*)buf);
     va_end(arg_ptr);
     return len;
 }
