@@ -142,8 +142,8 @@ STATIC int mod_esp8266_socket_socket(mod_network_socket_obj_t *socket, int *_err
     // make accept blocking by default
     int optval = SOCK_OFF;
     unsigned optlen = sizeof(optval);
-    //ESP8266_EXPORT(setsockopt)(socket->handle, SOL_SOCKET, SOCKOPT_ACCEPT_NONBLOCK, &optval, optlen);
-    esp8266_setsockopt(socket->handle, SOL_SOCKET, SOCKOPT_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+    //ESP8266_EXPORT(setsockopt)(socket->handle, ESP8266_SOCKET, ESP8266_ACCEPT_NONBLOCK, &optval, optlen);
+    esp8266_setsockopt(socket->handle, ESP8266_SOCKET, ESP8266_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
     return 0;
 }
 
@@ -351,15 +351,15 @@ STATIC int mod_esp8266_socket_settimeout(mod_network_socket_obj_t *socket, mp_ui
             // set blocking mode
             optval = SOCK_OFF;
         }
-        //ret = ESP8266_EXPORT(setsockopt)(socket->handle, SOL_SOCKET, SOCKOPT_RECV_NONBLOCK, &optval, optlen);
-        ret = esp8266_setsockopt(socket->handle, SOL_SOCKET, SOCKOPT_RECVT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+        //ret = ESP8266_EXPORT(setsockopt)(socket->handle, ESP8266_SOCKET, ESP8266_RECV_NONBLOCK, &optval, optlen);
+        ret = esp8266_setsockopt(socket->handle, ESP8266_SOCKET, ESP8266_RECV_NONBLOCK, (const void *)&optval, (unsigned)optlen);
         if (ret == 0) {
-            //ret = ESP8266_EXPORT(setsockopt)(socket->handle, SOL_SOCKET, SOCKOPT_ACCEPT_NONBLOCK, &optval, optlen);
-            ret = esp8266_setsockopt(socket->handle, SOL_SOCKET, SOCKOPT_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+            //ret = ESP8266_EXPORT(setsockopt)(socket->handle, ESP8266_SOCKET, ESP8266_ACCEPT_NONBLOCK, &optval, optlen);
+            ret = esp8266_setsockopt(socket->handle, ESP8266_SOCKET, ESP8266_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
         }
     } else {
         unsigned optlen = sizeof(timeout_ms);
-        ret = ESP8266_EXPORT(setsockopt)(socket->handle, SOL_SOCKET, SOCKOPT_RECV_TIMEOUT, &timeout_ms, optlen);
+        ret = ESP8266_EXPORT(setsockopt)(socket->handle, ESP8266_SOCKET, ESP8266_RECV_TIMEOUT, &timeout_ms, optlen);
     }
     if (ret != 0) {
         //*_errno = ESP8266_EXPORT(errno);

@@ -49,21 +49,19 @@ extern "C" {
 #define SOCK_DGRAM  2
 #define SOCK_RAW    3
 
-#define  SOCK_ON                0
-#define  SOCK_OFF               1
+#define SOCK_ON     0
+#define SOCK_OFF    1
 
-#define  SOL_SOCKET                 0xffff
-#define  SOCKOPT_RECV_NONBLOCK      0
-#define  SOCKOPT_RECV_TIMEOUT       1
-#define  SOCKOPT_ACCEPT_NONBLOCK    2
-#define  SOCKOPT_RECVT_NONBLOCK     3
+#define ESP8266_SOCKET              0xffff
+#define ESP8266_RECV_NONBLOCK       0   // recv non block mode, set SOCK_ON or SOCK_OFF (default block mode)
+#define ESP8266_RECV_TIMEOUT        1   // optname to configure recv and recvfromtimeout
+#define ESP8266_ACCEPT_NONBLOCK     2   // accept non block mode, set SOCK_ON or SOCK_OFF (default block mode)
+#define ESP8266_KEEPALIVE           3
 
 #define ESP8266_AT_VERSION_TCP_PASSIVE_MODE 1070000
 #define ESP8266_SOCKET_COUNT    5
-#define ESP8266_SOCKET          7000
-#define ESP8266_KEEPALIVE       1
 #define ESP8266_CONNECT_TIMEOUT 15000
-#define ESP8266_SOCKET_BUFSIZE  8192
+#define ESP8266_SOCKET_BUFSIZE  16384
 
 #define CIPSEND_MAX 2048
 
@@ -108,7 +106,7 @@ typedef struct driver_info {
 } driver_info_t;
 
 typedef struct _packet {
-    struct packet *next;
+    struct _packet *next;
     int id;
     uint32_t len;       // Remaining length
     uint32_t alloc_len; // Original length
