@@ -286,9 +286,9 @@ void rx_rtc_init(void) {
     /* call back */
     rx_rtc_func = NULL;
     /* Start the clock */
-    RTC.RCR2.BIT.START = 0x1;
+//    RTC.RCR2.BIT.START = 0x1;
     /* Wait until the start bit is set to 1 */
-    while (1 != RTC.RCR2.BIT.START) { ; }
+//    while (1 != RTC.RCR2.BIT.START) { ; }
 }
 
 void rx_rtc_deinit(void) {

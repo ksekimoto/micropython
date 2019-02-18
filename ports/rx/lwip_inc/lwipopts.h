@@ -34,6 +34,8 @@
 
 //#define SNTP_STARTUP_DELAY              1       // when setting 1, never worked
 #define SNTP_SERVER_DNS                 1       // necessary for sntp_setservername()
+#define SNTP_CHECK_RESPONSE             1
+//#define SNTP_STARTUP_DELAY_FUNC         ((LWIP_RAND() % 5000) + 500)
 //#define SNTP_GET_SERVERS_FROM_DHCP      0
 //#define SNTP_MAX_SERVERS                3
 //#define SNTP_SUPPORT_MULTIPLE_SERVERS   1

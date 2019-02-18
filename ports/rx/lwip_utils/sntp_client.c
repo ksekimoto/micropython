@@ -61,12 +61,13 @@ void sntp_client_init(void) {
     time_t now = 0;
     struct tm timeinfo = {0};
     int retry = 0;
-    const int retry_count = 5;
+    const int retry_count = 10;
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
+    //sntp_setservername(0, "pool.ntp.org");
+    sntp_setservername(0, "129.250.35.250");
     while(timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
         sntp_init();
-        mdelay(200);
+        mdelay(100);
         time(&now);
         localtime_r(&now, &timeinfo);
         sntp_stop();
