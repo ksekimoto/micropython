@@ -205,6 +205,7 @@ void rx_rtc_set_time(rtc_t *time) {
 }
 
 void rx_rtc_get_time(rtc_t *time) {
+#if defined(RX63N)
     IEN(RTC, CUP)= 0;
     RTC.RCR1.BIT.CIE = 1;
     do {
@@ -218,6 +219,19 @@ void rx_rtc_get_time(rtc_t *time) {
         time->weekday = bcd_to_int(RTC.RWKCNT.BYTE);
     } while (IR(RTC, CUP));
     RTC.RCR1.BIT.CIE = 0;
+#endif
+#if defined(RX65N)
+    // ToDo: implement interrupt configuration
+    RTC.RCR1.BIT.CIE = 1;
+    time->year = bcd_to_int(RTC.RYRCNT.WORD) + 2000;
+    time->month = bcd_to_int(RTC.RMONCNT.BYTE);
+    time->date = bcd_to_int(RTC.RDAYCNT.BYTE);
+    time->hour = bcd_to_int(0x3f & RTC.RHRCNT.BYTE);
+    time->minute = bcd_to_int(RTC.RMINCNT.BYTE);
+    time->second = bcd_to_int(RTC.RSECCNT.BYTE);
+    time->weekday = bcd_to_int(RTC.RWKCNT.BYTE);
+    RTC.RCR1.BIT.CIE = 0;
+#endif
 }
 
 static void wait(volatile int count) {

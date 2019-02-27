@@ -221,7 +221,16 @@ void rx_rtc_get_time(rtc_t *time) {
     RTC.RCR1.BIT.CIE = 0;
 #endif
 #if defined(RX65N)
-    // ToDo
+    // ToDo: implement interrupt configuration
+    RTC.RCR1.BIT.CIE = 1;
+    time->year = bcd_to_int(RTC.RYRCNT.WORD) + 2000;
+    time->month = bcd_to_int(RTC.RMONCNT.BYTE);
+    time->date = bcd_to_int(RTC.RDAYCNT.BYTE);
+    time->hour = bcd_to_int(0x3f & RTC.RHRCNT.BYTE);
+    time->minute = bcd_to_int(RTC.RMINCNT.BYTE);
+    time->second = bcd_to_int(RTC.RSECCNT.BYTE);
+    time->weekday = bcd_to_int(RTC.RWKCNT.BYTE);
+    RTC.RCR1.BIT.CIE = 0;
 #endif
 }
 
@@ -276,6 +285,10 @@ void rx_rtc_init(void) {
     while (RTC.RCR2.BIT.RESET) { ; }
     /* call back */
     rx_rtc_func = NULL;
+    /* Start the clock */
+    RTC.RCR2.BIT.START = 0x1;
+    /* Wait until the start bit is set to 1 */
+    while (1 != RTC.RCR2.BIT.START) { ; }
 }
 
 void rx_rtc_deinit(void) {

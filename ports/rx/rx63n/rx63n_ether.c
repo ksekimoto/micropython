@@ -80,14 +80,10 @@
 
 #if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 
-#define ALIGN(X,Y) ( (X+Y-1)/Y*Y )
-#define ALIGNED_BUFSIZE ALIGN(ETH_BUF_SIZE,32)
-
 static ethfifo RX_DESC_SECTION rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
 static ethfifo TX_DESC_SECTION txdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
 static int8_t  RX_DESC_SECTION rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
 static int8_t  TX_DESC_SECTION txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
-int8_t tmpbuf[ALIGNED_BUFSIZE] __attribute__((aligned(32)));
 
 static RX_ETHER_INPUT_CB rx_ether_input_cb = (RX_ETHER_INPUT_CB)0;
 

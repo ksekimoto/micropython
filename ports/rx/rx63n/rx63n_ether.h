@@ -149,6 +149,9 @@ struct ei_device {
 #define PHY_RESET_WAIT              0x00002000L
 #define PHY_AUTO_NEGOTIATON_WAIT    0x00040000L
 
+#define ALIGN(X,Y) ( (X+Y-1)/Y*Y )
+#define ALIGNED_BUFSIZE ALIGN(ETH_BUF_SIZE,32)
+
 void rx_ether_int(void);
 void rx_ether_init(uint8_t *hwaddr);
 void rx_ether_start(void);

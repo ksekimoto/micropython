@@ -44,13 +44,16 @@ struct timeval {
 };
 #endif
 
-time_t time(time_t *t);
-time_t mktime(void *tm);
-struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
+//time_t time(time_t *t);
+//time_t mktime(void *tm);
+//struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
 int gettimeofday(struct timeval *tv , void *tz);
 sighandler_t signal (int sig, sighandler_t handler);
 
 int atoi(const char *s);
 char *itoa(int num, char *str, int base);
+int rand(void);
+int rand_r(int seed);
+//void __attribute__((noreturn)) abort(void);
 
 #endif /* PORTS_RX_POSIX_HELPERS_H_ */

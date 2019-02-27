@@ -33,6 +33,9 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "common.h"
+#if defined(DA)
+#undef DA
+#endif
 
 #define MBEDTLS_ENTROPY_C
 #define MBEDTLS_HAVEGE_C
@@ -2128,7 +2131,7 @@
  *
  * This module provides debugging functions.
  */
-//#define MBEDTLS_DEBUG_C
+#define MBEDTLS_DEBUG_C
 
 /**
  * \def MBEDTLS_DES_C
@@ -3282,3 +3285,7 @@
 #include "check_config.h"
 
 #endif /* MBEDTLS_CONFIG_H */
+#define MBEDTLS_PSA_CRYPTO_STORAGE_C
+#define MBEDTLS_PSA_CRYPTO_STORAGE_ITS_C
+
+//void alarm(int s);

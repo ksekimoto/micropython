@@ -39,6 +39,7 @@ void rx65n_init(void) {
     exti_init();
     exti_deinit();
     udelay_init();
+    rx_rtc_init();
 #ifdef USE_DBG_PRINT
     sci_init(DEBUG_CH, SCI_BAUD);
     //sci_tx_str(DEBUG_CH, "\r\n*** USE_DBG_PRINT ***\r\n");

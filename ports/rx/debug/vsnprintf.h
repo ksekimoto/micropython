@@ -26,6 +26,8 @@
 #ifndef VSNPRINTF_H_
 #define VSNPRINTF_H_
 
+#include <stdarg.h>
+
 int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args);
 
 #endif /* VSNPRINTF_H_ */

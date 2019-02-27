@@ -1,33 +1,49 @@
 #ifndef MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
 #define MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
 
+#define SSIZE_MAX INT_MAX
+
 #include <stdio.h>
 #include <stdint.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "common.h"
 
+//#define LWIP_DEBUG                      LWIP_DBG_ON
+//#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
+//#define DHCP_DEBUG                      LWIP_DBG_ON
+//#define DNS_DEBUG                       LWIP_DBG_ON
+//#define SNTP_DEBUG                      LWIP_DBG_ON
+//#define TCP_DEBUG                       LWIP_DBG_ON
+//#define IP_DEBUG                        LWIP_DBG_ON
+
 #define NO_SYS                          1
 #define SYS_LIGHTWEIGHT_PROT            1
-#define MEM_ALIGNMENT                   4
-
-#define LWIP_CHKSUM_ALGORITHM           3
 
 #define LWIP_ARP                        1
 #define LWIP_ETHERNET                   1
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
 #define LWIP_STATS                      0
-#define LWIP_NETIF_HOSTNAME             1
 
-#define LWIP_IPV4                       1
-#define LWIP_IPV6                       0
 #define LWIP_DHCP                       1
-#define LWIP_DHCP_CHECK_LINK_UP         1
 #define LWIP_DNS                        1
 #define LWIP_IGMP                       1
 
 #define SO_REUSE                        1
+
+//#define SNTP_STARTUP_DELAY              1       // when setting 1, never worked
+#define SNTP_SERVER_DNS                 1       // necessary for sntp_setservername()
+//#define SNTP_GET_SERVERS_FROM_DHCP      0
+//#define SNTP_MAX_SERVERS                3
+//#define SNTP_SUPPORT_MULTIPLE_SERVERS   1
+
+#define SNTP_SET_SYSTEM_TIME_US(a, b)   sntp_set_system_time(a, b)
+
+//#define TCP_OVERSIZE_DBGCHECK           1
+//#define LWIP_CHECKSUM_ON_COPY           1
+//#define CHECKSUM_GEN_TCP                1
+//#define IP_REASSEMBLY                   0
 
 extern uint32_t rng_get(void);
 #define LWIP_RAND() rng_get()
@@ -68,6 +84,11 @@ typedef uint32_t sys_prot_t;
 // universal and other ports will need to do something else. It may be necessary to move
 // things like this into a port-provided header file.
 #define sys_now mp_hal_ticks_ms
+#endif
+
+#include "lwip/arch.h"
+#if !(LWIP_VER == 1)
+#include "sntp_client.h"
 #endif
 
 #endif // MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H

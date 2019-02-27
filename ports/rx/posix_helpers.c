@@ -29,11 +29,20 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>
 
 #include "py/mphal.h"
 #include "py/gc.h"
 
+//#if MICROPY_PY_LWIP
+//#include "sntp_client.h"
+//#endif
+
+#include "rng.h"
 #include "posix_helpers.h"
+
+//#define DEBUG_TIME
+#define DEBUG_SIGNAL
 
 // Functions for external libs like axTLS, BerkeleyDB, etc.
 
@@ -83,17 +92,47 @@ uint32_t htonl(uint32_t netlong) {
 
 time_t time(time_t *t) {
     // ToDo: implementation
-    return mp_hal_ticks_ms() / 1000;
+//#if MICROPY_PY_LWIP
+//    return get_sntp_time();
+//#else
+//    return mp_hal_ticks_ms() / 1000;
+//#endif
+    rtc_t rtc;
+    struct tm tmbuf;
+    time_t  ret;
+    rx_rtc_get_time(&rtc);
+    tmbuf.tm_hour = (int)rtc.hour;
+    tmbuf.tm_mday = (int)rtc.date;
+    tmbuf.tm_min = (int)rtc.minute;
+    tmbuf.tm_mon = (int)rtc.month;
+    tmbuf.tm_sec = (int)rtc.second;
+    tmbuf.tm_wday = (int)rtc.weekday;
+    tmbuf.tm_year = (int)rtc.year;
+    tmbuf.tm_yday = 0;
+    tmbuf.tm_isdst = 0;
+    tmbuf.tm_year -= 1900;
+    ret = (time_t)mktime(&tmbuf);
+    if (t) {
+        *t = ret;
+    }
+#if defined(DEBUG_TIME)
+    debug_printf("time:%d\r\n", ret);
+#endif
+    return ret;
 }
 
-time_t mktime(void *tm) {
-    // ToDo: implementation
-    return 0;
-}
-
-struct tm *gmtime(const time_t *timer, struct tm *tmbuf) {
-    // ToDo: implementation
-    return tmbuf;
+void set_time(time_t *t) {
+    rtc_t rtc;
+    struct tm *tmbuf;
+    tmbuf = gmtime((const time_t *)t);
+    rtc.hour = tmbuf->tm_hour;
+    rtc.date = tmbuf->tm_mday;
+    rtc.minute = tmbuf->tm_min;
+    rtc.month = tmbuf->tm_mon;
+    rtc.second = tmbuf->tm_sec;
+    rtc.weekday = tmbuf->tm_wday;
+    rtc.year = tmbuf->tm_year;
+    rx_rtc_set_time(&rtc);
 }
 
 #ifndef _TIMEVAL_DEFINED
@@ -106,13 +145,26 @@ struct timeval {
 
 int gettimeofday(struct timeval *tv , void *tz) {
     // ToDo: implementation
-   return 0;
+    //return mp_hal_ticks_ms();
+    time_t t;
+    t = time(NULL);
+    tv->tv_sec = t;
+    tv->tv_usec = 0;
+#if defined(DEBUG_GETTIMEOFDAY)
+    debug_printf("gettimeofday:%d\r\n", t);
+#endif
+    return (int)0;
 }
 
+#if !MICROPY_SSL_AXTLS
 sighandler_t signal (int sig, sighandler_t handler) {
     // ToDo: implementation
+#if defined(DEBUG_SIGNAL)
+    debug_printf("signal\r\n");
+#endif
     return (sighandler_t)handler;
 }
+#endif
 
 int atoi(const char *s) {
     int result = 0, sign = 1;
@@ -165,3 +217,31 @@ char *itoa(int num, char *str, int base) {
     reverse(str, i);
     return str;
 }
+
+int rand(void) {
+    return (int)rng_get();
+}
+
+int rand_r(int seed) {
+    return (int)rng_get();
+}
+
+void __attribute__((noreturn)) abort(void) {
+    __asm__ __volatile__ ("nop");
+    while (1) {
+        ;
+    }
+}
+
+char *strncpy(char *dst, const char *src, size_t len) {
+    char *q = (char *)dst;
+    const char *p = (const char *)src;
+    char ch;
+    while (len--) {
+        *q++ = ch = *p++;
+        if (!ch)
+            break;
+    }
+    return dst;
+}
+
