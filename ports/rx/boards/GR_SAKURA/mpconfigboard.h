@@ -6,6 +6,7 @@
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_HAS_SDCARD       (1)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_HAS_ETHERNET     (1)

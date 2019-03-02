@@ -6,6 +6,7 @@
 #define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_HAS_SDCARD       (0)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_HAS_ETHERNET     (1)
@@ -25,7 +26,7 @@
 #define MICROPY_HW_UART6_TX         (pin_P32)
 #define MICROPY_HW_UART6_RX         (pin_P33)
 #define MICROPY_HW_UART6_DIR        (pin_P34)
-#define MICROPY_HW_UART_REPL        PYB_UART_1
+//#define MICROPY_HW_UART_REPL        PYB_UART_1
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses

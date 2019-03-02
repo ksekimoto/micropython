@@ -6,6 +6,7 @@
 #define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_HAS_SDCARD       (1)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_HAS_ETHERNET     (0)
@@ -65,8 +66,8 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP8266      (1)
-#define MICROPY_PY_PYB_TWITTER      (1)
+#define MICROPY_HW_HAS_ESP8266      (0)
+#define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
