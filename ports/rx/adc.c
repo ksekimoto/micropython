@@ -100,7 +100,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
     int32_t resolution = 0;
     int32_t channel = 0;
     int32_t pin_idx = -1;
-    if (MP_OBJ_IS_INT(pin_obj)) {
+    if (mp_obj_is_int(pin_obj)) {
         pin_idx = mp_obj_get_int(pin_obj);
         resolution = rx_adc_get_resolution((uint8_t)pin_idx);
         if (resolution < 0) {
@@ -159,7 +159,7 @@ typedef struct _pyb_adc_all_obj_t {
 } pyb_adc_all_obj_t;
 
 void adc_init_all(pyb_adc_all_obj_t *adc_all, uint32_t resolution, uint32_t en_mask) {
-    // ToDo
+    // ToDo: implement initialization function
 }
 
 int adc_get_resolution(ADC_HandleTypeDef *adcHandle) {

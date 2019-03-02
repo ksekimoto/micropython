@@ -3,8 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2015 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2019 Damien P. George
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +23,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RX_MODMACHINE_H
-#define MICROPY_INCLUDED_RX_MODMACHINE_H
+#ifndef MICROPY_INCLUDED_LIB_UTILS_GCHELPER_H
+#define MICROPY_INCLUDED_LIB_UTILS_GCHELPER_H
 
-#include "py/obj.h"
+#include <stdint.h>
 
-void machine_init(void);
-void machine_deinit(void);
-void get_unique_id(uint8_t *id);
+uintptr_t gc_helper_get_sp(void);
+uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_unique_id_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_reset_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_bootloader_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_lightsleep_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_deepsleep_obj);
-
-#endif // MICROPY_INCLUDED_RX_MODMACHINE_H
+#endif // MICROPY_INCLUDED_LIB_UTILS_GCHELPER_H

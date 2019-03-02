@@ -126,7 +126,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     uint pin_idx;
     uint irq_no;
     uint cond = 0;
-    if (!MP_OBJ_IS_TYPE(pin_obj, &pin_type)) {
+    if (!mp_obj_is_type(pin_obj, &pin_type)) {
         return 0xff;
     }
     pin = pin_find(pin_obj);

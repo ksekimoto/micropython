@@ -60,4 +60,6 @@ typedef struct
 void rtc_init_start(bool force_init);
 void rtc_init_finalise(void);
 
+mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args);
+
 #endif // MICROPY_INCLUDED_RX_RTC_H

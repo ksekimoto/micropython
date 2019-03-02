@@ -30,9 +30,6 @@
 
 #define FLASH_BLOCK_SIZE (512)
 
-#define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
-#define STORAGE_IDLE_TICK(tick) (((tick) & STORAGE_SYSTICK_MASK) == 2)
-
 // Try to match Python-level VFS block protocol where possible for these constants
 enum {
     BDEV_IOCTL_INIT = 1,

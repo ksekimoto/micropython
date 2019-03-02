@@ -35,6 +35,7 @@
 
 #if MICROPY_HW_HAS_MMA7660
 
+// ToDo: update I2C1 definition
 #define I2C1    1
 
 /// \moduleref pyb

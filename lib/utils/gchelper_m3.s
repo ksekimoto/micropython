@@ -3,8 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2015 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2013-2014 Damien P. George
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +23,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RX_MODMACHINE_H
-#define MICROPY_INCLUDED_RX_MODMACHINE_H
 
-#include "py/obj.h"
+    .syntax unified
+    .cpu cortex-m3
+    .thumb
 
-void machine_init(void);
-void machine_deinit(void);
-void get_unique_id(uint8_t *id);
+    .section .text
+    .align  2
 
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_unique_id_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_reset_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_bootloader_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_lightsleep_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_deepsleep_obj);
+    .global gc_helper_get_sp
+    .type gc_helper_get_sp, %function
 
-#endif // MICROPY_INCLUDED_RX_MODMACHINE_H
+@ uint gc_helper_get_sp(void)
+gc_helper_get_sp:
+    @ return the sp
+    mov     r0, sp
+    bx      lr
+
+    .size gc_helper_get_sp, .-gc_helper_get_sp
+
+
+    .global gc_helper_get_regs_and_sp
+    .type gc_helper_get_regs_and_sp, %function
+
+@ uint gc_helper_get_regs_and_sp(r0=uint regs[10])
+gc_helper_get_regs_and_sp:
+    @ store registers into given array
+    str     r4, [r0], #4
+    str     r5, [r0], #4
+    str     r6, [r0], #4
+    str     r7, [r0], #4
+    str     r8, [r0], #4
+    str     r9, [r0], #4
+    str     r10, [r0], #4
+    str     r11, [r0], #4
+    str     r12, [r0], #4
+    str     r13, [r0], #4
+
+    @ return the sp
+    mov     r0, sp
+    bx      lr
+
+    .size gc_helper_get_regs_and_sp, .-gc_helper_get_regs_and_sp
