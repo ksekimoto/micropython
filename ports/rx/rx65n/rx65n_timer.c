@@ -147,15 +147,15 @@ void cmt_timer_init(unsigned int ch, unsigned int prescale) {
         ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
         break;
     case 1:
-        ICU.IPR[0x05].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x05].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
         break;
     case 2:
-        ICU.IPR[0x06].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x06].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN6 = 1;         // IER enable
         break;
     case 3:
-        ICU.IPR[0x07].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x07].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
         break;
     default:
