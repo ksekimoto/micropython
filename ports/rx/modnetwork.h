@@ -46,6 +46,7 @@ typedef struct _mod_network_nic_type_t {
 
 extern const mp_obj_type_t mod_network_nic_type_wiznet5k;
 
+void mod_network_lwip_poll_wrapper(uint32_t ticks_ms);
 mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_obj_t *args);
 
 extern const mod_network_nic_type_t mod_network_nic_type_rx_ether;
@@ -88,10 +89,14 @@ typedef struct _mod_network_socket_obj_t {
         } u_param;
         mp_uint_t u_state;
     };
+//#if MICROPY_PY_ESP8266
+    mp_uint_t handle;
+//#endif
 } mod_network_socket_obj_t;
 
 extern const mod_network_nic_type_t mod_network_nic_type_wiznet5k;
 extern const mod_network_nic_type_t mod_network_nic_type_cc3k;
+extern const mod_network_nic_type_t mod_network_nic_type_esp8266;
 
 #endif
 
