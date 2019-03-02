@@ -31,10 +31,36 @@
 extern "C" {
 #endif
 
+#ifndef MICROPY_HW_MCU_PCLK
+#define MICROPY_HW_MCU_PCLK 60000000
+#endif
+
+#define DEF_CLKDEV  8
+#define TENUSEC_COUNT   (MICROPY_HW_MCU_PCLK / DEF_CLKDEV / 100000)
+#define MSEC_COUNT      (MICROPY_HW_MCU_PCLK / DEF_CLKDEV / 100)
+
+#define CLKDEV  DEF_CLKDEV
+#if CLKDEV == 8
+#define CMT_VAL 0x0040;     // CMIE is Enable,CKS is PCLK/8     clk=1/6(us)
+#elif CLKDEV == 32
+#define CMT_VAL 0x0041;     // CMIE is Enable,CKS is PCLK/32    clk=1/1.5(us)
+#elif CLKDEV == 128
+#define CMT_VAL 0x0042;     // CMIE is Enable,CKS is PCLK/128   clk=32/12(us)
+#else
+#define CMT_VAL 0x0043;     // CMIE is Enable,CKS is PCLK/512   clk=128/3(us)
+#endif
+
+/*
+ * Prescale: 8
+ * freq = 1000(1/s) = 1000(us) -> 7500
+ * freq = 10000(1/s) = 100(us) -> 750
+ * freq = 100000(1/s) = 10(us) -> 75
+ */
+
 #include <stdint.h>
 typedef void (*CMT_TIMER_FUNC)(void *);
 
-void cmt_timer_init(unsigned int ch);
+void cmt_timer_init(unsigned int ch, unsigned int prescale);
 void cmt_timer_deinit(unsigned int ch);
 void cmt_timer_disable_clk(unsigned int ch);
 void cmt_timer_eable_clk(unsigned int ch);
