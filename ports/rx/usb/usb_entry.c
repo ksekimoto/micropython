@@ -196,7 +196,7 @@ void usbcdc_write(uint8_t c) {
 int usbcdc_read(void) {
     // if the head isn't ahead of the tail, we don't have any characters
     if (rx_buf_head == rx_buf_tail) {
-        return -1;
+        return 0;
     } else {
         uint8_t c = rx_buf[rx_buf_tail];
         rx_buf_tail = (uint32_t)(rx_buf_tail + 1) % USBCDC_BUF_SIZE;

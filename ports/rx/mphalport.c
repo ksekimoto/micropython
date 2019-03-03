@@ -81,7 +81,7 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
         }
         #if MICROPY_HW_ENABLE_RX_USB
         byte c;
-        if ((c = usbcdc_read()) != -1) {
+        if ((c = usbcdc_read()) != 0) {
             return c;
         }
         #endif
@@ -89,7 +89,7 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
         if (dupterm_c >= 0) {
             return dupterm_c;
         }
-        //MICROPY_EVENT_POLL_HOOK
+        MICROPY_EVENT_POLL_HOOK
     }
 }
 
