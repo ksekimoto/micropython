@@ -147,7 +147,7 @@ void cmt_timer_init(unsigned int ch, unsigned int prescale) {
         ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
         break;
     case 1:
-        ICU.IPR[0x05].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x05].BIT.IPR = 0x5;        // IPR = 14 (15: highest priority)
         ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
         break;
     case 2:
@@ -246,7 +246,7 @@ void udelay(int m) {
 }
 
 unsigned long utick(void) {
-    return cmt_count[USEC_CH] * 10;
+    return cmt_count[USEC_CH] * 10UL;
 }
 
 void mdelay(int m) {
@@ -257,5 +257,6 @@ void mdelay(int m) {
 }
 
 unsigned long mtick(void) {
-    return cmt_count[MSEC_CH];
+    //return cmt_count[MSEC_CH];
+    return cmt_count[USEC_CH] / 100UL;
 }
