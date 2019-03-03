@@ -18,6 +18,7 @@
 #define MICROPY_HW_UART2_RX         (pin_P52)
 //#define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
+#define MICROPY_HW_ESP8266_UART_CH  6
 
 // I2C busses
 //#define MICROPY_HW_I2C0_SCL (pin_P13)

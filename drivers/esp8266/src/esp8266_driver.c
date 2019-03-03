@@ -79,7 +79,7 @@ char *itoa(int num, char *str, int base);
 uint32_t esp8266_read(uint32_t timeout);
 
 #define ESP8266_READ_TIMEOUT    1000
-#define WIFI_SERIAL     6   /* sci6 */
+#define WIFI_SERIAL     MICROPY_HW_ESP8266_UART_CH
 #define WIFI_BAUDRATE   115200
 #define WIFI_WAIT_MSEC  5000
 #define WIFI_TIMEOUT    5000
