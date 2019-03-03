@@ -40,7 +40,7 @@ void rx63n_init(void) {
     rx_rtc_init();
 #ifdef USE_DBG_PRINT
     sci_init(DEBUG_CH, SCI_BAUD);
-    //sci_tx_str(DEBUG_CH, "\r\n*** USE_DBG_PRINT ***\r\n");
+    sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
     //sci_tx_str(DEBUG_CH, "rx63n_init\r\n");
 #endif
     //usb_init();
