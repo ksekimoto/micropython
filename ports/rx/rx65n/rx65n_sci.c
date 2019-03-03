@@ -109,8 +109,13 @@ struct SCI_FIFO {
     uint8_t buff[SCI_BUF_SIZE];
 };
 
-static bool sci_init_flag[SCI_CH_NUM] = {false};
-static SCI_CALLBACK sci_callback[SCI_CH_NUM] = {0};
+static bool sci_init_flag[] = {
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false,
+};
+static SCI_CALLBACK sci_callback[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
 static volatile struct SCI_FIFO tx_fifo[SCI_CH_NUM];
 static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
@@ -137,14 +142,14 @@ void sci_rx_set_int(int ch, int flag) {
         idx = (58 + ch * 2) / 8;
         bit = (58 + ch * 2) & 7;
     } else if (ch < 7) {
-        idx = (80 + ch * 2) / 8;
-        bit = (80 + ch * 2) & 7;
+        idx = (74 + ch * 2) / 8;
+        bit = (74 + ch * 2) & 7;
     } else if (ch < 11) {
-        idx = (98 + ch * 2) / 8;
-        bit = (98 + ch * 2) & 7;
+        idx = (84 + ch * 2) / 8;
+        bit = (84 + ch * 2) & 7;
     } else {
-        idx = (114 + ch * 2) / 8;
-        bit = (114 + ch * 2) & 7;
+        idx = (92 + ch * 2) / 8;
+        bit = (92 + ch * 2) & 7;
     }
 #endif
     uint8_t mask = (1 << bit);
@@ -171,14 +176,14 @@ void sci_tx_set_int(int ch, int flag) {
         idx = (59 + ch * 2) / 8;
         bit = (59 + ch * 2) & 7;
     } else if (ch < 7) {
-        idx = (81 + ch * 2) / 8;
-        bit = (81 + ch * 2) & 7;
+        idx = (75 + ch * 2) / 8;
+        bit = (75 + ch * 2) & 7;
     } else if (ch < 11) {
-        idx = (99 + ch * 2) / 8;
-        bit = (99 + ch * 2) & 7;
+        idx = (85 + ch * 2) / 8;
+        bit = (85 + ch * 2) & 7;
     } else {
-        idx = (115 + ch * 2) / 8;
-        bit = (115 + ch * 2) & 7;
+        idx = (93 + ch * 2) / 8;
+        bit = (93 + ch * 2) & 7;
     }
 #endif
     uint8_t mask = (1 << bit);
