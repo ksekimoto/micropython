@@ -32,6 +32,8 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "lib/netutils/netutils.h"
+#include "systick.h"
+#include "pendsv.h"
 #include "modnetwork.h"
 
 #if MICROPY_PY_NETWORK
@@ -48,6 +50,10 @@
 #include "lwip/timeouts.h"
 #endif
 #include "lwip/dns.h"
+#include "lwip/dhcp.h"
+
+// Poll lwIP every 128ms
+#define LWIP_TICK(tick) (((tick) & ~(SYSTICK_DISPATCH_NUM_SLOTS - 1) & 0x7f) == 0)
 
 u32_t sys_now(void) {
     return mp_hal_ticks_ms();
@@ -85,6 +91,14 @@ void pyb_lwip_poll(void) {
     sys_check_timeouts();
 }
 #endif
+
+void mod_network_lwip_poll_wrapper(uint32_t ticks_ms) {
+    if (LWIP_TICK(ticks_ms)) {
+// ToDo: implement pendsv 
+//        pendsv_schedule_dispatch(PENDSV_DISPATCH_LWIP, pyb_lwip_poll);
+        pyb_lwip_poll();
+    }
+}
 
 #endif
 

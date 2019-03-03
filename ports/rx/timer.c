@@ -156,7 +156,7 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
     for (int i = 1; i <= TIMER_SIZE; i++) {
         cmt_timer_set_callback(i, (CMT_TIMER_FUNC)timer_irq_handler, (void *)&cmt_timer_ch[i-1]);
     }
-    cmt_timer_init(self->tim_id);
+    cmt_timer_init(self->tim_id, DEF_CLKDEV);
     if (args[ARG_freq].u_obj != mp_const_none) {
         mp_obj_t freq_args[2];
         freq_args[0] = self;

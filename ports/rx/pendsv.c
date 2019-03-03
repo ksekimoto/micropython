@@ -38,7 +38,15 @@
 // mp_kbd_exception which is in the root-pointer set.
 void *pendsv_object;
 
+#if defined(PENDSV_DISPATCH_NUM_SLOTS)
+uint32_t pendsv_dispatch_active;
+pendsv_dispatch_t pendsv_dispatch_table[PENDSV_DISPATCH_NUM_SLOTS];
+#endif
+
 void pendsv_init(void) {
+    #if defined(PENDSV_DISPATCH_NUM_SLOTS)
+    pendsv_dispatch_active = false;
+    #endif
     // set PendSV interrupt at lowest priority
 }
 
@@ -61,6 +69,24 @@ void pendsv_kbd_intr(void) {
         );
     }
 }
+
+#if defined(PENDSV_DISPATCH_NUM_SLOTS)
+void pendsv_schedule_dispatch(size_t slot, pendsv_dispatch_t f) {
+    pendsv_dispatch_table[slot] = f;
+    pendsv_dispatch_active = true;
+    //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+}
+
+void pendsv_dispatch_handler(void) {
+    for (size_t i = 0; i < PENDSV_DISPATCH_NUM_SLOTS; ++i) {
+        if (pendsv_dispatch_table[i] != NULL) {
+            pendsv_dispatch_t f = pendsv_dispatch_table[i];
+            pendsv_dispatch_table[i] = NULL;
+            f();
+        }
+    }
+}
+#endif
 
 void __attribute__ ((naked)) INT_Excep_1(void) {
     // re-jig the stack so that when we return from this interrupt handler
