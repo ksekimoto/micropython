@@ -73,27 +73,6 @@
 ///
 ///     uart.any()               # returns True if any characters waiting
 
-#define CHAR_WIDTH_8BIT (0)
-#define CHAR_WIDTH_9BIT (1)
-
-struct _pyb_uart_obj_t {
-    mp_obj_base_t base;
-    pyb_uart_t uart_id;
-    uint32_t baud;
-    uint8_t bits;
-    bool is_enabled : 1;
-    bool attached_to_repl;              // whether the UART is attached to REPL
-    byte char_width;                    // 0 for 7,8 bit chars, 1 for 9 bit chars
-    uint16_t char_mask;                 // 0x7f for 7 bit, 0xff for 8 bit, 0x1ff for 9 bit
-    uint16_t timeout;                   // timeout waiting for first char
-    uint16_t timeout_char;              // timeout waiting between chars
-    uint16_t read_buf_len;              // len in chars; buf can hold len-1 chars
-    volatile uint16_t read_buf_head;    // indexes first empty slot
-    uint16_t read_buf_tail;             // indexes first full slot (not full if equals head)
-    byte *read_buf;                     // byte or uint16_t, depending on char size
-};
-
-STATIC mp_obj_t pyb_uart_deinit(mp_obj_t self_in);
 extern void NORETURN __fatal_error(const char *msg);
 #if MICROPY_KBD_EXCEPTION
 extern int mp_interrupt_char;
@@ -116,16 +95,17 @@ void uart_init0(void) {
 }
 
 // unregister all interrupt sources
-void uart_deinit(void) {
+void uart_deinit_all(void) {
     for (int i = 0; i < MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all)); i++) {
         pyb_uart_obj_t *uart_obj = MP_STATE_PORT(pyb_uart_obj_all)[i];
-        if (uart_obj != NULL) {
-            pyb_uart_deinit(MP_OBJ_FROM_PTR(uart_obj));
+        if (uart_obj != NULL && !uart_obj->is_static) {
+            uart_deinit(uart_obj);
+            MP_STATE_PORT(pyb_uart_obj_all)[i] = NULL;
         }
     }
 }
 
-STATIC bool uart_exists(int uart_id) {
+bool uart_exists(int uart_id) {
     if (uart_id > MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all))) {
         // safeguard against pyb_uart_obj_all array being configured too small
         return false;
@@ -188,7 +168,8 @@ STATIC bool uart_exists(int uart_id) {
 }
 
 // assumes Init parameters have been set up correctly
-STATIC bool uart_init2(pyb_uart_obj_t *uart_obj) {
+bool uart_init(pyb_uart_obj_t *uart_obj,
+    uint32_t baudrate, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow) {
     int uart_unit = (int)uart_obj->uart_id;
 
     const pin_obj_t *pins[4] = {0};
@@ -311,6 +292,22 @@ STATIC bool uart_init2(pyb_uart_obj_t *uart_obj) {
     return true;
 }
 
+void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
+    self->read_buf_head = 0;
+    self->read_buf_tail = 0;
+    self->read_buf_len = len;
+    self->read_buf = buf;
+    //if (len == 0) {
+    //    UART_RXNE_IT_DIS(self->uartx);
+    //} else {
+    //    UART_RXNE_IT_EN(self->uartx);
+    //}
+}
+void uart_deinit(pyb_uart_obj_t *self) {
+    self->is_enabled = false;
+
+    // ToDo: implement
+}
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
 #if MICROPY_KBD_EXCEPTION
@@ -330,7 +327,7 @@ mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
 // Waits at most timeout milliseconds for at least 1 char to become ready for
 // reading (from buf or for direct reading).
 // Returns true if something available, false if not.
-STATIC bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
+bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
@@ -352,7 +349,7 @@ int uart_rx_char(pyb_uart_obj_t *self) {
 
 // Waits at most timeout milliseconds for TX register to become empty.
 // Returns true if can write, false if can't.
-STATIC bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
+bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
@@ -390,7 +387,7 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
 // num_chars - number of characters to send (9-bit chars count for 2 bytes from src)
 // *errcode - returns 0 for success, MP_Exxx on error
 // returns the number of characters sent (valid even if there was an error)
-STATIC size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
+size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
     int ch = (int)self->uart_id;
     uint8_t *data = (uint8_t *)src_in;
     if (num_chars == 0) {
@@ -463,9 +460,9 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
     self->bits = args.bits.u_int;
 
     // init UART (if it fails, it's because the port doesn't exist)
-    if (!uart_init2(self)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", self->uart_id));
-    }
+    //if (!uart_init(self)) {
+    //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", self->uart_id));
+    //}
 
     // set timeout
     self->timeout = args.timeout.u_int;
@@ -502,7 +499,7 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
 
     // work out port
     int uart_id = 0;
-    if (MP_OBJ_IS_STR(args[0])) {
+    if (mp_obj_is_str(args[0])) {
         const char *port = mp_obj_str_get_str(args[0]);
         if (0) {
         #ifdef MICROPY_HW_UART0_NAME
