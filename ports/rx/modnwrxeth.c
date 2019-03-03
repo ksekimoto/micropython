@@ -75,6 +75,7 @@ STATIC rx_ether_obj_t rx_ether_obj;
 //}
 
 STATIC void rx_ether_lwip_poll(void *self_in) {
+#if 0
     rx_ether_obj_t *self = self_in;
     mp_uint_t t;
 
@@ -84,6 +85,7 @@ STATIC void rx_ether_lwip_poll(void *self_in) {
       etharp_tmr();
       self->last_arp = t;
     }
+#endif
 }
 
 /*
