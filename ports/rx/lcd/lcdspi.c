@@ -1377,7 +1377,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* cs */
     if (vals[ARG_cs].u_obj == MP_OBJ_NULL) {
         _csPin = self->lcdspi_pins.csPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_cs].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_cs].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.csPin = MP_OBJ_TO_PTR(vals[ARG_cs].u_obj);
@@ -1386,7 +1386,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* clk */
     if (vals[ARG_clk].u_obj == MP_OBJ_NULL) {
         _clkPin = self->lcdspi_pins.clkPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_clk].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_clk].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.clkPin = MP_OBJ_TO_PTR(vals[ARG_clk].u_obj);
@@ -1395,7 +1395,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* dout */
     if (vals[ARG_dout].u_obj == MP_OBJ_NULL) {
         _doutPin = self->lcdspi_pins.doutPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_dout].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_dout].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.doutPin = MP_OBJ_TO_PTR(vals[ARG_dout].u_obj);
@@ -1404,7 +1404,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* reset */
     if (vals[ARG_reset].u_obj == MP_OBJ_NULL) {
         _resetPin = self->lcdspi_pins.resetPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_reset].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_reset].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.resetPin = MP_OBJ_TO_PTR(vals[ARG_reset].u_obj);
@@ -1413,7 +1413,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* rs */
     if (vals[ARG_rs].u_obj == MP_OBJ_NULL) {
         _rsPin = self->lcdspi_pins.rsPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_rs].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_rs].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.rsPin = MP_OBJ_TO_PTR(vals[ARG_rs].u_obj);
@@ -1422,7 +1422,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* din */
     if (vals[ARG_din].u_obj == MP_OBJ_NULL) {
         _dinPin = self->lcdspi_pins.dinPin->pin;
-    } else if (!MP_OBJ_IS_TYPE(vals[ARG_din].u_obj, &pin_type)) {
+    } else if (!mp_obj_is_type(vals[ARG_din].u_obj, &pin_type)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
     } else {
         self->lcdspi_pins.dinPin = MP_OBJ_TO_PTR(vals[ARG_din].u_obj);
