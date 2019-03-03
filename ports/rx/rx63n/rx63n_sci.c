@@ -317,8 +317,6 @@ int sci_tx_wait(int ch) {
 void sci_tx_str(int ch, uint8_t *p) {
     uint8_t c;
     while ((c = *p++) != 0) {
-        //if (c == '\n')
-        //    sci_tx_ch(ch, '\r');
         sci_tx_ch(ch, c);
     }
 }
