@@ -28,38 +28,8 @@
 #include "iodefine.h"
 #include "rx63n_timer.h"
 
-#define CLKDEV  8
-// PCLK = 48000000Hz default
-#if CLKDEV == 8
-#define CMT_VAL 0x0040;     // CMIE is Enable,CKS is PCLK/8     clk=1/6(us)
-#elif CLKDEV == 32
-#define CMT_VAL 0x0041;     // CMIE is Enable,CKS is PCLK/32    clk=1/1.5(us)
-#elif CLKDEV == 128
-#define CMT_VAL 0x0042;     // CMIE is Enable,CKS is PCLK/128   clk=32/12(us)
-#else
-#define CMT_VAL 0x0043;     // CMIE is Enable,CKS is PCLK/512   clk=128/3(us)
-#endif
-
-/*
- * Prescale: 8
- * freq = 1000(1/s) = 1000(us) -> 6000
- * freq = 10000(1/s) = 100(us) -> 600
- * freq = 100000(1/s) = 10(us) -> 60
- * Prescale: 32
- * freq = 100(1/s) = 10000(us) -> 15000
- * freq = 1000(1/s) = 1000(us) -> 1500
- * freq = 10000(1/s) = 100(us) -> 150
- * Prescale: 128
- * freq = 10(1/s) = 100000(us) -> 37500
- * freq = 100(1/s) = 10000(us) -> 3750
- * freq = 1000(1/s) = 1000(us) -> 375
- * Prescale: 512
- * freq = 1(1/s) = 1000000(us) -> 23437.5 -> 23437
- * freq = 10(1/s) = 100000(us) -> 2343.75 -> 2344
- * freq = 100(1/s) = 10000(us) -> 234.375 -> 234
- */
-
-#define DELAY_CH    0
+#define USEC_CH    0
+#define MSEC_CH    1
 
 volatile struct st_cmt0 *CMTN[4] = {
     (volatile struct st_cmt0 *)0x88002,
@@ -79,13 +49,22 @@ static void isr_timer(unsigned int ch) {
     cmt_count[ch] += 1L;
 }
 
+void SysTick_Handler(void);
+
+/*
+ * 10usec timer
+ */
 void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void) {
     isr_timer(0);
     cmt_timer_callback(0);
 }
+/*
+ * 1msec timer
+ */
 void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void) {
     isr_timer(1);
     cmt_timer_callback(1);
+    SysTick_Handler();
 }
 void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void) {
     isr_timer(2);
@@ -105,74 +84,6 @@ void cmt_timer_callback(unsigned int ch) {
     if (cmt_timer_func[ch]) {
         (*cmt_timer_func[ch])(cmt_timer_param[ch]);
     }
-}
-
-void cmt_timer_init(unsigned int ch) {
-    volatile struct st_cmt0 *cmtn = CMTN[ch];
-    cmt_count[ch] = 0L;
-    SYSTEM.PRCR.WORD = 0xA502;
-    if ((ch == 0) || (ch == 1)) {
-        SYSTEM.MSTPCRA.BIT.MSTPA15 = 0;
-    } else {
-        SYSTEM.MSTPCRA.BIT.MSTPA14 = 0;
-    }
-    SYSTEM.PRCR.WORD = 0xA500;
-    CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
-    cmtn->CMCNT = 0;
-    cmtn->CMCOR = 0xffff;
-    cmtn->CMCR.WORD = CMT_VAL
-    ;
-    switch (ch) {
-    case 0:
-        ICU.IPR[0x04].BIT.IPR = 0xf;        // IPR = 14 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
-        break;
-    case 1:
-        ICU.IPR[0x05].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
-        break;
-    case 2:
-        ICU.IPR[0x06].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN6 = 1;         // IER enable
-        break;
-    case 3:
-        ICU.IPR[0x07].BIT.IPR = 0xe;        // IPR = 14 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
-        break;
-    default:
-        break;
-    }
-    CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
-}
-
-void cmt_timer_deinit(unsigned int ch) {
-    cmt_count[ch] = 0L;
-    switch (ch) {
-    case 0:
-        ICU.IER[0x03].BIT.IEN4 = 0;         // IER disable
-        break;
-    case 1:
-        ICU.IER[0x03].BIT.IEN5 = 0;         // IER disable
-        break;
-    case 2:
-        ICU.IER[0x03].BIT.IEN6 = 0;         // IER disable
-        break;
-    case 3:
-        ICU.IER[0x03].BIT.IEN7 = 0;         // IER disable
-        break;
-    default:
-        break;
-    }
-    cmt_timer_func[ch] = (CMT_TIMER_FUNC)0;
-    cmt_timer_param[ch] = (void *)0;
-}
-
-void cmt_timer_disable_clk(unsigned int ch) {
-    CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
-}
-
-void cmt_timer_eable_clk(unsigned int ch) {
-    CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
 }
 
 unsigned int cmt_timer_get_prescale(unsigned int ch) {
@@ -215,6 +126,74 @@ void cmt_timer_set_prescale(unsigned int ch, unsigned int prescale) {
     cmtn->CMCR.WORD = (unsigned short)val;
 }
 
+void cmt_timer_init(unsigned int ch, unsigned int prescale) {
+    volatile struct st_cmt0 *cmtn = CMTN[ch];
+    cmt_count[ch] = 0L;
+    SYSTEM.PRCR.WORD = 0xA502;
+    if ((ch == 0) || (ch == 1)) {
+        SYSTEM.MSTPCRA.BIT.MSTPA15 = 0;
+    } else {
+        SYSTEM.MSTPCRA.BIT.MSTPA14 = 0;
+    }
+    SYSTEM.PRCR.WORD = 0xA500;
+    CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
+    cmtn->CMCNT = 0;
+    cmtn->CMCOR = 0xffff;
+    cmt_timer_set_prescale(ch, prescale);
+
+    switch (ch) {
+    case 0:
+        ICU.IPR[0x04].BIT.IPR = 0xf;        // IPR = 14 (15: highest priority)
+        ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
+        break;
+    case 1:
+        ICU.IPR[0x05].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
+        break;
+    case 2:
+        ICU.IPR[0x06].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IER[0x03].BIT.IEN6 = 1;         // IER enable
+        break;
+    case 3:
+        ICU.IPR[0x07].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
+        break;
+    default:
+        break;
+    }
+    CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
+}
+
+void cmt_timer_deinit(unsigned int ch) {
+    cmt_count[ch] = 0L;
+    switch (ch) {
+    case 0:
+        ICU.IER[0x03].BIT.IEN4 = 0;         // IER disable
+        break;
+    case 1:
+        ICU.IER[0x03].BIT.IEN5 = 0;         // IER disable
+        break;
+    case 2:
+        ICU.IER[0x03].BIT.IEN6 = 0;         // IER disable
+        break;
+    case 3:
+        ICU.IER[0x03].BIT.IEN7 = 0;         // IER disable
+        break;
+    default:
+        break;
+    }
+    cmt_timer_func[ch] = (CMT_TIMER_FUNC)0;
+    cmt_timer_param[ch] = (void *)0;
+}
+
+void cmt_timer_disable_clk(unsigned int ch) {
+    CMT.CMSTR0.WORD &= (ch == 0 ? 2 : 1);   // disable clock
+}
+
+void cmt_timer_eable_clk(unsigned int ch) {
+    CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
+}
+
 unsigned int cmt_timer_get_counter(unsigned int ch) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     return (unsigned int)cmtn->CMCOR;
@@ -245,16 +224,18 @@ void cmt_timer_set_period(unsigned int ch, unsigned long period) {
 }
 
 void udelay_init(void) {
-    cmt_timer_init(DELAY_CH);
-    cmt_timer_set_counter(DELAY_CH, 60);
+    cmt_timer_init(USEC_CH, 8);
+    cmt_timer_set_counter(USEC_CH, 60);
+    cmt_timer_init(MSEC_CH, 8);
+    cmt_timer_set_counter(MSEC_CH, 6000);
 }
 
 void udelay(int m) {
     volatile unsigned long start;
     if (m >= 10) {
         m /= 10;
-        start = cmt_count[DELAY_CH];
-        while (cmt_count[DELAY_CH] - start < (unsigned long)m) {
+        start = cmt_count[USEC_CH];
+        while (cmt_count[USEC_CH] - start < (unsigned long)m) {
             __asm__ __volatile__ ("nop");
         }
     } else {
@@ -264,14 +245,17 @@ void udelay(int m) {
     }
 }
 
-void mdelay(int m) {
-    udelay(m*1000);
+unsigned long utick(void) {
+    return cmt_count[USEC_CH] * 10;
 }
 
-unsigned long utick(void) {
-    return cmt_count[DELAY_CH] * 10;
+void mdelay(int m) {
+    volatile unsigned long start = cmt_count[MSEC_CH];
+    while (cmt_count[MSEC_CH] - start < (unsigned long)m) {
+        __asm__ __volatile__ ("nop");
+}
 }
 
 unsigned long mtick(void) {
-    return cmt_count[DELAY_CH] / 100;
+    return cmt_count[MSEC_CH];
 }
