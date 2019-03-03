@@ -30,6 +30,7 @@
 #include "py/runtime.h"
 #include "extmod/vfs_fat.h"
 
+#include "systick.h"
 #include "led.h"
 #include "storage.h"
 #include "irq.h"
@@ -46,6 +47,9 @@
 
 //#define DEBUG_STORAGE_FLASH_CLEAR
 
+#define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
+#define STORAGE_IDLE_TICK(tick) (((tick) & ~(SYSTICK_DISPATCH_NUM_SLOTS - 1) & STORAGE_SYSTICK_MASK) == 0)
+
 #define FLASH_PART1_START_BLOCK (0x1)
 
 #if defined(MICROPY_HW_BDEV2_IOCTL)
@@ -53,6 +57,9 @@
 #endif
 
 static bool storage_is_initialised = false;
+
+// ToDo: check how to implement
+//static void storage_systick_callback(uint32_t ticks_ms);
 
 void storage_init(void) {
     if (!storage_is_initialised) {

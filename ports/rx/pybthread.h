@@ -64,7 +64,7 @@ static inline void *pyb_thread_get_local(void) {
 
 static inline void pyb_thread_yield(void) {
     if (pyb_thread_cur->run_next == pyb_thread_cur) {
-        //__WFI();
+        __WFI();
     } else {
         //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
     }
