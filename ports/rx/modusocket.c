@@ -35,7 +35,8 @@
 #include "lib/netutils/netutils.h"
 #include "modnetwork.h"
 
-#if MICROPY_PY_USOCKET && !MICROPY_PY_LWIP
+//#if MICROPY_PY_USOCKET && !MICROPY_PY_LWIP
+#if MICROPY_PY_USOCKET
 
 /******************************************************************************/
 // socket class
@@ -71,7 +72,7 @@ STATIC void socket_select_nic(mod_network_socket_obj_t *self, const byte *ip) {
     if (self->nic == MP_OBJ_NULL) {
         // select NIC based on IP
         self->nic = mod_network_find_nic(ip);
-        self->nic_type = (mod_network_nic_type_t*)mp_obj_get_type(self->nic);
+        self->nic_type = (mod_network_socket_nic_type_t*)mp_obj_get_type(self->nic);
 
         // call the NIC to open the socket
         int _errno;
@@ -413,6 +414,7 @@ STATIC mp_obj_t mod_usocket_getaddrinfo(mp_obj_t host_in, mp_obj_t port_in) {
     uint8_t out_ip[MOD_NETWORK_IPADDR_BUF_SIZE];
     bool have_ip = false;
 
+#if 0
     if (hlen > 0) {
         // check if host is already in IP form
         nlr_buf_t nlr;
@@ -424,12 +426,13 @@ STATIC mp_obj_t mod_usocket_getaddrinfo(mp_obj_t host_in, mp_obj_t port_in) {
             // swallow exception: host was not in IP form so need to do DNS lookup
         }
     }
+#endif
 
     if (!have_ip) {
         // find a NIC that can do a name lookup
         for (mp_uint_t i = 0; i < MP_STATE_PORT(mod_network_nic_list).len; i++) {
             mp_obj_t nic = MP_STATE_PORT(mod_network_nic_list).items[i];
-            mod_network_nic_type_t *nic_type = (mod_network_nic_type_t*)mp_obj_get_type(nic);
+            mod_network_socket_nic_type_t *nic_type = (mod_network_socket_nic_type_t*)mp_obj_get_type(nic);
             if (nic_type->gethostbyname != NULL) {
                 int ret = nic_type->gethostbyname(nic, host, hlen, out_ip);
                 if (ret != 0) {

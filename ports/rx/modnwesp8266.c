@@ -437,7 +437,7 @@ typedef struct _esp8266_obj_t {
     mp_obj_base_t base;
 } esp8266_obj_t;
 
-STATIC const esp8266_obj_t esp8266_obj = {{(mp_obj_type_t*)&mod_network_nic_type_esp8266}};
+STATIC const esp8266_obj_t esp8266_obj = {{(mp_obj_type_t*)&mod_network_socket_nic_type_esp8266}};
 
 // \classmethod \constructor()
 STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -549,7 +549,7 @@ STATIC const mp_rom_map_elem_t esp8266_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(esp8266_locals_dict, esp8266_locals_dict_table);
 
-const mod_network_nic_type_t mod_network_nic_type_esp8266 = {
+const mod_network_socket_nic_type_t mod_network_socket_nic_type_esp8266 = {
     .base = {
         { &mp_type_type },
         .name = MP_QSTR_ESP8266,

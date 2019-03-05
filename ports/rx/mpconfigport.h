@@ -209,16 +209,23 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_lwip) },
 #define SOCKET_BUILTIN_MODULE_WEAK_LINKS    { MP_ROM_QSTR(MP_QSTR_socket), MP_ROM_PTR(&mp_module_lwip) },
 #define SOCKET_POLL extern void pyb_lwip_poll(void); pyb_lwip_poll();
-#elif MICROPY_PY_USOCKET
-// usocket implementation provided by skeleton wrapper
-#define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_usocket) },
-#define SOCKET_BUILTIN_MODULE_WEAK_LINKS    { MP_ROM_QSTR(MP_QSTR_socket), MP_ROM_PTR(&mp_module_usocket) },
-#define SOCKET_POLL
 #else
 // no usocket module
 #define SOCKET_BUILTIN_MODULE
 #define SOCKET_BUILTIN_MODULE_WEAK_LINKS
 #define SOCKET_POLL
+#endif
+
+#if MICROPY_PY_USOCKET && MICROPY_PY_ESP8266
+// usocket implementation provided by skeleton wrapper
+#define WSOCKET_BUILTIN_MODULE             { MP_ROM_QSTR(MP_QSTR_uwsocket), MP_ROM_PTR(&mp_module_usocket) },
+#define WSOCKET_BUILTIN_MODULE_WEAK_LINKS  { MP_ROM_QSTR(MP_QSTR_wsocket), MP_ROM_PTR(&mp_module_usocket) },
+#define WSOCKET_POLL
+#else
+// no usocket module
+#define WSOCKET_BUILTIN_MODULE
+#define WSOCKET_BUILTIN_MODULE_WEAK_LINKS
+#define WSOCKET_POLL
 #endif
 
 #if MICROPY_PY_NETWORK
@@ -248,6 +255,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
     SOCKET_BUILTIN_MODULE \
+    WSOCKET_BUILTIN_MODULE \
     NETWORK_BUILTIN_MODULE \
     { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, \
 
@@ -277,6 +285,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
     { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, \
     SOCKET_BUILTIN_MODULE_WEAK_LINKS \
+    WSOCKET_BUILTIN_MODULE_WEAK_LINKS \
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_errno), MP_ROM_PTR(&mp_module_uerrno) }, \
