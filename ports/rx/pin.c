@@ -197,20 +197,17 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
     } else {
         // IO mode
         bool af = false;
-        qstr mode_qst;
+        qstr mode_qst = MP_QSTR_NULL;
         if (mode == GPIO_MODE_INPUT) {
             mode_qst = MP_QSTR_IN;
         } else if (mode == GPIO_MODE_OUTPUT_PP) {
             mode_qst = MP_QSTR_OUT;
         } else if (mode == GPIO_MODE_OUTPUT_OD) {
             mode_qst = MP_QSTR_OPEN_DRAIN;
-        } else {
-            af = true;
-            if (mode == GPIO_MODE_AF_PP) {
-                mode_qst = MP_QSTR_ALT;
-            } else {
-                mode_qst = MP_QSTR_ALT_OPEN_DRAIN;
-            }
+        } else if (mode == GPIO_NOPULL) {
+            mode_qst = MP_QSTR_PULL_NONE;
+        } else if (mode == GPIO_PULLUP) {
+            mode_qst = MP_QSTR_PULL_UP;
         }
         mp_print_str(print, qstr_str(mode_qst));
 
@@ -219,10 +216,10 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
         uint32_t pull = pin_get_pull(self);
         if (pull == GPIO_PULLUP) {
             pull_qst = MP_QSTR_PULL_UP;
-        } else if (pull == GPIO_PULLDOWN) {
-            pull_qst = MP_QSTR_PULL_DOWN;
+        } else if (pull == GPIO_NOPULL) {
+            pull_qst = MP_QSTR_PULL_NONE;
         }
-        if (pull_qst != MP_QSTR_NULL) {
+        if (mode == GPIO_MODE_INPUT && pull_qst != MP_QSTR_NULL) {
             mp_printf(print, ", pull=Pin.%q", pull_qst);
         }
 
@@ -350,8 +347,6 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     uint pull = GPIO_NOPULL;
     if (args[1].u_obj == mp_const_true) {
         pull = GPIO_PULLUP;
-    } else if (args[1].u_obj == mp_const_false) {
-        pull = GPIO_PULLDOWN;
     } else if (args[1].u_obj != mp_const_none) {
         pull = mp_obj_get_int(args[1].u_obj);
     }
@@ -550,7 +545,6 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ALT_OPEN_DRAIN), MP_ROM_INT(GPIO_MODE_AF_OD) },
     { MP_ROM_QSTR(MP_QSTR_ANALOG),    MP_ROM_INT(GPIO_MODE_ANALOG) },
     { MP_ROM_QSTR(MP_QSTR_PULL_UP),   MP_ROM_INT(GPIO_PULLUP) },
-    { MP_ROM_QSTR(MP_QSTR_PULL_DOWN), MP_ROM_INT(GPIO_PULLDOWN) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_RISING), MP_ROM_INT(GPIO_MODE_IT_RISING) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_FALLING), MP_ROM_INT(GPIO_MODE_IT_FALLING) },
 
