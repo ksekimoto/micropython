@@ -71,8 +71,8 @@ void gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
         }
         break;
     }
+    if (mode == GPIO_MODE_INPUT) {
     switch (pull) {
-    case GPIO_PULLDOWN:
     case GPIO_NOPULL:
         // assumption GPIO input mode
         _PCR(port) &= ~mask;
@@ -82,6 +82,7 @@ void gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
         _PCR(port) |= mask;
         break;
     }
+}
 }
 
 #if defined(USE_BIT_OPERATION)
@@ -151,4 +152,36 @@ uint8_t gpio_read(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
     return ((_PIDR(port) & mask) != 0) ? 1 : 0;
+}
+
+uint8_t gpio_get_mode(uint8_t pin) {
+    uint8_t mode = 0;
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    if ((_PDR(port) & mask) != 0) {
+        // OUT
+        mode = GPIO_MODE_OUTPUT_PP;
+    } else {
+        // IN
+        mode = GPIO_MODE_INPUT;
+    }
+    return mode;
+}
+
+uint8_t gpio_get_pull(uint8_t pin) {
+    uint8_t pull = 0;
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    if ((_PCR(port) & mask) != 0) {
+        pull = GPIO_PULLUP;
+    } else {
+        pull = GPIO_NOPULL;
+    }
+    return pull;
+}
+
+uint8_t gpio_get_af(uint8_t pin) {
+    uint8_t port = GPIO_PORT(pin);
+    uint8_t mask = GPIO_MASK(pin);
+    return ((_PMR(port) & mask) != 0);
 }
