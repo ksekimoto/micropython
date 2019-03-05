@@ -28,7 +28,7 @@
 #define MICROPY_HW_UART6_TX         (pin_P32)
 #define MICROPY_HW_UART6_RX         (pin_P33)
 #define MICROPY_HW_UART6_DIR        (pin_P34)
-//#define MICROPY_HW_UART_REPL        PYB_UART_1
+//#define MICROPY_HW_UART_REPL        PYB_UART_1  // Serial5 (P26:TX1, P30:RX1)
 #define MICROPY_HW_UART_REPL_BAUD   115200
 #define MICROPY_HW_ESP8266_UART_CH  3
 
