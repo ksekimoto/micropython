@@ -11,10 +11,11 @@ endif
 BUILD ?= build-$(BOARD)
 
 # enable debug_printf
-USE_DBG_PRINT = 1
+#USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
+#MICROPY_DEBUG_PRINTERS = 1
 
 # Use developing usb library instead of stable one for testing
 #USE_NEW_USBLIB = 1
@@ -160,10 +161,15 @@ CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
+#CFLAGS += -DMICROPY_DEBUG_PRINTERS=debug_printf
 endif
 
 ifeq ($(MICROPY_DEBUG_VERBOSE), 1)
 CFLAGS += -DMICROPY_DEBUG_VERBOSE=1
+endif
+
+ifeq ($(MICROPY_DEBUG_PRINTERS), 1)
+CFLAGS += -DMICROPY_DEBUG_PRINTERS=1
 endif
 
 ifeq ($(TEST_RAMDISK), 1)
