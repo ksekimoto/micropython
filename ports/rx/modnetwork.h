@@ -51,11 +51,11 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
 
 extern const mod_network_nic_type_t mod_network_nic_type_rx_ether;
 
-#else
+#endif
 
 struct _mod_network_socket_obj_t;
 
-typedef struct _mod_network_nic_type_t {
+typedef struct _mod_network_socket_nic_type_t {
     mp_obj_type_t base;
 
     // API for non-socket operations
@@ -75,12 +75,12 @@ typedef struct _mod_network_nic_type_t {
     int (*setsockopt)(struct _mod_network_socket_obj_t *socket, mp_uint_t level, mp_uint_t opt, const void *optval, mp_uint_t optlen, int *_errno);
     int (*settimeout)(struct _mod_network_socket_obj_t *socket, mp_uint_t timeout_ms, int *_errno);
     int (*ioctl)(struct _mod_network_socket_obj_t *socket, mp_uint_t request, mp_uint_t arg, int *_errno);
-} mod_network_nic_type_t;
+} mod_network_socket_nic_type_t;
 
 typedef struct _mod_network_socket_obj_t {
     mp_obj_base_t base;
     mp_obj_t nic;
-    mod_network_nic_type_t *nic_type;
+    mod_network_socket_nic_type_t *nic_type;
     union {
         struct {
             uint8_t domain;
@@ -89,16 +89,14 @@ typedef struct _mod_network_socket_obj_t {
         } u_param;
         mp_uint_t u_state;
     };
-//#if MICROPY_PY_ESP8266
+#if MICROPY_PY_ESP8266
     mp_uint_t handle;
-//#endif
+#endif
 } mod_network_socket_obj_t;
 
-extern const mod_network_nic_type_t mod_network_nic_type_wiznet5k;
-extern const mod_network_nic_type_t mod_network_nic_type_cc3k;
-extern const mod_network_nic_type_t mod_network_nic_type_esp8266;
-
-#endif
+extern const mod_network_socket_nic_type_t mod_network_socket_nic_type_wiznet5k;
+extern const mod_network_socket_nic_type_t mod_network_socket_nic_type_cc3k;
+extern const mod_network_socket_nic_type_t mod_network_socket_nic_type_esp8266;
 
 void mod_network_init(void);
 void mod_network_deinit(void);
