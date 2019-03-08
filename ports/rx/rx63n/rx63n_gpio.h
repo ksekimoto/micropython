@@ -91,7 +91,6 @@ enum AF_INDEX {
 #define  GPIO_MODE_EVT_RISING_FALLING   12
 #define  GPIO_NOPULL            13
 #define  GPIO_PULLUP            14
-#define  GPIO_PULLDOWN          15
 
 #define IS_GPIO_MODE(MODE) (((MODE) == GPIO_MODE_INPUT)              ||\
                             ((MODE) == GPIO_MODE_OUTPUT_PP)          ||\
@@ -106,8 +105,7 @@ enum AF_INDEX {
                             ((MODE) == GPIO_MODE_EVT_RISING_FALLING) ||\
                             ((MODE) == GPIO_MODE_ANALOG))
 
-#define IS_GPIO_PULL(PULL) (((PULL) == GPIO_NOPULL) || ((PULL) == GPIO_PULLUP) || \
-                            ((PULL) == GPIO_PULLDOWN))
+#define IS_GPIO_PULL(PULL) (((PULL) == GPIO_NOPULL) || ((PULL) == GPIO_PULLUP))
 
 #define IS_GPIO_AF(AF)   ((AF) <= (uint8_t)0x0F)
 
@@ -159,6 +157,9 @@ void gpio_mode_input(uint8_t pin);
 void gpio_write(uint8_t pin, uint8_t state);
 void gpio_toggle(uint8_t pin);
 uint8_t gpio_read(uint8_t pin);
+uint8_t gpio_get_mode(uint8_t pin);
+uint8_t gpio_get_pull(uint8_t pin);
+uint8_t gpio_get_af(uint8_t pin);
 
 #ifdef __cplusplus
 }

@@ -26,6 +26,7 @@
 
 #include "py/obj.h"
 #include "pin.h"
+#include "common.h"
 
 // Returns the pin mode. This value returned by this macro should be one of:
 // GPIO_MODE_INPUT, GPIO_MODE_OUTPUT_PP, GPIO_MODE_OUTPUT_OD,
@@ -33,7 +34,7 @@
 
 /* ToDo */
 uint32_t pin_get_mode(const pin_obj_t *pin) {
-    return 0;
+    return gpio_get_mode(pin->pin);
 }
 
 // Returns the pin pullup/pulldown. The value returned by this macro should
@@ -41,13 +42,13 @@ uint32_t pin_get_mode(const pin_obj_t *pin) {
 
 /* ToDo */
 uint32_t pin_get_pull(const pin_obj_t *pin) {
-    return 0;
+    return (uint32_t)gpio_get_pull(pin->pin);
 }
 
 // Returns the af (alternate function) index currently set for a pin.
 
 /* ToDo */
 uint32_t pin_get_af(const pin_obj_t *pin) {
-    return 0;
+    return (uint32_t)gpio_get_af(pin->pin);
 }
 
