@@ -79,7 +79,7 @@ char *itoa(int num, char *str, int base);
 uint32_t esp8266_read(uint32_t timeout);
 
 #define ESP8266_READ_TIMEOUT    1000
-#define WIFI_SERIAL     6   /* sci6 */
+#define WIFI_SERIAL     MICROPY_HW_ESP8266_UART_CH
 #define WIFI_BAUDRATE   115200
 #define WIFI_WAIT_MSEC  5000
 #define WIFI_TIMEOUT    5000
@@ -854,7 +854,9 @@ bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
         return false;
     }
     if (strlen(domain) >= 64) {
+#if defined(DEBUG_ESP8266_DRIVER)
         debug_printf("ESP8266 ERR: domain name too long\r\n");
+#endif
         return false;
     }
     esp8266_serial_prepare_AT();
@@ -1346,7 +1348,9 @@ int32_t esp8266_send(int id, const void *data, uint32_t amount) {
     if (amount > CIPSEND_MAX && socket_info[id].proto == ESP8266_TCP) {
         amount = CIPSEND_MAX;
     } else if (amount > CIPSEND_MAX && socket_info[id].proto == ESP8266_UDP) {
+#if defined(DEBUG_ESP8266_DRIVER)
         debug_printf("UDP datagram maximum size is 2048");
+#endif
         esp8266_errno = ESP8266_ERROR_PARAMETER;
         return false;
     }

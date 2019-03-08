@@ -9,6 +9,7 @@
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
+#define MICROPY_HW_HAS_ETHERNET     (0)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
@@ -17,6 +18,7 @@
 #define MICROPY_HW_UART2_RX         (pin_P52)
 //#define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
+#define MICROPY_HW_ESP8266_UART_CH  6
 
 // I2C busses
 //#define MICROPY_HW_I2C0_SCL (pin_P13)

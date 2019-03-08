@@ -20,14 +20,17 @@
 #define MICROPY_HW_UART2_TX         (pin_P13)
 #define MICROPY_HW_UART2_RX         (pin_P12)
 #define MICROPY_HW_UART2_SEL        (pin_P14)
+#define MICROPY_HW_UART3_TX         (pin_P23)
+#define MICROPY_HW_UART3_RX         (pin_P25)
 #define MICROPY_HW_UART5_TX         (pin_PC3)
 #define MICROPY_HW_UART5_RX         (pin_PC2)
 #define MICROPY_HW_UART5_DIR        (pin_P51)
 #define MICROPY_HW_UART6_TX         (pin_P32)
 #define MICROPY_HW_UART6_RX         (pin_P33)
 #define MICROPY_HW_UART6_DIR        (pin_P34)
-//#define MICROPY_HW_UART_REPL        PYB_UART_1
+//#define MICROPY_HW_UART_REPL        PYB_UART_1  // Serial5 (P26:TX1, P30:RX1)
 #define MICROPY_HW_UART_REPL_BAUD   115200
+#define MICROPY_HW_ESP8266_UART_CH  3
 
 // I2C busses
 //#define MICROPY_HW_I2C0_SCL (pin_P13)
@@ -77,8 +80,8 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP8266      (1)
-#define MICROPY_PY_PYB_TWITTER      (1)
+#define MICROPY_HW_HAS_ESP8266      (0)
+#define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
