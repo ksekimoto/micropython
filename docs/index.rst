@@ -9,4 +9,6 @@ MicroPython documentation and references
     license.rst
     pyboard/quickref.rst
     esp8266/quickref.rst
+    esp32/quickref.rst
     wipy/quickref.rst
+    rxboard/quickref.rst
