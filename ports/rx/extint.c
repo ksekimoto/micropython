@@ -145,8 +145,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
         cond = 0;
     }
     if (pull != GPIO_NOPULL &&
-        pull != GPIO_PULLUP &&
-        pull != GPIO_PULLDOWN) {
+        pull != GPIO_PULLUP) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid ExtInt Pull: %d", pull));
     }
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
