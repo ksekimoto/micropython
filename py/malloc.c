@@ -32,8 +32,14 @@
 #include "py/misc.h"
 #include "py/mpstate.h"
 
+#define MICROPY_DEBUG_MALLOC (0)
+
 #if MICROPY_DEBUG_VERBOSE // print debugging info
+#if MICROPY_DEBUG_MALLOC
 #define DEBUG_printf DEBUG_printf
+#else
+#define DEBUG_printf(...) (void)0
+#endif
 #else // don't print debugging info
 #define DEBUG_printf(...) (void)0
 #endif
