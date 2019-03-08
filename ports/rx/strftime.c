@@ -34,7 +34,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "vsnprintf.h"
+#include <stdarg.h>
+//#include "vsnprintf.h"
 
 extern long _timezone;
 extern const char *_days[];
@@ -174,7 +175,7 @@ static char *_fmt(const char *format, const struct tm *t, char *pt, const char *
           tm = *t;
           mkt = mktime(&tm);
           //sprintf(buf, "%lu", mkt);
-          vxsnprintf((char *)buf, sizeof(buf), "%lu", (va_list)mkt);
+          vsnprintf((char *)buf, sizeof(buf), "%lu", (va_list)mkt);
           pt = _add(buf, pt, ptlim);
           continue;
         }
@@ -306,7 +307,7 @@ static char *_conv(const int n, const char *format, char *pt, const char *ptlim)
   char  buf[32];
 
   //sprintf(buf, format, n);
-  vxsnprintf(buf, sizeof(buf), format, (va_list )n);
+  vsnprintf(buf, sizeof(buf), format, (va_list )n);
   return _add(buf, pt, ptlim);
 }
 
