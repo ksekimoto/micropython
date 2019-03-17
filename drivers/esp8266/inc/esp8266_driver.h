@@ -127,6 +127,8 @@ bool esp8266_get_AT_CWJAP_CUR(char *ssid, char *bssid, char *channel, char *rssi
 bool esp8266_set_AT_CWDHCP(uint8_t mode, bool enabled);
 bool esp8266_get_AT_CIPSTAMAC_CUR(uint8_t *mac);
 bool esp8266_get_AT_CIPSTA(uint8_t *ip, uint8_t *gw, uint8_t *mask);
+bool esp8266_set_AT_CIPSERVER(int port);
+bool esp8266_reset_AT_CIPSERVER(void);
 
 bool esp8266_gethostbyname(const char *name, unsigned char *ip);
 int esp8266_socket_open(void **handle, esp8266_protocol_t proto);

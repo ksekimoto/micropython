@@ -104,6 +104,7 @@ bool _sock_already = false;
 bool _error = false;
 bool _busy = false;
 int _heap_usage = 0;
+bool _cip_server = false;
 
 /*******************************************************************/
 /* string routines                                                 */
@@ -285,7 +286,7 @@ static void esp8266_serial_clear_buf(void) {
 }
 
 static void esp8266_serial_begin(void) {
-    sci_init(esp8266_ch, esp8266_baud);
+    sci_init_default(esp8266_ch, esp8266_baud);
 }
 
 static int esp8266_serial_available(void) {
@@ -1072,6 +1073,32 @@ bool esp8266_set_AT_CIPCLOSE(int id) {
     return false;
 }
 
+bool esp8266_set_AT_CIPSERVER(int port) {
+    if (_cip_server) {
+        return false;
+    }
+    esp8266_serial_prepare_AT();
+    esp8266_serial_print("AT+CIPSERVER=1,");
+    esp8266_serial_printiln(port);
+    char *buf = esp8266_serial_recv_string2("OK", "ERROR", 5000);
+    if (strstr((const char *)buf, "OK") != NULL) {
+        _cip_server = true;
+        return true;
+    }
+    return false;
+}
+
+bool esp8266_reset_AT_CIPSERVER(void) {
+    esp8266_serial_prepare_AT();
+    esp8266_serial_println("AT+CIPSERVER=0");
+    char *buf = esp8266_serial_recv_string2("OK", "ERROR", 5000);
+    if (strstr((const char *)buf, "OK") != NULL) {
+        _cip_server = false;
+        return true;
+    }
+    return false;
+}
+
 uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32_t timeout, int id) {
 #if defined(DEBUG_ESP8266_DRIVER)
     debug_printf("esp8266_recv(id=%d, amount=%d)\r\n", id, amount);
@@ -1389,6 +1416,20 @@ int32_t esp8266_recv_udp(int id, const void *data, uint32_t amount) {
     return count;
 }
 
+/*
+ * accept
+ */
+bool esp8266_accept(int id) {
+    bool ret = false;
+    while (!ret) {
+        if (!_cip_server) {
+            break;
+        }
+        esp8266_serial_prepare_AT();
+    }
+    return ret;
+}
+
 /*******************************************************************/
 /* ESP8266 socket interface                                        */
 /*******************************************************************/
@@ -1462,23 +1503,33 @@ int esp8266_socket_bind(void *handle, const esp8266_socket_address_t *address) {
 #if defined(DEBUG_ESP8266_SOCKET)
     debug_printf("esp8266_socket_bind()\r\n");
 #endif
+    int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
-        return -1;
-    }
-    if (socket->proto == ESP8266_UDP) {
-        for (int id = 0; id < ESP8266_SOCKET_COUNT; id++) {
-            if (socket_info[id].sport == address->_port && id != socket->id) {
-                // Port already reserved by another socket
-                return -1;
-            } else if (id == socket->id && socket->connected) {
-                return -1;
+        err = -1;
+    } else {
+        if (socket->proto == ESP8266_UDP) {
+            for (int id = 0; id < ESP8266_SOCKET_COUNT; id++) {
+                if (socket_info[id].sport == address->_port && id != socket->id) {
+                    // Port already reserved by another socket
+                    err = -1;
+                    break;
+                } else if (id == socket->id && socket->connected) {
+                    err = -1;
+                    break;
+                }
             }
+            if (err == 0) {
+                socket_info[socket->id].sport = address->_port;
+            }
+        } else {
+            socket->addr = *(esp8266_socket_address_t *)address;
         }
-        socket_info[socket->id].sport = address->_port;
-        return 0;
     }
-    return -1;
+#if defined(DEBUG_ESP8266_SOCKET)
+    debug_printf("esp8266_socket_bind() ret=%d\r\n", err);
+#endif
+    return err;
 }
 
 /*
@@ -1488,8 +1539,20 @@ bool esp8266_socket_listen(void *handle, int backlog) {
 #if defined(DEBUG_ESP8266_SOCKET)
     debug_printf("esp8266_socket_listen()\r\n");
 #endif
-    // ToDo: implementation
-    return false;
+    int err = 0;
+    struct esp8266_socket *socket = (struct esp8266_socket *)handle;
+    if (!socket) {
+        err = -1;
+    } else {
+        if (socket->proto == ESP8266_UDP) {
+            err = -1;
+        } else {
+            if (!esp8266_set_AT_CIPSERVER(socket->addr._port)) {
+                err = -1;
+            }
+        }
+    }
+    return (err == 0);
 }
 
 /*

@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+void internal_flash_init(void);
+
 void rx63n_software_reset(void) {
     SYSTEM.PRCR.WORD = 0xA502;  /* Enable writing to the Software Reset */
     SYSTEM.SWRR = 0xA501;       /* Software Reset */
@@ -39,10 +41,11 @@ void rx63n_init(void) {
     udelay_init();
     rx_rtc_init();
 #ifdef USE_DBG_PRINT
-    sci_init(DEBUG_CH, SCI_BAUD);
-    sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    //sci_tx_str(DEBUG_CH, "rx63n_init\r\n");
+    sci_init_default(DEBUG_CH, SCI_BAUD);
+    //sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
+    //sci_tx_str(DEBUG_CH, (uint8_t *)"rx63n_init\r\n");
 #endif
     //usb_init();
+    internal_flash_init();
 }
 

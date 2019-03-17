@@ -85,7 +85,7 @@ unsigned long millis() {
 }
 
 static void esp8266_serial_begin(void) {
-    sci_init(esp8266_ch, esp8266_baud);
+    sci_init_default(esp8266_ch, esp8266_baud);
 }
 
 static int esp8266_serial_available(void) {
