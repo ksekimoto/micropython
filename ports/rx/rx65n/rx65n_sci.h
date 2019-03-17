@@ -30,8 +30,9 @@
 extern "C" {
 #endif
 
-void sci_init(int ch, int baud);
-void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud);
+void sci_init(int ch, int baud, int bits, int parity, int stop, int flow);
+void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int parity, int stop, int flow);
+void sci_init_default(int ch, int baud);
 void sci_set_baud(int ch, int baud);
 uint8_t sci_rx_ch(int ch);
 int sci_rx_any(int ch);

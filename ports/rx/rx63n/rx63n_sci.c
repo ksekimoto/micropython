@@ -97,8 +97,13 @@ struct SCI_FIFO {
     uint8_t buff[SCI_BUF_SIZE];
 };
 
-static bool sci_init_flag[SCI_CH_NUM] = {false};
-static SCI_CALLBACK sci_callback[SCI_CH_NUM] = {};
+static bool sci_init_flag[] = {
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false,
+};
+static SCI_CALLBACK sci_callback[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
 static volatile struct SCI_FIFO tx_fifo[SCI_CH_NUM];
 static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
@@ -311,7 +316,8 @@ void sci_tx_ch(int ch, uint8_t c) {
 }
 
 int sci_tx_wait(int ch) {
-    return (int)(tx_fifo[ch].head != tx_fifo[ch].tail);
+    volatile struct st_sci0 *sci = SCI[ch];
+    return (sci->SSR.BYTE & 0x80)? 1:0;
 }
 
 void sci_tx_str(int ch, uint8_t *p) {
@@ -465,7 +471,13 @@ void sci_set_baud(int ch, int baud) {
         sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 32 - 1);
 }
 
-void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
+/*
+ * bits: 7, 8, 9
+ * parity: none:0, odd:1, even:2
+ */
+void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int parity, int stop, int flow) {
+    uint8_t smr = 0;
+    uint8_t scmr = 0xf2;
     volatile struct st_sci0 *sci = SCI[ch];
 
     if (!sci_init_flag[ch]) {
@@ -491,7 +503,25 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
         //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
         SYSTEM.PRCR.WORD = 0xA500;
         sci->SCR.BYTE = 0;
-        sci->SMR.BYTE = 0x00;
+        if (bits == 7) {
+            smr |= 0x40;
+        }
+        if (parity != 0) {
+            smr |= 0x20;
+        }
+        if (parity == 1) {
+            smr |= 0x10;
+        }
+        if (stop == 2) {
+            smr |= 0x80;
+        }
+        sci->SMR.BYTE = smr;
+        if (bits != 9) {
+            scmr &= ~0x10;
+        } else {
+            scmr |= 0x10;
+        }
+        sci->SCMR.BYTE = scmr;
         sci_set_baud(ch, baud);
         delay_us(10);
         sci->SCR.BYTE = 0xd0;
@@ -502,12 +532,16 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
     }
 }
 
-void sci_init(int ch, int baud) {
+void sci_init(int ch, int baud, int bits, int parity, int stop, int flow) {
     int tx_pin = (int)sci_tx_pins[ch];
     int rx_pin = (int)sci_rx_pins[ch];
     if ((tx_pin != 0xff) && (rx_pin != 0xff)) {
-        sci_init_with_pins(ch, tx_pin, rx_pin, baud);
+        sci_init_with_pins(ch, tx_pin, rx_pin, baud, bits, parity, stop, flow);
     }
+}
+
+void sci_init_default(int ch, int baud) {
+    sci_init(ch, baud, 8, 0, 1, 0);
 }
 
 void sci_deinit(int ch) {

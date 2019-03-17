@@ -468,14 +468,13 @@ void sci_tx_ch(int ch, uint8_t c) {
 }
 
 int sci_tx_wait(int ch) {
-    return (int)(tx_fifo[ch].head != tx_fifo[ch].tail);
+    volatile struct st_sci0 *sci = SCI[ch];
+    return (sci->SSR.BYTE & 0x80)? 1:0;
 }
 
 void sci_tx_str(int ch, uint8_t *p) {
     uint8_t c;
     while ((c = *p++) != 0) {
-        //if (c == '\n')
-        //    sci_tx_ch(ch, '\r');
         sci_tx_ch(ch, c);
     }
 }
@@ -693,11 +692,18 @@ void sci_set_baud(int ch, int baud) {
     }
 }
 
-void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
+/*
+ * bits: 7, 8, 9
+ * parity: none:0, odd:1, even:2
+ */
+void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int parity, int stop, int flow) {
+    uint8_t smr = 0;
+    uint8_t scmr = 0xf2;
     volatile struct st_sci0 *sci = SCI[ch];
 
     if (!sci_init_flag[ch]) {
         sci_fifo_init(ch);
+        sci_callback[ch] = 0;
         rx_disable_irq();
         SYSTEM.PRCR.WORD = 0xA502;
         MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
@@ -718,7 +724,25 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
         //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
         SYSTEM.PRCR.WORD = 0xA500;
         sci->SCR.BYTE = 0;
-        sci->SMR.BYTE = 0x00;
+        if (bits == 7) {
+            smr |= 0x40;
+        }
+        if (parity != 0) {
+            smr |= 0x20;
+        }
+        if (parity == 1) {
+            smr |= 0x10;
+        }
+        if (stop == 2) {
+            smr |= 0x80;
+        }
+        sci->SMR.BYTE = smr;
+        if (bits != 9) {
+            scmr &= ~0x10;
+        } else {
+            scmr |= 0x10;
+        }
+        sci->SCMR.BYTE = scmr;
         sci_set_baud(ch, baud);
         delay_us(10);
         sci->SCR.BYTE = 0xd0;
@@ -729,12 +753,16 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud) {
     }
 }
 
-void sci_init(int ch, int baud) {
+void sci_init(int ch, int baud, int bits, int parity, int stop, int flow) {
     int tx_pin = (int)sci_tx_pins[ch];
     int rx_pin = (int)sci_rx_pins[ch];
     if ((tx_pin != 0xff) && (rx_pin != 0xff)) {
-        sci_init_with_pins(ch, tx_pin, rx_pin, baud);
+        sci_init_with_pins(ch, tx_pin, rx_pin, baud, bits, parity, stop, flow);
     }
+}
+
+void sci_init_default(int ch, int baud) {
+    sci_init(ch, baud, 8, 0, 1, 0);
 }
 
 void sci_deinit(int ch) {
@@ -747,6 +775,7 @@ void sci_deinit(int ch) {
         sci_module_stop(ch);
         //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
         SYSTEM.PRCR.WORD = 0xA500;
+        sci_callback[ch] = 0;
     }
 }
 

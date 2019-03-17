@@ -49,6 +49,8 @@ typedef enum {
 #define UART_WORDLENGTH_8B  (0)
 #define UART_STOPBITS_1     (0)
 #define UART_PARITY_NONE    (0)
+#define UART_PARITY_ODD     (1)
+#define UART_PARITY_EVEN    (2)
 
 typedef struct _pyb_uart_obj_t {
     mp_obj_base_t base;
