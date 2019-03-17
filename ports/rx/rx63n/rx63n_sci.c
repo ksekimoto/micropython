@@ -516,7 +516,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
             smr |= 0x80;
         }
         sci->SMR.BYTE = smr;
-        if (bits != 9) {
+        if (bits == 9) {
             scmr &= ~0x10;
         } else {
             scmr |= 0x10;
