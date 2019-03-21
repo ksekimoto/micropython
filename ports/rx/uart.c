@@ -285,7 +285,7 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
             return false;
     }
 
-    sci_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, uart_obj->baud);
+    sci_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
 
     uart_obj->is_enabled = true;
     uart_obj->attached_to_repl = false;
@@ -395,11 +395,11 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
         return 0;
     }
     int i;
-    for (int i = 0; i < num_chars; i++) {
+    for (i = 0; i < (int)num_chars; i++) {
         sci_tx_ch(ch, *data++);
     }
     *errcode = 0;
-    return i;
+    return (size_t)i;
 }
 
 void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {
@@ -457,12 +457,26 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
 
     // set the UART configuration values
     self->baud = args.baudrate.u_int;
-    self->bits = args.bits.u_int;
+    uint32_t bits = args.bits.u_int;
+    self->bits = bits;
+    if (bits != 9) {
+        self->char_width = CHAR_WIDTH_8BIT;
+    } else {
+        self->char_width = CHAR_WIDTH_9BIT;
+    }
+
+    uint32_t parity = 0;
+    if (args.parity.u_obj == mp_const_none) {
+        parity = 0;
+    } else {
+        mp_int_t p = mp_obj_get_int(args.parity.u_obj);
+        parity = (p & 1) ? 1 : 2;
+    }
 
     // init UART (if it fails, it's because the port doesn't exist)
-    //if (!uart_init(self)) {
-    //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", self->uart_id));
-    //}
+    if (!uart_init(self, args.baudrate.u_int, bits, parity, args.stop.u_int, args.flow.u_int)) {
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", self->uart_id));
+    }
 
     // set timeout
     self->timeout = args.timeout.u_int;
@@ -619,7 +633,7 @@ STATIC mp_obj_t pyb_uart_writechar(mp_obj_t self_in, mp_obj_t char_in) {
     uint16_t data = mp_obj_get_int(char_in);
 
     // write the character
-    int errcode;
+    int errcode = 0;
     if (uart_tx_wait(self, self->timeout)) {
         uart_tx_data(self, &data, 1, &errcode);
     } else {
@@ -736,6 +750,7 @@ STATIC mp_uint_t pyb_uart_write(mp_obj_t self_in, const void *buf_in, mp_uint_t 
     }
 
     // wait to be able to write the first character. EAGAIN causes write to return None
+    // ToDo: temporarily commented out
     if (!uart_tx_wait(self, self->timeout)) {
         *errcode = MP_EAGAIN;
         return MP_STREAM_ERROR;
