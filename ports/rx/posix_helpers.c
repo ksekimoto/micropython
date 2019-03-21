@@ -42,7 +42,7 @@
 #include "posix_helpers.h"
 
 //#define DEBUG_TIME
-#define DEBUG_SIGNAL
+//#define DEBUG_SIGNAL
 
 // Functions for external libs like axTLS, BerkeleyDB, etc.
 
