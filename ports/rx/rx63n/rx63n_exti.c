@@ -31,11 +31,17 @@
 #include "rx63n_exti.h"
 #include "rx63n_gpio.h"
 
-#define EXTI_DEFAULT_PRIORITY   1
+#define EXTI_DEFAULT_PRIORITY   (1)
+#define IRQ_NUM (16)
+#define DEFAULT_BOUNCE_PERIOD   (200)   /* 200ms */
 
-static EXTI_FUNC exti_func[16] = {0};
-static void *exti_param[16] = {0};
-static uint8_t pin_idx[] = {
+static EXTI_FUNC exti_func[IRQ_NUM] = {0};
+static void *exti_param[IRQ_NUM] = {0};
+static bool bounce_flag[IRQ_NUM] = {false};
+static uint32_t bounce_period[IRQ_NUM] = {0};
+static uint32_t bounce_start[IRQ_NUM] = {0};
+
+static const uint8_t pin_idx[] = {
         P00,    /* P00 0 */
         P01,    /* P01 1 */
         P02,    /* P02 2 */
@@ -77,7 +83,7 @@ static uint8_t pin_idx[] = {
 
 };
 
-static uint8_t pin_irq[] = {
+static const uint8_t pin_irq[] = {
     8,      /* P00 0 */
     9,      /* P01 1 */
     10,     /* P02 2 */
@@ -168,18 +174,31 @@ void exti_disable(uint32_t pin) {
 }
 
 void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param) {
-    if (irq_no >= 16)
+    if (irq_no >= IRQ_NUM)
         return;
     exti_func[irq_no] = func;
     exti_param[irq_no] = param;
 }
 
 void exti_callback(uint32_t irq_no) {
-    if (irq_no >= 16)
+    if (irq_no >= IRQ_NUM)
         return;
+    if (bounce_flag[irq_no]) {
+        if ((mtick() - bounce_start[irq_no]) > bounce_period[irq_no]) {
+            bounce_flag[irq_no] = false;
+        }
+        return;
+    }
+    uint8_t mask2 = 1 << (irq_no & 7);
+    RX_IER(irq_no) &= ~mask2;
     if (exti_func[irq_no]) {
+        if (!bounce_flag[irq_no]) {
+            bounce_start[irq_no] = mtick();
+            bounce_flag[irq_no] = true;
         (*exti_func[irq_no])(exti_param[irq_no]);
     }
+    }
+    RX_IER(irq_no) |= mask2;
 }
 
 /*
@@ -195,9 +214,14 @@ void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
     cond = (cond & 0x3) << 2;
     /* disable interrupt */
     RX_IER(irq_no) &= ~mask2;
+    SYSTEM.PRCR.WORD = 0xA502;
+    MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
+    MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
     gpio_config(pin, GPIO_MODE_INPUT, pull, 0);
     /* IRQx input: set ISEL bit */
     _MPC(pin) |= 0x40;
+    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    SYSTEM.PRCR.WORD = 0xA500;
     /* interrupt condition (level or edge) */
     RX_IRQCR(irq_no) = (RX_IRQCR(irq_no) & ~0x0c) | (cond << 2);
     /* clear interrupt flag */
@@ -223,6 +247,17 @@ void exti_register(uint32_t pin, uint32_t cond, uint32_t pull) {
     }
 }
 
+static void exti_bounce_init(void) {
+    for (int i = 0; i < IRQ_NUM; i++) {
+        bounce_flag[i] = false;
+        bounce_period[i] = DEFAULT_BOUNCE_PERIOD;
+    }
+}
+
+void exti_set_bounce(uint32_t irq_no, uint32_t bounce) {
+    bounce_period[irq_no] = bounce;
+}
+
 void exti_init(void) {
     /* set the digital filters to use PCLK/1 and disable */
     ICU.IRQFLTC0.WORD = 0U;
@@ -233,7 +268,7 @@ void exti_init(void) {
 
 void exti_deinit(void) {
     uint8_t cond = 0;
-    for (int irq_no = 0; irq_no < 16; irq_no++) {
+    for (int irq_no = 0; irq_no < IRQ_NUM; irq_no++) {
         uint8_t mask2 = 1 << (irq_no & 7);
         RX_IER(irq_no) &= ~mask2;
         /* interrupt condition (level or edge) */
@@ -243,6 +278,7 @@ void exti_deinit(void) {
         /* set interrupt priority */
         RX_IPR(irq_no) = 0;
     }
+    exti_bounce_init();
 }
 
 void INT_Excep_ICU_IRQ0(void) {
