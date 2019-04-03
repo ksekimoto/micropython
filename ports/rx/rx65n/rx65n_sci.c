@@ -704,51 +704,61 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     if (!sci_init_flag[ch]) {
         sci_fifo_init(ch);
         sci_callback[ch] = 0;
-        rx_disable_irq();
-        SYSTEM.PRCR.WORD = 0xA502;
-        MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
-        MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
-        sci_module_start(ch);
-        uint8_t tx_port = GPIO_PORT(tx_pin);
-        uint8_t tx_mask = GPIO_MASK(tx_pin);
-        uint8_t rx_port = GPIO_PORT(rx_pin);
-        uint8_t rx_mask = GPIO_MASK(rx_pin);
-        _PMR(tx_port) &= ~tx_mask;
-        _PMR(rx_port) &= ~rx_mask;
-        _PDR(tx_port) |= tx_mask;
-        _PDR(rx_port) &= ~rx_mask;
-        _PXXPFS(tx_port, tx_pin & 7) = 0x0a;
-        _PXXPFS(rx_port, rx_pin & 7) = 0x0a;
-        _PMR(tx_port) |= tx_mask;
-        _PMR(rx_port) |= rx_mask;
-        //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
-        SYSTEM.PRCR.WORD = 0xA500;
-        sci->SCR.BYTE = 0;
-        if (bits == 7) {
-            smr |= 0x40;
-        }
-        if (parity != 0) {
-            smr |= 0x20;
-        }
-        if (parity == 1) {
-            smr |= 0x10;
-        }
-        if (stop == 2) {
-            smr |= 0x80;
-        }
-        sci->SMR.BYTE = smr;
-        if (bits == 9) {
-            scmr &= ~0x10;
-        } else {
-            scmr |= 0x10;
-        }
-        sci->SCMR.BYTE = scmr;
-        sci_set_baud(ch, baud);
-        delay_us(10);
-        sci->SCR.BYTE = 0xd0;
-        sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
-        sci_int_enable(ch);
-        rx_enable_irq();
+    }
+    rx_disable_irq();
+    SYSTEM.PRCR.WORD = 0xA502;
+    MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
+    MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
+    sci_module_start(ch);
+    uint8_t tx_port = GPIO_PORT(tx_pin);
+    uint8_t tx_mask = GPIO_MASK(tx_pin);
+    uint8_t rx_port = GPIO_PORT(rx_pin);
+    uint8_t rx_mask = GPIO_MASK(rx_pin);
+    _PMR(tx_port) &= ~tx_mask;
+    _PMR(rx_port) &= ~rx_mask;
+    _PDR(tx_port) |= tx_mask;
+    _PDR(rx_port) &= ~rx_mask;
+    _PXXPFS(tx_port, tx_pin & 7) = 0x0a;
+    _PXXPFS(rx_port, rx_pin & 7) = 0x0a;
+    _PMR(tx_port) |= tx_mask;
+    _PMR(rx_port) |= rx_mask;
+    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    SYSTEM.PRCR.WORD = 0xA500;
+    sci->SCR.BYTE = 0;
+    if (bits == 7) {
+        smr |= 0x40;
+    } else {
+        smr &= ~0x40;
+    }
+    if (parity != 0) {
+        smr |= 0x20;
+    } else {
+        smr &= ~0x20;
+    }
+    if (parity == 1) {
+        smr |= 0x10;
+    } else {
+        smr &= ~0x10;
+    }
+    if (stop == 2) {
+        smr |= 0x80;
+    } else {
+        smr &= ~0x80;
+    }
+    sci->SMR.BYTE = smr;
+    if (bits == 9) {
+        scmr &= ~0x10;
+    } else {
+        scmr |= 0x10;
+    }
+    sci->SCMR.BYTE = scmr;
+    sci_set_baud(ch, baud);
+    delay_us(10);
+    sci->SCR.BYTE = 0xd0;
+    sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
+    sci_int_enable(ch);
+    rx_enable_irq();
+    if (!sci_init_flag[ch]) {
         sci_init_flag[ch] = true;
     }
 }
@@ -766,17 +776,15 @@ void sci_init_default(int ch, int baud) {
 }
 
 void sci_deinit(int ch) {
-    if (sci_init_flag[ch]) {
-        sci_init_flag[ch] = false;
-        sci_int_disable(ch);
-        SYSTEM.PRCR.WORD = 0xA502;
-        MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
-        MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
-        sci_module_stop(ch);
-        //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
-        SYSTEM.PRCR.WORD = 0xA500;
-        sci_callback[ch] = 0;
-    }
+    sci_init_flag[ch] = false;
+    sci_int_disable(ch);
+    SYSTEM.PRCR.WORD = 0xA502;
+    MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */
+    MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
+    sci_module_stop(ch);
+    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    SYSTEM.PRCR.WORD = 0xA500;
+    sci_callback[ch] = 0;
 }
 
 /* rx interrupt */
