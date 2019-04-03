@@ -72,3 +72,11 @@
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
+
+#define PYB_SERVO_NUM   (6)
+#define BOARD_SERVO1_PIN    (pin_P13)
+#define BOARD_SERVO2_PIN    (pin_P15)
+#define BOARD_SERVO3_PIN    (pin_P32)
+#define BOARD_SERVO4_PIN    (pin_P33)
+#define BOARD_SERVO5_PIN    (pin_PB3)
+#define BOARD_SERVO6_PIN    (pin_PB5)
