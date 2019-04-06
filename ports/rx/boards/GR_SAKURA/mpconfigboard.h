@@ -92,3 +92,12 @@
 #define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_UNICODE_FONT (0)
 #define MICROPY_PY_PYB_LCDSPI       (1)
+
+#define PYB_SERVO_NUM   (6)
+#define BOARD_SERVO1_PIN    (pin_P13)
+#define BOARD_SERVO2_PIN    (pin_PC4)
+#define BOARD_SERVO3_PIN    (pin_P22)
+#define BOARD_SERVO4_PIN    (pin_P23)
+#define BOARD_SERVO5_PIN    (pin_P24)
+#define BOARD_SERVO6_PIN    (pin_P25)
+
