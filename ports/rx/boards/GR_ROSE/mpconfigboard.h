@@ -53,6 +53,11 @@
 //#define MICROPY_HW_SPI1_SCK  (pin_PC5)
 //#define MICROPY_HW_SPI1_MISO (pin_PC7)
 //#define MICROPY_HW_SPI1_MOSI (pin_PC6)
+#define MICROPY_HW_SPI2_NAME "B"
+#define MICROPY_HW_SPI2_NSS  (pin_PE4)
+#define MICROPY_HW_SPI2_SCK  (pin_PE5)
+#define MICROPY_HW_SPI2_MISO (pin_PE7)
+#define MICROPY_HW_SPI2_MOSI (pin_PE6)
 // USRSW is pulled low. Pressing the button makes the input go high.
 //#define MICROPY_HW_USRSW_PIN        (pin_PA7)
 //#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
