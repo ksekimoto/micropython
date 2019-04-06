@@ -50,9 +50,9 @@
 #include "vector.h"
 #include "esp8266_driver.h"
 
-#define DEBUG_ESP8266_PACKET
-#define DEBUG_ESP8266_DRIVER
-#define DEBUG_ESP8266_SOCKET
+//#define DEBUG_ESP8266_PACKET
+//#define DEBUG_ESP8266_DRIVER
+//#define DEBUG_ESP8266_SOCKET
 
 void mp_hal_delay_ms(uint32_t);
 
