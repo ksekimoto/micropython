@@ -57,18 +57,25 @@ static vp_ipr g_ipr[] = {
 };
 
 static vp_rspi g_rspi[] = {
+#if defined(RX63N)
     (vp_rspi)0x88380,   // RSPI0
     (vp_rspi)0x883A0,   // RSPI1
     (vp_rspi)0x883C0    // RSPI2
+#endif
+#if defined(RX65N) || defined(RX64M)
+    (vp_rspi)0xD0100,   // RSPI0
+    (vp_rspi)0xD0140,   // RSPI1
+    (vp_rspi)0xD0300    // RSPI2
+#endif
 };
 
 static uint8_t SPI_PINS[] = {
     PC5,    // PC5: RSPCKA
     PC6,    // PC6: MOSIA
     PC7,    // PC7: MISOA
-    PE5,    // PE5: RSPCKB
-    PE6,    // PE6: MOSIB
-    PE7,    // PE7: MISOB
+    PE5,    // PE5: RSPCKB-B
+    PE6,    // PE6: MOSIB-B
+    PE7,    // PE7: MISOB-B
     PD3,    // PD3: RSPCKC
     PD1,    // PD1: MOSIC
     PD2     // PD2: MISOC
