@@ -699,38 +699,48 @@ void rx_tpu_channel_init(int channel) {
     rx_tpu_channel_disable(channel);
     switch (channel) {
     case 0:
-        TPU0.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
+        TPU0.TCR.BIT.CCLR = 0x3;    // compare match clear by other counter
         TPU0.TMDR.BIT.MD = 0x3;     // PWM mode 2
         TPU0.TIORH.BIT.IOA = 0x5;   // compare match high - low
         TPU0.TIORH.BIT.IOB = 0x5;   // compare match high - low
         TPU0.TIORL.BIT.IOC = 0x5;   // compare match high - low
         TPU0.TIORL.BIT.IOD = 0x5;   // compare match high - low
+        TPUA.TSYR.BIT.SYNC0 = 1;    // TCNT would be synced
+        TPUA.TSYR.BIT.SYNC5 = 1;    // TCNT would be synced
         break;
     case 1:
-        TPU1.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
+        TPU1.TCR.BIT.CCLR = 0x3;    // compare match clear by other counter
         TPU1.TMDR.BIT.MD = 0x3;     // PWM mode 2
         TPU1.TIOR.BIT.IOA = 0x5;    // compare match high - low
         TPU1.TIOR.BIT.IOB = 0x5;    // compare match high - low
+        TPUA.TSYR.BIT.SYNC1 = 1;    // TCNT would be synced
+        TPUA.TSYR.BIT.SYNC5 = 1;    // TCNT would be synced
         break;
     case 2:
-        TPU2.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
+        TPU2.TCR.BIT.CCLR = 0x3;    // compare match clear by other counter
         TPU2.TMDR.BIT.MD = 0x3;     // PWM mode 2
         TPU2.TIOR.BIT.IOA = 0x5;    // compare match high - low
         TPU2.TIOR.BIT.IOB = 0x5;    // compare match high - low
+        TPUA.TSYR.BIT.SYNC2 = 1;    // TCNT would be synced
+        TPUA.TSYR.BIT.SYNC5 = 1;    // TCNT would be synced
         break;
     case 3:
-        TPU3.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
+        TPU3.TCR.BIT.CCLR = 0x3;    // compare match clear by other counter
         TPU3.TMDR.BIT.MD = 0x3;     // PWM mode 2
         TPU3.TIORH.BIT.IOA = 0x5;   // compare match high - low
         TPU3.TIORH.BIT.IOB = 0x5;   // compare match high - low
         TPU3.TIORL.BIT.IOC = 0x5;   // compare match high - low
         TPU3.TIORL.BIT.IOD = 0x5;   // compare match high - low
+        TPUA.TSYR.BIT.SYNC3 = 1;    // TCNT would be synced
+        TPUA.TSYR.BIT.SYNC5 = 1;    // TCNT would be synced
         break;
     case 4:
-        TPU4.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
+        TPU4.TCR.BIT.CCLR = 0x3;    // compare match clear by other counter
         TPU4.TMDR.BIT.MD = 0x3;     // PWM mode 2
         TPU4.TIOR.BIT.IOA = 0x5 ;   // compare match high - low
         TPU4.TIOR.BIT.IOB = 0x5;    // compare match high - low
+        TPUA.TSYR.BIT.SYNC4 = 1;    // TCNT would be synced
+        TPUA.TSYR.BIT.SYNC5 = 1;    // TCNT would be synced
         break;
     case 5:
         TPU5.TCR.BIT.CCLR = 0x2;    // compare match clear by TGRB
