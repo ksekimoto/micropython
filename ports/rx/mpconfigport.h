@@ -123,7 +123,8 @@
 #define MICROPY_PY_SYS_STDFILES     (1)
 #define MICROPY_PY_SYS_STDIO_BUFFER (1)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
-#define MICROPY_PY_SYS_PLATFORM     "pyboard"
+//#define MICROPY_PY_SYS_PLATFORM     "pyboard"
+#define MICROPY_PY_SYS_PLATFORM     "rxboard"
 #endif
 #define MICROPY_PY_UERRNO           (1)
 #ifndef MICROPY_PY_THREAD
@@ -289,12 +290,14 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_errno), MP_ROM_PTR(&mp_module_uerrno) }, \
+    { MP_ROM_QSTR(MP_QSTR_rxb), MP_ROM_PTR(&pyb_module) }, \
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_rxb), MP_ROM_PTR(&pyb_module) }, \
 
 #define MP_STATE_PORT MP_STATE_VM
 
