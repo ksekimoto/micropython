@@ -176,8 +176,8 @@ STATIC int mod_esp8266_socket_listen(mod_network_socket_obj_t *socket, mp_int_t 
 #if defined(DEBUG_MODNWESP8266)
     debug_printf("mod_esp8266_socket_listen\r\n");
 #endif
-    int ret = esp8266_socket_listen((void *)socket->handle, (int)backlog);
-    if (ret != 0) {
+    bool ret = esp8266_socket_listen((void *)socket->handle, (int)backlog);
+    if (!ret) {
         *_errno = ret;
         return -1;
     }
@@ -189,12 +189,12 @@ STATIC int mod_esp8266_socket_accept(mod_network_socket_obj_t *socket, mod_netwo
     debug_printf("mod_esp8266_socket_accept\r\n");
 #endif
     // accept incoming connection
-    int fd;
+    bool ret;
     void *sock;
     esp8266_socket_address_t socket_addr;
     //sockaddr addr;
     //socklen_t addr_len = sizeof(addr);
-    fd = esp8266_socket_accept((void *)socket->handle, &sock, &socket_addr);
+    ret = esp8266_socket_accept((void *)socket->handle, &sock, &socket_addr);
     //if ((fd = ESP8266_EXPORT(accept)(socket->handle, &addr, &addr_len)) < 0) {
     //    if (fd == SOC_IN_PROGRESS) {
     //        *_errno = MP_EAGAIN;
@@ -208,7 +208,7 @@ STATIC int mod_esp8266_socket_accept(mod_network_socket_obj_t *socket, mod_netwo
     //esp8266_reset_fd_closed_state(fd);
 
     // store state in new socket object
-    socket2->handle = fd;
+    socket2->handle = (mp_uint_t)sock;
 
     // return ip and port
     // it seems ESP8266 returns little endian for accept??
@@ -218,7 +218,7 @@ STATIC int mod_esp8266_socket_accept(mod_network_socket_obj_t *socket, mod_netwo
     //ip[2] = addr.sa_data[3];
     //ip[1] = addr.sa_data[4];
     //ip[0] = addr.sa_data[5];
-    return 0;
+    return (ret)? 0:1;
 }
 
 STATIC int mod_esp8266_socket_connect(mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno) {
@@ -248,6 +248,23 @@ STATIC mp_uint_t mod_esp8266_socket_send(mod_network_socket_obj_t *socket, const
     while (bytes < len) {
         int n = MIN((len - bytes), MAX_TX_PACKET);
         //n = ESP8266_EXPORT(send)(socket->handle, (uint8_t*)buf + bytes, n, 0);
+        n = esp8266_socket_send((void *)socket->handle, (const void *)(buf + bytes), (unsigned)n);
+        if (n <= 0) {
+            //*_errno = ESP8266_EXPORT(errno);
+            return -1;
+        }
+        bytes += n;
+    }
+    return bytes;
+}
+
+STATIC mp_uint_t mod_esp8266_socket_sendall(mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno) {
+#if defined(DEBUG_MODNWESP8266)
+    debug_printf("mod_esp8266_socket_sendall\r\n");
+#endif
+    mp_int_t bytes = 0;
+    while (bytes < len) {
+        int n = MIN((len - bytes), MAX_TX_PACKET);
         n = esp8266_socket_send((void *)socket->handle, (const void *)(buf + bytes), (unsigned)n);
         if (n <= 0) {
             //*_errno = ESP8266_EXPORT(errno);
@@ -564,6 +581,7 @@ const mod_network_socket_nic_type_t mod_network_socket_nic_type_esp8266 = {
     .accept = mod_esp8266_socket_accept,
     .connect = mod_esp8266_socket_connect,
     .send = mod_esp8266_socket_send,
+    .sendall = mod_esp8266_socket_sendall,
     .recv = mod_esp8266_socket_recv,
     .sendto = mod_esp8266_socket_sendto,
     .recvfrom = mod_esp8266_socket_recvfrom,

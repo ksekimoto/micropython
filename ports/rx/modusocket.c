@@ -193,6 +193,24 @@ STATIC mp_obj_t socket_send(mp_obj_t self_in, mp_obj_t buf_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(socket_send_obj, socket_send);
 
+// method socket.sendall(bytes)
+STATIC mp_obj_t socket_sendall(mp_obj_t self_in, mp_obj_t buf_in) {
+    mod_network_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (self->nic == MP_OBJ_NULL) {
+        // not connected
+        mp_raise_OSError(MP_EPIPE);
+    }
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(buf_in, &bufinfo, MP_BUFFER_READ);
+    int _errno;
+    mp_uint_t ret = self->nic_type->sendall(self, bufinfo.buf, bufinfo.len, &_errno);
+    if (ret == -1) {
+        mp_raise_OSError(_errno);
+    }
+    return mp_obj_new_int_from_uint(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(socket_sendall_obj, socket_sendall);
+
 // method socket.recv(bufsize)
 STATIC mp_obj_t socket_recv(mp_obj_t self_in, mp_obj_t len_in) {
     mod_network_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -346,6 +364,7 @@ STATIC const mp_rom_map_elem_t socket_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_accept), MP_ROM_PTR(&socket_accept_obj) },
     { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&socket_connect_obj) },
     { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&socket_send_obj) },
+    { MP_ROM_QSTR(MP_QSTR_sendall), MP_ROM_PTR(&socket_sendall_obj) },
     { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&socket_recv_obj) },
     { MP_ROM_QSTR(MP_QSTR_sendto), MP_ROM_PTR(&socket_sendto_obj) },
     { MP_ROM_QSTR(MP_QSTR_recvfrom), MP_ROM_PTR(&socket_recvfrom_obj) },
@@ -414,7 +433,6 @@ STATIC mp_obj_t mod_usocket_getaddrinfo(mp_obj_t host_in, mp_obj_t port_in) {
     uint8_t out_ip[MOD_NETWORK_IPADDR_BUF_SIZE];
     bool have_ip = false;
 
-#if 0
     if (hlen > 0) {
         // check if host is already in IP form
         nlr_buf_t nlr;
@@ -426,7 +444,6 @@ STATIC mp_obj_t mod_usocket_getaddrinfo(mp_obj_t host_in, mp_obj_t port_in) {
             // swallow exception: host was not in IP form so need to do DNS lookup
         }
     }
-#endif
 
     if (!have_ip) {
         // find a NIC that can do a name lookup
