@@ -37,20 +37,9 @@
 // This file implements the pyb.Servo class which controls standard hobby servo
 // motors that have 3-wires (ground, power, signal).
 //
-// The driver uses hardware PWM to drive servos on pins X1, X2, X3, X4 which are
-// assumed to be on PA0, PA1, PA2, PA3 but not necessarily in that order (the
-// pins PA0-PA3 are used directly if the X pins are not defined).
-//
-// TIM2 and TIM5 have CH1-CH4 on PA0-PA3 respectively.  They are both 32-bit
-// counters with 16-bit prescaler.  TIM5 is used by this driver.
-#if defined(GRCITRUS)
-#define PYB_SERVO_NUM (4)
-#endif
-#if defined(GRSAKURA)
-#define PYB_SERVO_NUM (6)
-#endif
-#if defined(GRROSE)
-#define PYB_SERVO_NUM (6)
+
+#ifndef PYB_SERVO_NUM
+#define PYB_SERVO_NUM (0)
 #endif
 
 typedef struct _pyb_servo_obj_t {
@@ -89,19 +78,23 @@ void servo_init(void) {
     }
 
     // assign servo objects to specific pins (must be some permutation of PA0-PA3)
-#if defined(GRCITRUS)
-    pyb_servo_obj[0].pin = pin_P13;
-    pyb_servo_obj[1].pin = pin_PC4;
-    pyb_servo_obj[2].pin = pin_PB3;
-    pyb_servo_obj[3].pin = pin_PB5;
+#if defined(BOARD_SERVO1_PIN)
+    pyb_servo_obj[0].pin = BOARD_SERVO1_PIN;
 #endif
-#if defined(GRSAKURA)
-    pyb_servo_obj[0].pin = pin_P13;
-    pyb_servo_obj[1].pin = pin_PC4;
-    pyb_servo_obj[2].pin = pin_P22;
-    pyb_servo_obj[3].pin = pin_P23;
-    pyb_servo_obj[2].pin = pin_P24;
-    pyb_servo_obj[3].pin = pin_P25;
+#if defined(BOARD_SERVO2_PIN)
+    pyb_servo_obj[1].pin = BOARD_SERVO2_PIN;
+#endif
+#if defined(BOARD_SERVO3_PIN)
+    pyb_servo_obj[2].pin = BOARD_SERVO3_PIN;
+#endif
+#if defined(BOARD_SERVO4_PIN)
+    pyb_servo_obj[3].pin = BOARD_SERVO4_PIN;
+#endif
+#if defined(BOARD_SERVO5_PIN)
+    pyb_servo_obj[4].pin = BOARD_SERVO5_PIN;
+#endif
+#if defined(BOARD_SERVO6_PIN)
+    pyb_servo_obj[5].pin = BOARD_SERVO6_PIN;
 #endif
 }
 
