@@ -89,6 +89,8 @@ typedef struct esp8266_socket {
     esp8266_socket_address_t addr;
     bool connected;
     int keepalive; // TCP
+    bool accept_id;
+    bool tcp_server;
 } esp8266_socket_t;
 
 typedef struct socket_info {
