@@ -64,9 +64,13 @@ class Pin(object):
     def parse_ad(self, ad_str):
         ad_bit = 0
         ad_channel = 0
-        if len(ad_str) == 5:
+        if (len(ad_str) == 5) and (ad_str[:3] == 'AN0'):
             ad_bit = 12
-            ad_channel = int(ad_str[3:])
+            ad_channel = int(ad_str[2:])
+            self._pin_ad.append(PinAD(ad_str, self._name, self._pin_idx, ad_bit, ad_channel))
+        elif (len(ad_str) == 5) and (ad_str[:3] == 'AN1'):
+            ad_bit = 12
+            ad_channel = int(ad_str[2:])
             self._pin_ad.append(PinAD(ad_str, self._name, self._pin_idx, ad_bit, ad_channel))
         elif ad_str[:2] == 'AN':
             if ad_str[:3] != 'ANE':
