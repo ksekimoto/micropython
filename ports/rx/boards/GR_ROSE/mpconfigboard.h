@@ -89,3 +89,18 @@
 //#define MICROPY_SSL_MBEDTLS         (1)
 // Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module
 //#define MICROPY_PY_USSL             (1)
+
+#define BOARD_SERIAL1_CH    (0)
+#define BOARD_SERIAL2_CH    (2)
+#define BOARD_SERIAL3_CH    (5)
+#define BOARD_SERIAL4_CH    (6)
+#define BOARD_SERIAL5_CH    (1)
+#define BOARD_SERIAL6_CH    (3)
+#define BOARD_SERIAL7_CH    (8)
+
+#define PYB_SERVO_NUM       (2)
+#define BOARD_SERVO1_PIN    (pin_P20)   // TIOCB3
+#define BOARD_SERVO2_PIN    (pin_P13)   // TIOCA5
+//#define BOARD_SERVO3_PIN    (pin_P21)   // TIOCA3   // if P21 is high
+//#define BOARD_SERVO4_PIN    (pin_P23)   // TIOCD3   // ESP8266
+//#define BOARD_SERVO5_PIN    (pin_P25)   // TIOCA4   // ESP8266
