@@ -89,6 +89,8 @@ typedef struct esp8266_socket {
     esp8266_socket_address_t addr;
     bool connected;
     int keepalive; // TCP
+    bool accept_id;
+    bool tcp_server;
 } esp8266_socket_t;
 
 typedef struct socket_info {
@@ -118,7 +120,7 @@ bool esp8266_driver_reset(void);
 bool esp8266_AT(void);
 bool esp8266_AT_RST(void);
 bool esp8266_AT_CWQAP(void);
-bool esp8266_AT_GMR(char *version, size_t len);
+bool esp8266_AT_GMR(char *at_ver, size_t at_len, char *sdk_ver, size_t sdk_len);
 bool esp8266_set_AT_CIPMUX(uint8_t mode);
 bool esp8266_get_AT_CWMODE(uint8_t *mode);
 bool esp8266_set_AT_CWMODE(uint8_t mode);
@@ -127,6 +129,10 @@ bool esp8266_get_AT_CWJAP_CUR(char *ssid, char *bssid, char *channel, char *rssi
 bool esp8266_set_AT_CWDHCP(uint8_t mode, bool enabled);
 bool esp8266_get_AT_CIPSTAMAC_CUR(uint8_t *mac);
 bool esp8266_get_AT_CIPSTA(uint8_t *ip, uint8_t *gw, uint8_t *mask);
+bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask);
+bool esp8266_set_AT_CIPDNS_CUR(const char *dns, bool flag);
+bool esp8266_set_AT_CIPSERVER(int port);
+bool esp8266_reset_AT_CIPSERVER(void);
 
 bool esp8266_gethostbyname(const char *name, unsigned char *ip);
 int esp8266_socket_open(void **handle, esp8266_protocol_t proto);
