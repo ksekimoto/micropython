@@ -461,14 +461,19 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
-#define VERSION_MAX 128
-    char version[VERSION_MAX];
+#define AT_MAX 32
+#define SDK_MAX 32
+    char at_ver[AT_MAX];
+    char sdk_ver[SDK_MAX];
     esp8266_driver_init();
     //if (!esp8266_driver_reset()) {
     //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "failed to init ESP8266 module\n"));
     //}
-    if (esp8266_AT_GMR(version, sizeof(version))) {
-        printf("%s\n", version);
+    if (esp8266_AT_GMR(at_ver, sizeof(at_ver), sdk_ver, sizeof(sdk_ver))) {
+        printf("AT ver=%s\n", at_ver);
+        printf("SDK ver=%s\n", sdk_ver);
+    } else {
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "can't get ESP vesions\n"));
     }
     esp8266_set_AT_CWMODE(3);
     // register with network module
@@ -529,28 +534,52 @@ STATIC mp_obj_t esp8266_isconnected(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp8266_isconnected_obj, esp8266_isconnected);
 
-STATIC mp_obj_t esp8266_ifconfig(mp_obj_t self_in) {
+STATIC mp_obj_t esp8266_ifconfig(size_t n_args, const mp_obj_t *args) {
     uint8_t ip[4];
     uint8_t gw[4];
     uint8_t mask[4];
-    uint8_t dns[4] = {0, 0, 0, 0};
-    uint8_t dhcp[4] = {0, 0, 0, 0};
-    uint8_t mac[6] = {0, 0, 0, 0, 0, 0};
-    char ssid[60];
-    esp8266_get_AT_CIPSTA(ip, gw, mask);
-    //esp8266_get_AT_CIPSTAMAC_CUR((uint8_t *)mac);
-    // render MAC address
-    //VSTR_FIXED(mac_vstr, 18);
-    //vstr_printf(&mac_vstr, "%02x:%02x:%02x:%02x:%02x:%02x", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
-    //esp8266_get_AT_CWJAP_CUR(ssid, NULL, NULL, NULL);
-    mp_obj_t tuple[3] = {
-        netutils_format_ipv4_addr(ip, NETUTILS_BIG),
-        netutils_format_ipv4_addr(gw, NETUTILS_BIG),
-        netutils_format_ipv4_addr(mask, NETUTILS_BIG),
-    };
-    return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
+    uint8_t dns[4] = { 0, 0, 0, 0 };
+    mp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    if (n_args == 1) {
+        uint8_t dhcp[4] = { 0, 0, 0, 0 };
+        uint8_t mac[6] = { 0, 0, 0, 0, 0, 0 };
+        esp8266_get_AT_CIPSTA(ip, gw, mask);
+        //esp8266_get_AT_CIPSTAMAC_CUR((uint8_t *)mac);
+        // render MAC address
+        //VSTR_FIXED(mac_vstr, 18);
+        //vstr_printf(&mac_vstr, "%02x:%02x:%02x:%02x:%02x:%02x", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
+        //esp8266_get_AT_CWJAP_CUR(ssid, NULL, NULL, NULL);
+        mp_obj_t tuple[3] = {
+            netutils_format_ipv4_addr(ip, NETUTILS_BIG),
+            netutils_format_ipv4_addr(gw, NETUTILS_BIG),
+            netutils_format_ipv4_addr(mask, NETUTILS_BIG), };
+        return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
+    } else if (n_args == 2) {
+        mp_obj_t *items;
+        mp_obj_get_array_fixed_n(args[1], 4, &items);
+        size_t ip_len;
+        size_t gw_len;
+        size_t mask_len;
+        size_t dns_len;
+        const char *ip_str = mp_obj_str_get_data(items[0], &ip_len);
+        const char *gw_str = mp_obj_str_get_data(items[1], &gw_len);
+        const char *mask_str = mp_obj_str_get_data(items[2], &mask_len);
+        const char *dns_str = mp_obj_str_get_data(items[3], &dns_len);
+        if ((ip_len <= 0) || (gw_len <= 0) || (mask_len <= 0) || (dns_len <= 0)) {
+            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "ip, gw, mask should be properly inputted.\n"));
+        }
+        bool ret = esp8266_set_AT_CIPSTA(ip_str, gw_str, mask_str);
+        if (!ret) {
+            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure ip=%s, gw=%s, mask=%s\n", ip_str, gw_str, mask_str));
+        }
+        ret = esp8266_set_AT_CIPDNS_CUR(dns_str, true);
+        if (!ret) {
+            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure dns=%s\n", dns_str));
+        }
+    }
+    return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp8266_ifconfig_obj, esp8266_ifconfig);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(esp8266_ifconfig_obj, 1, 2, esp8266_ifconfig);
 
 STATIC const mp_rom_map_elem_t esp8266_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&esp8266_connect_obj) },
@@ -563,7 +592,6 @@ STATIC const mp_rom_map_elem_t esp8266_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_WPA), MP_ROM_INT(WLAN_SEC_WPA) },
     { MP_ROM_QSTR(MP_QSTR_WPA2), MP_ROM_INT(WLAN_SEC_WPA2) },
 };
-
 STATIC MP_DEFINE_CONST_DICT(esp8266_locals_dict, esp8266_locals_dict_table);
 
 const mod_network_socket_nic_type_t mod_network_socket_nic_type_esp8266 = {

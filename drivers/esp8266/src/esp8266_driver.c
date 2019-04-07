@@ -687,11 +687,32 @@ bool esp8266_AT_CWQAP(void) {
  * AT+GMR
  * Checks Version Information
  */
-bool esp8266_AT_GMR(char *version, size_t len) {
+bool esp8266_AT_GMR(char *at_ver, size_t at_len, char *sdk_ver, size_t sdk_len) {
+    const char *buf;
+    const char *start;
+    const char *end;
     esp8266_serial_prepare_AT();
     esp8266_serial_println("AT+GMR");
-    //return esp8266_serial_recv_find("OK\r\n");
-    return esp8266_serial_recv_find_filter("OK\r\n", "SDK", "\r\nOK\r\n", version, len);
+    buf = esp8266_serial_recv_string("OK\r\n", 2000);
+    if (buf) {
+        start = buf;
+        start = strstr(start, "AT version");
+        if (!start) {
+            return false;
+        }
+        start += 10;
+        end = parse_str_between((const char*)start, ':', '\r', at_ver, at_len);
+        start = end + 1;
+        start = strstr(start, "SDK version");
+        if (!start) {
+            return false;
+        }
+        start += 11;
+        end = parse_str_between((const char*)start, ':', '\r', sdk_ver, sdk_len);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*
@@ -945,6 +966,49 @@ bool esp8266_get_AT_CIPSTA(uint8_t *ip, uint8_t *gw, uint8_t *mask) {
     } else {
         return false;
     }
+}
+
+/*
+ * AT+CIPSTA
+ * Set Command:
+ */
+bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask) {
+    bool ret;
+    if (!ip || !gw || !mask) {
+        return false;
+    }
+    esp8266_serial_prepare_AT();
+    esp8266_serial_print("AT+CIPSTA=\"");
+    esp8266_serial_print(ip);
+    esp8266_serial_print("\",\"");
+    esp8266_serial_print(gw);
+    esp8266_serial_print("\",\"");
+    esp8266_serial_print(mask);
+    esp8266_serial_println("\"");
+    ret = esp8266_serial_recv_find("OK\r\n");
+    return ret;
+}
+
+/*
+ * AT+CIPDNS_CUR
+ * Set Command:
+ */
+bool esp8266_set_AT_CIPDNS_CUR(const char *dns, bool flag) {
+    bool ret;
+    if (!dns) {
+        return false;
+    }
+    esp8266_serial_prepare_AT();
+    esp8266_serial_print("AT+CIPDNS_CUR=");
+    if (flag) {
+        esp8266_serial_print("1,\"");
+    } else {
+        esp8266_serial_print("0,\"");
+    }
+    esp8266_serial_print(dns);
+    esp8266_serial_println("\"");
+    ret = esp8266_serial_recv_find("OK\r\n");
+    return ret;
 }
 
 /*
