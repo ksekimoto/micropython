@@ -37,7 +37,6 @@ MP_WEAK DWORD get_fattime(void) {
     int year = rx_rtc_get_year();
     int month = rx_rtc_get_month();
     int date = rx_rtc_get_date();
-    int weekday = rx_rtc_get_weekday();
     int hour = rx_rtc_get_hour();
     int minute = rx_rtc_get_minute();
     int second = rx_rtc_get_second();
