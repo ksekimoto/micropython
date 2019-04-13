@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2019 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,14 @@
 #include "rtc.h"
 #include "irq.h"
 
+#define RTC_INIT_YEAR   2019
+#define RTC_INIT_MONTH  1
+#define RTC_INIT_DATE   1
+#define RTC_INIT_WEEKDAY    2   /* Tuesday */
+#define RTC_INIT_HOUR   0
+#define RTC_INIT_MINUTE 0
+#define RTC_INIT_SECOND 0
+
 /// \moduleref pyb
 /// \class RTC - real time clock
 ///
@@ -43,6 +52,7 @@
 ///     rtc.datetime((2014, 5, 1, 4, 13, 0, 0, 0))
 ///     print(rtc.datetime())
 
+#define HAL_StatusTypeDef	void
 // rtc_info indicates various things about RTC startup
 // it's a bit of a hack at the moment
 static mp_uint_t rtc_info;
@@ -51,18 +61,87 @@ static mp_uint_t rtc_info;
 // ck_spre(1Hz) = RTCCLK(LSE) /(uwAsynchPrediv + 1)*(uwSynchPrediv + 1)
 // modify RTC_ASYNCH_PREDIV & RTC_SYNCH_PREDIV in board/<BN>/mpconfigport.h to change sub-second ticks
 // default is 3906.25 µs, min is ~30.52 µs (will increas Ivbat by ~500nA)
-#ifndef RTC_ASYNCH_PREDIV
-#define RTC_ASYNCH_PREDIV (0x7f)
-#endif
+//#ifndef RTC_ASYNCH_PREDIV
+//#define RTC_ASYNCH_PREDIV (0x7f)
+//#endif
 #ifndef RTC_SYNCH_PREDIV
 #define RTC_SYNCH_PREDIV  (0x00ff)
 #endif
 
+STATIC HAL_StatusTypeDef PYB_RTC_Init(void);
+STATIC void PYB_RTC_MspInit_Kick(void);
+STATIC HAL_StatusTypeDef PYB_RTC_MspInit_Finalise(void);
+STATIC void RTC_CalendarConfig(void);
+STATIC uint32_t rtc_startup_tick;
+STATIC bool rtc_need_init_finalise = false;
+
+void rtc_init_start(bool force_init) {
+	/* ToDo */
+    /* Configure RTC prescaler and RTC data registers */
+    rtc_need_init_finalise = false;
+    if (!force_init) {
+        // So far, this case (force_init == false) is not called.
+        rtc_info |= 0x40000;
+        // or rtc_info |= 0x80000;
+        return;
+    }
+    rtc_startup_tick = mtick();
+    rtc_info = 0x3f000000 | (rtc_startup_tick & 0xffffff);
+    PYB_RTC_MspInit_Kick();
+}
+
+void rtc_init_finalise(void) {
+    if (!rtc_need_init_finalise) {
+        return;
+    }
+    rtc_info = 0x20000000;
+	PYB_RTC_Init();
+    RTC_CalendarConfig();
+    rtc_info |= (mtick() - rtc_startup_tick) & 0xffff;
+    rtc_need_init_finalise = false;
+}
+
+STATIC HAL_StatusTypeDef PYB_RCC_OscConfig(void) {
+    // ToDo: implement
+}
+
+STATIC HAL_StatusTypeDef PYB_RTC_Init(void) {
+    // Check the RTC peripheral state
+    // if RTC state is reset
+    //if (SYSTEM.RSTSR1.BIT.CWSF == 0) {
+        // cold reset
+    //    PYB_RTC_MspInit_Finalise();
+    //}
+    // Set RTC state
+    rx_rtc_init();
+}
+
+STATIC void PYB_RTC_MspInit_Kick(void) {
+    // ToDo: implement
+    PYB_RCC_OscConfig();
+    // now ramp up osc. in background and flag calendear init needed
+    rtc_need_init_finalise = true;
+}
+
 #define PYB_LSE_TIMEOUT_VALUE 1000  // ST docs spec 2000 ms LSE startup, seems to be too pessimistic
 #define PYB_LSI_TIMEOUT_VALUE 500   // this is way too pessimistic, typ. < 1ms
 
-void rtc_init_finalise(void) {
+STATIC HAL_StatusTypeDef PYB_RTC_MspInit_Finalise(void) {
+    // ToDo: implement
+    // enable RTC;
+    rx_rtc_init();
+}
 
+STATIC void RTC_CalendarConfig(void) {
+    rtc_t tm;
+    tm.year = RTC_INIT_YEAR - 2000;
+    tm.month = RTC_INIT_MONTH;
+    tm.date = RTC_INIT_DATE;
+    tm.weekday = RTC_INIT_WEEKDAY;
+    tm.hour = RTC_INIT_HOUR;
+    tm.minute = RTC_INIT_MINUTE;
+    tm.second = RTC_INIT_SECOND;
+    rx_rtc_set_time(&tm);
 }
 
 /******************************************************************************/
@@ -86,7 +165,8 @@ STATIC mp_obj_t pyb_rtc_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
 // force rtc to re-initialise
 mp_obj_t pyb_rtc_init(mp_obj_t self_in) {
-    rx_rtc_init();
+    rtc_init_start(true);
+    rtc_init_finalise();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_init_obj, pyb_rtc_init);
@@ -170,27 +250,30 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_datetime_obj, 1, 2, pyb_rtc_datetime
 // wakeup(ms, callback=None)
 // wakeup(wucksel, wut, callback)
 mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
-    // ToDo
+    // ToDo: implement
+    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "Not implemented"));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
+//MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 1, 4, pyb_rtc_wakeup);
 
 // calibration(None)
 // calibration(cal)
 // When an integer argument is provided, check that it falls in the range [-511 to 512]
 // and set the calibration value; otherwise return calibration value
 mp_obj_t pyb_rtc_calibration(size_t n_args, const mp_obj_t *args) {
-    // ToDo
+    // ToDo: implement
+    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "Not implemented"));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_calibration_obj, 1, 2, pyb_rtc_calibration);
 
 STATIC const mp_rom_map_elem_t pyb_rtc_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_rtc_init_obj) },
-    /* { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_rtc_info_obj) }, */
+    { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_rtc_info_obj) },
     { MP_ROM_QSTR(MP_QSTR_datetime), MP_ROM_PTR(&pyb_rtc_datetime_obj) },
-    /* { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&pyb_rtc_wakeup_obj) }, */
-    /* { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&pyb_rtc_calibration_obj) }, */
+    { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&pyb_rtc_wakeup_obj) },
+    { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&pyb_rtc_calibration_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pyb_rtc_locals_dict, pyb_rtc_locals_dict_table);
 
