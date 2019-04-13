@@ -70,7 +70,9 @@ static mp_uint_t rtc_info;
 
 STATIC HAL_StatusTypeDef PYB_RTC_Init(void);
 STATIC void PYB_RTC_MspInit_Kick(void);
+#if 0
 STATIC HAL_StatusTypeDef PYB_RTC_MspInit_Finalise(void);
+#endif
 STATIC void RTC_CalendarConfig(void);
 STATIC uint32_t rtc_startup_tick;
 STATIC bool rtc_need_init_finalise = false;
@@ -108,10 +110,12 @@ STATIC HAL_StatusTypeDef PYB_RCC_OscConfig(void) {
 STATIC HAL_StatusTypeDef PYB_RTC_Init(void) {
     // Check the RTC peripheral state
     // if RTC state is reset
-    //if (SYSTEM.RSTSR1.BIT.CWSF == 0) {
+#if 0
+    if (SYSTEM.RSTSR1.BIT.CWSF == 0) {
         // cold reset
-    //    PYB_RTC_MspInit_Finalise();
-    //}
+        PYB_RTC_MspInit_Finalise();
+    }
+#endif
     // Set RTC state
     rx_rtc_init();
 }
@@ -126,11 +130,13 @@ STATIC void PYB_RTC_MspInit_Kick(void) {
 #define PYB_LSE_TIMEOUT_VALUE 1000  // ST docs spec 2000 ms LSE startup, seems to be too pessimistic
 #define PYB_LSI_TIMEOUT_VALUE 500   // this is way too pessimistic, typ. < 1ms
 
+#if 0
 STATIC HAL_StatusTypeDef PYB_RTC_MspInit_Finalise(void) {
     // ToDo: implement
     // enable RTC;
     rx_rtc_init();
 }
+#endif
 
 STATIC void RTC_CalendarConfig(void) {
     rtc_t tm;
