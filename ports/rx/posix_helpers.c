@@ -128,7 +128,7 @@ void set_time(time_t *t) {
     rtc.hour = tmbuf->tm_hour;
     rtc.date = tmbuf->tm_mday;
     rtc.minute = tmbuf->tm_min;
-    rtc.month = tmbuf->tm_mon;
+    rtc.month = tmbuf->tm_mon + 1;
     rtc.second = tmbuf->tm_sec;
     rtc.weekday = tmbuf->tm_wday;
     rtc.year = tmbuf->tm_year;
