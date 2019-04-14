@@ -34,9 +34,12 @@
 #include "lib/mp-readline/readline.h"
 #include "lib/utils/pyexec.h"
 #include "lib/oofatfs/ff.h"
-#include "lwip/init.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
+
+#if MICROPY_PY_LWIP
+#include "lwip/init.h"
+#endif
 
 #include "systick.h"
 #include "pendsv.h"
@@ -198,7 +201,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
         led_state(PYB_LED_GREEN, 1);
         uint32_t start_tick = HAL_GetTick();
 
-        uint8_t working_buf[_MAX_SS];
+        uint8_t working_buf[FF_MAX_SS];
         res = f_mkfs(&vfs_fat->fatfs, FM_FAT, 0, working_buf, sizeof(working_buf));
         if (res == FR_OK) {
             // success creating fresh LFS
@@ -536,7 +539,7 @@ void stm32_main(uint32_t reset_mode) {
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     i2c_init0();
     #endif
-    #if MICROPY_HW_HAS_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     sdcard_init();
     #endif
     #if MICROPY_HW_ENABLE_STORAGE
@@ -627,6 +630,10 @@ soft_reset:
 
     #if MICROPY_HW_ENABLE_USB
     pyb_usb_init0();
+
+    // Activate USB_VCP(0) on dupterm slot 1 for the REPL
+    MP_STATE_VM(dupterm_objs[1]) = MP_OBJ_FROM_PTR(&pyb_usb_vcp_obj);
+    usb_vcp_attach_to_repl(&pyb_usb_vcp_obj, true);
     #endif
 
     // Initialise the local flash filesystem.
