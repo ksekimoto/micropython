@@ -1,4 +1,4 @@
-# test importing of invalid .mpy files
+# test importing of .mpy files with native code (x64 only)
 
 import sys, uio
 
@@ -7,6 +7,10 @@ try:
     import uos
     uos.mount
 except (ImportError, AttributeError):
+    print("SKIP")
+    raise SystemExit
+
+if not (sys.platform == 'linux' and sys.maxsize > 2 ** 32):
     print("SKIP")
     raise SystemExit
 
@@ -45,10 +49,30 @@ class UserFS:
 
 # these are the test .mpy files
 user_files = {
-    '/mod0.mpy': b'', # empty file
-    '/mod1.mpy': b'M', # too short header
-    '/mod2.mpy': b'M\x00\x00\x00', # bad version
-    '/mod3.mpy': b'M\x00\x00\x00\x7f', # qstr window too large
+    # bad architecture
+    '/mod0.mpy': b'M\x04\xff\x00\x10',
+
+    # test loading of viper and asm
+    '/mod1.mpy': (
+        b'M\x04\x0b\x1f\x20' # header
+
+        b'\x38' # n bytes, bytecode
+            b'\x01\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\xff' # prelude
+            b'\x11' # LOAD_CONST_NONE
+            b'\x5b' # RETURN_VALUE
+
+            b'\x02m\x02m\x00\x02' # simple_name, source_file, n_obj, n_raw_code
+
+        b'\x22' # n bytes, viper code
+            b'\x00\x00\x00\x00\x00\x00' # dummy machine code
+            b'\x00\x00' # qstr0
+            b'\x01\x0c\x0aprint' # n_qstr, qstr0
+            b'\x00\x00\x00' # scope_flags, n_obj, n_raw_code
+
+        b'\x23' # n bytes, asm code
+            b'\x00\x00\x00\x00\x00\x00\x00\x00' # dummy machine code
+            b'\x00\x00\x00' # scope_flags, n_pos_args, type_sig
+    ),
 }
 
 # create and mount a user filesystem
@@ -60,6 +84,7 @@ for i in range(len(user_files)):
     mod = 'mod%u' % i
     try:
         __import__(mod)
+        print(mod, 'OK')
     except ValueError as er:
         print(mod, 'ValueError', er)
 
