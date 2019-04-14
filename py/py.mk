@@ -120,6 +120,24 @@ $(BUILD)/$(BTREE_DIR)/%.o: CFLAGS += -Wno-old-style-definition -Wno-sign-compare
 $(BUILD)/extmod/modbtree.o: CFLAGS += $(BTREE_DEFS)
 endif
 
+# External modules written in C.
+ifneq ($(USER_C_MODULES),)
+# pre-define USERMOD variables as expanded so that variables are immediate 
+# expanded as they're added to them
+SRC_USERMOD := 
+CFLAGS_USERMOD :=
+LDFLAGS_USERMOD :=
+$(foreach module, $(wildcard $(USER_C_MODULES)/*/micropython.mk), \
+    $(eval USERMOD_DIR = $(patsubst %/,%,$(dir $(module))))\
+    $(info Including User C Module from $(USERMOD_DIR))\
+	$(eval include $(module))\
+)
+
+SRC_MOD += $(patsubst $(USER_C_MODULES)/%.c,%.c,$(SRC_USERMOD))
+CFLAGS_MOD += $(CFLAGS_USERMOD)
+LDFLAGS_MOD += $(LDFLAGS_USERMOD)
+endif
+
 # py object files
 PY_CORE_O_BASENAME = $(addprefix py/,\
 	mpstate.o \
@@ -292,7 +310,7 @@ endif
 
 # Sources that may contain qstrings
 SRC_QSTR_IGNORE = py/nlr%
-SRC_QSTR = $(SRC_MOD) $(filter-out $(SRC_QSTR_IGNORE),$(PY_CORE_O_BASENAME:.o=.c)) $(PY_EXTMOD_O_BASENAME:.o=.c)
+SRC_QSTR += $(SRC_MOD) $(filter-out $(SRC_QSTR_IGNORE),$(PY_CORE_O_BASENAME:.o=.c)) $(PY_EXTMOD_O_BASENAME:.o=.c)
 
 # Anything that depends on FORCE will be considered out-of-date
 FORCE:
@@ -314,6 +332,13 @@ $(HEADER_BUILD)/qstrdefs.generated.h: $(PY_QSTR_DEFS) $(QSTR_DEFS) $(QSTR_DEFS_C
 	$(ECHO) "GEN $@"
 	$(Q)cat $(PY_QSTR_DEFS) $(QSTR_DEFS) $(QSTR_DEFS_COLLECTED) | $(SED) 's/^Q(.*)/"&"/' | $(CPP) $(CFLAGS) - | $(SED) 's/^"\(Q(.*)\)"/\1/' > $(HEADER_BUILD)/qstrdefs.preprocessed.h
 	$(Q)$(PYTHON) $(PY_SRC)/makeqstrdata.py $(HEADER_BUILD)/qstrdefs.preprocessed.h > $@
+
+# build a list of registered modules for py/objmodule.c.
+$(HEADER_BUILD)/moduledefs.h: $(SRC_QSTR) $(QSTR_GLOBAL_DEPENDENCIES) | $(HEADER_BUILD)/mpversion.h
+	@$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(PY_SRC)/makemoduledefs.py --vpath="., $(TOP), $(USER_C_MODULES)" $(SRC_QSTR) > $@
+
+SRC_QSTR += $(HEADER_BUILD)/moduledefs.h
 
 # Force nlr code to always be compiled with space-saving optimisation so
 # that the function preludes are of a minimal and predictable form.

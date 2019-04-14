@@ -63,7 +63,8 @@ void mp_init(void) {
     MP_STATE_VM(mp_pending_exception) = MP_OBJ_NULL;
     #if MICROPY_ENABLE_SCHEDULER
     MP_STATE_VM(sched_state) = MP_SCHED_IDLE;
-    MP_STATE_VM(sched_sp) = 0;
+    MP_STATE_VM(sched_idx) = 0;
+    MP_STATE_VM(sched_len) = 0;
     #endif
 
 #if MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF
@@ -109,11 +110,6 @@ void mp_init(void) {
     for (size_t i = 0; i < MICROPY_PY_OS_DUPTERM; ++i) {
         MP_STATE_VM(dupterm_objs[i]) = MP_OBJ_NULL;
     }
-    #endif
-
-    #if MICROPY_FSUSERMOUNT
-    // zero out the pointers to the user-mounted devices
-    memset(MP_STATE_VM(fs_user_mount), 0, sizeof(MP_STATE_VM(fs_user_mount)));
     #endif
 
     #if MICROPY_VFS
