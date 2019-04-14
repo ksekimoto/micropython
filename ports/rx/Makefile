@@ -10,8 +10,13 @@ endif
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
 
+BOARD_DIR ?= boards/$(BOARD)
+ifeq ($(wildcard $(BOARD_DIR)/.),)
+$(error Invalid BOARD specified: $(BOARD_DIR))
+endif
+
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -48,17 +53,19 @@ FROZEN_DIR = modules
 
 include ../../py/mkenv.mk
 -include mpconfigport.mk
-include boards/$(BOARD)/mpconfigboard.mk
+include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h boards/$(BOARD)/mpconfigboard.h
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+
+FATFS_DIR=lib/oofatfs
 
 #######################################################################
 # MCU configuration
@@ -87,6 +94,7 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
+
 INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
 INC += -Idebug
@@ -128,6 +136,7 @@ CFLAGS += -Wall -Werror -Wno-missing-braces
 CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
 
+CFLAGS += -I$(BOARD_DIR)
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
 CFLAGS += -Os -g
@@ -363,17 +372,31 @@ SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
-SRC_LIB += $(addprefix lib/, libc/string0.c)
-SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
-SRC_LIB += $(addprefix lib/, netutils/netutils.c)
-SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
-SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
-SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
-SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
-SRC_LIB += $(addprefix lib/, utils/printf.c)
-SRC_LIB += $(addprefix lib/, utils/pyexec.c)
-#SRC_LIB += $(addprefix lib/, utils/stdout_helpers.c)
-SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
+SRC_LIB = $(addprefix lib/,\
+	libc/string0.c \
+	oofatfs/ff.c \
+	oofatfs/ffunicode.c \
+	mp-readline/readline.c \
+	netutils/netutils.c \
+	netutils/trace.c \
+	timeutils/timeutils.c \
+	utils/pyexec.c \
+	utils/interrupt_char.c \
+	utils/printf.c \
+	utils/sys_stdio_mphal.c \
+	utils/mpirq.c \
+	)
+
+#SRC_LIB += $(addprefix lib/, libc/string0.c)
+#SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
+#SRC_LIB += $(addprefix lib/, netutils/netutils.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
+#SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
+#SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
+#SRC_LIB += $(addprefix lib/, utils/printf.c)
+#SRC_LIB += $(addprefix lib/, utils/pyexec.c)
+#SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
 
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	virtpin.c \
@@ -516,6 +539,7 @@ CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
 #SRC_MOD += modnwesp8266.c
 SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	esp8266_driver.c \
+	vector.c \
 	)
 endif
 
@@ -732,7 +756,7 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(Q)$(SIZE) $@
 
 MAKE_PINS = boards/make-pins.py
-BOARD_PINS = boards/$(BOARD)/pins.csv
+BOARD_PINS = $(BOARD_DIR)/pins.csv
 AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
 PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
@@ -766,7 +790,7 @@ $(OBJ): | $(GEN_PINS_HDR)
 
 # With conditional pins, we may need to regenerate qstrdefs.h when config
 # options change.
-$(HEADER_BUILD)/qstrdefs.generated.h: boards/$(BOARD)/mpconfigboard.h
+$(HEADER_BUILD)/qstrdefs.generated.h: $(BOARD_DIR)/mpconfigboard.h
 
 # main.c can't be even preprocessed without $(GEN_CDCINF_HEADER)
 main.c: $(GEN_CDCINF_HEADER)
@@ -774,7 +798,7 @@ main.c: $(GEN_CDCINF_HEADER)
 # Use a pattern rule here so that make will only call make-pins.py once to make
 # both pins_$(BOARD).c and pins.h
 .PRECIOUS: $(GEN_PINS_SRC)
-$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_ad_const.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: boards/$(BOARD)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
+$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: $(BOARD_DIR)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
 	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --ad-const $(GEN_PINS_AD_CONST) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
 

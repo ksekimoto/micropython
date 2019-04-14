@@ -169,7 +169,7 @@
 
 // fatfs configuration used in ffconf.h
 #define MICROPY_FATFS_ENABLE_LFN       (1)
-#define MICROPY_FATFS_LFN_CODE_PAGE    (437) /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
+#define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
 #define MICROPY_FATFS_USE_LABEL        (1)
 #define MICROPY_FATFS_RPATH            (2)
 #define MICROPY_FATFS_MULTI_PARTITION  (1)
@@ -357,11 +357,23 @@ static inline void __WFI(void) {
 // value from disable_irq back to enable_irq.  If you really need
 // to know the machine-specific values, see irq.h.
 
-static inline uint32_t get_int(void)
-{
+static inline uint32_t get_int_status(void) {
     uint32_t ipl;
     __asm__ __volatile__ ("mvfc psw,%0":"=r"(ipl):);
     return ((ipl & 0x00010000) >> 16);
+}
+
+static inline uint32_t get_irq(void) {
+    uint32_t pri;
+    __asm__ __volatile__ ("mvfc psw,%0":"=r"(pri):);
+    return ((pri & 0x0f000000) >> 24);
+}
+
+static inline void set_irq(uint32_t i) {
+    uint32_t pri;
+    pri &= ~0x0f000000;
+    pri |= (i << 24);
+    __asm__ __volatile__ ("mvtc %0,psw":"=r"(pri):);
 }
 
 static inline void enable_irq(mp_uint_t state) {
@@ -369,7 +381,7 @@ static inline void enable_irq(mp_uint_t state) {
 }
 
 static inline mp_uint_t disable_irq(void) {
-    mp_uint_t state = (mp_uint_t)get_int();
+    mp_uint_t state = (mp_uint_t)get_irq();
     __asm__ __volatile__ ("clrpsw i");
     return state;
 }
@@ -404,6 +416,14 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_THREAD_YIELD()
 #endif
+
+// The LwIP interface must run at a raised IRQ priority
+#ifndef IRQ_PRI_PENDSV
+#define IRQ_PRI_PENDSV 6
+#endif
+#define MICROPY_PY_LWIP_ENTER   uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+#define MICROPY_PY_LWIP_REENTER irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+#define MICROPY_PY_LWIP_EXIT    restore_irq_pri(irq_state);
 
 // We need an implementation of the log2 function which is not a macro
 #define MP_NEED_LOG2 (1)

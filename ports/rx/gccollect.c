@@ -27,9 +27,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "py/obj.h"
+#include "py/mpstate.h"
 #include "py/gc.h"
 #include "py/mpthread.h"
+#include "lib/utils/gchelper.h"
 #include "gccollect.h"
 #include "systick.h"
 
