@@ -371,6 +371,7 @@ static inline uint32_t get_irq(void) {
 
 static inline void set_irq(uint32_t i) {
     uint32_t pri;
+    __asm__ __volatile__ ("mvfc psw,%0":"=r"(pri):);
     pri &= ~0x0f000000;
     pri |= (i << 24);
     __asm__ __volatile__ ("mvtc %0,psw":"=r"(pri):);
