@@ -46,8 +46,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "iodefine.h"
-#include "rx65n_adc.h"
 #include "rx65n_config.h"
+#include "rx65n_adc.h"
 #include "rx65n_dac.h"
 #include "rx65n_exti.h"
 #include "rx65n_ether.h"

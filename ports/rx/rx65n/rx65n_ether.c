@@ -492,9 +492,9 @@ void rx_ether_start(void) {
     // Sets up interrupt when you use interrupt
     EDMAC0.EESIPR.LONG = 0x00040000;
     //ICU.IER[4].BIT.IEN0 = 1;
-    //ICU.IPR[8].BYTE = 12;     // Set priority level
-    IPR(EXDMAC, EXDMAC0I)= 12;  // IPR_EXDMAC_EXDMAC0I=126,
-    IEN(EXDMAC, EXDMAC0I)= 1;   // IER_EXDMAC_EXDMAC0I=0x0F IEN_EXDMAC_EXDMAC0I IEN6
+    //ICU.IPR[8].BYTE = PRI_ETH;    // Set priority level
+    IPR(EXDMAC, EXDMAC0I)= PRI_ETH; // IPR_EXDMAC_EXDMAC0I=126,
+    IEN(EXDMAC, EXDMAC0I)= 1;       // IER_EXDMAC_EXDMAC0I=0x0F IEN_EXDMAC_EXDMAC0I IEN6
     /* Enable interrupts of interest only. */
     //ETHERC0.ECSIPR.BIT.LCHNGIP = 1;
     //EDMAC0.EESIPR.BIT.ECIIP    = 1;
