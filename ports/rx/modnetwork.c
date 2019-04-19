@@ -41,14 +41,7 @@
 #if MICROPY_PY_LWIP
 
 #include "lwip/netif.h"
-#if (LWIP_VER == 1)
-#include "lwip/dhcp.h"
-#include "lwip/timers.h"
-#else
-#include "lwip/dhcp.h"
-#include "lwip/prot/dhcp.h"
 #include "lwip/timeouts.h"
-#endif
 #include "lwip/dns.h"
 #include "lwip/dhcp.h"
 
@@ -59,26 +52,6 @@ u32_t sys_now(void) {
     return mp_hal_ticks_ms();
 }
 
-#if (LWIP_VER == 1)
-
-struct net_obj_t {
-    mp_obj_base_t base;
-    void (*poll_callback)(void*);
-};
-
-void pyb_lwip_poll(void) {
-    // Poll all the NICs
-    for (struct netif *netif = netif_list; netif != NULL; netif = netif->next) {
-        if (netif->flags & NETIF_FLAG_LINK_UP) {
-            struct net_obj_t *n = netif->state;
-            n->poll_callback(n);
-        }
-    }
-    // Run the lwIP internal updates
-    sys_check_timeouts();
-}
-
-#else
 void pyb_lwip_poll(void) {
     // Poll all the NICs for incoming data
     for (struct netif *netif = netif_list; netif != NULL; netif = netif->next) {
@@ -92,7 +65,6 @@ void pyb_lwip_poll(void) {
     // Run the lwIP internal updates
     sys_check_timeouts();
 }
-#endif
 
 void mod_network_lwip_poll_wrapper(uint32_t ticks_ms) {
     if (LWIP_TICK(ticks_ms)) {
@@ -177,38 +149,15 @@ const mp_obj_module_t mp_module_network = {
 mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_obj_t *args) {
     if (n_args == 0) {
         // Get IP addresses
-#if (LWIP_VER == 1)
-        ip_addr_t dns = dns_getserver(0);
-#else
         const ip_addr_t *dns = dns_getserver(0);
-#endif
         mp_obj_t tuple[4] = {
             netutils_format_ipv4_addr((uint8_t*)&netif->ip_addr, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)&netif->netmask, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)&netif->gw, NETUTILS_BIG),
-#if (LWIP_VER == 1)
-            netutils_format_ipv4_addr((uint8_t*)&dns, NETUTILS_BIG),
-#else
             netutils_format_ipv4_addr((uint8_t*)dns, NETUTILS_BIG),
-#endif
         };
         return mp_obj_new_tuple(4, tuple);
     } else if (args[0] == MP_OBJ_NEW_QSTR(MP_QSTR_dhcp)) {
-#if (LWIP_VER == 1)
-        static struct dhcp dhcp_struct;
-
-        dhcp_set_struct(netif, &dhcp_struct);
-        dhcp_start(netif);
-
-        // wait for dhcp to get IP address
-        uint32_t start = mp_hal_ticks_ms();
-        while (netif->dhcp->state != DHCP_BOUND && mp_hal_ticks_ms() - start < 8000) {
-            mp_hal_delay_ms(100);
-        }
-        if (netif->dhcp->state != DHCP_BOUND) {
-            mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
-        }
-#else
         // Start the DHCP client
         if (dhcp_supplied_address(netif)) {
             dhcp_renew(netif);
@@ -225,7 +174,7 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
             }
             mp_hal_delay_ms(100);
         }
-#endif
+
         return mp_const_none;
     } else {
         // Release and stop any existing DHCP
