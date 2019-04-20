@@ -55,10 +55,10 @@ static uint8_t rx_buf[USBCDC_BUF_SIZE];
 static uint8_t tx_buf[USBCDC_BUF_SIZE];
 
 volatile bool _begin = false;
-volatile uint32_t rx_buf_head;
-volatile uint32_t rx_buf_tail;
-volatile uint32_t tx_buf_head;
-volatile uint32_t tx_buf_tail;
+volatile uint32_t rx_buf_head = 0;
+volatile uint32_t rx_buf_tail = 0;
+volatile uint32_t tx_buf_head = 0;
+volatile uint32_t tx_buf_tail = 0;
 
 static USB_CALLBACK usb_callback = 0;
 
