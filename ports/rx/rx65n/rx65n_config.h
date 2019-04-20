@@ -37,7 +37,7 @@ extern "C" {
 #define UART_TxStr sci_tx_str
 #define PCLK    60000000
 
-#define PRI_ETH     (12)
+#define PRI_ETH     (14)
 #define PRI_SCI     (3)
 #define PRI_TIM0    (15)    // 10us
 #define PRI_TIM1    (5)     // 1ms
