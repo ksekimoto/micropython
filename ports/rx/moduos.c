@@ -59,8 +59,10 @@ STATIC const qstr os_uname_info_fields[] = {
     MP_QSTR_sysname, MP_QSTR_nodename,
     MP_QSTR_release, MP_QSTR_version, MP_QSTR_machine
 };
-STATIC const MP_DEFINE_STR_OBJ(os_uname_info_sysname_obj, "pyboard");
-STATIC const MP_DEFINE_STR_OBJ(os_uname_info_nodename_obj, "pyboard");
+//STATIC const MP_DEFINE_STR_OBJ(os_uname_info_sysname_obj, "pyboard");
+//STATIC const MP_DEFINE_STR_OBJ(os_uname_info_nodename_obj, "pyboard");
+STATIC const MP_DEFINE_STR_OBJ(os_uname_info_sysname_obj, "rxboard");
+STATIC const MP_DEFINE_STR_OBJ(os_uname_info_nodename_obj, "rxboard");
 STATIC const MP_DEFINE_STR_OBJ(os_uname_info_release_obj, MICROPY_VERSION_STRING);
 STATIC const MP_DEFINE_STR_OBJ(os_uname_info_version_obj, MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE);
 STATIC const MP_DEFINE_STR_OBJ(os_uname_info_machine_obj, MICROPY_HW_BOARD_NAME " with " MICROPY_HW_MCU_NAME);
