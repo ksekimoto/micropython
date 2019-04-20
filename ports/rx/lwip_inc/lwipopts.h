@@ -19,14 +19,21 @@
 
 #define NO_SYS                          1
 #define SYS_LIGHTWEIGHT_PROT            1
+#define MEM_ALIGNMENT                   4
+
+#define LWIP_CHKSUM_ALGORITHM           3
+#define LWIP_CHECKSUM_CTRL_PER_NETIF    1
 
 #define LWIP_ARP                        1
 #define LWIP_ETHERNET                   1
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
 #define LWIP_STATS                      0
+#define LWIP_NETIF_HOSTNAME             1
 
+#define LWIP_IPV6                       0
 #define LWIP_DHCP                       1
+#define LWIP_DHCP_CHECK_LINK_UP         1
 #define LWIP_DNS                        1
 #define LWIP_IGMP                       1
 
@@ -81,16 +88,14 @@ extern uint32_t rng_get(void);
 
 typedef uint32_t sys_prot_t;
 
-#if !defined(MICROPY_PY_LWIP)
+//#if !defined(MICROPY_PY_LWIP)
 // For now, we can simply define this as a macro for the timer code. But this function isn't
 // universal and other ports will need to do something else. It may be necessary to move
 // things like this into a port-provided header file.
-#define sys_now mp_hal_ticks_ms
-#endif
+//#define sys_now mp_hal_ticks_ms
+//#endif
 
 #include "lwip/arch.h"
-#if !(LWIP_VER == 1)
 #include "sntp_client.h"
-#endif
 
 #endif // MICROPY_INCLUDED_RX_LWIP_LWIPOPTS_H
