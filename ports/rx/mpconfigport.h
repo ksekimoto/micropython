@@ -364,17 +364,29 @@ static inline uint32_t get_int_status(void) {
 }
 
 static inline uint32_t get_irq(void) {
-    uint32_t pri;
-    __asm__ __volatile__ ("mvfc psw,%0":"=r"(pri):);
-    return ((pri & 0x0f000000) >> 24);
+    register uint32_t temp;
+    register uint32_t pri;
+    __asm__ volatile (
+        "mvfc psw, %[r14]\n\t"
+        "revl %[r14], %[r1]\n\t"
+        "and #0x0f, %[r1]\n\t"
+        : [r14] "=r" (temp), [r1] "=r" (pri)
+    );
+    return pri;
 }
 
-static inline void set_irq(uint32_t i) {
-    uint32_t pri;
-    __asm__ __volatile__ ("mvfc psw,%0":"=r"(pri):);
-    pri &= ~0x0f000000;
-    pri |= (i << 24);
-    __asm__ __volatile__ ("mvtc %0,psw":"=r"(pri):);
+static inline void set_irq(uint32_t pri) {
+    register uint32_t temp;
+    __asm__ volatile (
+        "mvfc psw, %[r14]\n\t"
+        "shll #0x1c, %[r1]\n\t"
+        "shlr #0x04, %[r1]\n\t"
+        "and #0xF0FFFFFF, %[r14]\n\t"
+        "or %[r14], %[r1]\n\t"
+        "mvtc %[r1], psw\n\t"
+        : [r14] "=&r" (temp), [r1] "+r" (pri)
+    );
+    return;
 }
 
 static inline void enable_irq(mp_uint_t state) {
