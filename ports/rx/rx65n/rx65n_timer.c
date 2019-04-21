@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include "iodefine.h"
+#include "common.h"
 #include "rx65n_timer.h"
 
 #define USEC_CH    0
@@ -143,19 +144,19 @@ void cmt_timer_init(unsigned int ch, unsigned int prescale) {
 
     switch (ch) {
     case 0:
-        ICU.IPR[0x04].BIT.IPR = 0xf;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x04].BIT.IPR = PRI_TIM0;   // IPR = 15 (15: highest priority)
         ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
         break;
     case 1:
-        ICU.IPR[0x05].BIT.IPR = 0x5;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x05].BIT.IPR = PRI_TIM1;   // IPR = 5 (15: highest priority)
         ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
         break;
     case 2:
-        ICU.IPR[0x06].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x06].BIT.IPR = PRI_TIM2;   // IPR = 12 (15: highest priority)
         ICU.IER[0x03].BIT.IEN6 = 1;         // IER enable
         break;
     case 3:
-        ICU.IPR[0x07].BIT.IPR = 0xc;        // IPR = 14 (15: highest priority)
+        ICU.IPR[0x07].BIT.IPR = PRI_TIM3;   // IPR = 12 (15: highest priority)
         ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
         break;
     default:

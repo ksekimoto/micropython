@@ -337,7 +337,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
         if (mtick() - start >= timeout) {
             return false; // timeout
         }
-        //MICROPY_EVENT_POLL_HOOK
+        MICROPY_EVENT_POLL_HOOK
     }
 }
 
@@ -359,7 +359,7 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
         if (mtick() - start >= timeout) {
             return false; // timeout
         }
-        //MICROPY_EVENT_POLL_HOOK
+        MICROPY_EVENT_POLL_HOOK
     }
 }
 

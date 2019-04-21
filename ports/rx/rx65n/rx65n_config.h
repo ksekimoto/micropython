@@ -37,6 +37,14 @@ extern "C" {
 #define UART_TxStr sci_tx_str
 #define PCLK    60000000
 
+#define PRI_ETH     (14)
+#define PRI_SCI     (3)
+#define PRI_TIM0    (15)    // 10us
+#define PRI_TIM1    (5)     // 1ms
+#define PRI_TIM2    (12)
+#define PRI_TIM3    (12)
+//#define PRI_USB     (14)  defined in usb_hal.h
+
 #if defined(USE_DBG_PRINT)
 #if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
