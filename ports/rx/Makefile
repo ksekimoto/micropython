@@ -10,6 +10,11 @@ endif
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
 
+BOARD_DIR ?= boards/$(BOARD)
+ifeq ($(wildcard $(BOARD_DIR)/.),)
+$(error Invalid BOARD specified: $(BOARD_DIR))
+endif
+
 # enable debug_printf
 #USE_DBG_PRINT = 1
 
@@ -35,30 +40,31 @@ USB_MSC = 2
 USB_CDC_MSC = 3
 USB_MODE = 3
 
+# LAN debug
+LAN_NEW = 0
+
 # Include modules
 USE_FONT = 1
 USE_LCD = 1
-
-# LWIP version
-#LWIP_VER ?= 1
-LWIP_VER ?= 2
 
 # Frozon module dir
 FROZEN_DIR = modules
 
 include ../../py/mkenv.mk
 -include mpconfigport.mk
-include boards/$(BOARD)/mpconfigboard.mk
+include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h boards/$(BOARD)/mpconfigboard.h
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+
+FATFS_DIR=lib/oofatfs
 
 #######################################################################
 # MCU configuration
@@ -87,6 +93,7 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
+
 INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
 INC += -Idebug
@@ -95,11 +102,7 @@ INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
-ifeq ($(LWIP_VER),1)
-INC += -I$(TOP)/lib/lwip/src/include/ipv4
-else
 INC += -I$(TOP)/lib/lwip/src/include
-endif
 INC += -Ilwip_inc -Ilwip_utils
 endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -128,6 +131,7 @@ CFLAGS += -Wall -Werror -Wno-missing-braces
 CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
 
+CFLAGS += -I$(BOARD_DIR)
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
 CFLAGS += -Os -g
@@ -205,7 +209,6 @@ endif
 
 ifeq ($(MICROPY_PY_LWIP),1)
 CFLAGS += -DMICROPY_PY_LWIP=1
-CFLAGS += -DLWIP_VER=$(LWIP_VER)
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -242,7 +245,11 @@ SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += dac.c
+ifeq ($(LAN_NEW),1)
+SRC_C += eth.c
+else
 SRC_C += ethernetif.c
+endif
 SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -254,7 +261,6 @@ SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
-SRC_C += modnwrxeth.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 ifeq ($(MICROPY_PY_ESP8266),1)
@@ -267,6 +273,11 @@ SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpthreadport.c
+ifeq ($(LAN_NEW),1)
+SRC_C += network_lan.c
+else
+SRC_C += modnwrxeth.c
+endif
 SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
@@ -363,17 +374,31 @@ SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
-SRC_LIB += $(addprefix lib/, libc/string0.c)
-SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
-SRC_LIB += $(addprefix lib/, netutils/netutils.c)
-SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
-SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
-SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
-SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
-SRC_LIB += $(addprefix lib/, utils/printf.c)
-SRC_LIB += $(addprefix lib/, utils/pyexec.c)
-#SRC_LIB += $(addprefix lib/, utils/stdout_helpers.c)
-SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
+SRC_LIB = $(addprefix lib/,\
+	libc/string0.c \
+	oofatfs/ff.c \
+	oofatfs/ffunicode.c \
+	mp-readline/readline.c \
+	netutils/netutils.c \
+	netutils/trace.c \
+	timeutils/timeutils.c \
+	utils/pyexec.c \
+	utils/interrupt_char.c \
+	utils/printf.c \
+	utils/sys_stdio_mphal.c \
+	utils/mpirq.c \
+	)
+
+#SRC_LIB += $(addprefix lib/, libc/string0.c)
+#SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
+#SRC_LIB += $(addprefix lib/, netutils/netutils.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
+#SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
+#SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
+#SRC_LIB += $(addprefix lib/, utils/printf.c)
+#SRC_LIB += $(addprefix lib/, utils/pyexec.c)
+#SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
 
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	virtpin.c \
@@ -458,11 +483,11 @@ EXTMOD_SRC_C = $(addprefix extmod/,\
 	modonewire.c \
 	)
 
-ifeq ($(MICROPY_PY_LWIP),1)
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	modlwip.c \
-	)
-endif
+#ifeq ($(MICROPY_PY_LWIP),1)
+#EXTMOD_SRC_C += $(addprefix extmod/,\
+#	modlwip.c \
+#	)
+#endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -520,98 +545,10 @@ SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	)
 endif
 
-ifeq ($(MICROPY_PY_LWIP),1)
-LWIP_DIR = lib/lwip/src
-INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
-$(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
-ifneq ($(LWIP_VER),1)
-CFLAGS += -DLWIP_VER=2
-SRC_MOD += $(addprefix $(LWIP_DIR)/,\
-	core/def.c \
-	core/dns.c \
-	core/inet_chksum.c \
-	core/init.c \
-	core/ip.c \
-	core/mem.c \
-	core/memp.c \
-	core/netif.c \
-	core/pbuf.c \
-	core/raw.c \
-	core/stats.c \
-	core/sys.c \
-	core/tcp.c \
-	core/tcp_in.c \
-	core/tcp_out.c \
-	core/timeouts.c \
-	core/udp.c \
-	core/ipv4/autoip.c \
-	core/ipv4/dhcp.c \
-	core/ipv4/etharp.c \
-	core/ipv4/icmp.c \
-	core/ipv4/igmp.c \
-	core/ipv4/ip4_addr.c \
-	core/ipv4/ip4.c \
-	core/ipv4/ip4_frag.c \
-	core/ipv6/dhcp6.c \
-	core/ipv6/ethip6.c \
-	core/ipv6/icmp6.c \
-	core/ipv6/inet6.c \
-	core/ipv6/ip6_addr.c \
-	core/ipv6/ip6.c \
-	core/ipv6/ip6_frag.c \
-	core/ipv6/mld6.c \
-	core/ipv6/nd6.c \
-	netif/ethernet.c \
-	api/err.c \
-	)
-else
-
-# LWIP v1.x
-LWIP_DIR = lib/lwip/src
-INC += -I$(TOP)/$(LWIP_DIR)/include/ipv4 -I$(TOP)/$(LWIP_DIR)/include/lwip -I$(TOP)/$(LWIP_DIR)/include/proto -I$(TOP)/extmod/lwip-include
-CFLAGS += -DMICROPY_PY_LWIP=1
-CFLAGS += -DLWIP_VER=1
-CFLAGS += -Wno-unused-variable
-CFLAGS += -Wno-implicit-function-declaration
-CFLAGS += -Wno-unused-but-set-variable
-CFLAGS += -Wno-address
-SRC_MOD += extmod/modlwip.c lib/netutils/netutils.c
-SRC_MOD += $(addprefix $(LWIP_DIR)/,\
-	core/def.c \
-	core/dhcp.c \
-	core/dns.c \
-	core/init.c \
-	core/mem.c \
-	core/memp.c \
-	core/netif.c \
-	core/pbuf.c \
-	core/raw.c \
-	core/stats.c \
-	core/sys.c \
-	core/tcp.c \
-	core/tcp_in.c \
-	core/tcp_out.c \
-	core/timers.c \
-	core/udp.c \
-	core/ipv4/autoip.c \
-	core/ipv4/icmp.c \
-	core/ipv4/igmp.c \
-	core/ipv4/inet.c \
-	core/ipv4/inet_chksum.c \
-	core/ipv4/ip_addr.c \
-	core/ipv4/ip.c \
-	core/ipv4/ip_frag.c \
-	netif/etharp.c \
-	)
-#ifeq ($(MICROPY_PY_LWIP_SLIP),1)
-#CFLAGS_MOD += -DMICROPY_PY_LWIP_SLIP=1
-#SRC_MOD += $(LWIP_DIR)/netif/slipif.c
+#ifeq ($(MICROPY_PY_LWIP),1)
+#SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
+#SRC_MOD += lwip_utils/sntp_client.c
 #endif
-
-endif
-SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
-SRC_MOD += lwip_utils/sntp_client.c
-endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
@@ -733,7 +670,7 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(Q)$(SIZE) $@
 
 MAKE_PINS = boards/make-pins.py
-BOARD_PINS = boards/$(BOARD)/pins.csv
+BOARD_PINS = $(BOARD_DIR)/pins.csv
 AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
 PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
@@ -767,7 +704,7 @@ $(OBJ): | $(GEN_PINS_HDR)
 
 # With conditional pins, we may need to regenerate qstrdefs.h when config
 # options change.
-$(HEADER_BUILD)/qstrdefs.generated.h: boards/$(BOARD)/mpconfigboard.h
+$(HEADER_BUILD)/qstrdefs.generated.h: $(BOARD_DIR)/mpconfigboard.h
 
 # main.c can't be even preprocessed without $(GEN_CDCINF_HEADER)
 main.c: $(GEN_CDCINF_HEADER)
@@ -775,7 +712,7 @@ main.c: $(GEN_CDCINF_HEADER)
 # Use a pattern rule here so that make will only call make-pins.py once to make
 # both pins_$(BOARD).c and pins.h
 .PRECIOUS: $(GEN_PINS_SRC)
-$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_ad_const.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: boards/$(BOARD)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
+$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: $(BOARD_DIR)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
 	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --ad-const $(GEN_PINS_AD_CONST) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
 

@@ -32,7 +32,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 
-#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
 
 #include "common.h"
 #include "phy.h"
