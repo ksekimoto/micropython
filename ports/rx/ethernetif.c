@@ -37,7 +37,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 
-#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
 
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"
@@ -47,11 +47,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
-#if (LWIP_VER == 1)
 #include "netif/etharp.h"
-#else
-#include "netif/etharp.h"
-#endif
 #include "common.h"
 #include "phy.h"
 #include "modmachine.h"

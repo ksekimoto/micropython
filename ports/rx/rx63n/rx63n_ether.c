@@ -78,7 +78,7 @@
 
 #else
 
-#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
 
 static ethfifo RX_DESC_SECTION rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
 static ethfifo TX_DESC_SECTION txdesc[ETH_BUF_NUM] __attribute__((aligned(32)));

@@ -16,7 +16,7 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-USE_DBG_PRINT = 1
+#USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -40,13 +40,12 @@ USB_MSC = 2
 USB_CDC_MSC = 3
 USB_MODE = 3
 
+# LAN debug
+LAN_NEW = 0
+
 # Include modules
 USE_FONT = 1
 USE_LCD = 1
-
-# LWIP version
-#LWIP_VER ?= 1
-LWIP_VER ?= 2
 
 # Frozon module dir
 FROZEN_DIR = modules
@@ -103,11 +102,7 @@ INC += -Iusb
 INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
-ifeq ($(LWIP_VER),1)
-INC += -I$(TOP)/lib/lwip/src/include/ipv4
-else
 INC += -I$(TOP)/lib/lwip/src/include
-endif
 INC += -Ilwip_inc -Ilwip_utils
 endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -214,7 +209,6 @@ endif
 
 ifeq ($(MICROPY_PY_LWIP),1)
 CFLAGS += -DMICROPY_PY_LWIP=1
-CFLAGS += -DLWIP_VER=$(LWIP_VER)
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -251,7 +245,11 @@ SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += dac.c
+ifeq ($(LAN_NEW),1)
+SRC_C += eth.c
+else
 SRC_C += ethernetif.c
+endif
 SRC_C += extint.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -263,7 +261,6 @@ SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
-SRC_C += modnwrxeth.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 ifeq ($(MICROPY_PY_ESP8266),1)
@@ -276,6 +273,11 @@ SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpthreadport.c
+ifeq ($(LAN_NEW),1)
+SRC_C += network_lan.c
+else
+SRC_C += modnwrxeth.c
+endif
 SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
@@ -481,11 +483,11 @@ EXTMOD_SRC_C = $(addprefix extmod/,\
 	modonewire.c \
 	)
 
-ifeq ($(MICROPY_PY_LWIP),1)
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	modlwip.c \
-	)
-endif
+#ifeq ($(MICROPY_PY_LWIP),1)
+#EXTMOD_SRC_C += $(addprefix extmod/,\
+#	modlwip.c \
+#	)
+#endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -543,98 +545,10 @@ SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	)
 endif
 
-ifeq ($(MICROPY_PY_LWIP),1)
-LWIP_DIR = lib/lwip/src
-INC += -I$(TOP)/$(LWIP_DIR)/include -Ilwip_inc
-$(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS += -Wno-address
-ifneq ($(LWIP_VER),1)
-CFLAGS += -DLWIP_VER=2
-SRC_MOD += $(addprefix $(LWIP_DIR)/,\
-	core/def.c \
-	core/dns.c \
-	core/inet_chksum.c \
-	core/init.c \
-	core/ip.c \
-	core/mem.c \
-	core/memp.c \
-	core/netif.c \
-	core/pbuf.c \
-	core/raw.c \
-	core/stats.c \
-	core/sys.c \
-	core/tcp.c \
-	core/tcp_in.c \
-	core/tcp_out.c \
-	core/timeouts.c \
-	core/udp.c \
-	core/ipv4/autoip.c \
-	core/ipv4/dhcp.c \
-	core/ipv4/etharp.c \
-	core/ipv4/icmp.c \
-	core/ipv4/igmp.c \
-	core/ipv4/ip4_addr.c \
-	core/ipv4/ip4.c \
-	core/ipv4/ip4_frag.c \
-	core/ipv6/dhcp6.c \
-	core/ipv6/ethip6.c \
-	core/ipv6/icmp6.c \
-	core/ipv6/inet6.c \
-	core/ipv6/ip6_addr.c \
-	core/ipv6/ip6.c \
-	core/ipv6/ip6_frag.c \
-	core/ipv6/mld6.c \
-	core/ipv6/nd6.c \
-	netif/ethernet.c \
-	api/err.c \
-	)
-else
-
-# LWIP v1.x
-LWIP_DIR = lib/lwip/src
-INC += -I$(TOP)/$(LWIP_DIR)/include/ipv4 -I$(TOP)/$(LWIP_DIR)/include/lwip -I$(TOP)/$(LWIP_DIR)/include/proto -I$(TOP)/extmod/lwip-include
-CFLAGS += -DMICROPY_PY_LWIP=1
-CFLAGS += -DLWIP_VER=1
-CFLAGS += -Wno-unused-variable
-CFLAGS += -Wno-implicit-function-declaration
-CFLAGS += -Wno-unused-but-set-variable
-CFLAGS += -Wno-address
-SRC_MOD += extmod/modlwip.c lib/netutils/netutils.c
-SRC_MOD += $(addprefix $(LWIP_DIR)/,\
-	core/def.c \
-	core/dhcp.c \
-	core/dns.c \
-	core/init.c \
-	core/mem.c \
-	core/memp.c \
-	core/netif.c \
-	core/pbuf.c \
-	core/raw.c \
-	core/stats.c \
-	core/sys.c \
-	core/tcp.c \
-	core/tcp_in.c \
-	core/tcp_out.c \
-	core/timers.c \
-	core/udp.c \
-	core/ipv4/autoip.c \
-	core/ipv4/icmp.c \
-	core/ipv4/igmp.c \
-	core/ipv4/inet.c \
-	core/ipv4/inet_chksum.c \
-	core/ipv4/ip_addr.c \
-	core/ipv4/ip.c \
-	core/ipv4/ip_frag.c \
-	netif/etharp.c \
-	)
-#ifeq ($(MICROPY_PY_LWIP_SLIP),1)
-#CFLAGS_MOD += -DMICROPY_PY_LWIP_SLIP=1
-#SRC_MOD += $(LWIP_DIR)/netif/slipif.c
+#ifeq ($(MICROPY_PY_LWIP),1)
+#SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
+#SRC_MOD += lwip_utils/sntp_client.c
 #endif
-
-endif
-SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
-SRC_MOD += lwip_utils/sntp_client.c
-endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'

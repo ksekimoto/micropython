@@ -36,7 +36,7 @@
 #include "py/mphal.h"
 #include "lib/netutils/netutils.h"
 
-#if MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_RX
 
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"
@@ -48,21 +48,20 @@
 #include "lwip/dhcp.h"
 #include "netif/etharp.h"
 #include "lwip/dhcp.h"
-#if (LWIP_VER == 1)
-#else
 #include "lwip/timeouts.h"
 #include "lwip/prot/dhcp.h"
-#endif
 #include "ethernetif.h"
 #include "sntp_client.h"
+#include "modnetwork.h"
 
 struct netif *g_netif;
 
-typedef struct {
-    mp_obj_base_t base;
-    void (*poll_callback)(void*);
+typedef struct _rx_ether_obj_t {
+    mod_network_nic_type_t base;
+    uint32_t trace_flags;
     struct netif netif;
     struct dhcp dhcp_struct;
+    void (*poll_callback)(void*);
     mp_uint_t last_arp;
 } rx_ether_obj_t;
 
@@ -70,11 +69,18 @@ const mp_obj_type_t mod_network_nic_type_rx_ether;
 
 STATIC rx_ether_obj_t rx_ether_obj;
 
+typedef struct _network_lan_obj_t {
+    mp_obj_base_t base;
+    rx_ether_obj_t *eth;
+} network_lan_obj_t;
+
+STATIC const network_lan_obj_t network_lan_eth0 = { { &network_lan_type }, &rx_ether_obj };
+
 //u32_t sys_now(void) {
 //    return (u32_t)mp_hal_ticks_ms();
 //}
 
-STATIC void rx_ether_lwip_poll(void *self_in) {
+STATIC void network_lan_poll(void *self_in) {
 #if 0
     rx_ether_obj_t *self = self_in;
     mp_uint_t t;
@@ -91,7 +97,7 @@ STATIC void rx_ether_lwip_poll(void *self_in) {
 /*
  * lwip initialize
  */
-STATIC void rx_ether_lwip_init(rx_ether_obj_t *self) {
+STATIC void network_lan_init(rx_ether_obj_t *self) {
     for (struct netif *netif = netif_list; netif != NULL; netif = netif->next) {
         if (netif == &self->netif) {
             netif_remove(netif);
@@ -113,128 +119,104 @@ STATIC void rx_ether_lwip_init(rx_ether_obj_t *self) {
     dns_setserver(0, &ipconfig[3]);
 }
 
-STATIC mp_obj_t rx_ether_lwip_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t network_lan_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
-
     // init the ethernet object
-    rx_ether_obj.base.type = &mod_network_nic_type_rx_ether;
-    rx_ether_obj.poll_callback = rx_ether_lwip_poll;
-
+    const network_lan_obj_t *self = &network_lan_eth0;
+    rx_ether_obj.poll_callback = network_lan_poll;
     // Hardware init
-    rx_ether_lwip_init(&rx_ether_obj);
-
-    return &rx_ether_obj;
+    network_lan_init(&rx_ether_obj);
+    return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t rx_ether_lwip_isconnected(mp_obj_t self_in) {
-    rx_ether_obj_t *self = self_in;
-    ethernetif_set_link(&self->netif);
-    return mp_obj_new_bool(self->netif.flags & NETIF_FLAG_LINK_UP);
+STATIC mp_obj_t network_lan_isconnected(mp_obj_t self_in) {
+    network_lan_obj_t *self = self_in;
+    ethernetif_set_link(&self->eth->netif);
+    return mp_obj_new_bool(self->eth->netif.flags & NETIF_FLAG_LINK_UP);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(rx_ether_lwip_isconnected_obj, rx_ether_lwip_isconnected);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(network_lan_isconnected_obj, network_lan_isconnected);
 
-STATIC mp_obj_t rx_ether_lwip_active(size_t n_args, const mp_obj_t *args) {
-    rx_ether_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+STATIC mp_obj_t network_lan_active(size_t n_args, const mp_obj_t *args) {
+    network_lan_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     if (n_args == 1) {
-        return mp_obj_new_bool(self->netif.flags & NETIF_FLAG_UP);
+        return mp_obj_new_bool(self->eth->netif.flags & NETIF_FLAG_UP);
     } else {
         if (mp_obj_is_true(args[1])) {
-            netif_set_up(&self->netif);
-            netif_set_link_up(&self->netif);
+            netif_set_up(&self->eth->netif);
+            netif_set_link_up(&self->eth->netif);
         } else {
-            netif_set_link_down(&self->netif);
-            netif_set_down(&self->netif);
+            netif_set_link_down(&self->eth->netif);
+            netif_set_down(&self->eth->netif);
         }
         return mp_const_none;
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rx_ether_lwip_active_obj, 1, 2, rx_ether_lwip_active);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(network_lan_active_obj, 1, 2, network_lan_active);
 
-STATIC mp_obj_t rx_ether_lwip_ifconfig(size_t n_args, const mp_obj_t *args) {
-    rx_ether_obj_t *self = MP_OBJ_TO_PTR(args[0]);
 
+#if 1
+STATIC mp_obj_t network_lan_ifconfig(size_t n_args, const mp_obj_t *args) {
+    network_lan_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    return mod_network_nic_ifconfig(&self->eth->netif, n_args - 1, args + 1);
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(network_lan_ifconfig_obj, 1, 2, network_lan_ifconfig);
+#else
+STATIC mp_obj_t network_lan_ifconfig(size_t n_args, const mp_obj_t *args) {
+    network_lan_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     if (n_args == 1) {
         // get
-#if (LWIP_VER == 1)
-        ip_addr_t dns = dns_getserver(0);
-#else
         const ip_addr_t *dns = dns_getserver(0);
-#endif
         mp_obj_t tuple[4] = {
-            netutils_format_ipv4_addr((uint8_t*)&self->netif.ip_addr, NETUTILS_BIG),
-            netutils_format_ipv4_addr((uint8_t*)&self->netif.netmask, NETUTILS_BIG),
-            netutils_format_ipv4_addr((uint8_t*)&self->netif.gw, NETUTILS_BIG),
-#if (LWIP_VER == 1)
-            netutils_format_ipv4_addr((uint8_t*)&dns, NETUTILS_BIG),
-#else
+            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.ip_addr, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.netmask, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.gw, NETUTILS_BIG),
             netutils_format_ipv4_addr((uint8_t*)dns, NETUTILS_BIG),
-#endif
         };
         return mp_obj_new_tuple(4, tuple);
     } else if (args[1] == MP_OBJ_NEW_QSTR(MP_QSTR_dhcp)) {
-#if (LWIP_VER == 1)
-        dhcp_set_struct(&self->netif, &self->dhcp_struct);
-        dhcp_start(&self->netif);
-
-        // wait for dhcp to get IP address
-        //uint32_t start = mp_hal_ticks_ms();
-        //while (self->netif.dhcp->state != DHCP_BOUND && mp_hal_ticks_ms() - start < 8000) {
-        //    mp_hal_delay_ms(100);
-        //}
-        //if (self->netif.dhcp->state != DHCP_BOUND) {
-        //    mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
-        //}
-        uint32_t start = mp_hal_ticks_ms();
-        while ((self->netif.ip_addr.addr == 0) && (mp_hal_ticks_ms() - start < 12000)) {
-            sys_check_timeouts();
-        }
-        if (self->netif.ip_addr.addr == 0) {
-            mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
-        }
-
-#else
-        dhcp_set_struct(&self->netif, &self->dhcp_struct);
-        dhcp_start(&self->netif);
+        dhcp_set_struct(&self->eth->netif, &self->eth->dhcp_struct);
+        dhcp_start(&self->eth->netif);
 
         uint32_t start = mp_hal_ticks_ms();
-        while ((self->netif.ip_addr.addr == 0) && (mp_hal_ticks_ms() - start < 12000)) {
+        while ((self->eth->netif.ip_addr.addr == 0) && (mp_hal_ticks_ms() - start < 12000)) {
             sys_check_timeouts();
         }
-        if (self->netif.ip_addr.addr == 0) {
+        if (self->eth->netif.ip_addr.addr == 0) {
             mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
         }
-#endif
         sntp_client_init();
         return mp_const_none;
     } else {
         // set
         mp_obj_t *items;
         mp_obj_get_array_fixed_n(args[1], 4, &items);
-        netutils_parse_ipv4_addr(items[0], (uint8_t*)&self->netif.ip_addr, NETUTILS_BIG);
-        netutils_parse_ipv4_addr(items[1], (uint8_t*)&self->netif.netmask, NETUTILS_BIG);
-        netutils_parse_ipv4_addr(items[2], (uint8_t*)&self->netif.gw, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[0], (uint8_t*)&self->eth->netif.ip_addr, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[1], (uint8_t*)&self->eth->netif.netmask, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[2], (uint8_t*)&self->eth->netif.gw, NETUTILS_BIG);
         ip_addr_t dns;
         netutils_parse_ipv4_addr(items[3], (uint8_t*)&dns, NETUTILS_BIG);
         dns_setserver(0, &dns);
-        ethernetif_update_config(&self->netif);
+        //ethernetif_update_config(&self->eth->netif);
         return mp_const_none;
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rx_ether_lwip_ifconfig_obj, 1, 2, rx_ether_lwip_ifconfig);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(network_lan_ifconfig_obj, 1, 2, network_lan_ifconfig);
+#endif
 
-STATIC const mp_rom_map_elem_t rx_ether_lwip_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_isconnected), MP_ROM_PTR(&rx_ether_lwip_isconnected_obj) },
-    { MP_ROM_QSTR(MP_QSTR_active), MP_ROM_PTR(&rx_ether_lwip_active_obj) },
-    { MP_ROM_QSTR(MP_QSTR_ifconfig), MP_ROM_PTR(&rx_ether_lwip_ifconfig_obj) },
+STATIC const mp_rom_map_elem_t network_lan_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_isconnected), MP_ROM_PTR(&network_lan_isconnected_obj) },
+    { MP_ROM_QSTR(MP_QSTR_active), MP_ROM_PTR(&network_lan_active_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ifconfig), MP_ROM_PTR(&network_lan_ifconfig_obj) },
 
 };
-STATIC MP_DEFINE_CONST_DICT(rx_ether_lwip_locals_dict, rx_ether_lwip_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(network_lan_locals_dict, network_lan_locals_dict_table);
 
-const mp_obj_type_t mod_network_nic_type_rx_ether = {
+const mp_obj_type_t network_lan_type = {
     { &mp_type_type },
-    .name = MP_QSTR_Ethernet,
-    .make_new = rx_ether_lwip_make_new,
-    .locals_dict = (mp_obj_dict_t*)&rx_ether_lwip_locals_dict,
+    .name = MP_QSTR_LAN,
+    .make_new = network_lan_make_new,
+    .locals_dict = (mp_obj_dict_t*)&network_lan_locals_dict,
 };
+
 #endif

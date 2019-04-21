@@ -118,8 +118,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(network_route_obj, network_route);
 STATIC const mp_rom_map_elem_t mp_module_network_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_network) },
 
-    #if  MICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
-    { MP_ROM_QSTR(MP_QSTR_Ethernet), MP_ROM_PTR(&mod_network_nic_type_rx_ether) },
+    #if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+    { MP_ROM_QSTR(MP_QSTR_LAN), MP_ROM_PTR(&network_lan_type) },
     #endif
     #if MICROPY_PY_WIZNET5K
     { MP_ROM_QSTR(MP_QSTR_WIZNET5K), MP_ROM_PTR(&mod_network_socket_nic_type_wiznet5k) },
@@ -158,6 +158,7 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
         };
         return mp_obj_new_tuple(4, tuple);
     } else if (args[0] == MP_OBJ_NEW_QSTR(MP_QSTR_dhcp)) {
+#if 0
         // Start the DHCP client
         if (dhcp_supplied_address(netif)) {
             dhcp_renew(netif);
@@ -174,6 +175,16 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
             }
             mp_hal_delay_ms(100);
         }
+#endif
+        dhcp_start(netif);
+
+        uint32_t start = mp_hal_ticks_ms();
+        while ((netif->ip_addr.addr == 0) && (mp_hal_ticks_ms() - start < 12000)) {
+            sys_check_timeouts();
+        }
+        if (netif->ip_addr.addr == 0) {
+            mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
+        }
 
         return mp_const_none;
     } else {
@@ -189,6 +200,7 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
         ip_addr_t dns;
         netutils_parse_ipv4_addr(items[3], (uint8_t*)&dns, NETUTILS_BIG);
         dns_setserver(0, &dns);
+        //ethernetif_update_config(&self->netif);
         return mp_const_none;
     }
 }
