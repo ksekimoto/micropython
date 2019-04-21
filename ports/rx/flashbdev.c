@@ -138,7 +138,7 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
 
 void flash_cache_commit(void) {
     if (flash_flags & FLASH_FLAG_DIRTY) {
-        if (((long)mtick() - flash_tick_counter_last_write) > 5000) {
+        if (((long)mtick() - flash_tick_counter_last_write) > 1000) {
             flash_bdev_irq_handler();
         }
     }
