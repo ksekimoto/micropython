@@ -365,7 +365,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             flag =  fcu_flash_pe_mode_exit();
             goto WriteX_exit;
         }
-        flag = fcu_flash_write(buf_addr, flash_addr, count);
+        flag = fcu_flash_write(buf_addr, flash_addr, FLASH_BUF_SIZE);
         if (!flag) {
             error_code = 4;
             flag = fcu_flash_pe_mode_exit();
