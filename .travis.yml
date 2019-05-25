@@ -10,6 +10,8 @@ cache:
 env:
   global:
     - MAKEOPTS="-j4"
+git:
+  core.symlinks: false
 
 # define the successive stages
 stages:
