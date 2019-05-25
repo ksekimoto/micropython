@@ -35,7 +35,7 @@ jobs:
         - tar xvf rx-elf-gcc-4.9.4.tar.gz
         - sudo mv ./rx-elf-gcc-4.9.4 /opt
         - sudo chmod 777 /opt/rx-elf-gcc-4.9.4
-        - export PATH=/opt/opt/rx-elf-gcc-4.9.4/bin:$PATH
+        - export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
       script:
         - make ${MAKEOPTS} -C mpy-cross
         - make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS
