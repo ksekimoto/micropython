@@ -175,7 +175,7 @@ static char *_fmt(const char *format, const struct tm *t, char *pt, const char *
           tm = *t;
           mkt = mktime(&tm);
           //sprintf(buf, "%lu", mkt);
-          vsnprintf((char *)buf, sizeof(buf), "%lu", (va_list)mkt);
+          vsnprintf((char *)buf, sizeof(buf), "%lu", (va_list)(int)mkt);
           pt = _add(buf, pt, ptlim);
           continue;
         }
