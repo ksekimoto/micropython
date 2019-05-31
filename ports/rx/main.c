@@ -737,10 +737,10 @@ soft_reset_exit:
 
     // soft reset
 
-    #if MICROPY_HW_ENABLE_STORAGE
-    printf("MPY: sync filesystems\n");
-    storage_flush();
-    #endif
+    //#if MICROPY_HW_ENABLE_STORAGE
+    //printf("MPY: sync filesystems\n");
+    //storage_flush();
+    //#endif
 
     printf("MPY: soft reboot\n");
     #if MICROPY_HW_ENABLE_SERVO
