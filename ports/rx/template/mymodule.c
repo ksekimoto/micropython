@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#if MICROPY_PY_MYMODULE
 // ===== micropyhton class in module definition
 const mp_obj_type_t mymodule_helloObj_type;
 
@@ -120,4 +121,4 @@ const mp_obj_module_t mp_module_mymodule = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
 };
-
+#endif

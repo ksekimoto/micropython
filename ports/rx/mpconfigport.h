@@ -188,7 +188,9 @@
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
 // extra built in modules to add to the list of known ones
+#if MICROPY_PY_MYMODULE
 extern const struct _mp_obj_module_t mp_module_mymodule;
+#endif
 extern const struct _mp_obj_module_t mp_module_wifi;
 extern const struct _mp_obj_module_t mp_module_twitter;
 extern const struct _mp_obj_module_t machine_module;
@@ -204,6 +206,12 @@ extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
 extern const struct _mp_obj_module_t mp_module_onewire;
+
+#if MICROPY_PY_MYMODULE
+#define MYMODULE_BUILTIN_MODULE             { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) },
+#else
+#define MYMODULE_BUILTIN_MODULE
+#endif
 
 #if MICROPY_PY_USOCKET && MICROPY_PY_LWIP
 // usocket implementation provided by lwIP
@@ -248,7 +256,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
-    { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) }, \
+    MYMODULE_BUILTIN_MODULE \
     WIFI_BUILTIN_MODULE \
     TWITTER_BUILTIN_MODULE \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
