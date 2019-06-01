@@ -48,7 +48,7 @@ struct timeval {
 //time_t mktime(void *tm);
 //struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
 int gettimeofday(struct timeval *tv , void *tz);
-sighandler_t signal (int sig, sighandler_t handler);
+_sig_func_ptr signal (int sig, _sig_func_ptr handler);
 
 int atoi(const char *s);
 char *itoa(int num, char *str, int base);

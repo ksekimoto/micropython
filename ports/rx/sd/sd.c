@@ -51,29 +51,29 @@ bool sd_open(FIL *fp, const char *fn, uint8_t mode) {
 
 int sd_read_byte(FIL *fp) {
     unsigned char c;
-    uint len = 0;
-    f_read(fp, (void *)&c, (uint)1, (uint *)&len);
+    unsigned int len = 0;
+    f_read(fp, (void *)&c, (unsigned int) 1, (unsigned int *)&len);
     if (len == 0) {
         return -1;
     }
     return (int)c;
 }
 
-int sd_read(FIL *fp, void *buf, uint size) {
-    uint len;
-    f_read(fp, buf, size, (uint *) &len);
+int sd_read(FIL *fp, void *buf, unsigned int size) {
+    unsigned int len;
+    f_read(fp, buf, size, (unsigned int *) &len);
     return len;
 }
 
 int sd_write_byte(FIL *fp, unsigned char c) {
-    uint len;
-    f_write(fp, (void *)&c, (uint)1, (uint *)&len);
+    unsigned int len;
+    f_write(fp, (void *)&c, (unsigned int) 1, (unsigned int *)&len);
     return len;
 }
 
-int sd_write(FIL *fp, const void *buf, uint size) {
-    uint len;
-    f_write(fp, (void *)buf, (uint)size, (uint *)&len);
+int sd_write(FIL *fp, const void *buf, unsigned int size) {
+    unsigned int len;
+    f_write(fp, (void *)buf, (unsigned int) size, (unsigned int *)&len);
     return len;
 }
 
