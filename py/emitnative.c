@@ -609,8 +609,11 @@ STATIC void emit_native_end_pass(emit_t *emit) {
             const_table_alloc += nqstr;
         }
         emit->const_table = m_new(mp_uint_t, const_table_alloc);
+        #if !MICROPY_DYNAMIC_COMPILER
         // Store mp_fun_table pointer just after qstrs
+        // (but in dynamic-compiler mode eliminate dependency on mp_fun_table)
         emit->const_table[nqstr] = (mp_uint_t)(uintptr_t)mp_fun_table;
+        #endif
 
         #if MICROPY_PERSISTENT_CODE_SAVE
         size_t qstr_link_alloc = emit->qstr_link_cur;
@@ -1356,7 +1359,7 @@ STATIC void emit_native_load_global(emit_t *emit, qstr qst, int kind) {
         if (emit->do_viper_types) {
             // check for builtin casting operators
             int native_type = mp_native_type_from_qstr(qst);
-            if (native_type >= MP_NATIVE_TYPE_INT) {
+            if (native_type >= MP_NATIVE_TYPE_BOOL) {
                 emit_post_push_imm(emit, VTYPE_BUILTIN_CAST, native_type);
                 return;
             }
@@ -2227,17 +2230,16 @@ STATIC void emit_native_binary_op(emit_t *emit, mp_binary_op_t op) {
         int reg_rhs = REG_ARG_3;
         emit_pre_pop_reg_flexible(emit, &vtype_rhs, &reg_rhs, REG_RET, REG_ARG_2);
         emit_pre_pop_reg(emit, &vtype_lhs, REG_ARG_2);
-        if (0) {
-            // dummy
         #if !(N_X64 || N_X86)
-        } else if (op == MP_BINARY_OP_LSHIFT) {
+        if (op == MP_BINARY_OP_LSHIFT) {
             ASM_LSL_REG_REG(emit->as, REG_ARG_2, reg_rhs);
             emit_post_push_reg(emit, VTYPE_INT, REG_ARG_2);
         } else if (op == MP_BINARY_OP_RSHIFT) {
             ASM_ASR_REG_REG(emit->as, REG_ARG_2, reg_rhs);
             emit_post_push_reg(emit, VTYPE_INT, REG_ARG_2);
+        } else
         #endif
-        } else if (op == MP_BINARY_OP_OR) {
+        if (op == MP_BINARY_OP_OR) {
             ASM_OR_REG_REG(emit->as, REG_ARG_2, reg_rhs);
             emit_post_push_reg(emit, VTYPE_INT, REG_ARG_2);
         } else if (op == MP_BINARY_OP_XOR) {

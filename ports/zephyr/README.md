@@ -14,6 +14,7 @@ Features supported at this time:
 * `utime` module for time measurements and delays.
 * `machine.I2C` class for I2C control.
 * `machine.Pin` class for GPIO control.
+* `machine.I2C` class for I2C control.
 * `usocket` module for networking (IPv4/IPv6).
 * "Frozen modules" support to allow to bundle Python modules together
   with firmware. Including complete applications, including with
@@ -95,6 +96,13 @@ starts from 0). You will need to adjust it for another board (using board's
 reference materials). To execute the above sample, copy it to clipboard, in
 MicroPython REPL enter "paste mode" using Ctrl+E, paste clipboard, press
 Ctrl+D to finish paste mode and start execution.
+
+Example of using I2C to scan for I2C slaves:
+
+    from machine import I2C
+
+    i2c = I2C("I2C_0")
+    i2c.scan()
 
 
 Minimal build

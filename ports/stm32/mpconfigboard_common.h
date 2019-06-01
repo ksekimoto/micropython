@@ -138,6 +138,7 @@
 
 #define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
 #define PYB_EXTI_NUM_VECTORS (23)
+#define MICROPY_HW_MAX_I2C (2)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (8)
 
@@ -146,6 +147,7 @@
 
 #define MP_HAL_UNIQUE_ID_ADDRESS (0x1fff7a10)
 #define PYB_EXTI_NUM_VECTORS (23)
+#define MICROPY_HW_MAX_I2C (3)
 #define MICROPY_HW_MAX_TIMER (14)
 #if defined(UART10)
 #define MICROPY_HW_MAX_UART (10)
@@ -169,6 +171,7 @@
 #endif
 
 #define PYB_EXTI_NUM_VECTORS (24)
+#define MICROPY_HW_MAX_I2C (4)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (8)
 
@@ -177,6 +180,7 @@
 
 #define MP_HAL_UNIQUE_ID_ADDRESS (0x1ff1e800)
 #define PYB_EXTI_NUM_VECTORS (24)
+#define MICROPY_HW_MAX_I2C (4)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (8)
 
@@ -185,6 +189,7 @@
 
 #define MP_HAL_UNIQUE_ID_ADDRESS (0x1fff7590)
 #define PYB_EXTI_NUM_VECTORS (23)
+#define MICROPY_HW_MAX_I2C (4)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (6)
 
@@ -250,6 +255,18 @@
 #else
 #define MICROPY_HW_ENABLE_CAN (0)
 #define MICROPY_HW_MAX_CAN (0)
+#endif
+#if defined(MICROPY_HW_CAN3_TX)
+#define MICROPY_HW_MAX_CAN (3)
+#elif defined(MICROPY_HW_CAN2_TX)
+#define MICROPY_HW_MAX_CAN (2)
+#elif defined(MICROPY_HW_CAN1_TX)
+#define MICROPY_HW_MAX_CAN (1)
+#endif
+
+// Configure maximum number of CDC VCP interfaces
+#ifndef MICROPY_HW_USB_CDC_NUM
+#define MICROPY_HW_USB_CDC_NUM (1)
 #endif
 #if defined(MICROPY_HW_CAN3_TX)
 #define MICROPY_HW_MAX_CAN (3)
