@@ -28,7 +28,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#ifdef __linux__
 #include <sys/select.h>
+#endif
 
 // ESP8266 defines its own ENOBUFS (different to standard one!)
 #undef ENOBUFS
