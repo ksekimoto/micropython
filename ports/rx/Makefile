@@ -251,6 +251,7 @@ else
 SRC_C += ethernetif.c
 endif
 SRC_C += extint.c
+SRC_C += factoryreset.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
 SRC_C += flashbdev.c
@@ -424,6 +425,7 @@ SRC_LIBM = $(addprefix lib/libm_dbl/,\
 	ceil.c \
 	cos.c \
 	cosh.c \
+	copysign.c \
 	erf.c \
 	exp.c \
 	expm1.c \
