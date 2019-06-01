@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sys/select.h>
 
 // ESP8266 defines its own ENOBUFS (different to standard one!)
 #undef ENOBUFS
@@ -72,7 +73,7 @@
 
 STATIC int mod_esp8266_socket_ioctl(mod_network_socket_obj_t *socket, mp_uint_t request, mp_uint_t arg, int *_errno);
 
-int ESP8266_EXPORT(errno); // for esp8266 driver
+//int ESP8266_EXPORT(errno); // for esp8266 driver
 
 STATIC volatile uint32_t fd_closed_state = 0;
 STATIC volatile bool wlan_connected = false;

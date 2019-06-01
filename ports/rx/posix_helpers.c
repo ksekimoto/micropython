@@ -157,12 +157,12 @@ int gettimeofday(struct timeval *tv , void *tz) {
 }
 
 #if !MICROPY_SSL_AXTLS
-sighandler_t signal (int sig, sighandler_t handler) {
+_sig_func_ptr signal (int sig, _sig_func_ptr handler) {
     // ToDo: implementation
 #if defined(DEBUG_SIGNAL)
     debug_printf("signal\r\n");
 #endif
-    return (sighandler_t)handler;
+    return (_sig_func_ptr)handler;
 }
 #endif
 

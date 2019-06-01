@@ -130,6 +130,7 @@ CFLAGS += -Wall -Werror -Wno-missing-braces
 #CFLAGS += -w
 CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
 #CFLAGS += -fno-leading-underscore
+#CFLAGS += -D__GNU_VISIBLE=1
 
 CFLAGS += -I$(BOARD_DIR)
 ifeq ($(DEBUG), 1)
