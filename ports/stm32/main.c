@@ -208,31 +208,6 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     // It is set to the internal flash filesystem by default.
     MP_STATE_PORT(vfs_cur) = vfs;
 
-<<<<<<< HEAD
-    // Make sure we have a /flash/boot.py.  Create it if needed.
-    FILINFO fno;
-    res = f_stat(&vfs_fat->fatfs, "/boot.py", &fno);
-    if (res != FR_OK) {
-        // doesn't exist, create fresh file
-
-        // LED on to indicate creation of boot.py
-        led_state(PYB_LED_GREEN, 1);
-        uint32_t start_tick = HAL_GetTick();
-
-        FIL fp;
-        f_open(&vfs_fat->fatfs, &fp, "/boot.py", FA_WRITE | FA_CREATE_ALWAYS);
-        UINT n;
-        f_write(&fp, fresh_boot_py, sizeof(fresh_boot_py) - 1 /* don't count null terminator */, &n);
-        // TODO check we could write n bytes
-        f_close(&fp);
-
-        // keep LED on for at least 200ms
-        systick_wait_at_least(start_tick, 200);
-        led_state(PYB_LED_GREEN, 0);
-    }
-
-=======
->>>>>>> upstream_master
     return true;
 }
 #endif
