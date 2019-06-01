@@ -68,7 +68,7 @@ char *itoa(int num, char *str, int base);
 #  define DEBUG_PRINTLN1(s)     // do nothing
 #endif
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 #include "sd.h"
 #endif
 
@@ -476,7 +476,7 @@ void esp8266_multiconnect(int mode) {
     get_data(WIFI_WAIT_MSEC);
 }
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 //**************************************************
 // ファイルに含まれる+IPDデータを削除します
 // ipd: ipdデータ列
@@ -1122,7 +1122,7 @@ int esp8266_recv(int num, char *recv_buf, int *recv_cnt) {
     return 1;
 }
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 //**************************************************
 // http POSTとしてSDカードのファイルをPOSTします: WiFi.httpPostSD
 //  WiFi.httpPostSD( URL, Headers, Filename, Filename )
@@ -1383,7 +1383,7 @@ int esp8266_post(const char *strURL, char *strData, const char *strDFname, int n
     int sla, cnt;
     int koron = 0;
     int len;
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     FIL fp;
     const char *tmpFilename = (const char *)"wifitmp.tmp";
 #endif
@@ -1524,7 +1524,7 @@ int esp8266_post(const char *strURL, char *strData, const char *strDFname, int n
     }
     //****** 送信終了 ******
     //****** 受信開始 ******
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     if (sd_exists(tmpFilename)) {
         sd_remove(tmpFilename);
     }
@@ -1534,7 +1534,7 @@ int esp8266_post(const char *strURL, char *strData, const char *strDFname, int n
 #endif
     unsigned long times;
     unsigned int wait_msec = WIFI_WAIT_MSEC;
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     unsigned char recv[2];
 #endif
     times = millis();
@@ -1545,7 +1545,7 @@ int esp8266_post(const char *strURL, char *strData, const char *strDFname, int n
         }
         while ((len = esp8266_serial_available()) != 0) {
             for (int i = 0; i < len; i++) {
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
                 recv[0] = (unsigned char)esp8266_serial_read();
                 sd_write(&fp, (unsigned char*)recv, 1);
 #else
@@ -1556,12 +1556,12 @@ int esp8266_post(const char *strURL, char *strData, const char *strDFname, int n
             wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
         }
     }
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     sd_flush(&fp);
     sd_close(&fp);
 #endif
     //****** 受信終了 ******
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     if (strDFname) {
         //受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
         int ret = cut_garbage_data("\r\n+IPD,4,", tmpFilename,

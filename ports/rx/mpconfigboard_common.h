@@ -89,8 +89,8 @@
 #endif
 
 // Whether to enable the SD card interface, exposed as pyb.SDCard
-#ifndef MICROPY_HW_HAS_SDCARD
-#define MICROPY_HW_HAS_SDCARD (0)
+#ifndef MICROPY_HW_ENABLE_SDCARD
+#define MICROPY_HW_ENABLE_SDCARD (0)
 #endif
 
 // Whether to enable the MMA7660 driver, exposed as pyb.Accel

@@ -1156,7 +1156,7 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
     return (unsigned short)u;
 }
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 #define BMP_HEADER_SIZE 0x8a
 char BmpHeader[BMP_HEADER_SIZE];
 
@@ -1224,7 +1224,7 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
 }
 #endif
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 #ifdef MR_JPEG
 int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_t jpeg;
@@ -1506,7 +1506,7 @@ STATIC mp_obj_t pyb_lcdspi_bitblt(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcdspi_bitblt_obj, 6, 6, pyb_lcdspi_bitblt);
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 STATIC mp_obj_t pyb_lcdspi_disp_bmp_sd(size_t n_args, const mp_obj_t *args) {
     pyb_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     int x = mp_obj_get_int(args[1]);
@@ -1536,7 +1536,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_puts), MP_ROM_PTR(&pyb_lcdspi_puts_obj) },
     { MP_ROM_QSTR(MP_QSTR_pututf8), MP_ROM_PTR(&pyb_lcdspi_pututf8_obj) },
     { MP_ROM_QSTR(MP_QSTR_bitblt), MP_ROM_PTR(&pyb_lcdspi_bitblt_obj) },
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
     { MP_ROM_QSTR(MP_QSTR_disp_bmp_sd), MP_ROM_PTR(&pyb_lcdspi_disp_bmp_sd_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_sd), MP_ROM_PTR(&pyb_lcdspi_disp_jpeg_sd_obj) },
 #endif
