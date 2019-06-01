@@ -3,8 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
- * Copyright (c) 2015 Daniel Campora
+ * Copyright (c) 2018-2019 Damien P. George
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +23,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_CC3200_UTIL_GCHELPER_H
-#define MICROPY_INCLUDED_CC3200_UTIL_GCHELPER_H
 
-extern mp_uint_t gc_helper_get_sp(void);
-extern mp_uint_t gc_helper_get_regs_and_sp(mp_uint_t *regs);
+#include "py/mphal.h"
+#include "storage.h"
 
-#endif // MICROPY_INCLUDED_CC3200_UTIL_GCHELPER_H
+void mboot_board_early_init(void) {
+    // Enable 500mA on WBUS-DIP28
+    mp_hal_pin_config(pyb_pin_W23, MP_HAL_PIN_MODE_INPUT, MP_HAL_PIN_PULL_UP, 0);
+}
+
+void board_early_init(void) {
+    // Explicitly init SPI2 because it's not enabled as a block device
+    spi_bdev_ioctl(&spi_bdev2, BDEV_IOCTL_INIT, (uint32_t)&spiflash2_config);
+}

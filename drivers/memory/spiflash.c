@@ -132,10 +132,10 @@ STATIC int mp_spiflash_wait_sr(mp_spiflash_t *self, uint8_t mask, uint8_t val, u
         sr = mp_spiflash_read_cmd(self, CMD_RDSR, 1);
         if ((sr & mask) == val) {
             return 0; // success
-    }
+        }
     } while (timeout--);
 
-        return -MP_ETIMEDOUT;
+    return -MP_ETIMEDOUT;
 }
 
 STATIC int mp_spiflash_wait_wel1(mp_spiflash_t *self) {
