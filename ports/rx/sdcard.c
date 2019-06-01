@@ -52,7 +52,7 @@
 #include "bufhelper.h"
 #include "common.h"
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 
 /* MMC card type flags (MMC_GET_TYPE) */
 #define CT_MMC      0x01        /* MMC ver 3 */
@@ -663,4 +663,4 @@ void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->u.ioctl[1] = MP_OBJ_FROM_PTR(&pyb_sdcard_obj);
 }
 
-#endif // MICROPY_HW_HAS_SDCARD
+#endif // MICROPY_HW_ENABLE_SDCARD

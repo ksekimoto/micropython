@@ -29,7 +29,7 @@
 #include "ff.h"
 #include "sd.h"
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 bool sd_exists(const char *fn) {
     FRESULT res;
     FILINFO fno;

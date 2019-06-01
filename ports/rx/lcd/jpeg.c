@@ -40,7 +40,7 @@
 #  define DEBUG_PRINT(m,v)    // do nothing
 #endif
 
-#if MICROPY_HW_HAS_SDCARD
+#if MICROPY_HW_ENABLE_SDCARD
 static FIL g_pInFile;
 static uint32_t g_nInFileSize;
 static uint32_t g_nInFileOfs;
