@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef __linux__
+#ifndef _SYS_TYPES_FD_SET
 #include <sys/select.h>
 #endif
 
