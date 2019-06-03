@@ -1,0 +1,38 @@
+version: 0.2
+
+env:
+  variables:
+    MAKEOPTS: "-j4"
+
+phases:
+  install:
+    commands:
+      - echo Entered the install phase...
+      - sudo apt-get update -qq || true
+      - sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+      - sudo apt-get install -y bzip2
+      - sudo apt-get install -y wget
+      - sudo apt-get install -y build-essential        
+      - sudo apt-get install -y python3
+      - wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz" -k -O rx-elf-gcc-4.9.4.tar.gz
+      - tar xvf rx-elf-gcc-4.9.4.tar.gz
+      - sudo mv ./rx-elf-gcc-4.9.4 /opt
+      - sudo chmod 777 /opt/rx-elf-gcc-4.9.4
+      - export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    finally:
+      - echo This always runs even if the update or install command fails 
+  build:
+    commands:
+      - echo Entered the build phase...
+      - echo Build started on `date`
+      - make ${MAKEOPTS} -C mpy-cross
+      - make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE
+      - make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS
+    finally:
+      - echo This always runs even if the install command fails
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+artifacts:
+  discard-paths: yes
