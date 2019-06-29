@@ -7,6 +7,8 @@
     FLASH_APP   .text
     FLASH_APP   .data
 
+    FLASH_EXT   .big_const
+
     RAM         .data
     RAM         .bss
     RAM         .heap
@@ -27,22 +29,29 @@ MEMORY
 _minimum_stack_size = 2K;
 _minimum_heap_size = 16K;
 
-/* Define tho top end of the stack.  The stack is full descending so begins just
-   above last byte of RAM.  Note that EABI requires the stack to be 8-byte
-   aligned for a call. */
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+/* Define the stack.  The stack is full descending so begins just above last byte
+   of RAM.  Note that EABI requires the stack to be 8-byte aligned for a call. */
+_estack = ORIGIN(RAM) + LENGTH(RAM) - _estack_reserve;
+_sstack = _estack - 16K;
 
 /* RAM extents for the garbage collector */
 _ram_start = ORIGIN(RAM);
 _ram_end = ORIGIN(RAM) + LENGTH(RAM);
 _heap_start = _ebss; /* heap starts just after statically allocated memory */
-_heap_end = _ram_end - 16K; /* 16k stack */
+_heap_end = _sstack;
 
 ENTRY(Reset_Handler)
 
 /* Define output sections */
 SECTIONS
 {
+    .text_ext :
+    {
+        . = ALIGN(512);
+        *(.big_const*)
+        . = ALIGN(4);
+    } >FLASH_EXT
+
     .isr_vector :
     {
         . = ALIGN(4);
