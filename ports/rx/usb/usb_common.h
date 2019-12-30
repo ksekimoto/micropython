@@ -57,12 +57,15 @@
 * Defines
 *******************************************************************************/
 
+//#define USB_DEBUG_DESCRIPTOR
 //#define USB_DEBUG_SU
 //#define USB_DEBUG_CS
-//#define USB_DEBUG_CI
 //#define USB_DEBUG_CO
+//#define USB_DEBUG_CI
 //#define USB_DEBUG_BO
 //#define USB_DEBUG_BI
+//#define USB_DEBUG_II
+//#define USB_DEBUG_SPECIAL
 
 /*Debug messages*/
 /*The debug level - decides what level of message will be output*/

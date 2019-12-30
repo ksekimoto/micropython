@@ -342,6 +342,7 @@ SRC_C += $(MCU_SERIES)/usblib_hw.c
 else
 SRC_C += usb/usb_entry.c
 SRC_C += usb/usb_cdc.c
+SRC_C += usb/usb_hid.c
 SRC_C += usb/usb_msc_scsi.c
 SRC_C += usb/usb_msc.c
 SRC_C += usb/usb_core.c

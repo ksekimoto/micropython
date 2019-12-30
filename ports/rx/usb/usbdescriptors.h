@@ -45,30 +45,45 @@
 System Includes
 ***********************************************************************************/
 #include <stdint.h>
+#define HID_INTERFACE_DESCRIPTOR_SIZE 25
+//#define HID_REPORT_DESCRIPTOR_SIZE 34
+#define HID_DESCRIPTOR_SIZE 9
+#define START_INDEX_OF_HID_WITHIN_CONFIG_DESC 18
+
+/* As specified in the Report Descriptor */
+#define OUTPUT_REPORT_SIZE	17
+/* As specified in the Report Descriptor */
+#define INPUT_REPORT_DEF_SIZE	64
 
 /***********************************************************************************
 Type Definitions
 ***********************************************************************************/
 /*    Descriptor    */
-typedef    struct DESCRIPTOR
+typedef struct DESCRIPTOR
 {
     const uint16_t length;
     const uint8_t* pucData;
 }DESCRIPTOR;
 
 /* Device Descriptor */
-extern const DESCRIPTOR gDeviceDescriptor;
+extern DESCRIPTOR gDeviceDescriptor;
 
 /* Configuration, Interface, CDC and Endpoint Descriptor */
-extern const DESCRIPTOR gConfigurationDescriptor;
+extern DESCRIPTOR gConfigurationDescriptor;
+
+/* Hid Report Descriptor */
+extern DESCRIPTOR gHIDReportDescriptor;
 
 /* String descriptors */
-extern const DESCRIPTOR gStringDescriptorLanguageIDs;
-extern const DESCRIPTOR gStringDescriptorManufacturer;
-extern const DESCRIPTOR gStringDescriptorProduct;
-extern const DESCRIPTOR gStringDescriptorSerialNum;
+extern DESCRIPTOR gStringDescriptorLanguageIDs;
+extern DESCRIPTOR gStringDescriptorManufacturer;
+extern DESCRIPTOR gStringDescriptorProduct;
+extern DESCRIPTOR gStringDescriptorSerialNum;
 
 //#define USB_CDC_MSC
+
+void SetHIDInterfaceDescriptor(char *desc);
+void SetHIDReportDescriptor(char *desc, int size);
 
 /* FILENAME_USBDESCRIPTORS_H */
 #endif

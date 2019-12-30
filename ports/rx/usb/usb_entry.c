@@ -206,7 +206,11 @@ int usbcdc_read(void) {
 
 void usb_init(void) {
 #if defined(USB_CDC_MSC)
-    USB_ERR err = USBCDCMSC_Init();
+//#if defined(USB_HID)
+    USB_ERR err = USBCDCMSCHID_Init();
+//#else
+//    USB_ERR err = USBCDCMSC_Init();
+//#endif
 #elif defined (USB_MSC)
     USB_ERR err = USBMSC_Init();
 #else

@@ -116,12 +116,14 @@ void NORETURN __fatal_error(const char *msg) {
     mp_hal_stdout_tx_strn(msg, strlen(msg));
     for (uint i = 0; ;) {
         led_toggle(((i++) & 3) + 1);
-        for (volatile uint delay = 0; delay < 100000; delay++) {
+        for (volatile uint delay = 0; delay < 1000; delay++) {
         }
+#if 0
         if (i >= 16) {
             // to conserve power
             __WFI();
         }
+#endif
     }
 }
 

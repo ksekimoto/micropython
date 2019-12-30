@@ -559,6 +559,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
 		case BULK_ONLY_MASS_STORAGE_RESET:
 		{
 			DEBUG_MSG_MID(("USBMSC: BULK_ONLY_MASS_STORAGE_RESET\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("MASS RESET\r\n");
+#endif
 			
 			/*
 			This request is used to reset the mass storage device
@@ -614,6 +617,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
 			the maximum LUN supported by the device.*/
 			
 			DEBUG_MSG_MID(("USBMSC: GET_MAX_LUN\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET MAX LUN\r\n");
+#endif
 			
 			/*Check paramaters are OK*/
 			/*Check wIndex equalls the only interface number we support*/

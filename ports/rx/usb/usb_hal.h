@@ -51,8 +51,9 @@
 /*Select the USB module to use by commenting out the unused module*/
 #define USB_MODULE_0
 
-/*Set the priority of the USB interrupts according to your syastem.*/
-#define USB_HAL_INTERRUPT_PROIRITY 13
+/*Set the priority of the USB interrupts according to your system.*/
+//#define USB_HAL_INTERRUPT_PROIRITY 13
+#define USB_HAL_INTERRUPT_PROIRITY 11
 
 /*USB packet sizes*/
 #define CONTROL_IN_PACKET_SIZE      64
@@ -83,6 +84,10 @@
 #define PIPE_BULK_IN_MSC        5
 #define EP_BULK_IN_MSC          5
 
+/*INTERRUPT IN - Use Pipe6, EP 3*/
+#define PIPE_INTERRUPT_IN_HID   7
+#define EP_INTERRUPT_IN_HID     6
+
 /***********************************************************************************
 * Type Definitions
 ***********************************************************************************/
@@ -111,6 +116,9 @@ typedef struct USBHAL_CONFIG
 USB_ERR USBHAL_Init(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError);
 USB_ERR USBHAL_Init2(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError,
     CB_SETUP _fpSetup2, CB_CABLE _fpCable2, CB_ERROR _fpError2);
+USB_ERR USBHAL_Init3(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError,
+    CB_SETUP _fpSetup2, CB_CABLE _fpCable2, CB_ERROR _fpError2,
+    CB_SETUP _fpSetup3, CB_CABLE _fpCable3, CB_ERROR _fpError3);
 
 USB_ERR USBHAL_Disable(void);
 
@@ -130,6 +138,7 @@ USB_ERR USBHAL_Bulk_OUT_CDC(uint32_t _NumBytes, uint8_t* _Buffer, CB_DONE_OUT _C
 
 /*Interrupt*/
 USB_ERR USBHAL_Interrupt_IN(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone);
+USB_ERR USBHAL_Interrupt_IN_HID(uint32_t _NumBytes, const uint8_t* _Buffer, CB_DONE _CBDone);
 
 /*Cancel all pending operations and call callbacks*/
 USB_ERR USBHAL_Cancel(USB_ERR _err);
@@ -143,18 +152,21 @@ void USBHAL_Control_Stall(void);
 void USBHAL_Bulk_IN_CDC_Stall(void);
 void USBHAL_Bulk_OUT_CDC_Stall(void);
 void USBHAL_Interrupt_IN_Stall(void);
+void USBHAL_Interrupt_IN_HID_Stall(void);
 void USBHAL_Bulk_IN_MSC_Stall(void);
 void USBHAL_Bulk_OUT_MSC_Stall(void);
 /*Stall clear */
 void USBHAL_Bulk_IN_CDC_Stall_Clear(void);
 void USBHAL_Bulk_OUT_CDC_Stall_Clear(void);
 void USBHAL_Interrupt_IN_Stall_Clear(void);
+void USBHAL_Interrupt_IN_HID_Stall_Clear(void);
 void USBHAL_Bulk_IN_MSC_Stall_Clear(void);
 void USBHAL_Bulk_OUT_MSC_Stall_Clear(void);
 /*Stall Status*/
 bool USBHAL_Bulk_IN_CDC_Is_Stalled(void);
 bool USBHAL_Bulk_OUT_CDC_Is_Stalled(void);
 bool USBHAL_Interrupt_IN_Is_Stalled(void);
+bool USBHAL_Interrupt_IN_HID_Is_Stalled(void);
 bool USBHAL_Bulk_IN_MSC_Is_Stalled(void);
 bool USBHAL_Bulk_OUT_MSC_Is_Stalled(void);
 
