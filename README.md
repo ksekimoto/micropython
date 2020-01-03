@@ -65,6 +65,17 @@ You will also need bash, gcc, and Python 3.3+ available as the command `python3`
 (if your system only has Python 2.7 then invoke make with the additional option
 `PYTHON=python2`).
 
+The MicroPython cross-compiler, mpy-cross
+-----------------------------------------
+
+Most ports require the MicroPython cross-compiler to be built first.  This
+program, called mpy-cross, is used to pre-compile Python scripts to .mpy
+files which can then be included (frozen) into the firmware/executable for
+a port.  To build mpy-cross use:
+
+    $ cd mpy-cross
+    $ make
+
 The Unix version
 ----------------
 
@@ -176,8 +187,37 @@ https://gcc-renesas.com/rx-download-toolchains/
 To build:
 
     $ git submodule update --init
-    $ cd ports/rx
+    $ cd mpy-cross
+    $ make
+    $ cd ../ports/rx
     $ make BOARD=GR_CITURS
+
+To build on Ubuntu 18.04
+
+    $ sudo apt-get update -qq || true
+    $ sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+    $ sudo apt-get install -y bzip2
+    $ sudo apt-get install -y wget
+    $ sudo apt-get install -y build-essential        
+    $ sudo apt-get install -y python3
+    $ wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz" -k -O rx-elf-gcc-4.9.4.tar.gz
+    $ tar xvf rx-elf-gcc-4.9.4.tar.gz
+    $ sudo mv ./rx-elf-gcc-4.9.4 /opt
+    $ sudo chmod 777 /opt/rx-elf-gcc-4.9.4
+    $ export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    $ sudo apt-get install -y git
+    $ git clone https://github.com/ksekimoto/micropython.git
+    $ cd micropython
+    $ git submodule update --init
+    $ cd mpy-cross
+    $ make
+    $ cd ../ports/rx
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD clean 2>&1 | tee GR_CITRUS_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD 2>&1 | tee GR_CITRUS_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD clean 2>&1 | tee GR_ROSE_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD 2>&1 | tee GR_ROSE_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD clean 2>&1 | tee GR_SAKURA_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD 2>&1 | tee GR_SAKURA_DD_build.log
 
 The supported boards are
 
