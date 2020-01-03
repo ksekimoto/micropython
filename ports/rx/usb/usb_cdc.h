@@ -40,6 +40,7 @@
 User Includes
 ******************************************************************************/
 #include "usb_common.h"
+#include "usb_hid.h"
 
 /******************************************************************************
 Function Prototypes
@@ -48,6 +49,7 @@ Function Prototypes
 extern "C" {
 #endif
 
+USB_ERR USBCDCMSCHID_Init();
 USB_ERR USBCDCMSC_Init(void);
 USB_ERR USBCDC_Init(void);
 bool USBCDC_IsConnected(void);

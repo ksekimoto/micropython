@@ -48,6 +48,7 @@
 #include "usb_core.h"
 #include "usbdescriptors.h"
 #include "usb_cdc.h"
+#include "usb_hid.h"
 #include "common.h"
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"
@@ -199,6 +200,15 @@ void CBDoneControlOutMSC(USB_ERR _err, uint32_t _NumBytes);
 void CBCableMSC(bool _bConnected);
 void CBErrorMSC(USB_ERR _err);
 
+USB_ERR CBUnhandledSetupPacketHID(SetupPacket* _pSetupPacket,
+                                        uint16_t* _pNumBytes,
+                                        uint8_t** _ppBuffer);
+
+void CBDoneControlOutHID(USB_ERR _err, uint32_t _NumBytes);
+
+void CBCableHID(bool _bConnected);
+void CBErrorHID(USB_ERR _err);
+
 USB_ERR USBCDCMSC_Init(void)
 {
     USB_ERR err;
@@ -243,6 +253,53 @@ USB_ERR USBCDCMSC_Init(void)
     return err;
 }
 
+USB_ERR USBCDCMSCHID_Init(void)
+{
+    USB_ERR err;
+
+    /*Initialize this modules data*/
+    InitialiseData();
+
+#if defined(DEBUG_USE_RAMDISK)
+    RamDiskInit();
+#endif
+
+    /*Initialize the USB core*/
+    err = USBCORE_Init3(gStringDescriptorManufacturer.pucData,
+                       gStringDescriptorManufacturer.length,
+                       gStringDescriptorProduct.pucData,
+                       gStringDescriptorProduct.length,
+                       gStringDescriptorSerialNum.pucData,
+                       gStringDescriptorSerialNum.length,
+                       gDeviceDescriptor.pucData,
+                       gDeviceDescriptor.length,
+                       gConfigurationDescriptor.pucData,
+                       gConfigurationDescriptor.length,
+                       (CB_SETUP_PACKET)CBUnhandledSetupPacket,
+                       (CB_DONE_OUT)CBDoneControlOut,
+                       (CB_CABLE)CBCable,
+                       (CB_ERROR)CBError,
+                       (CB_SETUP_PACKET)CBUnhandledSetupPacketMSC,
+                       (CB_DONE_OUT)CBDoneControlOutMSC,
+                       (CB_CABLE)CBCableMSC,
+                       (CB_ERROR)CBErrorMSC,
+                       (CB_SETUP_PACKET)CBUnhandledSetupPacketHID,
+                       (CB_DONE_OUT)CBDoneControlOutHID,
+                       (CB_CABLE)CBCableHID,
+                       (CB_ERROR)CBErrorHID);
+    if(USB_ERR_OK == err)
+    {
+        USBHAL_CONFIG oHALConfig;
+        /*Config HAL*/
+        /*Get default/current config*/
+        oHALConfig = *USBHAL_Config_Get();
+        /*MSC is a special case as it mustn't send a zero length packet
+        to end a BULK IN that doesn't automatically end with a short packet*/
+        oHALConfig.m_bBULK_IN_No_Short_Packet = true;
+        err = USBHAL_Config_Set(&oHALConfig);
+    }
+    return err;
+}
 /***********************************************************************************
 * End of function USBCDC_Init
 ***********************************************************************************/
@@ -731,7 +788,10 @@ static void CBDoneControlOut(USB_ERR _err, uint32_t _NumBytes)
     assert(USB_ERR_OK == _err);
     /*Assume this is SET_LINE_CODING data as it is the
     only control out this deals with.*/
+#if defined(USB_DEBUG_SPECIAL)
+#else
     assert(SET_CONTROL_LINE_STATE_DATA_SIZE == _NumBytes);
+#endif
 
     /*Construct dwDTERate to avoid endian issues.
     NOTE: Buffer always arrives in little endian*/
@@ -782,7 +842,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
         case GET_LINE_CODING:
         {
             DEBUG_MSG_LOW(("USBCDC: GET_LINE_CODING\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET_LINE_CODING\r\n");
+#endif
             /*Data IN response */
             *_pNumBytes = LINE_CODING_DATA_SIZE;
             *_ppBuffer = (uint8_t*)g_LineCoding;
@@ -791,6 +853,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
         case SET_LINE_CODING: /*(Required for hyperterminal)*/
         {
             DEBUG_MSG_LOW(("USBCDC: SET_LINE_CODING\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET_LINE_CODING\r\n");
+#endif
             /*No action required for this request.*/
             /*Data OUT*/
             *_pNumBytes = SET_CONTROL_LINE_STATE_DATA_SIZE;
@@ -800,6 +865,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
         case SET_CONTROL_LINE_STATE:
         {
             DEBUG_MSG_LOW(("USBCDC: SET_CONTROL_LINE_STATE\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET_CONTROL_LINE_STATE\r\n");
+#endif
             /*No action required for this request.*/
             /*No data response */
             *_pNumBytes = 0;
@@ -808,6 +876,9 @@ static USB_ERR ProcessClassSetupPacket(SetupPacket* _pSetupPacket,
         case SEND_BREAK:
         {
             DEBUG_MSG_LOW(("USBCDC: SEND_BREAK\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET_CONTROL_LINE_STATE\r\n");
+#endif
             g_bBreakState = true;
             /*No data response */
             *_pNumBytes = 0;

@@ -146,9 +146,13 @@ static CB_SETUP_PACKET g_fpCBSetupPacket = NULL;
 static CB_DONE_OUT g_fpCBControlOut = NULL;
 static CB_SETUP_PACKET g_fpCBSetupPacket2 = NULL;
 static CB_DONE_OUT g_fpCBControlOut2 = NULL;
+static CB_SETUP_PACKET g_fpCBSetupPacket3 = NULL;
+static CB_DONE_OUT g_fpCBControlOut3 = NULL;
 
 /*Configuration Value */
 static uint8_t g_ConfigurationValue;
+
+void CopyInputReportHID();
 
 /*******************************************************************************
 * Outline       : USBCORE_Init
@@ -263,6 +267,60 @@ USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
     return err;
 }
 
+USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
+                     const uint8_t* _Product, uint16_t _ProductSize,
+                     const uint8_t* _Serial, uint16_t _SerialSize,
+                     const uint8_t* _DeviceDescriptor, uint16_t _DeviceDescriptorSize,
+                     const uint8_t* _ConfigDescriptor, uint16_t _ConfigDescriptorSize,
+                     CB_SETUP_PACKET _fpCBSetupPacket,
+                     CB_DONE_OUT _fpCBControlOut,
+                     CB_CABLE _fpCBCable,
+                     CB_ERROR _fpCBError,
+                     CB_SETUP_PACKET _fpCBSetupPacket2,
+                     CB_DONE_OUT _fpCBControlOut2,
+                     CB_CABLE _fpCBCable2,
+                     CB_ERROR _fpCBError2,
+                     CB_SETUP_PACKET _fpCBSetupPacket3,
+                     CB_DONE_OUT _fpCBControlOut3,
+                     CB_CABLE _fpCBCable3,
+                     CB_ERROR _fpCBError3)
+{
+    USB_ERR err = USB_ERR_OK;
+
+    /*Store passed in descriptors*/
+    g_Descriptors.Device.pucBuf = _DeviceDescriptor;
+    g_Descriptors.Device.NumBytes = _DeviceDescriptorSize;
+
+    g_Descriptors.Config.pucBuf = _ConfigDescriptor;
+    g_Descriptors.Config.NumBytes = _ConfigDescriptorSize;
+
+    g_Descriptors.StringManufacturer.pucBuf = _Manufacturer;
+    g_Descriptors.StringManufacturer.NumBytes = _ManufacturerSize;
+
+    g_Descriptors.StringProduct.pucBuf = _Product;
+    g_Descriptors.StringProduct.NumBytes = _ProductSize;
+
+    g_Descriptors.StringSerial.pucBuf = _Serial;
+    g_Descriptors.StringSerial.NumBytes = _SerialSize;
+
+    /*Store passed in callback*/
+    g_fpCBSetupPacket = _fpCBSetupPacket;
+    g_fpCBControlOut = _fpCBControlOut;
+    g_fpCBSetupPacket2 = _fpCBSetupPacket2;
+    g_fpCBControlOut2 = _fpCBControlOut2;
+    g_fpCBSetupPacket3 = _fpCBSetupPacket3;
+    g_fpCBControlOut3 = _fpCBControlOut3;
+
+    /*Initialise variables*/
+    g_ConfigurationValue = 0;
+    /*Initialise USB HAL*/
+    err = USBHAL_Init3(CBSetup, _fpCBCable, _fpCBError, CBSetup, _fpCBCable2, _fpCBError2, CBSetup, _fpCBCable3, _fpCBError3);
+
+    //CopyInputReportHID();
+
+    return err;
+}
+
 /******************************************************************************
 * End of function USBCORE_Init
 ******************************************************************************/
@@ -277,12 +335,27 @@ USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
 * Argument      : _pSetupPacket - buffer containing the setup packet.
 * Return value  : none
 ******************************************************************************/
+
+#if defined(USB_DEBUG_SPECIAL)
+uint16_t g_NumBytes[5] = {0};
+uint8_t g_setup[8] = {0};
+#endif
 static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
 {
     USB_ERR err = USB_ERR_OK;
     uint16_t NumBytes;
     uint8_t* pBuffer;
 
+#if defined(USB_DEBUG_SPECIAL)
+    g_setup[0] = (uint8_t)(*_pSetupPacket)[0];
+    g_setup[1] = (uint8_t)(*_pSetupPacket)[1];
+    g_setup[2] = (uint8_t)(*_pSetupPacket)[2];
+    g_setup[3] = (uint8_t)(*_pSetupPacket)[3];
+    g_setup[4] = (uint8_t)(*_pSetupPacket)[4];
+    g_setup[5] = (uint8_t)(*_pSetupPacket)[5];
+    g_setup[6] = (uint8_t)(*_pSetupPacket)[6];
+    g_setup[7] = (uint8_t)(*_pSetupPacket)[7];
+#endif
     DEBUG_MSG_HIGH( ("USBCORE: SetupPacket received\r\n"));
 
     /*Populate the Setup Packet structure g_oSetupPacket */
@@ -291,6 +364,10 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
     /*Process this setup packet*/
     err = ProcessSetupPacket(&NumBytes, &pBuffer);
 
+#if defined(USB_DEBUG_SPECIAL)
+    g_NumBytes[0] = g_oSetupPacket.wLength;
+    g_NumBytes[1] = NumBytes;
+#endif
     if(USB_ERR_UNKNOWN_REQUEST == err)
     {
         /*Can't handle this setup packet*/
@@ -298,6 +375,9 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         err = g_fpCBSetupPacket(&g_oSetupPacket, &NumBytes, &pBuffer);
     }
 
+#if defined(USB_DEBUG_SPECIAL)
+    g_NumBytes[2] = NumBytes;
+#endif
     if(USB_ERR_UNKNOWN_REQUEST == err)
     {
         /*Can't handle this setup packet*/
@@ -307,6 +387,21 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         }
     }
 
+#if defined(USB_DEBUG_SPECIAL)
+    g_NumBytes[3] = NumBytes;
+#endif
+    if(USB_ERR_UNKNOWN_REQUEST == err)
+    {
+        /*Can't handle this setup packet*/
+        /*Let upper layer try - call registered callback*/
+        if (g_fpCBSetupPacket3) {
+        err = g_fpCBSetupPacket3(&g_oSetupPacket, &NumBytes, &pBuffer);
+        }
+    }
+
+#if defined(USB_DEBUG_SPECIAL)
+    g_NumBytes[4] = NumBytes;
+#endif
     if(USB_ERR_OK == err)
     {
         /*Is there a data stage?*/
@@ -332,8 +427,15 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
                 /*OUT*/
                 DEBUG_MSG_MID(("USBCORE: SetupPacket DATA OUT\r\n"));
 
+#if defined(USB_DEBUG_SPECIAL)
+                if (g_oSetupPacket.wLength != NumBytes) {
+                    g_NumBytes[0] = g_oSetupPacket.wLength;
+                    debug_printf("%d %d %d %d %d\r\n", NumBytes, g_NumBytes[1], g_NumBytes[2], g_NumBytes[3], g_NumBytes[4]);
+                }
+                //assert(g_oSetupPacket.wLength == NumBytes);
+#else
                 assert(g_oSetupPacket.wLength == NumBytes);
-
+#endif
                 USBHAL_Control_OUT(NumBytes, pBuffer, g_fpCBControlOut);
             }
         }
@@ -386,7 +488,9 @@ static USB_ERR ProcessSetupPacket(uint16_t* _pNumBytes, uint8_t** _ppBuffer)
         case REQUEST_VENDOR:
         default:
         {
-            /*Unsupported request*/
+#ifdef USB_DEBUG_DESCRIPTOR
+            debug_printf("NOT REQUEST_STANDARD %d\r\n", g_oSetupPacket.bmRequest);
+#endif            /*Unsupported request*/
             err = USB_ERR_UNKNOWN_REQUEST;
         }
     }
@@ -417,35 +521,53 @@ static USB_ERR ProcessStandardSetupPacket(uint16_t* _pNumBytes, uint8_t** _ppBuf
 
     /*NOTE: SET_ADDRESS is supported by the HW.*/
 
-    switch(g_oSetupPacket.bRequest)
+    switch((int)g_oSetupPacket.bRequest)
     {
         case GET_DESCRIPTOR:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET DESCRIPTOR\r\n");
+#endif
             err = ProcessGetDescriptor(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
         case GET_CONFIGURATION:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET CONFIGURATION\r\n");
+#endif
             err = ProcessGetConfiguration(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
         case SET_CONFIGURATION:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET CONFIGURATION\r\n");
+#endif
             err = ProcessSetConfiguration(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
         case SET_FEATURE:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET FEATURE\r\n");
+#endif
             err = ProcessSetFeature(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
         case CLEAR_FEATURE:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("CLEAR FEATURE\r\n");
+#endif
             err = ProcessClearFeature(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
         case GET_STATUS:
         {
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET STATUS\r\n");
+#endif
             err = ProcessGetStatus(_pNumBytes, (const uint8_t**)_ppBuffer);
             break;
         }
@@ -507,6 +629,10 @@ static USB_ERR ProcessSetFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                     break;
                 case EP_INTERRUPT_IN:
                     USBHAL_Interrupt_IN_Stall();
+                    err = USB_ERR_OK;
+                    break;
+                case EP_INTERRUPT_IN_HID:
+                    USBHAL_Interrupt_IN_HID_Stall();
                     err = USB_ERR_OK;
                     break;
                 case EP_BULK_OUT_MSC:
@@ -593,6 +719,10 @@ static USB_ERR ProcessClearFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffe
                     USBHAL_Interrupt_IN_Stall_Clear();
                     err = USB_ERR_OK;
                     break;
+                case EP_INTERRUPT_IN_HID:
+                    USBHAL_Interrupt_IN_HID_Stall_Clear();
+                    err = USB_ERR_OK;
+                    break;
                 case EP_BULK_OUT_MSC:
                     /*Only clear a BULK OUT if flag "m_bAllowStallClear" is set.*/
                     if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
@@ -650,13 +780,15 @@ static USB_ERR ProcessSetConfiguration(uint16_t* _pNumBytes, const uint8_t**_ppB
     /*The lower byte of the 'value' field contains the configuration.*/
     g_ConfigurationValue = (uint8_t)g_oSetupPacket.wValue;
     DEBUG_MSG_MID(("USBCORE: SetConfiguration: %d \r\n", g_ConfigurationValue));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("SET CONFIGURATION %d\r\n", g_ConfigurationValue);
+#endif
     /*There is no data stage for this request*/
     *_pNumBytes = 0;
     *_ppBuffer = NULL;
 
     /*Reset the data toggles on the endpoints*/
-    USBHAL_ResetEndpoints();
+    //USBHAL_ResetEndpoints();
 
     return err;
 }
@@ -682,7 +814,9 @@ static USB_ERR ProcessGetConfiguration(uint16_t* _pNumBytes, const uint8_t**_ppB
     /*This assumes the device is in the configured state.*/
 
     DEBUG_MSG_MID(("USBCORE: GetConfiguration: %d \r\n", g_ConfigurationValue));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("GET CONFIGURATION %d\r\n", g_ConfigurationValue);
+#endif
     /*There is a 1 byte data stage for this request*/
     *_pNumBytes = 1;
     *_ppBuffer = &g_ConfigurationValue;
@@ -759,12 +893,19 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                 case EP_BULK_IN_CDC:
                     if(true == USBHAL_Bulk_IN_CDC_Is_Stalled())
                     {
-                            /*Set HALT bit (BIT 0)*/
-                            StatusData[0] |= 0x01;
+                        /*Set HALT bit (BIT 0)*/
+                        StatusData[0] |= 0x01;
                     }
                     break;
                 case EP_INTERRUPT_IN:
                     if(true == USBHAL_Interrupt_IN_Is_Stalled())
+                    {
+                        /*Set HALT bit (BIT 0)*/
+                        StatusData[0] |= 0x01;
+                    }
+                    break;
+                case EP_INTERRUPT_IN_HID:
+                    if(true == USBHAL_Interrupt_IN_HID_Is_Stalled())
                     {
                         /*Set HALT bit (BIT 0)*/
                         StatusData[0] |= 0x01;
@@ -780,8 +921,8 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                 case EP_BULK_IN_MSC:
                     if(true == USBHAL_Bulk_IN_MSC_Is_Stalled())
                     {
-                            /*Set HALT bit (BIT 0)*/
-                            StatusData[0] |= 0x01;
+                        /*Set HALT bit (BIT 0)*/
+                        StatusData[0] |= 0x01;
                     }
                     break;
                 default:
@@ -831,7 +972,9 @@ static USB_ERR ProcessGetDescriptor(uint16_t* _pNumBytes, const uint8_t** _ppDes
         case DEVICE:
         {
             DEBUG_MSG_MID(("USBCORE: Device Descriptor\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("DEVICE SIZE: %d\r\n", g_Descriptors.Device.NumBytes);
+#endif
             *_pNumBytes = g_Descriptors.Device.NumBytes;
             *_ppDescriptor = g_Descriptors.Device.pucBuf;
             break;
@@ -839,7 +982,9 @@ static USB_ERR ProcessGetDescriptor(uint16_t* _pNumBytes, const uint8_t** _ppDes
         case CONFIGURATION:
         {
             DEBUG_MSG_MID(("USBCORE: Config Descriptor\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("CONFIG SIZE: %d\r\n", g_Descriptors.Config.NumBytes);
+#endif
             *_pNumBytes = g_Descriptors.Config.NumBytes;
             *_ppDescriptor = g_Descriptors.Config.pucBuf;
             break;
@@ -847,6 +992,9 @@ static USB_ERR ProcessGetDescriptor(uint16_t* _pNumBytes, const uint8_t** _ppDes
         case STRING:
         {
             DEBUG_MSG_MID(("USBCORE: String Descriptor\r\n"));
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("STRING\r\n");
+#endif
             err = ProcessGetDescriptorString(_pNumBytes, _ppDescriptor);
             break;
         }
@@ -918,7 +1066,9 @@ static USB_ERR ProcessGetDescriptorString(uint16_t* _pNumBytes,
                 case STRING_iMANUFACTURER:
                 {
                     DEBUG_MSG_MID(("String Manufacturer\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("STRING_iMANUFACTURER %d\r\n", g_Descriptors.StringManufacturer.NumBytes);
+#endif
                     *_pNumBytes = g_Descriptors.StringManufacturer.NumBytes;
                     *_ppDescriptor = g_Descriptors.StringManufacturer.pucBuf;
                     break;
@@ -926,7 +1076,9 @@ static USB_ERR ProcessGetDescriptorString(uint16_t* _pNumBytes,
                 case STRING_iPRODUCT:
                 {
                     DEBUG_MSG_MID(("String Product\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("STRING_iPRODUCT %d\r\n", g_Descriptors.StringProduct.NumBytes);
+#endif
                     *_pNumBytes = g_Descriptors.StringProduct.NumBytes;
                     *_ppDescriptor = g_Descriptors.StringProduct.pucBuf;
                     break;
@@ -934,7 +1086,9 @@ static USB_ERR ProcessGetDescriptorString(uint16_t* _pNumBytes,
                 case STRING_iSERIAL:
                 {
                     DEBUG_MSG_MID(("String Serial Number\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("STRING_iSERIAL %d\r\n", g_Descriptors.StringSerial.NumBytes);
+#endif
                     *_pNumBytes = g_Descriptors.StringSerial.NumBytes;
                     *_ppDescriptor = g_Descriptors.StringSerial.pucBuf;
                     break;
@@ -943,7 +1097,9 @@ static USB_ERR ProcessGetDescriptorString(uint16_t* _pNumBytes,
                 {
                     /*Unknown descriptor request*/
                     DEBUG_MSG_MID(("Error:- Unknown String\r\n"));
-
+#ifdef USB_DEBUG_DESCRIPTOR
+    debug_printf("STRING_UNKNOWN %d\r\n", 0);
+#endif
                     *_pNumBytes = 0;
                     *_ppDescriptor = NULL;
                     err = USB_ERR_UNKNOWN_REQUEST;
@@ -993,3 +1149,4 @@ static void PopulateSetupPacket(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_S
 /******************************************************************************
 End of function PopulateSetupPacket
 ******************************************************************************/
+
