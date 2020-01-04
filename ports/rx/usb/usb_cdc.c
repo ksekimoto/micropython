@@ -253,6 +253,7 @@ USB_ERR USBCDCMSC_Init(void)
     return err;
 }
 
+#if defined(USB_HID)
 USB_ERR USBCDCMSCHID_Init(void)
 {
     USB_ERR err;
@@ -300,6 +301,7 @@ USB_ERR USBCDCMSCHID_Init(void)
     }
     return err;
 }
+#endif
 /***********************************************************************************
 * End of function USBCDC_Init
 ***********************************************************************************/
@@ -788,7 +790,10 @@ static void CBDoneControlOut(USB_ERR _err, uint32_t _NumBytes)
     assert(USB_ERR_OK == _err);
     /*Assume this is SET_LINE_CODING data as it is the
     only control out this deals with.*/
-#if defined(USB_DEBUG_SPECIAL)
+#if defined(USB_WORKAROUND)
+    // 2020/01/04 KS comment out for workaround
+    // assert fails on some cases on Windows
+    // assert(SET_CONTROL_LINE_STATE_DATA_SIZE == _NumBytes);
 #else
     assert(SET_CONTROL_LINE_STATE_DATA_SIZE == _NumBytes);
 #endif

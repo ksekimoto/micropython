@@ -28,6 +28,7 @@
 #ifndef PORTS_RX_USB_H_
 #define PORTS_RX_USB_H_
 
+#include "usb_common.h"
 #include "usbdescriptors.h"
 
 #define PYB_USB_FLAG_USB_MODE_CALLED    (0x0002)

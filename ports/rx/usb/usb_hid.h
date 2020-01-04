@@ -63,6 +63,7 @@ User Includes
 #include "usb_common.h"
 #include "usbdescriptors.h"
 
+#if defined(USB_HID)
 /***********************************************************************************
 Type Definitions
 ***********************************************************************************/
@@ -75,6 +76,6 @@ USB_ERR USBHID_Init(uint8_t *report, int size,
 					CB_REPORT_OUT _cb);
 					
 USB_ERR USBHID_ReportIN(uint8_t *report, int size);
-
+#endif
 
 #endif /*USB_HID_H*/

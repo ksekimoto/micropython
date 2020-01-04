@@ -37,15 +37,6 @@
 #include "usb.h"
 #include "usb_hid.h"
 
-
-static void CreateINReport(bool _bADC, bool _bSWPressed, uint32_t _ADCValue);
-static void SendINReport(bool _bADC, bool _bSWPressed, uint32_t _ADCValue);
-//uint8_t USBD_HID_ReceivePacket(usbd_hid_state_t *usbd, uint8_t *buf);
-//int USBD_HID_CanSendReport(usbd_hid_state_t *usbd);
-uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len);
-//uint8_t USBD_HID_SetNAK(usbd_hid_state_t *usbd);
-//uint8_t USBD_HID_ClearNAK(usbd_hid_state_t *usbd);
-
 const uint8_t USBD_HID_MOUSE_ReportDesc[USBD_HID_MOUSE_REPORT_DESC_SIZE];
 const uint8_t USBD_HID_KEYBOARD_ReportDesc[USBD_HID_KEYBOARD_REPORT_DESC_SIZE];
 // this will be persistent across a soft-reset
@@ -158,46 +149,34 @@ void pyb_usb_dev_deinit(void) {
     }
 }
 
-uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len) {
+static uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len) {
     uint8_t ret = 0;
+#if defined(USB_HID)
     USBHID_ReportIN(report, (int)len);
+#endif
     return ret;
 }
 
-// timout in milliseconds.
-// Returns number of bytes read from the device.
-int usbd_hid_rx(usbd_hid_itf_t *hid, size_t len, uint8_t *buf, uint32_t timeout) {
-    // Wait until we have buffer to read
-    uint32_t start = mtick();
-    while (hid->current_read_buffer == hid->current_write_buffer) {
-        // Wraparound of tick is taken care of by 2's complement arithmetic.
-        if (mtick() - start >= timeout) {
-            // timeout
-            return 0;
-        }
-        if (query_irq() == IRQ_STATE_DISABLED) {
-            // IRQs disabled so buffer will never be filled; return immediately
-            return 0;
-        }
-        __WFI(); // enter sleep mode, waiting for interrupt
-    }
-
-    // There is not enough space in buffer
-    if (len < hid->last_read_len) {
-        return 0;
-    }
-
-    // Copy bytes from device to user buffer
-    int read_len = hid->last_read_len;
-    memcpy(buf, hid->buffer[hid->current_read_buffer], read_len);
-    hid->current_read_buffer = !hid->current_read_buffer;
-
-    // Clear NAK to indicate we are ready to read more data
-    //USBD_HID_ClearNAK(&hid->base);
-
-    // Success, return number of bytes read
-    return read_len;
+// Dummy
+static uint8_t USBD_HID_ReceiveReport(uint8_t *report, uint16_t len) {
+    uint8_t ret = 0;
+#if defined(USB_HID)
+    //USBHID_ReportOut(report, (int)len);
+#endif
+    return ret; // return read length
 }
+
+// Dummy
+static int usbd_hid_rx_num(void) {
+    return 1;
+}
+
+
+// Dummy
+static int USBD_HID_CanSendReport(void) {
+    return 1;
+}
+
 /******************************************************************************/
 // MicroPython bindings for USB
 
@@ -414,7 +393,9 @@ STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
     mp_obj_t o_ret = pyb_buf_get_for_recv(vals[0].u_obj, &vstr);
 
     // receive the data
-    int ret = usbd_hid_rx(&self->usb_dev->usbd_hid_itf, vstr.len, (uint8_t*)vstr.buf, vals[1].u_int);
+    // Dummy
+    // ToDo: Implement USBD_HID_SendReport()
+    int ret = USBD_HID_SendReport((uint8_t*)vstr.buf, vstr.len);
 
     // return the received data
     if (o_ret != MP_OBJ_NULL) {
@@ -474,14 +455,14 @@ STATIC mp_uint_t pyb_usb_hid_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_
     if (request == MP_STREAM_POLL) {
         uintptr_t flags = arg;
         ret = 0;
-#ifdef USB_HID
-        if ((flags & MP_STREAM_POLL_RD) && usbd_hid_rx_num(&self->usb_dev->usbd_hid_itf) > 0) {
+
+        if ((flags & MP_STREAM_POLL_RD) && usbd_hid_rx_num() > 0) {
             ret |= MP_STREAM_POLL_RD;
         }
-        if ((flags & MP_STREAM_POLL_WR) && USBD_HID_CanSendReport(&self->usb_dev->usbd_hid_itf.base)) {
+        if ((flags & MP_STREAM_POLL_WR) && USBD_HID_CanSendReport()) {
             ret |= MP_STREAM_POLL_WR;
         }
-#endif
+
     } else {
         *errcode = MP_EINVAL;
         ret = MP_STREAM_ERROR;
