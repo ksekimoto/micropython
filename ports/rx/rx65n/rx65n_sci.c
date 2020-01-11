@@ -676,19 +676,28 @@ void sci_module_stop(int ch) {
 
 void sci_set_baud(int ch, int baud) {
     volatile struct st_sci0 *sci = SCI[ch];
-#if (defined(RX64M) || defined(RX65N))
+    if (baud == 0) {
+    	sci->SMR.BYTE &= ~0x03; // PCLK/1
+    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+    	sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 8 - 1);
+    	//sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * SCI_DEFAULT_BAUD * 32 * 256) / PCLK);
+    } else if (baud > 19200) {
+    	sci->SMR.BYTE &= ~0x03; // PCLK/1
     sci->SEMR.BYTE |= 0x50; //  BGDM and ABCS
-#endif
-    if (baud != 0) {
         sci->BRR = (uint8_t)((int)PCLK / baud / 8 - 1);
-#if (defined(RX64M) || defined(RX65N))
         //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
-#endif
+    } else if (baud > 2400) {
+    	sci->SMR.BYTE &= ~0x03;
+    	sci->SMR.BYTE |= 0x02;  // PCLK/16
+    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+    	sci->BRR = (uint8_t)((int)PCLK / baud / 128 - 1);
+        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
     } else {
-        sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 8 - 1);
-#if (defined(RX64M) || defined(RX65N))
-        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * SCI_DEFAULT_BAUD * 32 * 256) / PCLK);
-#endif
+    	sci->SMR.BYTE &= ~0x03;
+    	sci->SMR.BYTE |= 0x03;  // PCLK/64
+    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+    	sci->BRR = (uint8_t)((int)PCLK / baud / 512 - 1);
+        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
     }
 }
 
