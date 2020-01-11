@@ -37,15 +37,6 @@
 #include "usb.h"
 #include "usb_hid.h"
 
-
-static void CreateINReport(bool _bADC, bool _bSWPressed, uint32_t _ADCValue);
-static void SendINReport(bool _bADC, bool _bSWPressed, uint32_t _ADCValue);
-//uint8_t USBD_HID_ReceivePacket(usbd_hid_state_t *usbd, uint8_t *buf);
-//int USBD_HID_CanSendReport(usbd_hid_state_t *usbd);
-uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len);
-//uint8_t USBD_HID_SetNAK(usbd_hid_state_t *usbd);
-//uint8_t USBD_HID_ClearNAK(usbd_hid_state_t *usbd);
-
 const uint8_t USBD_HID_MOUSE_ReportDesc[USBD_HID_MOUSE_REPORT_DESC_SIZE];
 const uint8_t USBD_HID_KEYBOARD_ReportDesc[USBD_HID_KEYBOARD_REPORT_DESC_SIZE];
 // this will be persistent across a soft-reset
@@ -98,7 +89,13 @@ void pyb_usb_init0(void) {
 
 bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info) {
     usb_device_t *usb_dev = &usb_device;
-    if (!usb_dev->enabled) {
+    SetPIDVID(pid, vid);
+    SetHIDMode(mode);
+    if (hid_info == NULL) {
+        SetDefaultHIDReportDescriptor(mode);
+    }
+    usb_init();
+    //if (!usb_dev->enabled) {
         // only init USB once in the device's power-lifetime
 
         // set up the USBD state
@@ -143,8 +140,8 @@ bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info) 
         // start the USB device
         //USBD_LL_Init(usbd, (mode & USBD_MODE_HIGH_SPEED) != 0);
         //USBD_LL_Start(usbd);
-        usb_dev->enabled = true;
-    }
+        //usb_dev->enabled = true;
+    //}
 
     return true;
 }
@@ -158,46 +155,34 @@ void pyb_usb_dev_deinit(void) {
     }
 }
 
-uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len) {
+static uint8_t USBD_HID_SendReport(uint8_t *report, uint16_t len) {
     uint8_t ret = 0;
+#if defined(USB_HID)
     USBHID_ReportIN(report, (int)len);
+#endif
     return ret;
 }
 
-// timout in milliseconds.
-// Returns number of bytes read from the device.
-int usbd_hid_rx(usbd_hid_itf_t *hid, size_t len, uint8_t *buf, uint32_t timeout) {
-    // Wait until we have buffer to read
-    uint32_t start = mtick();
-    while (hid->current_read_buffer == hid->current_write_buffer) {
-        // Wraparound of tick is taken care of by 2's complement arithmetic.
-        if (mtick() - start >= timeout) {
-            // timeout
-            return 0;
-        }
-        if (query_irq() == IRQ_STATE_DISABLED) {
-            // IRQs disabled so buffer will never be filled; return immediately
-            return 0;
-        }
-        __WFI(); // enter sleep mode, waiting for interrupt
-    }
-
-    // There is not enough space in buffer
-    if (len < hid->last_read_len) {
-        return 0;
-    }
-
-    // Copy bytes from device to user buffer
-    int read_len = hid->last_read_len;
-    memcpy(buf, hid->buffer[hid->current_read_buffer], read_len);
-    hid->current_read_buffer = !hid->current_read_buffer;
-
-    // Clear NAK to indicate we are ready to read more data
-    //USBD_HID_ClearNAK(&hid->base);
-
-    // Success, return number of bytes read
-    return read_len;
+// Dummy
+static uint8_t USBD_HID_ReceiveReport(uint8_t *report, uint16_t len) {
+    uint8_t ret = 0;
+#if defined(USB_HID)
+    //USBHID_ReportOut(report, (int)len);
+#endif
+    return ret; // return read length
 }
+
+// Dummy
+static int usbd_hid_rx_num(void) {
+    return 1;
+}
+
+
+// Dummy
+static int USBD_HID_CanSendReport(void) {
+    return 1;
+}
+
 /******************************************************************************/
 // MicroPython bindings for USB
 
@@ -337,7 +322,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     //    }
     //}
 
-    char *hid_info;
+    char *hid_info = (char *)NULL;
     // get hid info if user selected such a mode
     //USBD_HID_ModeInfoTypeDef hid_info;
     //if (mode & USBD_MODE_IFACE_HID) {
@@ -405,7 +390,7 @@ STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
     };
 
     // parse args
-    pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    //pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, vals);
 
@@ -414,7 +399,9 @@ STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
     mp_obj_t o_ret = pyb_buf_get_for_recv(vals[0].u_obj, &vstr);
 
     // receive the data
-    int ret = usbd_hid_rx(&self->usb_dev->usbd_hid_itf, vstr.len, (uint8_t*)vstr.buf, vals[1].u_int);
+    // Dummy
+    // ToDo: Implement USBD_HID_SendReport()
+    int ret = USBD_HID_ReceiveReport((uint8_t*)vstr.buf, vstr.len);
 
     // return the received data
     if (o_ret != MP_OBJ_NULL) {
@@ -427,7 +414,7 @@ STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_hid_recv_obj, 1, pyb_usb_hid_recv);
 
 STATIC mp_obj_t pyb_usb_hid_send(mp_obj_t self_in, mp_obj_t report_in) {
-    pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    //pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_buffer_info_t bufinfo;
     byte temp_buf[8];
     // get the buffer to send from
@@ -469,19 +456,19 @@ STATIC const mp_rom_map_elem_t pyb_usb_hid_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(pyb_usb_hid_locals_dict, pyb_usb_hid_locals_dict_table);
 
 STATIC mp_uint_t pyb_usb_hid_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t arg, int *errcode) {
-    pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    //pyb_usb_hid_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_uint_t ret;
     if (request == MP_STREAM_POLL) {
         uintptr_t flags = arg;
         ret = 0;
-#ifdef USB_HID
-        if ((flags & MP_STREAM_POLL_RD) && usbd_hid_rx_num(&self->usb_dev->usbd_hid_itf) > 0) {
+
+        if ((flags & MP_STREAM_POLL_RD) && usbd_hid_rx_num() > 0) {
             ret |= MP_STREAM_POLL_RD;
         }
-        if ((flags & MP_STREAM_POLL_WR) && USBD_HID_CanSendReport(&self->usb_dev->usbd_hid_itf.base)) {
+        if ((flags & MP_STREAM_POLL_WR) && USBD_HID_CanSendReport()) {
             ret |= MP_STREAM_POLL_WR;
         }
-#endif
+
     } else {
         *errcode = MP_EINVAL;
         ret = MP_STREAM_ERROR;

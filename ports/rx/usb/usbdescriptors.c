@@ -49,7 +49,7 @@ User Includes
 #include "usbdescriptors.h"
 #include <string.h>
 
-#define USB_HID
+#if defined(USB_HID)
 //#define USB_HID_SPECIAL
 #define USB_HID_MOUSE
 //#define USB_HID_KEYBOARD
@@ -68,25 +68,48 @@ User Includes
 #define HID_SPECIAL_OUTPUT_REPORT_SIZE  17
 /* As specified in the Report Descriptor */
 #define HID_SPECIAL_INPUT_REPORT_SIZE   5
+#endif
 
 /***********************************************************************************
 Defines
 ***********************************************************************************/
 /*Vendor and Product ID*/
 /*NOTE Please use your company Vendor ID when developing a new product.*/
+/*Default PID/VID comes from Gadget Renesas compiler configuration.*/
+/*Other VIDs should be properly allocated.*/
+/*The following VIDs are not formally allocated.*/
 #if defined(GRSAKURA)
 #define VID 0x045B
-#define PID 0x0234
-#elif defined(GRCITRUS)
-#define VID 0x2A50
-#define PID 0x0277
-#elif defined(GRROSE)
-#define VID 0x045B
+//#define PID 0x0234
 #if defined(USB_HID_SPECIAL)
-#define PID 0x025A
+#define PID 0x0236
 #endif
 #if defined(USB_HID_MOUSE)
+#define PID 0x0234
+#endif
+#if defined(USB_HID_KEYBOARD)
+#define PID 0x0235
+#endif
+#elif defined(GRCITRUS)
+#define VID 0x2A50
+//#define PID 0x0277
+#if defined(USB_HID_SPECIAL)
+#define PID 0x0278
+#endif
+#if defined(USB_HID_MOUSE)
+#define PID 0x0277
+#endif
+#if defined(USB_HID_KEYBOARD)
+#define PID 0x0279
+#endif
+#elif defined(GRROSE)
+#define VID 0x045B
+//#define PID 0x025A
+#if defined(USB_HID_SPECIAL)
 #define PID 0x025B
+#endif
+#if defined(USB_HID_MOUSE)
+#define PID 0x025A
 #endif
 #if defined(USB_HID_KEYBOARD)
 #define PID 0x025C
@@ -105,12 +128,22 @@ static const uint8_t gDeviceDescriptorData[DEVICE_DESCRIPTOR_SIZE] =
     0x01,
     /*USB Version 2.0*/
     0x00,0x02,
+#if defined(USB_CDC_MSC)
     /*Class Code - Misc*/
-    0xef,   // CDC_MSC
+    0xef,
     /*Subclass Code*/
-    0x02,   // CDC_MSC
+    0x02,
     /*Protocol Code*/
-    0x01,   // CDC_MSC
+    0x01,
+#elif defined(USB_CDC)
+    2,                              /*  4:bFunctionClass */
+    2,                              /*  5:bFunctionSubClass */
+    1,                              /*  6:bFunctionProtocol */
+#elif defined(USB_MSC)
+    8,                              /*  4:bFunctionClass */
+    6,                              /*  5:bFunctionSubClass */
+    1,                              /*  6:bFunctionProtocol */
+#endif
     /*Max Packet Size for endpoint 0*/
     CONTROL_IN_PACKET_SIZE,
     (uint8_t)(VID & 0xFF),    /*Vendor ID LSB*/
@@ -129,26 +162,33 @@ static const uint8_t gDeviceDescriptorData[DEVICE_DESCRIPTOR_SIZE] =
     0x01
 };
 
-DESCRIPTOR gDeviceDescriptor =
+const DESCRIPTOR gDeviceDescriptor =
 {
-    DEVICE_DESCRIPTOR_SIZE, gDeviceDescriptorData
+    DEVICE_DESCRIPTOR_SIZE, (uint8_t *)gDeviceDescriptorData
 };
 
 /*Configuration Descriptor*/
+#if defined(USB_CDC_MSC)
 #if defined(USB_HID)
 // CDC_MSC_HID
 #define CONFIG_DESCRIPTOR_SIZE (9 + 23 + 8 + 35 + 23 + HID_INTERFACE_DESCRIPTOR_SIZE)
 // Configuration Descriptor = 9
 // Interface 0 (MSC) = 23
 // IAP = 8
-// Interface 1 (Com) = 34
+// Interface 1 (Com) = 35
 // Interface 2 (Data) = 23
 // Interface 3 (HID) = 25
+#define HID_INTERFACE_DESCRIPTOR_OFS    (9 + 23 + 8 + 35 + 23)
 #else
 // CDC_MSC
 #define CONFIG_DESCRIPTOR_SIZE (9 + 23 + 8 + 35 + 23)
 #endif
-static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONFIG_DESCRIPTOR_SIZE % 2)] =
+#elif defined(USB_CDC)
+#define CONFIG_DESCRIPTOR_SIZE (9 + 23 + 35)
+#elif defined(USB_MSC)
+#define CONFIG_DESCRIPTOR_SIZE (9 + 23)
+#endif
+static uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE] =
 {
     /*Size of this descriptor (Just the configuration part)*/
     0x09,
@@ -157,37 +197,39 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*Combined length of all descriptors (little endian)*/
     CONFIG_DESCRIPTOR_SIZE, 0x00,
     /*Number of interfaces*/
+#if defined(USB_CDC_MSC)
 #if defined(USB_HID)
     0x04,   // CDC_MSC_HID
 #else
     0x03,   // CDC_MSC
+#endif
+#elif defined(USB_CDC)
+    0x02,
+#elif defined(USB_MSC)
+    0x01,
 #endif
     /*This Interface Value*/
     0x01,
     /*No String Descriptor for this configuration*/
     0x00,
     /*bmAttributes - Self Powered(USB bus powered), No Remote Wakeup*/
-    0xC0,
+    /* 0xC0, */
     /*bmAttributes - Not USB Bus powered, No Remote Wakeup*/
-    /* 0x80, */
+    0x80,
     /*bMaxPower (2mA units) 100mA (A unit load is defined as 100mA)*/
     50,
 
+#if defined(USB_MSC) | defined(USB_CDC_MSC)
     /* Interface Descriptor 0 */
-#if defined(USB_HID)
     /*Size of this descriptor*/
-    0x09,   // CDC_MSC
+    0x09,
     /*INTERFACE Descriptor*/
-    0x04,   // CDC_MSC
+    0x04,
     /*Index of Interface*/
-    0x00,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x00,
 #else
-    /*Size of this descriptor*/
-    0x09,   // CDC_MSC
-    /*INTERFACE Descriptor*/
-    0x04,   // CDC_MSC
-    /*Index of Interface*/
-    0x00,   // CDC_MSC
+    0x00,
 #endif
     /*bAlternateSetting*/
     0x00,
@@ -231,7 +273,9 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     BULK_IN_PACKET_SIZE, 0x00,
     /*Polling Interval in mS - IGNORED FOR BULK*/
     0x00,
+#endif
 
+#if defined(USB_CDC_MSC)
     /* IAD */
         8,                              /*  0:bLength */
         0x0B,                           /*  1:bDescriptorType*/
@@ -241,7 +285,9 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
         2,                              /*  5:bFunctionSubClass */
         1,                              /*  6:bFunctionProtocol */
         0,                              /*  7:iInterface */
+#endif
 
+#if defined(USB_CDC) | defined(USB_CDC_MSC)
     /* Interface Descriptor 1 */
     /* Communication Class Interface Descriptor */
     /*Size of this descriptor*/
@@ -249,7 +295,11 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*INTERFACE Descriptor*/
     0x04,   // CDC_MSC
     /*Index of Interface*/
-    0x01,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x01,
+#else
+    0x00,
+#endif
     /*bAlternateSetting*/
     0x00,
     /*Number of Endpoints*/
@@ -263,7 +313,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*No String Descriptor for this interface*/
     0x00,
 
-    /*Header Functional Descriptor*/
+/*Header Functional Descriptor*/
     /*bFunctionalLength*/
     0x05,
     /*bDescriptorType = CS_INTERFACE*/
@@ -273,7 +323,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*bcdCDC 1.1*/
     0x10,0x01,
 
-    /* ACM Functional Descriptor */
+/* ACM Functional Descriptor */
     /*bFunctionalLength*/
     0x04,
     /*bDescriptorType = CS_INTERFACE*/
@@ -283,7 +333,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*bmCapabilities GET_LINE_CODING etc supported*/
     0x02,
 
-    /* Union Functional Descriptor */
+/* Union Functional Descriptor */
     /*bFunctionalLength*/
     0x05,
     /*bDescriptorType = CS_INTERFACE*/
@@ -291,11 +341,19 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*bDescriptor Subtype = Union*/
     0x06,
     /*bMasterInterface = Communication Class Interface*/
-    0x01,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x01,
+#else
+    0x00,
+#endif
     /*bSlaveInterface = Data Class Interface*/
-    0x02,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x02,
+#else
+    0x01,
+#endif
 
-    /* Call Management Functional Descriptor */
+/* Call Management Functional Descriptor */
     /*bFunctionalLength*/
     0x05,
     /*bDescriptorType = CS_INTERFACE*/
@@ -305,9 +363,13 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*bmCapabilities*/
     0x00,
     /*bDataInterface: Data Class Interface = 1*/
-    0x02,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x02,
+#else
+    0x01,
+#endif
 
-    /* Interrupt Endpoint */
+/* Interrupt Endpoint */
     /*Size of this descriptor*/
     0x07,
     /*ENDPOINT Descriptor*/
@@ -321,13 +383,17 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*Polling Interval in mS*/
     0xFF,
 
-    /* DATA Class Interface Descriptor */
+/* DATA Class Interface Descriptor */
     /*Size of this descriptor*/
     0x09,
     /*INTERFACE Descriptor*/
     0x04,
     /*Index of Interface*/
-    0x02,   // CDC_MSC
+#if defined(USB_CDC_MSC)
+    0x02,
+#else
+    0x01,
+#endif
     /*bAlternateSetting*/
     0x00,
     /*Number of Endpoints*/
@@ -341,7 +407,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*No String Descriptor for this interface*/
     0x00,
 
-    /*Endpoint Bulk OUT */
+/*Endpoint Bulk OUT */
     /*Size of this descriptor*/
     0x07,
     /*ENDPOINT Descriptor*/
@@ -355,7 +421,7 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     /*Polling Interval in mS - IGNORED FOR BULK*/
     0x00,
 
-    /* Endpoint Bulk IN */
+/* Endpoint Bulk IN */
     /*Size of this descriptor*/
     0x07,
     /*ENDPOINT Descriptor*/
@@ -517,9 +583,9 @@ static const uint8_t gConfigurationDescriptorData[CONFIG_DESCRIPTOR_SIZE + (CONF
     0x0A
 #endif
 #endif
+#endif
 };
 
-#if defined(HID_CHANGEABLE)
 static const uint8_t HID_SPECIAL_InterfaceDescriptorData[HID_INTERFACE_DESCRIPTOR_SIZE + (HID_INTERFACE_DESCRIPTOR_SIZE % 2)] = {
     /*Size of this descriptor*/
     0x09,
@@ -666,11 +732,10 @@ static const uint8_t HID_KEYBOARD_InterfaceDescriptorData[HID_INTERFACE_DESCRIPT
     /*Polling Interval in mS*/
     0x0A
 };
-#endif
 
-DESCRIPTOR gConfigurationDescriptor =
+const DESCRIPTOR gConfigurationDescriptor =
 {
-    CONFIG_DESCRIPTOR_SIZE, gConfigurationDescriptorData
+    CONFIG_DESCRIPTOR_SIZE, (uint8_t* )gConfigurationDescriptorData
 };
 
 /*String Descriptors*/
@@ -690,10 +755,10 @@ static const uint8_t gStringDescriptorManufacturerData[STRING_MANUFACTURER_SIZE]
     'S', 0x00, 'A', 0x00, 'S', 0x00
 };
 
-DESCRIPTOR  gStringDescriptorManufacturer =
+const DESCRIPTOR  gStringDescriptorManufacturer =
 {
     STRING_MANUFACTURER_SIZE,
-    gStringDescriptorManufacturerData
+    (uint8_t *)gStringDescriptorManufacturerData
 };
 
 /*Product string*/
@@ -735,10 +800,10 @@ static const uint8_t gStringDescriptorProductData[STRING_PRODUCT_SIZE] =
 #endif
 };
 
-DESCRIPTOR gStringDescriptorProduct =
+const DESCRIPTOR gStringDescriptorProduct =
 {
     STRING_PRODUCT_SIZE,
-    gStringDescriptorProductData
+    (uint8_t *)gStringDescriptorProductData
 };
 
 /*Serial number string "1.1"*/
@@ -753,13 +818,12 @@ static const uint8_t gStringDescriptorSerialNumData[STRING_SERIAL_NUM_SIZE] =
     '1', 0x00, '.', 0x00, '1', 0x00
 };
 
-DESCRIPTOR gStringDescriptorSerialNum =
+const DESCRIPTOR gStringDescriptorSerialNum =
 {
     STRING_SERIAL_NUM_SIZE,
-    gStringDescriptorSerialNumData
+    (uint8_t *)gStringDescriptorSerialNumData
 };
 
-#if defined(USB_HID_SPECIAL)
 /*
 Report Descriptor
 NOTE The size of this must be HID_REPORT_DESCRIPTOR_SIZE
@@ -805,63 +869,8 @@ static const uint8_t gHIDSpecialReportDescriptorData[HID_SPECIAL_REPORT_DESCRIPT
     0xC0
 };
 
-DESCRIPTOR gHIDReportDescriptor =
-{
-    /* Must match value specified in HID descriptor! */
-    HID_SPECIAL_REPORT_DESCRIPTOR_SIZE,
-    gHIDSpecialReportDescriptorData
-};
-#endif
-
-#if defined(USB_HID_MOUSE)
-
 static const uint8_t gHIDMouseReportDescriptorData[HID_MOUSE_REPORT_DESCRIPTOR_SIZE + (HID_MOUSE_REPORT_DESCRIPTOR_SIZE % 2)] =
 {
-#if 0
-    0x05, 0x01,     // Usage Page (Generic Desktop),
-    0x09, 0x02,     // Usage (Mouse),
-    0xA1, 0x01,     // Collection (Application),
-    0x09, 0x01,         // Usage (Pointer),
-    0xA1, 0x00,         // Collection (Physical),
-
-    0x05, 0x09,         // Usage Page (Buttons),
-    0x19, 0x01,         // Usage Minimum (01),
-    0x29, 0x03,         // Usage Maximum (03),
-    0x15, 0x00,         // Logical Minimum (0),
-    0x25, 0x01,         // Logical Maximum (1),
-
-    0x95, 0x03,         // Report Count (3),
-    0x75, 0x01,         // Report Size (1),
-    0x81, 0x02,         // Input(Data, Variable, Absolute), -- 3 button bits
-    0x95, 0x01,         // Report Count(1),
-    0x75, 0x05,         // Report Size(5),
-
-    0x81, 0x01,         // Input(Constant),                 -- 5 bit padding
-    0x05, 0x01,         // Usage Page (Generic Desktop),
-    0x09, 0x30,         // Usage (X),
-    0x09, 0x31,         // Usage (Y),
-    0x09, 0x38,         // Usage (Wheel),
-
-    0x15, 0x81,         // Logical Minimum (-127),
-    0x25, 0x7F,         // Logical Maximum (127),
-    0x75, 0x08,         // Report Size (8),
-    0x95, 0x03,         // Report Count (3),
-    0x81, 0x06,         // Input(Data, Variable, Relative), -- 3 position bytes (X,Y,Wheel)
-
-    0xC0,           // End Collection,
-    0x09, 0x3c,     // Usage (Motion Wakeup),
-    0x05, 0xff,     // Usage Page (?),
-    0x09, 0x01,     // Usage (?),
-    0x15, 0x00,     // Logical Minimum (0),
-    0x25, 0x01,     // Logical Maximum (1),
-    0x75, 0x01,     // Report Size(1),
-    0x95, 0x02,     // Report Count(2),
-    0xb1, 0x22,     // ?
-    0x75, 0x06,     // Report Size(6),
-    0x95, 0x01,     // Report Count(1),
-    0xb1, 0x01,     // ?
-    0xc0            // End Collection
-#else
     0x05, 0x01,  // Usage Page (Generic Desktop)
     0x09, 0x02,  // Usage (Mouse)
     0xA1, 0x01,  // Collection (Application)
@@ -894,20 +903,9 @@ static const uint8_t gHIDMouseReportDescriptorData[HID_MOUSE_REPORT_DESCRIPTOR_S
 
     0xC0,        //   End Collection
     0xC0         // End Collection
-#endif
 };
 
-DESCRIPTOR gHIDReportDescriptor =
-{
-    /* Must match value specified in HID descriptor! */
-    HID_MOUSE_REPORT_DESCRIPTOR_SIZE,
-    gHIDMouseReportDescriptorData
-};
-#endif
-
-#if defined(USB_HID_KEYBOARD)
-
-static const uint8_t gHIDMouseReportDescriptorData[HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE + (HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE % 2)] =
+static const uint8_t gHIDKeyboardReportDescriptorData[HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE + (HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE % 2)] =
 {
     0x05, 0x01,  // Usage Page (Generic Desktop)
     0x09, 0x06,  // Usage (Keyboard)
@@ -946,19 +944,62 @@ static const uint8_t gHIDMouseReportDescriptorData[HID_KEYBOARD_REPORT_DESCRIPTO
 DESCRIPTOR gHIDReportDescriptor =
 {
     /* Must match value specified in HID descriptor! */
+#if defined(HID_SPECIAL)
+    HID_SPECIAL_REPORT_DESCRIPTOR_SIZE,
+    (uint8_t *)gHIDSpecialReportDescriptorData
+#endif
+#if defined(HID_MOUSE)
+    HID_MOUSE_REPORT_DESCRIPTOR_SIZE,
+    (uint8_t *)gHIDMouseReportDescriptorData
+#endif
+#if defined(HID_KEYBOARD)
     HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE,
-    gHIDMouseReportDescriptorData
+    (uint8_t *)gHIDMouseReportDescriptorData
+#endif
 };
 
-#endif
-
-#if 0
+#if defined(USB_HID)
 void SetHIDReportDescriptor(char *desc, int size) {
     gHIDReportDescriptor.pucData = (uint8_t *)desc;
     gHIDReportDescriptor.length = (uint16_t)size;
 }
 
+void SetPIDVID(uint8_t pid, uint8_t vid) {
+    gConfigurationDescriptorData[8] = (uint8_t)(pid & 0xFF);
+    gConfigurationDescriptorData[9] = (uint8_t)(pid >> 8);
+    gConfigurationDescriptorData[10] = (uint8_t)(vid & 0xFF);
+    gConfigurationDescriptorData[11] = (uint8_t)(vid >> 8);
+}
+
 void SetHIDInterfaceDescriptor(char *desc) {
-    memcpy((uint8_t *)&gConfigurationDescriptorData[98], (const uint8_t *)desc, (size_t)HID_INTERFACE_DESCRIPTOR_SIZE);
+    memcpy((uint8_t *)&gConfigurationDescriptorData[HID_INTERFACE_DESCRIPTOR_OFS], (const uint8_t *)desc, (size_t)HID_INTERFACE_DESCRIPTOR_SIZE);
+}
+
+void SetHIDMode(int hid_mode) {
+    switch(hid_mode) {
+        case HID_SPECIAL_MODE:
+            SetHIDInterfaceDescriptor((char *)HID_SPECIAL_InterfaceDescriptorData);
+            break;
+        case HID_MOUSE_MODE:
+            SetHIDInterfaceDescriptor((char *)HID_MOUSE_InterfaceDescriptorData);
+            break;
+        case HID_KEYBOARD_MODE:
+            SetHIDInterfaceDescriptor((char *)HID_KEYBOARD_InterfaceDescriptorData);
+            break;
+    }
+}
+
+void SetDefaultHIDReportDescriptor(int hid_mode) {
+    switch(hid_mode) {
+        case HID_SPECIAL_MODE:
+            SetHIDReportDescriptor((char *)gHIDSpecialReportDescriptorData, (int)sizeof(gHIDSpecialReportDescriptorData));
+            break;
+        case HID_MOUSE_MODE:
+            SetHIDReportDescriptor((char *)gHIDSpecialReportDescriptorData, (int)sizeof(gHIDMouseReportDescriptorData));
+            break;
+        case HID_KEYBOARD_MODE:
+            SetHIDReportDescriptor((char *)gHIDSpecialReportDescriptorData, (int)sizeof(gHIDKeyboardReportDescriptorData));
+            break;
+    }
 }
 #endif

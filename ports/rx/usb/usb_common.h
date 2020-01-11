@@ -57,6 +57,9 @@
 * Defines
 *******************************************************************************/
 
+#define USB_HID
+#define USB_WORKAROUND  // This is a workaround for assert failure on some cases on Windows
+// USB Debug flags
 //#define USB_DEBUG_DESCRIPTOR
 //#define USB_DEBUG_SU
 //#define USB_DEBUG_CS

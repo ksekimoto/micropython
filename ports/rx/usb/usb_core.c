@@ -146,14 +146,17 @@ static CB_SETUP_PACKET g_fpCBSetupPacket = NULL;
 static CB_DONE_OUT g_fpCBControlOut = NULL;
 static CB_SETUP_PACKET g_fpCBSetupPacket2 = NULL;
 static CB_DONE_OUT g_fpCBControlOut2 = NULL;
+#if defined(USB_HID)
 static CB_SETUP_PACKET g_fpCBSetupPacket3 = NULL;
 static CB_DONE_OUT g_fpCBControlOut3 = NULL;
+#endif
 
 /*Configuration Value */
 static uint8_t g_ConfigurationValue;
 
+#if defined(USB_HID)
 void CopyInputReportHID();
-
+#endif
 /*******************************************************************************
 * Outline       : USBCORE_Init
 * Description   : Initialise the USB core.
@@ -267,6 +270,7 @@ USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
     return err;
 }
 
+#if defined(USB_HID)
 USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
                      const uint8_t* _Product, uint16_t _ProductSize,
                      const uint8_t* _Serial, uint16_t _SerialSize,
@@ -321,6 +325,7 @@ USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
     return err;
 }
 
+#endif
 /******************************************************************************
 * End of function USBCORE_Init
 ******************************************************************************/
@@ -335,27 +340,12 @@ USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
 * Argument      : _pSetupPacket - buffer containing the setup packet.
 * Return value  : none
 ******************************************************************************/
-
-#if defined(USB_DEBUG_SPECIAL)
-uint16_t g_NumBytes[5] = {0};
-uint8_t g_setup[8] = {0};
-#endif
 static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
 {
     USB_ERR err = USB_ERR_OK;
     uint16_t NumBytes;
     uint8_t* pBuffer;
 
-#if defined(USB_DEBUG_SPECIAL)
-    g_setup[0] = (uint8_t)(*_pSetupPacket)[0];
-    g_setup[1] = (uint8_t)(*_pSetupPacket)[1];
-    g_setup[2] = (uint8_t)(*_pSetupPacket)[2];
-    g_setup[3] = (uint8_t)(*_pSetupPacket)[3];
-    g_setup[4] = (uint8_t)(*_pSetupPacket)[4];
-    g_setup[5] = (uint8_t)(*_pSetupPacket)[5];
-    g_setup[6] = (uint8_t)(*_pSetupPacket)[6];
-    g_setup[7] = (uint8_t)(*_pSetupPacket)[7];
-#endif
     DEBUG_MSG_HIGH( ("USBCORE: SetupPacket received\r\n"));
 
     /*Populate the Setup Packet structure g_oSetupPacket */
@@ -364,10 +354,6 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
     /*Process this setup packet*/
     err = ProcessSetupPacket(&NumBytes, &pBuffer);
 
-#if defined(USB_DEBUG_SPECIAL)
-    g_NumBytes[0] = g_oSetupPacket.wLength;
-    g_NumBytes[1] = NumBytes;
-#endif
     if(USB_ERR_UNKNOWN_REQUEST == err)
     {
         /*Can't handle this setup packet*/
@@ -375,9 +361,6 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         err = g_fpCBSetupPacket(&g_oSetupPacket, &NumBytes, &pBuffer);
     }
 
-#if defined(USB_DEBUG_SPECIAL)
-    g_NumBytes[2] = NumBytes;
-#endif
     if(USB_ERR_UNKNOWN_REQUEST == err)
     {
         /*Can't handle this setup packet*/
@@ -387,9 +370,7 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         }
     }
 
-#if defined(USB_DEBUG_SPECIAL)
-    g_NumBytes[3] = NumBytes;
-#endif
+#if defined(USB_HID)
     if(USB_ERR_UNKNOWN_REQUEST == err)
     {
         /*Can't handle this setup packet*/
@@ -398,9 +379,6 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
         err = g_fpCBSetupPacket3(&g_oSetupPacket, &NumBytes, &pBuffer);
         }
     }
-
-#if defined(USB_DEBUG_SPECIAL)
-    g_NumBytes[4] = NumBytes;
 #endif
     if(USB_ERR_OK == err)
     {
@@ -427,15 +405,14 @@ static void CBSetup(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_SIZE])
                 /*OUT*/
                 DEBUG_MSG_MID(("USBCORE: SetupPacket DATA OUT\r\n"));
 
-#if defined(USB_DEBUG_SPECIAL)
-                if (g_oSetupPacket.wLength != NumBytes) {
-                    g_NumBytes[0] = g_oSetupPacket.wLength;
-                    debug_printf("%d %d %d %d %d\r\n", NumBytes, g_NumBytes[1], g_NumBytes[2], g_NumBytes[3], g_NumBytes[4]);
-                }
+#if defined(USB_WORKAROUND)
+                // 2020/01/04 KS comment out for workaround
+                // assert fails on some cases on Windows
                 //assert(g_oSetupPacket.wLength == NumBytes);
 #else
                 assert(g_oSetupPacket.wLength == NumBytes);
 #endif
+
                 USBHAL_Control_OUT(NumBytes, pBuffer, g_fpCBControlOut);
             }
         }
@@ -488,9 +465,7 @@ static USB_ERR ProcessSetupPacket(uint16_t* _pNumBytes, uint8_t** _ppBuffer)
         case REQUEST_VENDOR:
         default:
         {
-#ifdef USB_DEBUG_DESCRIPTOR
-            debug_printf("NOT REQUEST_STANDARD %d\r\n", g_oSetupPacket.bmRequest);
-#endif            /*Unsupported request*/
+            /*Unsupported request*/
             err = USB_ERR_UNKNOWN_REQUEST;
         }
     }
@@ -521,7 +496,7 @@ static USB_ERR ProcessStandardSetupPacket(uint16_t* _pNumBytes, uint8_t** _ppBuf
 
     /*NOTE: SET_ADDRESS is supported by the HW.*/
 
-    switch((int)g_oSetupPacket.bRequest)
+    switch(g_oSetupPacket.bRequest)
     {
         case GET_DESCRIPTOR:
         {
@@ -631,10 +606,12 @@ static USB_ERR ProcessSetFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                     USBHAL_Interrupt_IN_Stall();
                     err = USB_ERR_OK;
                     break;
+#if defined(USB_HID)
                 case EP_INTERRUPT_IN_HID:
                     USBHAL_Interrupt_IN_HID_Stall();
                     err = USB_ERR_OK;
                     break;
+#endif
                 case EP_BULK_OUT_MSC:
                     USBHAL_Bulk_OUT_MSC_Stall();
                     err = USB_ERR_OK;
@@ -719,10 +696,12 @@ static USB_ERR ProcessClearFeature(uint16_t* _pNumBytes, const uint8_t**_ppBuffe
                     USBHAL_Interrupt_IN_Stall_Clear();
                     err = USB_ERR_OK;
                     break;
+#if defined(USB_HID)
                 case EP_INTERRUPT_IN_HID:
                     USBHAL_Interrupt_IN_HID_Stall_Clear();
                     err = USB_ERR_OK;
                     break;
+#endif
                 case EP_BULK_OUT_MSC:
                     /*Only clear a BULK OUT if flag "m_bAllowStallClear" is set.*/
                     if(true == (USBHAL_Config_Get()->m_bAllowStallClear))
@@ -788,8 +767,11 @@ static USB_ERR ProcessSetConfiguration(uint16_t* _pNumBytes, const uint8_t**_ppB
     *_ppBuffer = NULL;
 
     /*Reset the data toggles on the endpoints*/
-    //USBHAL_ResetEndpoints();
-
+#if defined(USB_HID_DEBUG)
+    USBHAL_ResetEndpoints();
+#else
+    USBHAL_ResetEndpoints();
+#endif
     return err;
 }
 /******************************************************************************
@@ -893,8 +875,8 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                 case EP_BULK_IN_CDC:
                     if(true == USBHAL_Bulk_IN_CDC_Is_Stalled())
                     {
-                        /*Set HALT bit (BIT 0)*/
-                        StatusData[0] |= 0x01;
+                            /*Set HALT bit (BIT 0)*/
+                            StatusData[0] |= 0x01;
                     }
                     break;
                 case EP_INTERRUPT_IN:
@@ -904,6 +886,7 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                         StatusData[0] |= 0x01;
                     }
                     break;
+#if defined(USB_HID)
                 case EP_INTERRUPT_IN_HID:
                     if(true == USBHAL_Interrupt_IN_HID_Is_Stalled())
                     {
@@ -911,6 +894,7 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                         StatusData[0] |= 0x01;
                     }
                     break;
+#endif
                 case EP_BULK_OUT_MSC:
                     if(true == USBHAL_Bulk_OUT_MSC_Is_Stalled())
                     {
@@ -921,8 +905,8 @@ static USB_ERR ProcessGetStatus(uint16_t* _pNumBytes, const uint8_t**_ppBuffer)
                 case EP_BULK_IN_MSC:
                     if(true == USBHAL_Bulk_IN_MSC_Is_Stalled())
                     {
-                        /*Set HALT bit (BIT 0)*/
-                        StatusData[0] |= 0x01;
+                            /*Set HALT bit (BIT 0)*/
+                            StatusData[0] |= 0x01;
                     }
                     break;
                 default:
@@ -1149,4 +1133,3 @@ static void PopulateSetupPacket(const uint8_t(*_pSetupPacket)[USB_SETUP_PACKET_S
 /******************************************************************************
 End of function PopulateSetupPacket
 ******************************************************************************/
-

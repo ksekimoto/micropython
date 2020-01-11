@@ -46,6 +46,8 @@ System Includes
 User Includes
 ***********************************************************************************/
 #include "usb_common.h"
+
+#if defined(USB_HID)
 #include "usb_hal.h"
 #include "usb_core.h"
 #include "usbdescriptors.h"
@@ -498,3 +500,5 @@ static void CopyInputReport(uint8_t *report, int size)
 /**********************************************************************************
 End of function CopyInputReport
 ***********************************************************************************/   
+
+#endif

@@ -144,6 +144,7 @@ USB_ERR USBCORE_Init2(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
                      CB_CABLE _fpCBCable2,
                      CB_ERROR _fpCBError2);
 
+#if defined(USB_HID)
 USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
                      const uint8_t* _Product, uint16_t _ProductSize,
                      const uint8_t* _Serial, uint16_t _SerialSize,
@@ -162,5 +163,6 @@ USB_ERR USBCORE_Init3(const uint8_t* _Manufacturer, uint16_t _ManufacturerSize,
                      CB_CABLE _fpCBCable3,
                      CB_ERROR _fpCBError3);
 
+#endif
 /*USB_CORE_H*/
 #endif

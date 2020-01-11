@@ -80,9 +80,11 @@ typedef struct CBs
     CB_SETUP fpSetup2;
     CB_CABLE fpCable2;
     CB_ERROR fpError2;
+#if defined(USB_HID)
     CB_SETUP fpSetup3;
     CB_CABLE fpCable3;
     CB_ERROR fpError3;
+#endif
 }CBs;
 
 /*General purpose buffer*/
@@ -154,9 +156,11 @@ static volatile CBs g_CBs =
     NULL,
     NULL,
     NULL,
+#if defined(USB_HID)
     NULL,
     NULL,
     NULL,
+#endif
 };
 
 /*Control Pipe Data*/
@@ -382,6 +386,7 @@ USB_ERR USBHAL_Init2(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError, CB
     return err;
 }
 
+#if defined(USB_HID)
 USB_ERR USBHAL_Init3(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError,
     CB_SETUP _fpSetup2, CB_CABLE _fpCable2, CB_ERROR _fpError2,
     CB_SETUP _fpSetup3, CB_CABLE _fpCable3, CB_ERROR _fpError3)
@@ -418,7 +423,7 @@ USB_ERR USBHAL_Init3(CB_SETUP _fpSetup, CB_CABLE _fpCable, CB_ERROR _fpError,
 
     return err;
 }
-
+#endif
 /******************************************************************************
 End of function USBHAL_Init
 ******************************************************************************/
@@ -888,6 +893,7 @@ USB_ERR USBHAL_Interrupt_IN(uint32_t _NumBytes,
 End USBHAL_Interrupt_IN function
 ******************************************************************************/
 
+#if defined(USB_HID)
 /******************************************************************************
 * Outline       : USBHAL_Interrupt_IN_HID
 * Description   : Sends supplied data to host using INTERRUPT IN
@@ -949,7 +955,7 @@ USB_ERR USBHAL_Interrupt_IN_HID(uint32_t _NumBytes,
 /******************************************************************************
 End USBHAL_Interrupt_IN_HID function
 ******************************************************************************/
-
+#endif
 /******************************************************************************
 * Outline       : USBHAL_Control_Stall
 * Description   : Generate a stall on the Control Endpoint and then
@@ -1079,8 +1085,9 @@ void USBHAL_Interrupt_IN_Stall(void)
 End USBHAL_Interrupt_IN_Stall function
 **********************************************************************/
 
+#if defined(USB_HID)
 /**********************************************************************
-* Outline       : USBHAL_Interrupt_IN_Stall
+* Outline       : USBHAL_Interrupt_IN_HID_Stall
 * Description   : Generate a stall on the Interrupt IN Endpoint.
 * Argument      : none
 * Return value  : none
@@ -1102,7 +1109,7 @@ void USBHAL_Interrupt_IN_HID_Stall(void)
 /**********************************************************************
 End USBHAL_Interrupt_IN_HID_Stall function
 **********************************************************************/
-
+#endif
 /**********************************************************************
 * Outline       : USBHAL_Bulk_IN_Stall_Clear
 * Description   : Clear a stall on the BULK IN Endpoint.
@@ -1239,6 +1246,7 @@ void USBHAL_Interrupt_IN_Stall_Clear(void)
 End USBHAL_Interrupt_IN_Stall_Clear function
 **********************************************************************/
 
+#if defined(USB_HID)
 /**********************************************************************
 * Outline       : USBHAL_Interrupt_IN_HID_Stall_Clear
 * Description   : Clear a stall on the Interrupt IN Endpoint.
@@ -1264,6 +1272,7 @@ void USBHAL_Interrupt_IN_HID_Stall_Clear(void)
 /**********************************************************************
 End USBHAL_Interrupt_IN_Stall_Clear function
 **********************************************************************/
+#endif
 
 /**********************************************************************
 * Outline       : USBHAL_Bulk_IN_Is_Stalled
@@ -1359,6 +1368,7 @@ bool USBHAL_Interrupt_IN_Is_Stalled(void)
 End USBHAL_Interrupt_IN_Is_Stalled function
 **********************************************************************/
 
+#if defined(USB_HID)
 /**********************************************************************
 * Outline       : USBHAL_Interrupt_IN_HID_Is_Stalled
 * Description   : Returns true if the endpoint is stalled.
@@ -1380,6 +1390,7 @@ bool USBHAL_Interrupt_IN_HID_Is_Stalled(void)
 /**********************************************************************
 End USBHAL_Interrupt_IN_HID_Is_Stalled function
 **********************************************************************/
+#endif
 
 /**********************************************************************
 * Outline       : USBHAL_Config_Get
@@ -1525,7 +1536,9 @@ USB_ERR USBHAL_Reset(void)
     USBHAL_Bulk_OUT_MSC_Stall_Clear();
     USBHAL_Bulk_IN_MSC_Stall_Clear();
     USBHAL_Interrupt_IN_Stall_Clear();
+#if defined(USB_HID)
     USBHAL_Interrupt_IN_HID_Stall_Clear();
+#endif
 
     /*Return to the default interrupts*/
     SetDefaultInterrupts();
@@ -1546,6 +1559,9 @@ End USBHAL_Reset function
 **********************************************************************/
 USB_ERR USBHAL_ResetEndpoints(void)
 {
+#if defined(USB_DEBUG_DESCRIPTOR)
+    debug_printf("USBHAL_ResetEndpoints\r\n");
+#endif
     /*** BULK OUT ***/
     /*Pipe must not be "curpipe" while being configured.*/
     do{
@@ -1596,6 +1612,7 @@ USB_ERR USBHAL_ResetEndpoints(void)
     USBIO.PIPE6CTR.BIT.ACLRM = 1;
     USBIO.PIPE6CTR.BIT.ACLRM = 0;
 
+#if defined(USB_HID)
     /***Interrupt IN HID***/
     /*PID must be set to NAK before configuring PIPECFG*/
     USBIO.PIPE7CTR.BIT.PID = PID_NAK;
@@ -1607,6 +1624,7 @@ USB_ERR USBHAL_ResetEndpoints(void)
     /*Clear Buffer*/
     USBIO.PIPE7CTR.BIT.ACLRM = 1;
     USBIO.PIPE7CTR.BIT.ACLRM = 0;
+#endif
 
     /*** BULK OUT ***/
     /*Pipe must not be "curpipe" while being configured.*/
@@ -1915,6 +1933,7 @@ static void WriteIntINPacket(void)
 End WriteIntINPacket function
 **********************************************************************/
 
+#if defined(USB_HID)
 /**********************************************************************
 * Outline       : WriteIntINHIDPacket
 * Description   : If the Interrupt IN buffer contains data then this will
@@ -1963,7 +1982,7 @@ static void WriteIntINHIDPacket(void)
     USBIO.PIPE7CTR.BIT.PID = PID_BUF;
     /*If we have not written a full packets worth to the buffer then need to
     signal that the buffer is now ready to be sent, set the buffer valid flag (BVAL).*/
-    if(Count != BULK_IN_PACKET_SIZE)
+    if(Count != INTERRUPT_IN_PACKET_SIZE)
     {
         USBIO.D0FIFOCTR.BIT.BVAL = 1;
     }
@@ -2016,7 +2035,7 @@ static void WriteIntINHIDPacket(void)
 /**********************************************************************
 End WriteIntHIDINPacket function
 **********************************************************************/
-
+#endif
 /**********************************************************************
 * Outline       : WriteBulkINPacket
 * Description   : If the Bulk IN buffer contains data then this will
@@ -2320,9 +2339,11 @@ static void ReadControlOUTPacket(void)
         if (g_CBs.fpError2) {
             g_CBs.fpError2(USB_ERR_CONTROL_OUT);
         }
+#if defined(USB_HID)
         if (g_CBs.fpError3) {
             g_CBs.fpError3(USB_ERR_CONTROL_OUT);
         }
+#endif
     }
 }
 /**********************************************************************
@@ -2443,9 +2464,11 @@ static void HandleDVST(void)
             if (g_CBs.fpCable2) {
                 g_CBs.fpCable2(true);
             }
+#if defined(USB_HID)
             if (g_CBs.fpCable3) {
                 g_CBs.fpCable3(true);
             }
+#endif
         break;
         case 3:
             DEBUG_MSG_LOW(("USBHAL: Entered Configured State\r\n"));
@@ -2528,7 +2551,8 @@ static void HandleBRDY(void)
 {
     DEBUG_MSG_HIGH(("USBHAL: BRDY\r\n"));
 
-    /*Has Interrupt pipe caused this interrupt (pipe6)*/
+#if defined(USB_HID)
+    /*Has Interrupt pipe caused this interrupt (pipe7)*/
     if((1 == USBIO.BRDYSTS.BIT.PIPE7BRDY) && (1 == USBIO.BRDYENB.BIT.PIPE7BRDYE))
     {
         DEBUG_MSG_HIGH(("USBHAL: BRDY PIPE Interrupt HID\r\n"));
@@ -2539,6 +2563,7 @@ static void HandleBRDY(void)
         /*Send another packet (possibly zero legth)*/
         WriteIntINHIDPacket();
     }
+#endif
 
     /*Has Interrupt pipe caused this interrupt (pipe6)*/
     if((1 == USBIO.BRDYSTS.BIT.PIPE6BRDY) && (1 == USBIO.BRDYENB.BIT.PIPE6BRDYE))
@@ -3028,6 +3053,7 @@ static void ConfigurePipes(void)
         USBIO.PIPEMAXP.BIT.MXPS = INTERRUPT_IN_PACKET_SIZE;
     }
 
+#if defined(USB_HID)
     /*** INTERRUPT IN HID ***/
     {
         /*This is written for a particular pipe*/
@@ -3059,6 +3085,7 @@ static void ConfigurePipes(void)
         /*Pipe Packet Size*/
         USBIO.PIPEMAXP.BIT.MXPS = INTERRUPT_IN_PACKET_SIZE;
     }
+#endif
 
     /*Un-select any pipe*/
     USBIO.PIPESEL.BIT.PIPESEL = 0;
@@ -3103,12 +3130,13 @@ static void SetDefaultInterrupts(void)
     USBIO.BEMPENB.BIT.PIPE6BEMPE = 0;
     /*BRDY - enable only as required*/
     USBIO.BRDYENB.BIT.PIPE6BRDYE = 0;
-
+#if defined(USB_HID)
     /*Interrupt IN HID pipe (pipe7)*/
     /*BEMP - enable only as required*/
     USBIO.BEMPENB.BIT.PIPE7BEMPE = 0;
     /*BRDY - enable only as required*/
     USBIO.BRDYENB.BIT.PIPE7BRDYE = 0;
+#endif
 
     /*Bulk IN pipe (pipe2)*/
     /*BEMP - enable only as required*/
