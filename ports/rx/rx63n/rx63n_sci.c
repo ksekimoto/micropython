@@ -465,10 +465,21 @@ void sci_module_stop(int ch) {
 
 void sci_set_baud(int ch, int baud) {
     volatile struct st_sci0 *sci = SCI[ch];
-    if (baud != 0)
-        sci->BRR = (uint8_t)((int)PCLK / baud / 32 - 1);
-    else
+//    if (baud != 0)
+//        sci->BRR = (uint8_t)((int)PCLK / baud / 32 - 1);
+//    else
+//        sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 32 - 1);
+    if (baud == 0) {
+        sci->SMR.BYTE &= ~0x03; // PCLK/1
         sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 32 - 1);
+    } else if (baud > 9600) {
+        sci->SMR.BYTE &= ~0x03; // PCLK/1
+        sci->BRR = (uint8_t)((int)PCLK / baud / 32 - 1);
+    } else {
+        sci->SMR.BYTE &= ~0x03;
+        sci->SMR.BYTE |= 0x02;  // PCLK/16
+        sci->BRR = (uint8_t)((int)PCLK / baud / 512 - 1);
+    }
 }
 
 /*
