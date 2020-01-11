@@ -32,9 +32,15 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#if MICROPY_ESP_IDF_4
+#include "esp32/rom/rtc.h"
+#include "esp32/clk.h"
+#include "esp_sleep.h"
+#else
 #include "rom/ets_sys.h"
 #include "rom/rtc.h"
 #include "esp_clk.h"
+#endif
 #include "esp_pm.h"
 #include "driver/touch_pad.h"
 
@@ -113,7 +119,7 @@ STATIC mp_obj_t machine_sleep_helper(wake_type_t wake_type, size_t n_args, const
 
     if (machine_rtc_config.wake_on_touch) {
         if (esp_sleep_enable_touchpad_wakeup() != ESP_OK) {
-            nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "esp_sleep_enable_touchpad_wakeup() failed"));
+            mp_raise_msg(&mp_type_RuntimeError, "esp_sleep_enable_touchpad_wakeup() failed");
         }
     }
 

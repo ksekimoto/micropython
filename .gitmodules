@@ -22,3 +22,12 @@
 	path = lib/mbedtls
 	url = https://github.com/ksekimoto/mbedtls.git
 	branch = mbedtls-2.16
+[submodule "lib/asf4"]
+	path = lib/asf4
+	url = https://github.com/adafruit/asf4
+[submodule "lib/tinyusb"]
+	path = lib/tinyusb
+	url = https://github.com/hathach/tinyusb
+[submodule "lib/mynewt-nimble"]
+	path = lib/mynewt-nimble
+	url = https://github.com/apache/mynewt-nimble.git

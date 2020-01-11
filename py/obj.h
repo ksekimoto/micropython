@@ -178,7 +178,7 @@ static inline bool mp_obj_is_small_int(mp_const_obj_t o)
 static inline bool mp_obj_is_qstr(mp_const_obj_t o)
     { return ((((uint64_t)(o)) & 0xffff000000000000) == 0x0002000000000000); }
 #define MP_OBJ_QSTR_VALUE(o) ((((uint32_t)(o)) >> 1) & 0xffffffff)
-#define MP_OBJ_NEW_QSTR(qst) ((mp_obj_t)((((mp_uint_t)(qst)) << 1) | 0x0002000000000001))
+#define MP_OBJ_NEW_QSTR(qst) ((mp_obj_t)(((uint64_t)(((uint32_t)(qst)) << 1)) | 0x0002000000000001))
 
 #if MICROPY_PY_BUILTINS_FLOAT
 
@@ -241,6 +241,15 @@ typedef union _mp_rom_obj_t { uint64_t u64; struct { const void *lo, *hi; } u32;
 #endif
 
 // Macros to create objects that are stored in ROM.
+
+#ifndef MP_ROM_NONE
+#define MP_ROM_NONE MP_ROM_PTR(&mp_const_none_obj)
+#endif
+
+#ifndef MP_ROM_FALSE
+#define MP_ROM_FALSE MP_ROM_PTR(&mp_const_false_obj)
+#define MP_ROM_TRUE MP_ROM_PTR(&mp_const_true_obj)
+#endif
 
 #ifndef MP_ROM_INT
 typedef mp_const_obj_t mp_rom_obj_t;
@@ -435,18 +444,9 @@ typedef mp_obj_t (*mp_getiter_fun_t)(mp_obj_t self_in, mp_obj_iter_buf_t *iter_b
 
 // Buffer protocol
 typedef struct _mp_buffer_info_t {
-    // if we'd bother to support various versions of structure
-    // (with different number of fields), we can distinguish
-    // them with ver = sizeof(struct). Cons: overkill for *micro*?
-    //int ver; // ?
-
     void *buf;      // can be NULL if len == 0
     size_t len;     // in bytes
     int typecode;   // as per binary.h
-
-    // Rationale: to load arbitrary-sized sprites directly to LCD
-    // Cons: a bit adhoc usecase
-    // int stride;
 } mp_buffer_info_t;
 #define MP_BUFFER_READ  (1)
 #define MP_BUFFER_WRITE (2)
@@ -669,7 +669,7 @@ mp_obj_t mp_obj_new_getitem_iter(mp_obj_t *args, mp_obj_iter_buf_t *iter_buf);
 mp_obj_t mp_obj_new_module(qstr module_name);
 mp_obj_t mp_obj_new_memoryview(byte typecode, size_t nitems, void *items);
 
-mp_obj_type_t *mp_obj_get_type(mp_const_obj_t o_in);
+const mp_obj_type_t *mp_obj_get_type(mp_const_obj_t o_in);
 const char *mp_obj_get_type_str(mp_const_obj_t o_in);
 bool mp_obj_is_subclass_fast(mp_const_obj_t object, mp_const_obj_t classinfo); // arguments should be type objects
 mp_obj_t mp_instance_cast_to_native_base(mp_const_obj_t self_in, mp_const_obj_t native_type);
@@ -691,7 +691,6 @@ mp_float_t mp_obj_get_float(mp_obj_t self_in);
 bool mp_obj_get_float_maybe(mp_obj_t arg, mp_float_t *value);
 void mp_obj_get_complex(mp_obj_t self_in, mp_float_t *real, mp_float_t *imag);
 #endif
-//qstr mp_obj_get_qstr(mp_obj_t arg);
 void mp_obj_get_array(mp_obj_t o, size_t *len, mp_obj_t **items); // *items may point inside a GC block
 void mp_obj_get_array_fixed_n(mp_obj_t o, size_t len, mp_obj_t **items); // *items may point inside a GC block
 size_t mp_get_index(const mp_obj_type_t *type, size_t len, mp_obj_t index, bool is_slice);
@@ -779,8 +778,21 @@ static inline mp_map_t *mp_obj_dict_get_map(mp_obj_t dict) {
 // set
 void mp_obj_set_store(mp_obj_t self_in, mp_obj_t item);
 
+// slice indexes resolved to particular sequence
+typedef struct {
+    mp_int_t start;
+    mp_int_t stop;
+    mp_int_t step;
+} mp_bound_slice_t;
+
 // slice
-void mp_obj_slice_get(mp_obj_t self_in, mp_obj_t *start, mp_obj_t *stop, mp_obj_t *step);
+typedef struct _mp_obj_slice_t {
+    mp_obj_base_t base;
+    mp_obj_t start;
+    mp_obj_t stop;
+    mp_obj_t step;
+} mp_obj_slice_t;
+void mp_obj_slice_indices(mp_obj_t self_in, mp_int_t length, mp_bound_slice_t *result);
 
 // functions
 
@@ -836,13 +848,6 @@ typedef struct _mp_rom_obj_static_class_method_t {
 const mp_obj_t *mp_obj_property_get(mp_obj_t self_in);
 
 // sequence helpers
-
-// slice indexes resolved to particular sequence
-typedef struct {
-    mp_uint_t start;
-    mp_uint_t stop;
-    mp_int_t step;
-} mp_bound_slice_t;
 
 void mp_seq_multiply(const void *items, size_t item_sz, size_t len, size_t times, void *dest);
 #if MICROPY_PY_BUILTINS_SLICE
