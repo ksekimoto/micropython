@@ -45,7 +45,7 @@
 #include "esp8266.h"
 
 #include "common.h"
-#include "ff.h"
+#include "lib/oofatfs/ff.h"
 
 #if MICROPY_HW_HAS_ESP8266
 

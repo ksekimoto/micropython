@@ -47,9 +47,6 @@ LAN_NEW = 0
 USE_FONT = 1
 USE_LCD = 1
 
-# Frozon module dir
-FROZEN_DIR = modules
-
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
@@ -58,17 +55,21 @@ include $(BOARD_DIR)/mpconfigboard.mk
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
-# directory containing scripts to be frozen as bytecode
-FROZEN_MPY_DIR ?= modules
+# File containing description of content to be frozen into firmware.
+FROZEN_MANIFEST ?= boards/manifest.py
 
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-FATFS_DIR=lib/oofatfs
+GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+
 
 #######################################################################
 # MCU configuration
 #######################################################################
+
+# Select the cross compile prefix
+CROSS_COMPILE ?= rx-elf-
 
 ifeq ($(MCU_SERIES),RX63N)
 MCU_SERIES_LOW = rx63n
@@ -99,7 +100,6 @@ INC += -Iboards/$(BOARD)
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
-INC += -I$(TOP)/lib/oofatfs
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
@@ -162,6 +162,7 @@ ifeq ($(BOARD),GR_ROSE_DD)
 CFLAGS += -DGRROSE
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
+CFLAGS += -DMICROPY_VFS_FAT=1
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
@@ -239,6 +240,134 @@ LDFLAGS += -Wl,-Map=$@.map
 
 LIBS =
 
+
+SRC_LIB = $(addprefix lib/,\
+	libc/string0.c \
+	oofatfs/ff.c \
+	oofatfs/ffunicode.c \
+	mp-readline/readline.c \
+	netutils/netutils.c \
+	netutils/trace.c \
+	netutils/dhcpserver.c \
+	timeutils/timeutils.c \
+	utils/pyexec.c \
+	utils/interrupt_char.c \
+	utils/printf.c \
+	utils/sys_stdio_mphal.c \
+	utils/mpirq.c \
+	)
+
+#SRC_LIB += $(addprefix lib/, libc/string0.c)
+#SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
+#SRC_LIB += $(addprefix lib/, netutils/netutils.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
+#SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
+#SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
+#SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
+#SRC_LIB += $(addprefix lib/, utils/printf.c)
+#SRC_LIB += $(addprefix lib/, utils/pyexec.c)
+#SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
+
+EXTMOD_SRC_C += $(addprefix extmod/,\
+	virtpin.c \
+        )
+
+ifeq ($(MICROPY_FLOAT_IMPL),double)
+SRC_LIBM = $(addprefix lib/libm_dbl/,\
+	__cos.c \
+	__expo2.c \
+	__fpclassify.c \
+	__rem_pio2.c \
+	__rem_pio2_large.c \
+	__signbit.c \
+	__sin.c \
+	__tan.c \
+	acos.c \
+	acosh.c \
+	asin.c \
+	asinh.c \
+	atan.c \
+	atan2.c \
+	atanh.c \
+	ceil.c \
+	cos.c \
+	cosh.c \
+	copysign.c \
+	erf.c \
+	exp.c \
+	expm1.c \
+	floor.c \
+	fmod.c \
+	frexp.c \
+	ldexp.c \
+	lgamma.c \
+	log.c \
+	log10.c \
+	log1p.c \
+	modf.c \
+	nearbyint.c \
+	pow.c \
+	rint.c \
+	scalbn.c \
+	sin.c \
+	sinh.c \
+	tan.c \
+	tanh.c \
+	tgamma.c \
+	trunc.c \
+	)
+ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
+# ToDo
+SRC_LIBM += lib/libm_dbl/thumb_vfp_sqrt.c
+else
+SRC_LIBM += lib/libm_dbl/sqrt.c
+endif
+else
+SRC_LIBM = $(addprefix lib/libm/,\
+	math.c \
+	acoshf.c \
+	asinfacosf.c \
+	asinhf.c \
+	atan2f.c \
+	atanf.c \
+	atanhf.c \
+	ef_rem_pio2.c \
+	erf_lgamma.c \
+	fmodf.c \
+	kf_cos.c \
+	kf_rem_pio2.c \
+	kf_sin.c \
+	kf_tan.c \
+	log1pf.c \
+	nearbyintf.c \
+	sf_cos.c \
+	sf_erf.c \
+	sf_frexp.c \
+	sf_ldexp.c \
+	sf_modf.c \
+	sf_sin.c \
+	sf_tan.c \
+	wf_lgamma.c \
+	wf_tgamma.c \
+	)
+ifeq ($(SUPPORTS_HARDWARE_FP_SINGLE),1)
+SRC_LIBM += lib/libm/thumb_vfp_sqrtf.c
+else
+SRC_LIBM += lib/libm/ef_sqrt.c
+endif
+endif
+
+EXTMOD_SRC_C = $(addprefix extmod/,\
+	modonewire.c \
+	)
+
+DRIVERS_SRC_C = $(addprefix drivers/,\
+	bus/softspi.c \
+	bus/softqspi.c \
+	memory/spiflash.c \
+	dht/dht.c \
+	)
+
 SRC_C = main.c
 SRC_C += template/mymodule.c
 SRC_C += accel.c
@@ -294,6 +423,7 @@ SRC_C += rng.c
 SRC_C += rtc.c
 SRC_C += sdcard.c
 SRC_C += servo.c
+SRC_C += softtimer.c
 SRC_C += spi.c
 #SRC_C += spibdev.c
 SRC_C += storage.c
@@ -376,130 +506,6 @@ SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
-SRC_LIB = $(addprefix lib/,\
-	libc/string0.c \
-	oofatfs/ff.c \
-	oofatfs/ffunicode.c \
-	mp-readline/readline.c \
-	netutils/netutils.c \
-	netutils/trace.c \
-	timeutils/timeutils.c \
-	utils/pyexec.c \
-	utils/interrupt_char.c \
-	utils/printf.c \
-	utils/sys_stdio_mphal.c \
-	utils/mpirq.c \
-	)
-
-#SRC_LIB += $(addprefix lib/, libc/string0.c)
-#SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
-#SRC_LIB += $(addprefix lib/, netutils/netutils.c)
-#SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
-#SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
-#SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
-#SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
-#SRC_LIB += $(addprefix lib/, utils/printf.c)
-#SRC_LIB += $(addprefix lib/, utils/pyexec.c)
-#SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
-
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	virtpin.c \
-        )
-
-ifeq ($(MICROPY_FLOAT_IMPL),double)
-SRC_LIBM = $(addprefix lib/libm_dbl/,\
-	__cos.c \
-	__expo2.c \
-	__fpclassify.c \
-	__rem_pio2.c \
-	__rem_pio2_large.c \
-	__signbit.c \
-	__sin.c \
-	__tan.c \
-	acos.c \
-	acosh.c \
-	asin.c \
-	asinh.c \
-	atan.c \
-	atan2.c \
-	atanh.c \
-	ceil.c \
-	cos.c \
-	cosh.c \
-	copysign.c \
-	erf.c \
-	exp.c \
-	expm1.c \
-	floor.c \
-	fmod.c \
-	frexp.c \
-	ldexp.c \
-	lgamma.c \
-	log.c \
-	log10.c \
-	log1p.c \
-	modf.c \
-	nearbyint.c \
-	pow.c \
-	rint.c \
-	scalbn.c \
-	sin.c \
-	sinh.c \
-	sqrt.c \
-	tan.c \
-	tanh.c \
-	tgamma.c \
-	trunc.c \
-	)
-else
-SRC_LIBM = $(addprefix lib/libm/,\
-	math.c \
-	acoshf.c \
-	asinfacosf.c \
-	asinhf.c \
-	atan2f.c \
-	atanf.c \
-	atanhf.c \
-	ef_rem_pio2.c \
-	erf_lgamma.c \
-	fmodf.c \
-	kf_cos.c \
-	kf_rem_pio2.c \
-	kf_sin.c \
-	kf_tan.c \
-	log1pf.c \
-	nearbyintf.c \
-	sf_cos.c \
-	sf_erf.c \
-	sf_frexp.c \
-	sf_ldexp.c \
-	sf_modf.c \
-	sf_sin.c \
-	sf_tan.c \
-	wf_lgamma.c \
-	wf_tgamma.c \
-	)
-SRC_LIBM += lib/libm/ef_sqrt.c
-endif
-
-EXTMOD_SRC_C = $(addprefix extmod/,\
-	modonewire.c \
-	)
-
-#ifeq ($(MICROPY_PY_LWIP),1)
-#EXTMOD_SRC_C += $(addprefix extmod/,\
-#	modlwip.c \
-#	)
-#endif
-
-DRIVERS_SRC_C = $(addprefix drivers/,\
-	bus/softspi.c \
-	bus/softqspi.c \
-	memory/spiflash.c \
-	dht/dht.c \
-	)
-
-#OBJ = $(PY_CORE_O)
 ifneq ($(MICROPY_PY_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
@@ -554,7 +560,9 @@ endif
 #endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
-CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+SRC_MOD += mbedtls/mbedtls_port.c
 SRC_MOD += $(addprefix lib/,\
 	mbedtls/library/aes.c \
 	mbedtls/library/aesni.c \
@@ -646,20 +654,37 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 
-ifneq ($(FROZEN_DIR),)
+# This file contains performance critical functions so turn up the optimisation
+# level.  It doesn't add much to the code size and improves performance a bit.
+# Don't use -O3 with this file because gcc tries to optimise memset in terms of itself.
+$(BUILD)/lib/libc/string0.o: COPT += -O2
+
+# We put several files into the first 16K section with the ISRs.
+# If we compile these using -O0 then it won't fit. So if you really want these
+# to be compiled with -O0, then edit boards/common.ld (in the .isr_vector section)
+# and comment out the following lines.
+$(BUILD)/$(OOFATFS_DIR)/ff.o: COPT += -Os
+$(filter $(PY_BUILD)/../extmod/vfs_fat_%.o, $(PY_O)): COPT += -Os
+$(PY_BUILD)/formatfloat.o: COPT += -Os
+$(PY_BUILD)/parsenum.o: COPT += -Os
+$(PY_BUILD)/mpprint.o: COPT += -Os
+
+all: $(BUILD)/firmware.elf
+
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
 # and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
 CFLAGS += -DMICROPY_MODULE_FROZEN_STR
 endif
 
-ifneq ($(FROZEN_MPY_DIR),)
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
 # To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
 # then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
-all: $(BUILD)/firmware.elf
+
 
 #$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 #	$(ECHO) "MISC freezing bytecode"
@@ -667,7 +692,7 @@ all: $(BUILD)/firmware.elf
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin
 	$(Q)$(OBJCOPY) -O srec -I elf32-rx-be-ns $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
 	$(Q)$(SIZE) $@

@@ -27,7 +27,7 @@
 #ifndef _SD_H_
 #define _SD_H_
 
-#include "ff.h"
+#include "lib/oofatfs/ff.h"
 
 #ifdef __cplusplus
 extern "C" {

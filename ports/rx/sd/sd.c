@@ -26,7 +26,6 @@
 
 #include <stdio.h>
 #include "common.h"
-#include "ff.h"
 #include "sd.h"
 
 #if MICROPY_HW_ENABLE_SDCARD

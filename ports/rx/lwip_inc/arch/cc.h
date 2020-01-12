@@ -61,4 +61,6 @@ typedef u32_t mem_ptr_t;
 
 #endif
 
+#define LWIP_NO_CTYPE_H 1
+
 #endif // MICROPY_INCLUDED_RX_LWIP_ARCH_CC_H

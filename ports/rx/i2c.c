@@ -30,9 +30,9 @@
 
 #if MICROPY_HW_ENABLE_HW_I2C
 
-#define I2C_POLL_TIMEOUT_MS (50)
+STATIC uint16_t i2c_timeout_ms[MICROPY_HW_MAX_I2C];
 
-int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq) {
+int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout_ms) {
 
     // Init pins
     //if (!mp_hal_pin_config_alt(scl, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
@@ -41,6 +41,8 @@ int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t fr
     //if (!mp_hal_pin_config_alt(sda, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
     //    return -MP_EPERM;
     //}
+    // Save timeout value
+    i2c_timeout_ms[i2c_id] = timeout_ms;
 
 
     return 0;

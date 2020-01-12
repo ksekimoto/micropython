@@ -89,13 +89,13 @@ void pyb_usb_init0(void) {
 
 bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info) {
     usb_device_t *usb_dev = &usb_device;
-    SetPIDVID(pid, vid);
-    SetHIDMode(mode);
-    if (hid_info == NULL) {
-        SetDefaultHIDReportDescriptor(mode);
-    }
-    usb_init();
-    //if (!usb_dev->enabled) {
+    if (!usb_dev->enabled) {
+        SetPIDVID(pid, vid);
+        SetHIDMode(mode);
+        if (hid_info == NULL) {
+            SetDefaultHIDReportDescriptor(mode);
+        }
+        usb_init();
         // only init USB once in the device's power-lifetime
 
         // set up the USBD state
@@ -140,8 +140,8 @@ bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info) 
         // start the USB device
         //USBD_LL_Init(usbd, (mode & USBD_MODE_HIGH_SPEED) != 0);
         //USBD_LL_Start(usbd);
-        //usb_dev->enabled = true;
-    //}
+        usb_dev->enabled = true;
+    }
 
     return true;
 }

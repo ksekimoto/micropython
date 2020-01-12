@@ -36,11 +36,6 @@ int eth_link_status(eth_t *self);
 int eth_start(eth_t *self);
 int eth_stop(eth_t *self);
 
-//err_t low_level_output(struct netif *netif, struct pbuf *p);
-//void ethernetif_input(struct netif *netif);
-//err_t ethernetif_init(struct netif *netif);
-//void ethernetif_set_link(struct netif *netif);
-//err_t ethernetif_update_config(struct netif *netif);
 void ethernetif_input_cb(void);
 
 #endif // MICROPY_INCLUDED_RX_ETH_H

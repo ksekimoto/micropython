@@ -216,7 +216,10 @@ def main():
 
     # Get paths to tools
     MAKE_FROZEN = VARS['MPY_DIR'] + '/tools/make-frozen.py'
-    MPY_CROSS = VARS['MPY_DIR'] + '/mpy-cross/mpy-cross'
+    if os.name == 'nt':
+        MPY_CROSS = VARS['MPY_DIR'] + '/mpy-cross/mpy-cross.exe'
+    else:
+        MPY_CROSS = VARS['MPY_DIR'] + '/mpy-cross/mpy-cross'
     MPY_TOOL = VARS['MPY_DIR'] + '/tools/mpy-tool.py'
 
     # Ensure mpy-cross is built

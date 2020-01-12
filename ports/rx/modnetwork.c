@@ -53,6 +53,11 @@ u32_t sys_now(void) {
 }
 
 void pyb_lwip_poll(void) {
+    #if MICROPY_PY_WIZNET5K
+    // Poll the NIC for incoming data
+    wiznet5k_poll();
+    #endif
+
     // Poll all the NICs for incoming data
     for (struct netif *netif = netif_list; netif != NULL; netif = netif->next) {
         if (netif->flags & NETIF_FLAG_LINK_UP) {
@@ -64,6 +69,11 @@ void pyb_lwip_poll(void) {
     }
     // Run the lwIP internal updates
     sys_check_timeouts();
+
+    #if MICROPY_BLUETOOTH_NIMBLE
+    extern void nimble_poll(void);
+    nimble_poll();
+    #endif
 }
 
 void mod_network_lwip_poll_wrapper(uint32_t ticks_ms) {
@@ -72,6 +82,16 @@ void mod_network_lwip_poll_wrapper(uint32_t ticks_ms) {
 //        pendsv_schedule_dispatch(PENDSV_DISPATCH_LWIP, pyb_lwip_poll);
         pyb_lwip_poll();
     }
+
+    #if MICROPY_PY_NETWORK_CYW43
+    if (cyw43_poll) {
+        if (cyw43_sleep != 0) {
+            if (--cyw43_sleep == 0) {
+                pendsv_schedule_dispatch(PENDSV_DISPATCH_CYW43, cyw43_poll);
+            }
+        }
+    }
+#endif
 }
 
 #endif
@@ -107,7 +127,7 @@ mp_obj_t mod_network_find_nic(const uint8_t *ip) {
         return nic;
     }
 
-    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "no available NIC"));
+    mp_raise_msg(&mp_type_OSError, "no available NIC");
 }
 
 STATIC mp_obj_t network_route(void) {
@@ -121,6 +141,10 @@ STATIC const mp_rom_map_elem_t mp_module_network_globals_table[] = {
     #if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
     { MP_ROM_QSTR(MP_QSTR_LAN), MP_ROM_PTR(&network_lan_type) },
     #endif
+    #if MICROPY_PY_NETWORK_CYW43
+    { MP_ROM_QSTR(MP_QSTR_WLAN), MP_ROM_PTR(&mp_network_cyw43_type) },
+    #endif
+
     #if MICROPY_PY_WIZNET5K
     { MP_ROM_QSTR(MP_QSTR_WIZNET5K), MP_ROM_PTR(&mod_network_socket_nic_type_wiznet5k) },
     #endif
@@ -132,6 +156,12 @@ STATIC const mp_rom_map_elem_t mp_module_network_globals_table[] = {
     #endif
 
     { MP_ROM_QSTR(MP_QSTR_route), MP_ROM_PTR(&network_route_obj) },
+
+    // Constants
+    #if MICROPY_PY_NETWORK_CYW43
+    { MP_ROM_QSTR(MP_QSTR_STA_IF), MP_ROM_INT(CYW43_ITF_STA)},
+    { MP_ROM_QSTR(MP_QSTR_AP_IF), MP_ROM_INT(CYW43_ITF_AP)},
+    #endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_network_globals, mp_module_network_globals_table);
@@ -200,7 +230,6 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
         ip_addr_t dns;
         netutils_parse_ipv4_addr(items[3], (uint8_t*)&dns, NETUTILS_BIG);
         dns_setserver(0, &dns);
-        //ethernetif_update_config(&self->netif);
         return mp_const_none;
     }
 }
