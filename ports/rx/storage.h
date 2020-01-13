@@ -35,7 +35,8 @@ enum {
     BDEV_IOCTL_INIT = 1,
     BDEV_IOCTL_SYNC = 3,
     BDEV_IOCTL_NUM_BLOCKS = 4,
-    BDEV_IOCTL_IRQ_HANDLER = 6,
+    BDEV_IOCTL_BLOCK_ERASE = 6,
+    BDEV_IOCTL_IRQ_HANDLER = 7,
 };
 
 void storage_init(void);
@@ -64,6 +65,7 @@ int spi_bdev_readblocks(spi_bdev_t *bdev, uint8_t *dest, uint32_t block_num, uin
 int spi_bdev_writeblocks(spi_bdev_t *bdev, const uint8_t *src, uint32_t block_num, uint32_t num_blocks);
 
 extern const struct _mp_obj_type_t pyb_flash_type;
+extern const struct _pyb_flash_obj_t pyb_flash_obj;
 
 struct _fs_user_mount_t;
 void pyb_flash_init_vfs(struct _fs_user_mount_t *vfs);

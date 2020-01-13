@@ -301,24 +301,12 @@
 #ifndef MICROPY_HW_USB_CDC_NUM
 #define MICROPY_HW_USB_CDC_NUM (1)
 #endif
-<<<<<<< .mine
-#if defined(MICROPY_HW_CAN3_TX)
-#define MICROPY_HW_MAX_CAN (3)
-#elif defined(MICROPY_HW_CAN2_TX)
-#define MICROPY_HW_MAX_CAN (2)
-#elif defined(MICROPY_HW_CAN1_TX)
-#define MICROPY_HW_MAX_CAN (1)
-#endif
-=======
 #ifndef MICROPY_HW_USB_MSC
 #define MICROPY_HW_USB_MSC (MICROPY_HW_ENABLE_USB)
 #endif
 #ifndef MICROPY_HW_USB_HID
 #define MICROPY_HW_USB_HID (MICROPY_HW_ENABLE_USB)
 #endif
-
->>>>>>> .theirs
-
 
 // Pin definition header file
 #define MICROPY_PIN_DEFS_PORT_H "pin_defs_stm32.h"

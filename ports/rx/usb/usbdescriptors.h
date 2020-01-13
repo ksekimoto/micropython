@@ -58,14 +58,18 @@ System Includes
 #define INPUT_REPORT_DEF_SIZE	64
 #endif
 
+#define HID_SPECIAL_MODE    1
+#define HID_MOUSE_MODE      2
+#define HID_KEYBOARD_MODE   3
+
 /***********************************************************************************
 Type Definitions
 ***********************************************************************************/
 /*    Descriptor    */
 typedef    struct DESCRIPTOR
 {
-    const uint16_t length;
-    const uint8_t* pucData;
+    uint16_t length;
+    uint8_t* pucData;
 }DESCRIPTOR;
 
 /* Device Descriptor */
@@ -86,8 +90,11 @@ extern const DESCRIPTOR gStringDescriptorProduct;
 extern const DESCRIPTOR gStringDescriptorSerialNum;
 
 #if defined(USB_HID)
+void SetPIDVID(uint8_t pid, uint8_t vid);
+void SetHIDMode(int hid_mode);
 void SetHIDInterfaceDescriptor(char *desc);
 void SetHIDReportDescriptor(char *desc, int size);
+void SetDefaultHIDReportDescriptor(int hid_mode);
 #endif
 
 /* FILENAME_USBDESCRIPTORS_H */

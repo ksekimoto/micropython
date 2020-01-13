@@ -21,7 +21,6 @@ QSTR_GLOBAL_REQUIREMENTS += $(HEADER_BUILD)/mpversion.h
 # some code is performance bottleneck and compiled with other optimization options
 CSUPEROPT = -O3
 
-<<<<<<< .mine
 # this sets the config file for FatFs
 CFLAGS_MOD += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
@@ -51,42 +50,16 @@ else ifeq ($(MICROPY_SSL_MBEDTLS),1)
 # Can be overridden by ports which have "builtin" mbedTLS
 MICROPY_SSL_MBEDTLS_INCLUDE ?= $(TOP)/lib/mbedtls/include
 CFLAGS_MOD += -DMICROPY_SSL_MBEDTLS=1 -I$(MICROPY_SSL_MBEDTLS_INCLUDE)
-LDFLAGS_MOD += -L$(TOP)/lib/mbedtls/library -lmbedx509 -lmbedtls -lmbedcrypto
-=======
+#LDFLAGS_MOD += -L$(TOP)/lib/mbedtls/library -lmbedx509 -lmbedtls -lmbedcrypto
 # Enable building 32-bit code on 64-bit host.
 ifeq ($(MICROPY_FORCE_32BIT),1)
 CC += -m32
 CXX += -m32
 LD += -m32
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> .theirs
+endif
+endif
 endif
 
-<<<<<<< .mine
 ifeq ($(MICROPY_PY_LWIP),1)
 # A port should add an include path where lwipopts.h can be found (eg extmod/lwip-include)
 LWIP_DIR = lib/lwip/src
@@ -167,88 +140,6 @@ $(BUILD)/$(BTREE_DIR)/%.o: CFLAGS += -Wno-old-style-definition -Wno-sign-compare
 $(BUILD)/extmod/modbtree.o: CFLAGS += $(BTREE_DEFS)
 endif
 
-=======
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> .theirs
 # External modules written in C.
 ifneq ($(USER_C_MODULES),)
 # pre-define USERMOD variables as expanded so that variables are immediate

@@ -31,23 +31,31 @@
 #include "py/runtime.h"
 #include "py/stackctrl.h"
 #include "py/gc.h"
+#include "py/mperrno.h"
 #include "py/mphal.h"
 #include "lib/mp-readline/readline.h"
 #include "lib/utils/pyexec.h"
 #include "lib/oofatfs/ff.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
+#include "extmod/vfs_lfs.h"
 
 #if MICROPY_PY_LWIP
 #include "lwip/init.h"
+#include "lwip/apps/mdns.h"
+#include "drivers/cyw43/cyw43.h"
 #endif
 
+#if MICROPY_BLUETOOTH_NIMBLE
+#include "extmod/modbluetooth.h"
+#endif
 #include "systick.h"
 #include "pendsv.h"
 #include "pybthread.h"
 #include "gccollect.h"
 #include "factoryreset.h"
 #include "modmachine.h"
+#include "softtimer.h"
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
@@ -116,7 +124,7 @@ void NORETURN __fatal_error(const char *msg) {
     mp_hal_stdout_tx_strn(msg, strlen(msg));
     for (uint i = 0; ;) {
         led_toggle(((i++) & 3) + 1);
-        for (volatile uint delay = 0; delay < 100000; delay++) {
+        for (volatile uint delay = 0; delay < 10000000; delay++) {
         }
         if (i >= 16) {
             // to conserve power
@@ -150,7 +158,9 @@ STATIC mp_obj_t pyb_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
         // parse args
         mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
         mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+        #if MICROPY_ENABLE_COMPILER
         MP_STATE_VM(mp_optimise_value) = args[0].u_int;
+        #endif
     }
     return mp_const_none;
 }
@@ -161,7 +171,6 @@ MP_DEFINE_CONST_FUN_OBJ_KW(pyb_main_obj, 1, pyb_main);
 MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     // init the vfs object
     fs_user_mount_t *vfs_fat = &fs_user_mount_flash;
-    vfs_fat->flags = 0;
     pyb_flash_init_vfs(vfs_fat);
 
     // try to mount the flash
@@ -231,7 +240,7 @@ STATIC bool init_sdcard_fs(void) {
         if (vfs == NULL || vfs_fat == NULL) {
             break;
         }
-        vfs_fat->flags = FSUSER_FREE_OBJ;
+        vfs_fat->blockdev.flags = MP_BLOCKDEV_FLAG_FREE_OBJ;
         sdcard_init_vfs(vfs_fat, part_num);
 
         // try to mount the partition
@@ -439,6 +448,9 @@ void rx_main(uint32_t reset_mode) {
     // because the system timeout list (next_timeout) is only ever reset by BSS clearing.
     // So for now we only init the lwIP stack once on power-up.
     lwip_init();
+    #if LWIP_MDNS_RESPONDER
+    mdns_resp_init();
+    #endif
     systick_enable_dispatch(SYSTICK_DISPATCH_LWIP, mod_network_lwip_poll_wrapper);
     #endif
 
@@ -642,6 +654,7 @@ soft_reset:
         }
     }
 
+    #if MICROPY_ENABLE_COMPILER
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
@@ -658,6 +671,7 @@ soft_reset:
             }
         }
     }
+    #endif
 
 soft_reset_exit:
 
@@ -675,10 +689,11 @@ soft_reset_exit:
     #if MICROPY_PY_NETWORK
     mod_network_deinit();
     #endif
+    soft_timer_deinit();
     timer_deinit();
     uart_deinit_all();
     #if MICROPY_HW_ENABLE_CAN
-    can_deinit();
+    can_deinit_all();
     #endif
     machine_deinit();
 

@@ -93,6 +93,21 @@
 #define MICROPY_HW_ENABLE_SDCARD (0)
 #endif
 
+// Whether to enable the MMC interface, exposed as pyb.MMCard
+#ifndef MICROPY_HW_ENABLE_MMCARD
+#define MICROPY_HW_ENABLE_MMCARD (0)
+#endif
+
+// SD/MMC interface bus width (defaults to 4 bits)
+#ifndef MICROPY_HW_SDMMC_BUS_WIDTH
+#define MICROPY_HW_SDMMC_BUS_WIDTH (4)
+#endif
+
+// Whether to automatically mount (and boot from) the SD card if it's present
+#ifndef MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (MICROPY_HW_ENABLE_SDCARD)
+#endif
+
 // Whether to enable the MMA7660 driver, exposed as pyb.Accel
 #ifndef MICROPY_HW_HAS_MMA7660
 #define MICROPY_HW_HAS_MMA7660 (0)
@@ -111,6 +126,14 @@
 
 /*****************************************************************************/
 // General configuration
+
+// Heap start / end definitions
+#ifndef MICROPY_HEAP_START
+#define MICROPY_HEAP_START &_heap_start
+#endif
+#ifndef MICROPY_HEAP_END
+#define MICROPY_HEAP_END &_heap_end
+#endif
 
 // Configuration for RX63N series
 

@@ -259,25 +259,6 @@ void usbd_cdc_rx_check_resume(usbd_cdc_itf_t *cdc) {
     enable_irq(irq_state);
 }
 
-bool usbd_cdc_rx_buffer_full(usbd_cdc_itf_t *cdc) {
-    int get = cdc->rx_buf_get, put = cdc->rx_buf_put;
-    int remaining = (get - put) + (-((int) (get <= put)) & USBD_CDC_RX_DATA_SIZE);
-    return remaining < CDC_DATA_MAX_PACKET_SIZE + 1;
-}
-
-void usbd_cdc_rx_check_resume(usbd_cdc_itf_t *cdc) {
-    uint32_t irq_state = disable_irq();
-    if (cdc->rx_buf_full) {
-        if (!usbd_cdc_rx_buffer_full(cdc)) {
-            cdc->rx_buf_full = false;
-            enable_irq(irq_state);
-            USBD_CDC_ReceivePacket(&cdc->base, cdc->rx_packet_buf);
-            return;
-        }
-    }
-    enable_irq(irq_state);
-}
-
 // Data received over USB OUT endpoint is processed here.
 // len: number of bytes received into the buffer we passed to USBD_CDC_ReceivePacket
 // Returns USBD_OK if all operations are OK else USBD_FAIL

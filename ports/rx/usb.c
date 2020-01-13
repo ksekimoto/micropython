@@ -90,6 +90,12 @@ void pyb_usb_init0(void) {
 bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info) {
     usb_device_t *usb_dev = &usb_device;
     if (!usb_dev->enabled) {
+        SetPIDVID(pid, vid);
+        SetHIDMode(mode);
+        if (hid_info == NULL) {
+            SetDefaultHIDReportDescriptor(mode);
+        }
+        usb_init();
         // only init USB once in the device's power-lifetime
 
         // set up the USBD state
@@ -316,7 +322,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     //    }
     //}
 
-    char *hid_info;
+    char *hid_info = (char *)NULL;
     // get hid info if user selected such a mode
     //USBD_HID_ModeInfoTypeDef hid_info;
     //if (mode & USBD_MODE_IFACE_HID) {

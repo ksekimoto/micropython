@@ -470,46 +470,12 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev, int high_speed, const 
         // Initialize LL Driver
         HAL_PCD_Init(&pcd_hs_handle);
 
-<<<<<<< .mine
-        // We have 1024 32-bit words in total to use here
-        #if MICROPY_HW_USB_CDC_NUM == 3
-        HAL_PCD_SetRxFiFo(&pcd_hs_handle, 328);
-        #else
-        HAL_PCD_SetRxFiFo(&pcd_hs_handle, 464);
-        #endif
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 0, 32); // EP0
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 1, 256); // MSC / HID
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 2, 8); // CDC CMD
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 3, 128); // CDC DATA
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 4, 8); // CDC2 CMD
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 5, 128); // CDC2 DATA
-<<<<<<< HEAD
-=======
-        #if MICROPY_HW_USB_CDC_NUM == 3
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 6, 8); // CDC3 CMD
-        HAL_PCD_SetTxFiFo(&pcd_hs_handle, 7, 128); // CDC3 DATA
-        #endif
-=======
         // Set FIFO buffer sizes
         fifo_size += USBD_FS_NUM_FIFO; // skip over FS FIFO size values
         HAL_PCD_SetRxFiFo(&pcd_hs_handle, fifo_size[0] * 4);
         for (size_t i = 0; i < USBD_HS_NUM_TX_FIFO; ++i) {
             HAL_PCD_SetTxFiFo(&pcd_hs_handle, i, fifo_size[1 + i] * 4);
         }
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> .theirs
->>>>>>> upstream_master
     }
     #endif  // MICROPY_HW_USB_HS
 

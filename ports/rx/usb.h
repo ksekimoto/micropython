@@ -92,6 +92,7 @@ MP_DECLARE_CONST_FUN_OBJ_KW(pyb_usb_mode_obj);
 void pyb_usb_init0(void);
 bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, uint8_t mode, char *hid_info);
 void pyb_usb_dev_deinit(void);
+void usb_init(void);
 
 /* USB HID */
 #define USBD_HID_MOUSE_MAX_PACKET          (4)
