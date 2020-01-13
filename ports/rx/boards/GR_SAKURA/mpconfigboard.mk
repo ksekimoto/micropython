@@ -4,4 +4,4 @@ LD_FILES = boards/GR_SAKURA/gr_sakura.ld
 START_FILE = rx63n/startup_rx63n.S
 
 # MicroPython settings
-MICROPY_VFS_LFS2 = 1
+MICROPY_VFS_FAT = 1
