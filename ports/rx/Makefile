@@ -551,6 +551,7 @@ CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
 SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	esp8266_driver.c \
 	vector.c \
+	tinymalloc.c \
 	)
 endif
 
