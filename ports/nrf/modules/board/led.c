@@ -38,24 +38,24 @@ typedef struct _board_led_obj_t {
     mp_uint_t led_id;
     mp_uint_t hw_pin;
     uint8_t hw_pin_port;
-    bool act_level;
+    bool pullup;
 } board_led_obj_t;
 
-static inline void LED_OFF(board_led_obj_t * const led_obj) {
-    if (led_obj->act_level) {
-        nrf_gpio_pin_clear(led_obj->hw_pin);
+static inline void led_off(board_led_obj_t * const led_obj) {
+    if (led_obj->pullup) {
+        nrf_gpio_pin_set(led_obj->hw_pin);
     }
     else {
-        nrf_gpio_pin_set(led_obj->hw_pin);
+        nrf_gpio_pin_clear(led_obj->hw_pin);
     }
 }
 
-static inline void LED_ON(board_led_obj_t * const led_obj) {
-    if (led_obj->act_level) {
-        nrf_gpio_pin_set(led_obj->hw_pin);
+static inline void led_on(board_led_obj_t * const led_obj) {
+    if (led_obj->pullup) {
+        nrf_gpio_pin_clear(led_obj->hw_pin);
     }
     else {
-        nrf_gpio_pin_clear(led_obj->hw_pin);
+        nrf_gpio_pin_set(led_obj->hw_pin);
     }
 }
 
@@ -64,89 +64,43 @@ static const board_led_obj_t board_led_obj[] = {
 
 #if MICROPY_HW_LED_TRICOLOR
 
-    {{&board_led_type}, BOARD_LED_RED, MICROPY_HW_LED_RED, 0, MICROPY_HW_LED_PULLUP != 0 ? 0 : 1},
-    {{&board_led_type}, BOARD_LED_GREEN, MICROPY_HW_LED_GREEN,0, MICROPY_HW_LED_PULLUP != 0 ? 0 : 1},
-    {{&board_led_type}, BOARD_LED_BLUE, MICROPY_HW_LED_BLUE,0, MICROPY_HW_LED_PULLUP != 0 ? 0 : 1},
-
-#elif (MICROPY_HW_LED_COUNT == 1)
-
+    {{&board_led_type}, BOARD_LED_RED, MICROPY_HW_LED_RED, 0, MICROPY_HW_LED_PULLUP},
+    {{&board_led_type}, BOARD_LED_GREEN, MICROPY_HW_LED_GREEN, 0, MICROPY_HW_LED_PULLUP},
+    {{&board_led_type}, BOARD_LED_BLUE, MICROPY_HW_LED_BLUE, 0, MICROPY_HW_LED_PULLUP},
+#endif
+#if (MICROPY_HW_LED_COUNT >= 1)
     {{&board_led_type}, BOARD_LED1, MICROPY_HW_LED1, 0,
-    #ifdef MICROPY_HW_LED1_LEVEL
-        MICROPY_HW_LED1_LEVEL,
+    #ifdef MICROPY_HW_LED1_PULLUP
+        MICROPY_HW_LED1_PULLUP
     #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
+        MICROPY_HW_LED_PULLUP
     #endif
     },
-
-#elif (MICROPY_HW_LED_COUNT == 2)
-
-    {{&board_led_type}, BOARD_LED1, MICROPY_HW_LED1, 0,
-    #ifdef MICROPY_HW_LED1_LEVEL
-        MICROPY_HW_LED1_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
+#endif
+#if (MICROPY_HW_LED_COUNT >= 2)
     {{&board_led_type}, BOARD_LED2, MICROPY_HW_LED2, 0,
-    #ifdef MICROPY_HW_LED2_LEVEL
-        MICROPY_HW_LED2_LEVEL,
+    #ifdef MICROPY_HW_LED2_PULLUP
+        MICROPY_HW_LED2_PULLUP
     #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
+        MICROPY_HW_LED_PULLUP
     #endif
     },
-
-#elif (MICROPY_HW_LED_COUNT == 3)
-
-    {{&board_led_type}, BOARD_LED1, MICROPY_HW_LED1, 0,
-    #ifdef MICROPY_HW_LED1_LEVEL
-        MICROPY_HW_LED1_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
-    {{&board_led_type}, BOARD_LED2, MICROPY_HW_LED2, 0,
-    #ifdef MICROPY_HW_LED2_LEVEL
-        MICROPY_HW_LED2_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
+#endif
+#if (MICROPY_HW_LED_COUNT >= 3)
     {{&board_led_type}, BOARD_LED3, MICROPY_HW_LED3, 0,
-    #ifdef MICROPY_HW_LED3_LEVEL
-        MICROPY_HW_LED3_LEVEL,
+    #ifdef MICROPY_HW_LED3_PULLUP
+        MICROPY_HW_LED3_PULLUP
     #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
+        MICROPY_HW_LED_PULLUP
     #endif
     },
-
-#else
-
-    {{&board_led_type}, BOARD_LED1, MICROPY_HW_LED1, 0,
-    #ifdef MICROPY_HW_LED1_LEVEL
-        MICROPY_HW_LED1_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
-    {{&board_led_type}, BOARD_LED2, MICROPY_HW_LED2, 0,
-    #ifdef MICROPY_HW_LED2_LEVEL
-        MICROPY_HW_LED2_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
-    {{&board_led_type}, BOARD_LED3, MICROPY_HW_LED3, 0,
-    #ifdef MICROPY_HW_LED3_LEVEL
-        MICROPY_HW_LED3_LEVEL,
-    #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
-    #endif
-    },
+#endif
+#if (MICROPY_HW_LED_COUNT == 4)
     {{&board_led_type}, BOARD_LED4, MICROPY_HW_LED4, 0,
-    #ifdef MICROPY_HW_LED4_LEVEL
-        MICROPY_HW_LED4_LEVEL,
+    #ifdef MICROPY_HW_LED4_PULLUP
+        MICROPY_HW_LED4_PULLUP
     #else
-        MICROPY_HW_LED_PULLUP != 0 ? 0 : 1
+        MICROPY_HW_LED_PULLUP
     #endif
     },
 #endif
@@ -156,22 +110,22 @@ static const board_led_obj_t board_led_obj[] = {
 
 void led_init(void) {
     for (uint8_t i = 0; i < NUM_LEDS; i++) {
-        LED_OFF((board_led_obj_t*)&board_led_obj[i]);
+        led_off((board_led_obj_t*)&board_led_obj[i]);
         nrf_gpio_cfg_output(board_led_obj[i].hw_pin);
     }
 }
 
-void led_state(board_led_obj_t * led_obj, int state) {
+void led_state(board_led_t led, int state) {
     if (state == 1) {
-        LED_ON(led_obj);
+        led_on((board_led_obj_t*)&board_led_obj[led-1]);
 
     } else {
-        LED_OFF(led_obj);
+        led_off((board_led_obj_t*)&board_led_obj[led-1]);
     }
 }
 
-void led_toggle(board_led_obj_t * led_obj) {
-    nrf_gpio_pin_toggle(led_obj->hw_pin);
+void led_toggle(board_led_t led) {
+    nrf_gpio_pin_toggle(board_led_obj[led-1].hw_pin);
 }
 
 
@@ -208,7 +162,7 @@ STATIC mp_obj_t led_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_
 /// Turn the LED on.
 mp_obj_t led_obj_on(mp_obj_t self_in) {
     board_led_obj_t *self = self_in;
-    led_state(self, 1);
+    led_state(self->led_id, 1);
     return mp_const_none;
 }
 
@@ -216,7 +170,7 @@ mp_obj_t led_obj_on(mp_obj_t self_in) {
 /// Turn the LED off.
 mp_obj_t led_obj_off(mp_obj_t self_in) {
     board_led_obj_t *self = self_in;
-    led_state(self, 0);
+    led_state(self->led_id, 0);
     return mp_const_none;
 }
 
@@ -224,7 +178,7 @@ mp_obj_t led_obj_off(mp_obj_t self_in) {
 /// Toggle the LED between on and off.
 mp_obj_t led_obj_toggle(mp_obj_t self_in) {
     board_led_obj_t *self = self_in;
-    led_toggle(self);
+    led_toggle(self->led_id);
     return mp_const_none;
 }
 
@@ -248,4 +202,13 @@ const mp_obj_type_t board_led_type = {
     .locals_dict = (mp_obj_dict_t*)&led_locals_dict,
 };
 
+#else
+// For boards with no LEDs, we leave an empty function here so that we don't
+// have to put conditionals everywhere.
+void led_init(void) {
+}
+void led_state(board_led_t led, int state) {
+}
+void led_toggle(board_led_t led) {
+}
 #endif // MICROPY_HW_HAS_LED
