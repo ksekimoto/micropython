@@ -13,7 +13,7 @@
 #include "vector.h"
 
 #if USE_DBG_PRINT
-#define DEBUG_VECTOR
+//#define DEBUG_VECTOR
 #endif
 
 #define VECTOR_INIT_SIZE    10
