@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include "py/runtime.h"
 #include "common.h"
 #include "tinymalloc.h"
@@ -43,6 +44,10 @@ static int memory_size = 0;
 void tinymalloc_init(void *memory, size_t size) {
     memory_start = memory;
     memory_size = (int)size;
+#if defined(DEBUG_TINY_MALLOC)
+    debug_printf("tinymalloc_init() start=%08x, size=%d\r\n", memory_start, memory_size);
+#endif
+    memset(memory, 0, size);
     freeList=(void*)memory;
     freeList->size = size - sizeof(struct block);
     freeList->free = 1;
@@ -62,40 +67,24 @@ void split(struct block *fitting_slot, size_t size) {
 void *tinymalloc(size_t noOfBytes) {
     struct block *curr;
     void *result;
-//    if (!(freeList->size)) {
-//        tinymalloc_init();
-//#if defined(DEBUG_TINY_MALLOC)
-//        debug_printf("Memory Initialized\n");
-//#endif
-//    }
     curr = freeList;
     while ((((curr->size) < noOfBytes) || ((curr->free) == 0)) && (curr->next != NULL)) {
         curr = curr->next;
-#if defined(DEBUG_TINY_MALLOC)
-        debug_printf("One block checked\n");
-#endif
     }
     if ((curr->size) == noOfBytes) {
         curr->free = 0;
         result = (void *)(++curr);
-#if defined(DEBUG_TINY_MALLOC)
-        debug_printf("Exact fitting block allocated\n");
-#endif
         return result;
     } else if ((curr->size) > (noOfBytes + sizeof(struct block))) {
         split(curr, noOfBytes);
         result = (void *)(++curr);
-#if defined(DEBUG_TINY_MALLOC)
-        debug_printf("Fitting block allocated with a split\n");
-#endif
-        return result;
     } else {
         result = NULL;
-#if defined(DEBUG_TINY_MALLOC)
-        debug_printf("Sorry. No sufficient memory to allocate\n");
-#endif
-        return result;
     }
+#if defined(DEBUG_TINY_MALLOC)
+    debug_printf("tinymalloc() addr=%08x, size=%d\r\n", result, (int)noOfBytes);
+#endif
+    return result;
 }
 
 void merge() {
@@ -116,9 +105,8 @@ void tinyfree(void *ptr) {
         --curr;
         curr->free = 1;
         merge();
-    } else {
-#if defined(DEBUG_TINY_MALLOC)
-        debug_printf("Please provide a valid pointer allocated by tinymalloc\n");
-#endif
     }
+#if defined(DEBUG_TINY_MALLOC)
+    debug_printf("tinyfree() addr=%08x\r\n", ptr);
+#endif
 }

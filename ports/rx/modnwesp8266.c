@@ -163,9 +163,10 @@ STATIC int mod_esp8266_socket_bind(mod_network_socket_obj_t *socket, byte *ip, m
 #endif
     //MAKE_SOCKADDR(addr, ip, port)
     esp8266_socket_address_t socket_addr;
-    // ToDo
-    //socket_addr._addr;
-    socket_addr._ip_address = (char *)ip;
+    socket_addr._addr.bytes[0] = ip[0];
+    socket_addr._addr.bytes[1] = ip[1];
+    socket_addr._addr.bytes[2] = ip[2];
+    socket_addr._addr.bytes[3] = ip[3];
     socket_addr._port = (uint16_t)port;
     int ret = esp8266_socket_bind((void *)socket->handle, (const esp8266_socket_address_t *)&socket_addr);
     if (ret != 0) {
@@ -212,15 +213,11 @@ STATIC int mod_esp8266_socket_accept(mod_network_socket_obj_t *socket, mod_netwo
 
     // store state in new socket object
     socket2->handle = (mp_uint_t)sock;
-
-    // return ip and port
-    // it seems ESP8266 returns little endian for accept??
-    //UNPACK_SOCKADDR(addr, ip, *port);
-    //*port = (addr.sa_data[1] << 8) | addr.sa_data[0];
-    //ip[3] = addr.sa_data[2];
-    //ip[2] = addr.sa_data[3];
-    //ip[1] = addr.sa_data[4];
-    //ip[0] = addr.sa_data[5];
+    ip[3] = socket_addr._addr.bytes[3];
+    ip[2] = socket_addr._addr.bytes[2];
+    ip[1] = socket_addr._addr.bytes[1];
+    ip[0] = socket_addr._addr.bytes[0];
+    *port = socket_addr._port;
     return (ret)? 0:1;
 }
 
@@ -229,7 +226,11 @@ STATIC int mod_esp8266_socket_connect(mod_network_socket_obj_t *socket, byte *ip
     debug_printf("mod_esp8266_socket_connect\r\n");
 #endif
     esp8266_socket_address_t socket_addr;
-    socket_addr._ip_address = (char *)ip;
+    socket_addr._addr.bytes[0] = ip[0];
+    socket_addr._addr.bytes[1] = ip[1];
+    socket_addr._addr.bytes[2] = ip[2];
+    socket_addr._addr.bytes[3] = ip[3];
+    socket_addr._port = (uint16_t)port;
     socket_addr._port = port;
     bool ret = esp8266_socket_connect((void *)socket->handle, (const esp8266_socket_address_t *)&socket_addr);
     if (ret) {
@@ -478,6 +479,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
     } else {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "can't get ESP vesions\n"));
     }
+    esp8266_AT_CWQAP();
     esp8266_set_AT_CWMODE(3);
     // register with network module
     mod_network_register_nic((mp_obj_t)&esp8266_obj);
@@ -517,6 +519,8 @@ STATIC mp_obj_t esp8266_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not connect to ssid=%s, key=%s\n", ssid, key));
     }
     esp8266_set_AT_CIPMUX(1);
+    esp8266_AT_CWAUTOCONN_0();
+    esp8266_set_AT_CIPDINFO(1);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(esp8266_connect_obj, 1, esp8266_connect);

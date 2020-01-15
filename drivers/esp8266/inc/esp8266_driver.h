@@ -78,7 +78,7 @@ typedef struct esp8266_addr {
 } esp8266_addr_t;
 
 typedef struct esp8266_socket_address {
-    char *_ip_address;
+    //char *_ip_address;
     esp8266_addr_t _addr;
     uint16_t _port;
 } esp8266_socket_address_t;
@@ -119,6 +119,7 @@ void esp8266_driver_init(void);
 bool esp8266_driver_reset(void);
 bool esp8266_AT(void);
 bool esp8266_AT_RST(void);
+bool esp8266_AT_CWAUTOCONN_0(void);
 bool esp8266_AT_CWQAP(void);
 bool esp8266_AT_GMR(char *at_ver, size_t at_len, char *sdk_ver, size_t sdk_len);
 bool esp8266_set_AT_CIPMUX(uint8_t mode);
@@ -133,6 +134,8 @@ bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask);
 bool esp8266_set_AT_CIPDNS_CUR(const char *dns, bool flag);
 bool esp8266_set_AT_CIPSERVER(int port);
 bool esp8266_reset_AT_CIPSERVER(void);
+bool esp8266_set_AT_CIPSTO(int timeout);
+bool esp8266_set_AT_CIPDINFO(uint8_t mode);
 
 bool esp8266_gethostbyname(const char *name, unsigned char *ip);
 int esp8266_socket_open(void **handle, esp8266_protocol_t proto);
