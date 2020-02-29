@@ -1,4 +1,3 @@
-#if 0
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,6 +35,7 @@ int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    printf("Micropython start\r\n");
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
@@ -256,5 +256,4 @@ void stm32_init(void) {
     USART1->CR1 = 0x0000200c; // USART enable, tx enable, rx enable
 }
 
-#endif
 #endif

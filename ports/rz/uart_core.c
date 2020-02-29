@@ -1,3 +1,4 @@
+#if 0
 #include <unistd.h>
 #include "py/mpconfig.h"
 
@@ -42,3 +43,4 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     }
 #endif
 }
+#endif

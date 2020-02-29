@@ -55,6 +55,31 @@ $(BUILD)/%.pp: %.c
 	$(ECHO) "PreProcess $<"
 	$(Q)$(CPP) $(CFLAGS) -Wp,-C,-dD,-dI -o $@ $<
 
+define compile_cpp
+$(ECHO) "CC $<"
+$(Q)$(CXX) $(CPPFLAGS) -c -MD -o $@ $<
+@# The following fixes the dependency file.
+@# See http://make.paulandlesley.org/autodep.html for details.
+@# Regex adjusted from the above to play better with Windows paths, etc.
+@$(CP) $(@:.o=.d) $(@:.o=.P); \
+  $(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
+      -e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.d) >> $(@:.o=.P); \
+  $(RM) -f $(@:.o=.d)
+endef
+
+vpath %.cpp . $(TOP) $(USER_C_MODULES)
+$(BUILD)/%.o: %.cpp
+	$(call compile_cpp)
+
+QSTR_GEN_EXTRA_CPPFLAGS += -DNO_QSTR
+QSTR_GEN_EXTRA_CPPFLAGS += -I$(BUILD)/tmp
+
+vpath %.cpp . $(TOP) $(USER_C_MODULES)
+
+$(BUILD)/%.pp: %.cpp
+	$(ECHO) "PreProcess $<"
+	$(Q)$(CXX) $(CPPFLAGS) -Wp,-C,-dD,-dI -o $@ $<
+
 # The following rule uses | to create an order only prerequisite. Order only
 # prerequisites only get built if they don't exist. They don't cause timestamp
 # checking to be performed.

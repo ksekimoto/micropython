@@ -2,32 +2,10 @@
 
 /* Linker script to configure memory regions. */
 
-#if !defined(MBED_APP_START)
-  #define MBED_APP_START 0x50000000
-#endif
-
-#if !defined(MBED_APP_SIZE)
-  #define MBED_APP_SIZE 0x1000000
-#endif
-
-#define BOOT_LOADER_ADDR    (MBED_APP_START)
-#if (MBED_APP_START == 0x50000000)
-#if(1) /* No boot loader is used */
-  #define BOOT_LOADER_SIZE  (0x00000000)
-#else
-  #define BOOT_LOADER_SIZE  (0x00004000)
-#endif
-#else
-  #define BOOT_LOADER_SIZE  (0x00000000)
-#endif
-
-#define ROM_ADDR            (MBED_APP_START + BOOT_LOADER_SIZE)
-#define ROM_SIZE            (MBED_APP_SIZE - BOOT_LOADER_SIZE)
-
 MEMORY
 {
-  BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE
-  ROM (rx)         : ORIGIN = ROM_ADDR,         LENGTH = ROM_SIZE
+  BOOT_LOADER (rx) : ORIGIN = 0x50000000,       LENGTH = 0x00000000
+  ROM (rx)         : ORIGIN = 0x50000000,       LENGTH = 0x1000000
   RAM_NV (rwx)     : ORIGIN = 0x80000000,       LENGTH = 0x00020000
   L_TTB (rw)       : ORIGIN = 0x80020000,       LENGTH = 0x00005000
   RAM (rwx)        : ORIGIN = 0x80025000,       LENGTH = 0x003DB000
@@ -64,13 +42,6 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-#if (BOOT_LOADER_SIZE != 0x00000000)
-    .boot :
-    {
-        KEEP(*(.boot_loader)) 
-    } > BOOT_LOADER 
-#endif
-
     .text :
     {
 
