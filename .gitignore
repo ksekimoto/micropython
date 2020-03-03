@@ -57,3 +57,5 @@ genrst/
 /rx_releases/gr_sakura
 /rx_releases/gr_sakura
 /*.jlink
+/ports/rz/boards/.pydevproject
+/ports/rz/boards/.project

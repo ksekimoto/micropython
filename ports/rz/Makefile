@@ -1,7 +1,8 @@
-include ../../py/mkenv.mk
+# Select the board to build for: if not given on the command line,
+# then default to GR_MANGO
+BOARD ?= GR_MANGO
 
 CROSS ?= 0
-BOARD ?= GR_MANGO
 
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -20,26 +21,57 @@ CROSS = 1
 TARGET = TARGET_RZ_A2XX
 TARGET_LD = TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/RZA2M.ld
 STACK_USAGE = 16384
+MBED_GR_LIBS = 0
+MBED_HTTP = 0
+MBED_CONSOLE = 1
+OVERRIDE_CONSOLE_USBSERIAL = 0
 else
 ifeq ($(CROSS), 1)
 TARGET = stm32f405
 TARGET_LD = $(TARGET).ld
 endif
 endif
+include ../../py/mkenv.mk
+-include mpconfigport.mk
+include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h
+QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
+# File containing description of content to be frozen into firmware.
+FROZEN_MANIFEST ?= boards/manifest.py
+FROZEN_DIR =
+FROZEN_MPY_DIR =
 # include py core make definitions
 include $(TOP)/py/py.mk
 
+#GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+
+
+#######################################################################
+# MCU configuration
+#######################################################################
+
+# Select the cross compile prefix
 ifeq ($(CROSS), 1)
 CROSS_COMPILE ?= arm-none-eabi-
 endif
 
+ifeq ($(MCU_SERIES),RZA2M)
+MCU_SERIES_LOW = rza2m
+MCU_SERIES_CAP = RZA2M
+endif
+
+#######################################################################
+# C include
+#######################################################################
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
+
+INC += -I$(MCU_SERIES_LOW)
+INC += -Iboards/$(BOARD)
 
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 INC += -ITARGET_RENESAS
@@ -80,17 +112,93 @@ INC += -I$(TOP)/lib/mbed-os/usb/device/USBPhy
 INC += -I$(TOP)/lib/mbed-os/usb/device/USBSerial
 INC += -I$(TOP)/lib/mbed-os/usb/device/utilities
 INC += -I$(TOP)/lib/mbed-os/usb/device/utilities/events
+
+ifeq ($(MBED_GR_LIBS), 1)
+INC += -I$(TOP)/lib/mbed-gr-libs
+INC += -I$(TOP)/lib/mbed-gr-libs/AlarmTimer
+INC += -I$(TOP)/lib/mbed-gr-libs/AlarmTimer/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/AsciiFont
+INC += -I$(TOP)/lib/mbed-gr-libs/bd/RomRamBlockDevice
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/MAX9867_RBSP
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/PwmOutSpeaker
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/SoundlessSpeaker
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/SPDIF_RBSP
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/TLV320_RBSP
+INC += -I$(TOP)/lib/mbed-gr-libs/components/AUDIO/WM8978_RBSP
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/Display_shield_config
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/LCD_config_40pin
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/LCD_config_lvds_to_hdmi
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/LCD_config_rgb_to_hdmi
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/LCD_config_RSK_TFT
+INC += -I$(TOP)/lib/mbed-gr-libs/components/LCD/LCD_shield_config
+INC += -I$(TOP)/lib/mbed-gr-libs/components/WIFI/esp32-driver
+INC += -I$(TOP)/lib/mbed-gr-libs/components/WIFI/esp32-driver/ESP32
+INC += -I$(TOP)/lib/mbed-gr-libs/dcache-control
+INC += -I$(TOP)/lib/mbed-gr-libs/DeepStandby
+INC += -I$(TOP)/lib/mbed-gr-libs/DeepStandby/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/DisplayApp
+INC += -I$(TOP)/lib/mbed-gr-libs/drp-for-mbed/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
+INC += -I$(TOP)/lib/mbed-gr-libs/EasyPlayback
+INC += -I$(TOP)/lib/mbed-gr-libs/EasyPlayback/decoder
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/config
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/jcu/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/ospl/inc
+#INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/TARGET_RZA1H/common/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/RGA
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/RGA/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GraphicsFramework/RGA/RGPNCG/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/driver/ceu/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/driver/r_mipi/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/src
+INC += -I$(TOP)/lib/mbed-gr-libs/R_BSP/api
+INC += -I$(TOP)/lib/mbed-gr-libs/R_BSP/RenesasBSP/drv_inc
+INC += -I$(TOP)/lib/mbed-gr-libs/R_BSP/RenesasBSP/drv_inc/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/R_BSP/tools
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/r_sdhi_simplified/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/r_sdhi_simplified/src/sd/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/r_sdhi_simplified/src/sd/access
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/r_sdhi_simplified/userdef
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHost
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHost/TARGET_RENESAS/$(TARGET)
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHost3GModule
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHostHID
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHostHub
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHostMIDI
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHostMSD
+INC += -I$(TOP)/lib/mbed-gr-libs/USBHost_custom/USBHostSerial
+INC += -I$(TOP)/lib/mbed-gr-libs/utility/mmu
 endif
 
+ifeq ($(MBED_HTTP), 1)
+INC += -I$(TOP)/lib/mbed-http/http_parser
+INC += -I$(TOP)/lib/mbed-http/source
+endif
+
+endif
+
+#######################################################################
+# C flags.
+#######################################################################
 ifeq ($(CROSS), 1)
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 LD = gcc
 #-Wstack-usage=$(STACK_USAGE)
-CFLAGS_COMMON += $(INC) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -DMBEDTLS_USER_CONFIG_FILE="mbedtls_entropy_config.h" -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DOVERRIDE_CONSOLE_USBSERIAL -DDEVICE_SERIAL_FC=1 -DMBEDTLS_TEST_NULL_ENTROPY -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
+CFLAGS_COMMON += $(INC) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -DMBEDTLS_USER_CONFIG_FILE="mbedtls_entropy_config.h" -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DMBEDTLS_TEST_NULL_ENTROPY -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
 CFLAGS_COMMON += -DMBED_CONF_PLATFORM_CTHUNK_COUNT_MAX=1
 CFLAGS_COMMON += -DMBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE=115200
 CFLAGS_COMMON += -DMBED_CONF_PLATFORM_STDIO_BAUD_RATE=115200
 CFLAGS_COMMON += -DMBED_CONF_RTOS_THREAD_STACK_SIZE=4096
+ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
+CFLAGS_COMMON += -DOVERRIDE_CONSOLE_USBSERIAL
+endif
+ifeq ($(MBED_CONSOLE), 1)
+CFLAGS_COMMON += -DMBED_CONSOLE
+endif
 #CFLAGS_COMMON += -MMD
 #CFLAGS_COMMON += -MF $(@:%.o=%.d)
 CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -O0 -g3 -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
@@ -110,6 +218,13 @@ LD = gcc
 CFLAGS = -m32 $(INC) -Wall -Werror -std=c99 $(COPT)
 LDFLAGS = -m32 -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 endif
+
+CFLAGS += -D$(MCU_SERIES_CAP)
+CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
+ifeq ($(BOARD),GR_MANGO)
+CFLAGS += -DGRMANGO
+endif
+CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
 CSUPEROPT = -Os # save some code space
 
@@ -131,7 +246,7 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
-	$(BUILD)/_frozen_mpy.c \
+#	$(BUILD)/_frozen_mpy.c \
 
 ifeq ($(BOARD), GR_MANGO)
 SRC_C += TARGET_RENESAS/$(TARGET)/analogin_api.c
@@ -206,8 +321,8 @@ SRC_C += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_semaphore.c
 SRC_C += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_system.c
 SRC_C += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_thread.c
 SRC_C += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_timer.c
-SRC_S += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
 
+SRC_S += $(TOP)/lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
 SRC_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
 SRC_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
 
@@ -281,57 +396,143 @@ SRC_CPP += $(TOP)/lib/mbed-os/usb/device/utilities/OperationListBase.cpp
 SRC_CPP += $(TOP)/lib/mbed-os/usb/device/utilities/events/PolledQueue.cpp
 SRC_CPP += $(TOP)/lib/mbed-os/usb/device/utilities/events/TaskBase.cpp
 
+ifeq ($(MBED_GR_LIBS), 1)
+SRC_CPP += $(TOP)/lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
+endif
+
 SRC_C += rz_main.c
-SRC_CPP += wrapper.cpp
+SRC_CPP += uart_wrapper.cpp
+ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
+endif
 
 endif
 
-OBJ = $(PY_CORE_O)
+#OBJ = $(PY_CORE_O)
+OBJ =
+OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
+
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
+OBJ += $(BUILD)/pins_$(BOARD).o
+
 #DEPS += $(addprefix $(BUILD)/, $(SRC_C:.c=.d))
 #DEPS += $(addprefix $(BUILD)/, $(SRC_S:.S=.d))
 #DEPS += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.d))
 #-include $(DEPS)
 
 ifeq ($(CROSS), 1)
-all: $(BUILD)/firmware.dfu
+#all: $(BUILD)/firmware.dfu
+all: $(BUILD)/firmware.elf
 else
 all: $(BUILD)/firmware.elf
 endif
 
-$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-	$(ECHO) "MISC freezing bytecode"
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
+# To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
+# and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
+CFLAGS += -DMICROPY_MODULE_FROZEN_STR
+endif
+
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
+# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
+# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+endif
+
+
+
+#$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
+#	$(ECHO) "MISC freezing bytecode"
+#	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(OBJCOPY) -O srec $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
 
-$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
-	$(ECHO) "Create $@"
+#$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
+#	$(ECHO) "Create $@"
 #	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
 
-deploy: $(BUILD)/firmware.dfu
-	$(ECHO) "Writing $< to the board"
+#deploy: $(BUILD)/firmware.dfu
+#	$(ECHO) "Writing $< to the board"
 #	$(Q)$(PYTHON) $(PYDFU) -u $<
 
 # Run emulation build on a POSIX system with suitable terminal settings
-run:
-	stty raw opost -echo
-	build/firmware.elf
-	@echo Resetting terminal...
+#run:
+#	stty raw opost -echo
+#	build/firmware.elf
+#	@echo Resetting terminal...
 # This sleep is useful to spot segfaults
-	sleep 1
-	reset
+#	sleep 1
+#	reset
 
-test: $(BUILD)/firmware.elf
-	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
+#test: $(BUILD)/firmware.elf
+#	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | #$(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
+
+MAKE_PINS = boards/make-pins.py
+BOARD_PINS = $(BOARD_DIR)/pins.csv
+AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
+PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
+GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
+GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
+GEN_PINS_QSTR = $(BUILD)/pins_qstr.h
+GEN_PINS_AD_CONST = $(HEADER_BUILD)/pins_ad_const.h
+GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
+#GEN_PINS_AF_DEFS = $(HEADER_BUILD)/pins_af_defs.h
+GEN_PINS_AF_PY = $(BUILD)/pins_af.py
+
+INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
+FILE2H = $(TOP)/tools/file2h.py
+
+USB_IDS_FILE = usb.h
+CDCINF_TEMPLATE = pybcdc.inf_template
+GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
+GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
+
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) $(SRC_MOD) $(SRC_LIB) $(EXTMOD_SRC_C)
+# Append any auto-generated sources that are needed by sources listed in
+# SRC_QSTR
+SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)
+
+# Making OBJ use an order-only depenedency on the generated pins.h file
+# has the side effect of making the pins.h file before we actually compile
+# any of the objects. The normal dependency generation will deal with the
+# case when pins.h is modified. But when it doesn't exist, we don't know
+# which source files might need it.
+$(OBJ): | $(GEN_PINS_HDR)
+
+# With conditional pins, we may need to regenerate qstrdefs.h when config
+# options change.
+$(HEADER_BUILD)/qstrdefs.generated.h: $(BOARD_DIR)/mpconfigboard.h
+
+# main.c can't be even preprocessed without $(GEN_CDCINF_HEADER)
+main.c: $(GEN_CDCINF_HEADER)
+
+# Use a pattern rule here so that make will only call make-pins.py once to make
+# both pins_$(BOARD).c and pins.h
+.PRECIOUS: $(GEN_PINS_SRC)
+$(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: $(BOARD_DIR)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --ad-const $(GEN_PINS_AD_CONST) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
+
+$(BUILD)/pins_$(BOARD).o: $(GEN_PINS_SRC)
+	$(call compile_c)
+
+$(GEN_CDCINF_HEADER): $(GEN_CDCINF_FILE) $(FILE2H)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(FILE2H) $< > $@
+
+$(GEN_CDCINF_FILE): $(CDCINF_TEMPLATE) $(INSERT_USB_IDS) $(USB_IDS_FILE)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(INSERT_USB_IDS) $(USB_IDS_FILE) $< > $@
 
 include $(TOP)/py/mkrules.mk
