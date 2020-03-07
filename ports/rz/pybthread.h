@@ -63,11 +63,13 @@ static inline void *pyb_thread_get_local(void) {
 }
 
 static inline void pyb_thread_yield(void) {
+#if RZ_TODO
     if (pyb_thread_cur->run_next == pyb_thread_cur) {
         __WFI();
     } else {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
     }
+#endif
 }
 
 void pyb_mutex_init(pyb_mutex_t *m);
