@@ -19,7 +19,7 @@ endif
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
 TARGET = TARGET_RZ_A2XX
-TARGET_LD = TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/RZA2M.ld
+TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
 MBED_GR_LIBS = 0
 MBED_HTTP = 0
@@ -404,22 +404,20 @@ ifeq ($(MBED_GR_LIBS), 1)
 SRC_CPP += $(TOP)/lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
 endif
 
-#SRC_C += rz_main.c
-SRC_C += help.c
-SRC_C += systick.c
 SRC_CPP += uart_wrapper.cpp
 ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
 endif
 
-#SRC_C += gccollect.c
-#SRC_S += gchelper_a9.S
 SRC_C += help.c
+SRC_C += gccollect.c
+SRC_S += gchelper_a9.S
 SRC_C += mphalport.c
 SRC_C += led.c
 SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
+SRC_C += systick.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
 endif
 

@@ -44,9 +44,9 @@
 #if MICROPY_BLUETOOTH_NIMBLE
 #include "extmod/modbluetooth.h"
 #endif
-//#include "systick.h"
-//#include "pendsv.h"
-//#include "pybthread.h"
+#include "systick.h"
+#include "pendsv.h"
+#include "pybthread.h"
 #include "gccollect.h"
 //#include "factoryreset.h"
 //#include "modmachine.h"
@@ -133,7 +133,9 @@ void NORETURN __fatal_error(const char *msg) {
 }
 
 void nlr_jump_fail(void *val) {
-    while (1);
+    printf("FATAL: uncaught exception %p\n", val);
+    mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(val));
+    __fatal_error("");
 }
 
 #ifndef NDEBUG
@@ -437,15 +439,9 @@ static int chk_kbd_interrupt(int d)
 }
 #endif
 
-static char *stack_top;
-#if MICROPY_ENABLE_GC
-static char heap[2048];
-#endif
 
 void main(uint32_t reset_mode) {
-    int stack_dummy;
-    stack_top = (char*)&stack_dummy;
-
+    // Enable caches and prefetch buffers
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif
@@ -532,9 +528,9 @@ soft_reset:
     mp_stack_set_top(&_estack);
     mp_stack_set_limit((char*)&_estack - (char*)&_sstack - 1024);
 
-    #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + sizeof(heap));
-    #endif
+    // GC init
+    //gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
+    gc_init(&_heap_start, &_heap_end);
 
     #if MICROPY_ENABLE_PYSTACK
     static mp_obj_t pystack[384];
@@ -543,6 +539,10 @@ soft_reset:
 
     // MicroPython init
     mp_init();
+    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), 0);
+    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR_)); // current dir (or base dir of the script)
+    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
+
     // Initialise low-level sub-systems.  Here we need to very basic things like
     // zeroing out memory and resetting any of the sub-systems.  Following this
     // we can run Python scripts (eg boot.py), but anything that is configurable
@@ -747,6 +747,7 @@ soft_reset_exit:
     return 0;
 }
 
+#if RZ_TODO
 void gc_collect(void) {
     // WARNING: This gc_collect implementation doesn't try to get root
     // pointers from CPU registers, and thus may function incorrectly.
@@ -756,4 +757,4 @@ void gc_collect(void) {
     gc_collect_end();
     gc_dump_info();
 }
-
+#endif
