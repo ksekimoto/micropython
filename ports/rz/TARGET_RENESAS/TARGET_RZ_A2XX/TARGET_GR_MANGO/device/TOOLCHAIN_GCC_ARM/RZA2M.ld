@@ -182,12 +182,14 @@ SECTIONS
 
     .bss ALIGN(0x10):
     {
+        _sbss = .;         /* define a global symbol at bss start; used by startup code */
         Image$$RW_IRAM1$$Base = .;
         __bss_start__ = .;
         *(.bss*)
         *(COMMON)
         __bss_end__ = .;
         Image$$RW_IRAM1$$Limit = .;
+        _ebss = .;         /* define a global symbol at bss end; used by startup code and GC */
     } > RAM
 
     .memory_adjust (NOLOAD):
@@ -204,9 +206,11 @@ SECTIONS
 
     .nc_bss (NOLOAD) :
     {
+        _snc_bss = .;
         Image$$ZI_DATA_NC$$Base = .;
         *(NC_BSS)
         Image$$ZI_DATA_NC$$Limit = .;
+        _enc_bss = .;
     } > RAM
 
     .heap ALIGN(0x1000):
@@ -229,6 +233,7 @@ SECTIONS
     __StackTop = ORIGIN(RAM) + LENGTH(RAM);
     _estack = __StackTop;
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
+    _sstack = __StackLimit;
     __HeapLimit = __StackLimit;
     PROVIDE(__stack = __StackTop);
 
@@ -256,3 +261,10 @@ SECTIONS
     } > RAM_OCTA
 
 }
+
+/* RAM extents for the garbage collector */
+_ram_start = ORIGIN(RAM);
+_ram_end = ORIGIN(RAM) + LENGTH(RAM);
+_heap_start = _enc_bss; /* heap starts just after statically allocated memory */
+_heap_end = _sstack;
+

@@ -5,14 +5,14 @@
 #define MICROPY_HW_MCU_PCLK1        66000000
 #define MICROPY_HW_MCU_PCLK1C       66000000
 
-#define MICROPY_HW_HAS_SWITCH       (1)
-#define MICROPY_HW_HAS_FLASH        (1)
-#define MICROPY_HW_ENABLE_SDCARD    (1)
+#define MICROPY_HW_HAS_SWITCH       (0)
+#define MICROPY_HW_HAS_FLASH        (0)
+#define MICROPY_HW_ENABLE_SDCARD    (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
-#define MICROPY_HW_ENABLE_RTC       (1)
-#define MICROPY_HW_ENABLE_SERVO     (1)
-#define MICROPY_HW_ENABLE_RZ_USB    (1)
-#define MICROPY_HW_ETH_RZ           (1)
+#define MICROPY_HW_ENABLE_RTC       (0)
+#define MICROPY_HW_ENABLE_SERVO     (0)
+#define MICROPY_HW_ENABLE_RZ_USB    (0)
+#define MICROPY_HW_ETH_RZ           (0)
 
 // UART config
 #define MICROPY_HW_UART0_RX         (pin_P41)
@@ -59,5 +59,5 @@
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
 
-#define MICROPY_HW_ENABLE_DAC   (1)
+#define MICROPY_HW_ENABLE_DAC   (0)
 

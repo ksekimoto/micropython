@@ -36,6 +36,7 @@ include ../../py/mkenv.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
+#QSTR_DEFS = qstrdefsport.h
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
@@ -112,6 +113,8 @@ INC += -I$(TOP)/lib/mbed-os/usb/device/USBPhy
 INC += -I$(TOP)/lib/mbed-os/usb/device/USBSerial
 INC += -I$(TOP)/lib/mbed-os/usb/device/utilities
 INC += -I$(TOP)/lib/mbed-os/usb/device/utilities/events
+
+INC += -I$(MCU_SERIES_LOW)
 
 ifeq ($(MBED_GR_LIBS), 1)
 INC += -I$(TOP)/lib/mbed-gr-libs
@@ -219,8 +222,8 @@ CFLAGS = -m32 $(INC) -Wall -Werror -std=c99 $(COPT)
 LDFLAGS = -m32 -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 endif
 
-CFLAGS += -D$(MCU_SERIES_CAP)
-CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
+#CFLAGS += -D$(MCU_SERIES_CAP)
+#CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
 ifeq ($(BOARD),GR_MANGO)
 CFLAGS += -DGRMANGO
 endif
@@ -241,6 +244,7 @@ LIBS =
 SRC_C = \
 	main.c \
 	uart_core.c \
+	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
@@ -400,12 +404,23 @@ ifeq ($(MBED_GR_LIBS), 1)
 SRC_CPP += $(TOP)/lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
 endif
 
-SRC_C += rz_main.c
+#SRC_C += rz_main.c
+SRC_C += help.c
+SRC_C += systick.c
 SRC_CPP += uart_wrapper.cpp
 ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
 endif
 
+#SRC_C += gccollect.c
+#SRC_S += gchelper_a9.S
+SRC_C += help.c
+SRC_C += mphalport.c
+SRC_C += led.c
+SRC_C += pin.c
+SRC_C += pin_defs_rz.c
+SRC_C += pin_named_pins.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
 endif
 
 #OBJ = $(PY_CORE_O)
@@ -428,6 +443,10 @@ all: $(BUILD)/firmware.elf
 else
 all: $(BUILD)/firmware.elf
 endif
+
+#$(BUILD)/_frozen_mpy.c: frozentest.mpy #$(BUILD)/genhdr/qstrdefs.generated.h
+#	$(ECHO) "MISC freezing bytecode"
+#	$(Q)$(TOP)/tools/mpy-tool.py -f -q #$(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
@@ -452,6 +471,7 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(OBJCOPY) -O srec $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
+	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
@@ -477,6 +497,8 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 #test: $(BUILD)/firmware.elf
 #	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | #$(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
 
+#test: $(BUILD)/firmware.elf
+#	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = $(BOARD_DIR)/pins.csv
 AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv

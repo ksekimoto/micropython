@@ -32,6 +32,7 @@
 
 //#include MICROPY_PIN_DEFS_PORT_H
 #include "py/obj.h"
+#include "common.h"
 
 typedef struct {
   mp_obj_base_t base;
@@ -46,7 +47,7 @@ typedef struct {
 typedef struct {
   mp_obj_base_t base;
   qstr name;
-  uint8_t pin;
+  uint32_t pin;
   uint8_t bit;
   uint8_t channel;
 } pin_ad_obj_t;
@@ -54,7 +55,7 @@ typedef struct {
 typedef struct {
   mp_obj_base_t base;
   qstr name;
-  uint8_t pin;
+  uint32_t pin;
   uint8_t num_af;
   const pin_af_obj_t *af;
   const pin_ad_obj_t *ad;

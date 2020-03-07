@@ -44,7 +44,7 @@ class Pin(object):
 
     def __init__(self, name, port, bit):
         self._name = name
-        self._pin_idx = port * 8 + bit
+        self._pin_idx = port * 16 + bit
         self._pin_ad = []
         self._board_pin = False
         #print('// pin_{:s}_obj = PIN({:s}, {:d});'.format(self.name, self.name, self.pin))

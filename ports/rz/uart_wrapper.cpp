@@ -4,6 +4,8 @@ extern "C" void mp_hal_stdout_tx_chr(int c);
 extern "C" int mp_hal_stdin_rx_chr(void);
 extern "C" void mp_hal_stdout_tx_strn(const char *str, int len);
 
+#define MBED_CONSOLE
+
 #if !defined(MBED_CONSOLE)
 #include "USBSerial.h"
 USBSerial pc;
@@ -35,7 +37,10 @@ void mp_hal_stdout_tx_chr(int c) {
 }
 
 int mp_hal_stdin_rx_chr(void) {
-    int c = pc.getc();
+    int c = 0;
+    if (pc.readable()) {
+        c = pc.getc();
+    }
     return c;
 }
 
