@@ -28,10 +28,10 @@
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
-#define MICROPY_HW_I2C1_SCL (pin_PD2)
-#define MICROPY_HW_I2C1_SDA (pin_PD3)
-#define MICROPY_HW_I2C2_SCL (pin_PD4)
-#define MICROPY_HW_I2C2_SDA (pin_PD5)
+//#define MICROPY_HW_I2C1_SCL (pin_PD2)
+//#define MICROPY_HW_I2C1_SDA (pin_PD3)
+//#define MICROPY_HW_I2C2_SCL (pin_PD4)
+//#define MICROPY_HW_I2C2_SDA (pin_PD5)
 
 // MMA accelerometer config
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
