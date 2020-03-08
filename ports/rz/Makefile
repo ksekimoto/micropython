@@ -411,6 +411,7 @@ endif
 SRC_C += help.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
+SRC_C += i2c.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
 SRC_C += mphalport.c
