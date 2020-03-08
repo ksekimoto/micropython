@@ -115,7 +115,7 @@
 #define MICROPY_PY_MATH_ISCLOSE     (1)
 #define MICROPY_PY_MATH_FACTORIAL   (1)
 #define MICROPY_PY_CMATH            (1)
-#define MICROPY_PY_IO               (0)
+#define MICROPY_PY_IO               (1)
 #define MICROPY_PY_IO_IOBASE        (1)
 #define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT) // because mp_type_fileio/textio point to fatfs impl
 #define MICROPY_PY_SYS_MAXSIZE      (0)
@@ -151,7 +151,7 @@
 #define MICROPY_PY_OS_DUPTERM       (3)
 #define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (0)
 #define MICROPY_PY_LWIP_SOCK_RAW    (MICROPY_PY_LWIP)
-#define MICROPY_PY_MACHINE          (0)
+#define MICROPY_PY_MACHINE          (1)
 #define MICROPY_PY_MACHINE_PULSE    (1)
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW mp_pin_make_new
 #define MICROPY_PY_MACHINE_I2C      (1)
@@ -203,9 +203,9 @@ extern const struct _mp_obj_module_t mp_module_mymodule;
 #if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_wifi;
 extern const struct _mp_obj_module_t mp_module_twitter;
+#endif
 extern const struct _mp_obj_module_t machine_module;
 extern const struct _mp_obj_module_t pyb_module;
-#endif
 extern const struct _mp_obj_module_t mp_module_ubinascii;
 extern const struct _mp_obj_module_t mp_module_ure;
 extern const struct _mp_obj_module_t mp_module_uzlib;
@@ -274,8 +274,8 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     /* MYMODULE_BUILTIN_MODULE */ \
     /* WIFI_BUILTIN_MODULE */ \
     /* TWITTER_BUILTIN_MODULE */ \
-    /* { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, */ \
-    /* { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     /* { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, */ \
     /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */\
     /* SOCKET_BUILTIN_MODULE */ \
@@ -317,10 +317,10 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
-    /* { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, */ \
-    /* { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, */ \
-    /* { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, */ \
-    /* { MP_ROM_QSTR(MP_QSTR_rzb), MP_ROM_PTR(&pyb_module) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_rzb), MP_ROM_PTR(&pyb_module) }, \
 
 #define MP_STATE_PORT MP_STATE_VM
 
@@ -460,7 +460,7 @@ static inline mp_uint_t disable_irq(void) {
             pyb_thread_yield(); \
             MP_THREAD_GIL_ENTER(); \
         } else { \
-            __WFI(); \
+        /*    __WFI(); */ \
         } \
     } while (0);
 

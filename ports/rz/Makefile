@@ -36,7 +36,6 @@ include ../../py/mkenv.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
 # qstr definitions (must come before including py.mk)
-#QSTR_DEFS = qstrdefsport.h
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
@@ -412,6 +411,8 @@ endif
 SRC_C += help.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
+SRC_C += modmachine.c
+SRC_C += modpyb.c
 SRC_C += mphalport.c
 SRC_C += led.c
 SRC_C += pin.c
