@@ -97,11 +97,9 @@
 STATIC bool pin_class_debug;
 
 void pin_init0(void) {
-#if RZ_TODO
     MP_STATE_PORT(pin_class_mapper) = mp_const_none;
     MP_STATE_PORT(pin_class_map_dict) = mp_const_none;
     pin_class_debug = false;
-#endif
 }
 
 // C API used to convert a user-supplied pin name into an ordinal pin number.
@@ -461,7 +459,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_names_obj, pin_names);
 /// Get the pin port.
 STATIC mp_obj_t pin_port(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin / 8);
+    return MP_OBJ_NEW_SMALL_INT(self->pin / 16);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 

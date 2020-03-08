@@ -115,11 +115,11 @@ enum AF_INDEX {
 #include "gpio_addrdefine.h"
 
 #define GPIO_PORT(pin)      (pin >> 4)
-#define GPIO_MASK1(pin)     (pin & 7)
-#define GPIO_MASK_DIR(pin)  (3 << (1 << (pin & 7)))
-#define GPIO_DIR_HIZ(pin)   (0 << (1 << (pin & 7)))
-#define GPIO_DIR_IN(pin)    (2 << (1 << (pin & 7)))
-#define GPIO_DIR_OUT(pin)   (3 << (1 << (pin & 7)))
+#define GPIO_MASK1(pin)     (1 << (pin & 7))
+#define GPIO_MASK_DIR(pin)  (3 << ((pin & 7) << 1))
+#define GPIO_DIR_HIZ(pin)   (0 << ((pin & 7) << 1))
+#define GPIO_DIR_IN(pin)    (2 << ((pin & 7) << 1))
+#define GPIO_DIR_OUT(pin)   (3 << ((pin & 7) << 1))
 #define GPIO_BIT(pin)       (pin & 7)
 
 #define PPDR(g)     *(volatile unsigned short *)(PORTm_base + 0x0000 + ((g)*2))

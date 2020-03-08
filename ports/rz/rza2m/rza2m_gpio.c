@@ -86,6 +86,7 @@ void _gpio_write(uint32_t pin, uint8_t state) {
     uint8_t mask1 = GPIO_MASK1(pin);
     uint16_t maskd = GPIO_MASK_DIR(pin);
     uint16_t maskout = GPIO_DIR_OUT(pin);
+    PPMR(port) &= ~mask1;    /* gpio */
     PPDR(port) = ((PPDR(port) & (~maskd))) | maskout;
     if (state) {
         PPODR(port) |= mask1;
@@ -99,6 +100,7 @@ void _gpio_toggle(uint32_t pin) {
     uint8_t mask1 = GPIO_MASK1(pin);
     uint16_t maskd = GPIO_MASK_DIR(pin);
     uint16_t maskout = GPIO_DIR_OUT(pin);
+    PPMR(port) &= ~mask1;    /* gpio */
     PPDR(port) = ((PPDR(port) & (~maskd))) | maskout;
     PPODR(port) ^= mask1;
 }
@@ -106,6 +108,7 @@ void _gpio_toggle(uint32_t pin) {
 uint8_t _gpio_read(uint32_t pin) {
     uint32_t port = GPIO_PORT(pin);
     uint8_t mask1 = GPIO_MASK1(pin);
+    PPMR(port) &= ~mask1;    /* gpio */
     return ((PPIDR(port) & mask1) != 0) ? 1 : 0;
 }
 
