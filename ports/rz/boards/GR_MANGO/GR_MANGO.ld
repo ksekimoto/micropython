@@ -44,7 +44,7 @@ SECTIONS
 {
     .text :
     {
-
+        _stext = .;
         Image$$VECTORS$$Base = .;
         * (RESET)
 
@@ -77,6 +77,7 @@ SECTIONS
         KEEP(*(.eh_frame*))
 
         __etext = .;
+        _etext = .;
     } > ROM
 
     .ARM.extab : 
@@ -149,6 +150,8 @@ SECTIONS
 
     .data :
     {
+        _sidata = .;
+        _sdata = .;
         Image$$RW_DATA$$Base = .;
         __data_start__ = .;
         *(vtable)
@@ -178,6 +181,7 @@ SECTIONS
         . = ALIGN(8);
         /* All data end */
         __data_end__ = .;
+        _edata = .;
     } > RAM AT > ROM
 
     .bss ALIGN(0x10):
