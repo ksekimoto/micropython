@@ -21,10 +21,9 @@
 #define MICROPY_HW_UART0_SCK        (pin_P40)
 #define MICROPY_HW_UART0_RTS        (pin_P43)
 #define MICROPY_HW_UART0_CTS        (pin_P44)
-#define MICROPY_HW_UART4_RX         (pin_P45)
-#define MICROPY_HW_UART4_TX         (pin_P46)
-#define MICROPY_HW_UART4_SCK        (pin_P47)
-//#define MICROPY_HW_UART_REPL        PYB_UART_1  // Serial5 (P26:TX1, P30:RX1)
+#define MICROPY_HW_UART4_RX         (pin_P91)
+#define MICROPY_HW_UART4_TX         (pin_P90)
+#define MICROPY_HW_UART_REPL        PYB_UART_4  // SCI4 (P90:TXD4, P91:RXD4)
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses

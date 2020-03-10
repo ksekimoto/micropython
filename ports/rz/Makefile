@@ -72,6 +72,7 @@ INC += -I$(BUILD)
 
 INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
+INC += -Imbed
 
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 INC += -ITARGET_RENESAS
@@ -245,7 +246,6 @@ SRC_C = \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \
-	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
@@ -403,7 +403,6 @@ ifeq ($(MBED_GR_LIBS), 1)
 SRC_CPP += $(TOP)/lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
 endif
 
-SRC_CPP += uart_wrapper.cpp
 ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
 endif
@@ -412,15 +411,21 @@ SRC_C += help.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
 SRC_C += i2c.c
+SRC_C += machine_uart.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
 SRC_C += mphalport.c
 SRC_C += led.c
+SRC_C += pendsv.c
 SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
 SRC_C += systick.c
+SRC_C += uart.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
+SRC_CPP += mbed/mbed_uart.cpp
+
 endif
 
 #OBJ = $(PY_CORE_O)

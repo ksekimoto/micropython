@@ -33,7 +33,7 @@
 #include "py/mphal.h"
 #include "extmod/misc.h"
 #include "usb.h"
-//#include "uart.h"
+#include "uart.h"
 //#include "usb_entry.h"
 
 typedef enum
@@ -94,11 +94,9 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
             return c;
         }
         #endif
-#if RZ_TODO
         if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
             return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
         }
-#endif
         #if MICROPY_HW_ENABLE_RZ_USB
         //byte c;
         //if ((c = usbcdc_read()) != 0) {
@@ -113,19 +111,14 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
     }
 }
 
-#if RZ_TODO
 void mp_hal_stdout_tx_str(const char *str) {
     mp_hal_stdout_tx_strn(str, strlen(str));
 }
-#endif
 
-#if RZ_TODO
 MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
-#if RZ_TODO
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
-#endif
 #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);
 #endif
@@ -143,9 +136,7 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
 
     mp_uos_dupterm_tx_strn(str, len);
 }
-#endif
 
-#if RZ_TODO
 // Efficiently convert "\n" to "\r\n"
 void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
     const char *last = str;
@@ -165,7 +156,6 @@ void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
         mp_hal_stdout_tx_strn(last, str - last);
     }
 }
-#endif
 
 void mp_hal_ticks_cpu_enable(void) {
 }
