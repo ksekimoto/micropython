@@ -118,3 +118,9 @@ mp_uint_t mp_hal_ticks_us(void) {
     uint32_t ticks = ticker_read(ticker);
     return ticks;
 }
+
+unsigned long mtick(void) {
+    const ticker_data_t *const ticker = get_us_ticker_data();
+    uint32_t ticks = ticker_read(ticker);
+    return (unsigned long)ticks/1000;
+}
