@@ -32,7 +32,7 @@
 #define TICKS_PERIOD 0x80000000
 #define TICKS_DIFF(t1, t0) ((int32_t)(((t1 - t0 + TICKS_PERIOD / 2) & (TICKS_PERIOD - 1)) - TICKS_PERIOD / 2))
 
-extern __IO uint32_t uwTick;
+//extern __IO uint32_t uwTick;
 
 volatile uint32_t soft_timer_next;
 
@@ -42,7 +42,7 @@ void soft_timer_deinit(void) {
 
 STATIC void soft_timer_schedule_systick(uint32_t ticks_ms) {
     uint32_t irq_state = disable_irq();
-    uint32_t uw_tick = uwTick;
+    uint32_t uw_tick = (uint32_t)mtick();
     if (TICKS_DIFF(ticks_ms, uw_tick) <= 0) {
         soft_timer_next = uw_tick + 1;
     } else {
@@ -53,7 +53,7 @@ STATIC void soft_timer_schedule_systick(uint32_t ticks_ms) {
 
 // Must be executed at IRQ_PRI_PENDSV
 void soft_timer_handler(void) {
-    uint32_t ticks_ms = uwTick;
+    uint32_t ticks_ms = (uint32_t)mtick();
     soft_timer_entry_t *head = MP_STATE_PORT(soft_timer_head);
     while (head != NULL && TICKS_DIFF(head->expiry_ms, ticks_ms) <= 0) {
         mp_sched_schedule(head->callback, MP_OBJ_FROM_PTR(head));
@@ -77,7 +77,7 @@ void soft_timer_handler(void) {
     MP_STATE_PORT(soft_timer_head) = head;
     if (head == NULL) {
         // No more timers left, set largest delay possible
-        soft_timer_next = uwTick;
+        soft_timer_next = (uint32_t)mtick();
     } else {
         // Set soft_timer_next so SysTick calls us back at the correct time
         soft_timer_schedule_systick(head->expiry_ms);
