@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_SYSTICK_H
-#define MICROPY_INCLUDED_STM32_SYSTICK_H
+#ifndef MICROPY_INCLUDED_RZ_SYSTICK_H
+#define MICROPY_INCLUDED_RZ_SYSTICK_H
 
 // Works for x between 0 and 16 inclusive
 #define POW2_CEIL(x) ((((x) - 1) | ((x) - 1) >> 1 | ((x) - 1) >> 2 | ((x) - 1) >> 3) + 1)
@@ -61,4 +61,4 @@ void systick_wait_at_least(uint32_t stc, uint32_t delay_ms);
 bool systick_has_passed(uint32_t stc, uint32_t delay_ms);
 unsigned long mtick(void);
 
-#endif // MICROPY_INCLUDED_STM32_SYSTICK_H
+#endif // MICROPY_INCLUDED_RZ_SYSTICK_H

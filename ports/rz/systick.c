@@ -29,29 +29,29 @@
 #include "irq.h"
 #include "pendsv.h"
 #include "systick.h"
-#if RZ_TODO
 #include "softtimer.h"
+#if RZ_TODO
 #include "pybthread.h"
 #endif
 #include "mbed_wait_api.h"
 #include "hal/us_ticker_api.h"
+#include "mbed_timer.h"
 
-//extern __IO uint32_t uwTick;
+static volatile uint32_t uwTick;
 
 systick_dispatch_t systick_dispatch_table[SYSTICK_DISPATCH_NUM_SLOTS];
 
 void SysTick_Handler(void) {
-#if RZ_TODO
     // Instead of calling HAL_IncTick we do the increment here of the counter.
     // This is purely for efficiency, since SysTick is called 1000 times per
     // second at the highest interrupt priority.
-    uint32_t uw_tick = uwTick + 1;
+    uint32_t uw_tick =  mbed_timer_get_ticks() + 1;
     uwTick = uw_tick;
 
     // Read the systick control regster. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
     // work properly.
-    SysTick->CTRL;
+    //SysTick->CTRL;
 
     // Dispatch to any registered handlers in a cycle
     systick_dispatch_t f = systick_dispatch_table[uw_tick & (SYSTICK_DISPATCH_NUM_SLOTS - 1)];
@@ -59,7 +59,7 @@ void SysTick_Handler(void) {
         f(uw_tick);
     }
 
-    if (soft_timer_next == uw_tick) {
+    if (soft_timer_next == mbed_timer_get_ticks()) {
         pendsv_schedule_dispatch(PENDSV_DISPATCH_SOFT_TIMER, soft_timer_handler);
     }
 
@@ -74,7 +74,6 @@ void SysTick_Handler(void) {
         }
     }
     #endif
-#endif
 }
 
 void HAL_Delay(uint32_t Delay) {
@@ -107,10 +106,7 @@ void systick_wait_at_least(uint32_t start_tick, uint32_t delay_ms) {
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
-    const ticker_data_t *const ticker = get_us_ticker_data();
-    uint32_t ticks = ticker_read(ticker);
-    return ticks/1000;
-
+    return  mbed_timer_get_ticks();
 }
 
 mp_uint_t mp_hal_ticks_us(void) {
@@ -120,7 +116,5 @@ mp_uint_t mp_hal_ticks_us(void) {
 }
 
 unsigned long mtick(void) {
-    const ticker_data_t *const ticker = get_us_ticker_data();
-    uint32_t ticks = ticker_read(ticker);
-    return (unsigned long)ticks/1000;
+    return  mbed_timer_get_ticks();
 }
