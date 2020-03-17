@@ -37,7 +37,28 @@
 #include "irq.h"
 #include "pendsv.h"
 #include "common.h"
+
+//#define MBED_URT_WRAPPER
+
+#if defined(MBED_URT_WRAPPER)
 #include "mbed_uart.h"
+#define MBED_UART_TX_WAIT               mbed_uart_tx_wait
+#define MBED_UART_RX_ANY                mbed_uart_rx_any
+#define MBED_UART_TX_CH                 mbed_uart_tx_ch
+#define MBED_UART_RX_CH                 mbed_uart_rx_ch
+#define MBED_UART_INIT_WITH_PINS        mbed_uart_init_with_pins
+#define MBED_UART_DEINIT                mbed_uart_deinit
+#define MBED_UART_SET_KBD_INTERRUPT     mbed_uart_set_kbd_interrupt
+#else
+#include "rza2m_sci.h"
+#define MBED_UART_TX_WAIT               sci_tx_wait
+#define MBED_UART_RX_ANY                sci_rx_any
+#define MBED_UART_TX_CH                 sci_tx_ch
+#define MBED_UART_RX_CH                 sci_rx_ch
+#define MBED_UART_INIT_WITH_PINS        sci_init_with_pins
+#define MBED_UART_DEINIT                sci_deinit
+#define MBED_UART_SET_KBD_INTERRUPT     sci_rz_set_callback
+#endif
 
 /// \moduleref pyb
 /// \class UART - duplex serial communication bus
@@ -189,7 +210,7 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
             return false;
     }
 
-    mbed_uart_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
+    MBED_UART_INIT_WITH_PINS(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
 
     uart_obj->is_enabled = true;
     uart_obj->attached_to_repl = false;
@@ -209,23 +230,25 @@ void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
 }
 void uart_deinit(pyb_uart_obj_t *self) {
     self->is_enabled = false;
-    mbed_uart_deinit(self->uart_id);
+    MBED_UART_DEINIT(self->uart_id);
 }
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
+#if RZ_TODO
 #if MICROPY_KBD_EXCEPTION
     if (attached) {
-        mbed_uart_set_kbd_interrupt((int)self->uart_id, (void *)chk_kbd_interrupt);
+        MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)chk_kbd_interrupt);
     } else {
-        mbed_uart_set_kbd_interrupt((int)self->uart_id, (void *)0);
+        MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)0);
     }
+#endif
 #endif
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
     int ch = (int)self->uart_id;
-    return mbed_uart_rx_any(ch);
+    return MBED_UART_RX_ANY(ch);
 }
 
 // Waits at most timeout milliseconds for at least 1 char to become ready for
@@ -235,7 +258,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
-        if (mbed_uart_rx_any(ch)) {
+        if (MBED_UART_RX_ANY(ch)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -248,7 +271,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 // assumes there is a character available
 int uart_rx_char(pyb_uart_obj_t *self) {
     int ch = (int)self->uart_id;
-    return mbed_uart_rx_ch(ch);
+    return MBED_UART_RX_CH(ch);
 }
 
 // Waits at most timeout milliseconds for TX register to become empty.
@@ -257,7 +280,7 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
-        if (mbed_uart_tx_wait(ch)) {
+        if (MBED_UART_TX_WAIT(ch)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -277,7 +300,7 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
-        if (mbed_uart_tx_wait(ch)) {
+        if (MBED_UART_TX_WAIT(ch)) {
             return true;
         }
         if (timeout == 0 || mtick() - start >= timeout) {
@@ -300,7 +323,7 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
     }
     int i;
     for (i = 0; i < (int)num_chars; i++) {
-        mbed_uart_tx_ch(ch, *data++);
+        MBED_UART_TX_CH(ch, *data++);
     }
     *errcode = 0;
     return (size_t)num_chars;
