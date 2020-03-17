@@ -71,10 +71,13 @@
 //#include "can.h"
 //#include "modnetwork.h"
 //#include "usb_entry.h"
+#include "mbed_timer.h"
 
-//uint32_t mtick(void) {
-//    return (uint32_t)mp_hal_ticks_ms();
-//}
+#define RZA2M_OSTM2_ENABLE
+
+#if defined(RZA2M_OSTM2_ENABLE)
+#include "rza2m_ostm2.h"
+#endif
 
 #if MICROPY_KBD_EXCEPTION
 int mp_interrupt_channel;
@@ -456,16 +459,19 @@ void main(uint32_t reset_mode) {
     #if MICROPY_PY_THREAD
     pyb_thread_init(&pyb_thread_main);
     #endif
-    //pendsv_init();
+#if defined(RZA2M_OSTM2_ENABLE)
+    rza2m_ostm2_init();
+    pendsv_init();
+#endif
     led_init();
     #if MICROPY_HW_HAS_SWITCH
     switch_init0();
     #endif
-    //machine_init();
+    machine_init();
     #if MICROPY_HW_ENABLE_RTC
     rtc_init_start(false);
     #endif
-    //uart_init0();
+    uart_init0();
     //spi_init0();
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     //i2c_init0();
@@ -554,10 +560,11 @@ soft_reset:
     MP_STATE_PORT(pyb_stdio_uart) = NULL;
     #endif
 
-    //readline_init0();
-    //pin_init0();
+    readline_init0();
+    pin_init0();
     //extint_init0();
     //timer_init0();
+    mbed_timer_init();
 
     #if MICROPY_HW_ENABLE_CAN
     can_init0();
@@ -727,13 +734,13 @@ soft_reset_exit:
     #if MICROPY_PY_NETWORK
     //mod_network_deinit();
     #endif
-    //soft_timer_deinit();
+    soft_timer_deinit();
     //timer_deinit();
-    //uart_deinit_all();
+    uart_deinit_all();
     #if MICROPY_HW_ENABLE_CAN
     can_deinit_all();
     #endif
-    //machine_deinit();
+    machine_deinit();
 
     #if MICROPY_PY_THREAD
     pyb_thread_deinit();
@@ -742,19 +749,4 @@ soft_reset_exit:
     gc_sweep_all();
 
     goto soft_reset;
-
-    mp_deinit();
-    return 0;
 }
-
-#if RZ_TODO
-void gc_collect(void) {
-    // WARNING: This gc_collect implementation doesn't try to get root
-    // pointers from CPU registers, and thus may function incorrectly.
-    void *dummy;
-    gc_collect_start();
-    gc_collect_root(&dummy, ((mp_uint_t)stack_top - (mp_uint_t)&dummy) / sizeof(mp_uint_t));
-    gc_collect_end();
-    gc_dump_info();
-}
-#endif
