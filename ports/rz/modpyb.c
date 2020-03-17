@@ -72,6 +72,9 @@
 #if MICROPY_PY_PYB_LCDSPI
 #include "lcdspi.h"
 #endif
+#if MICROPY_PY_PYB_CAMERA_LCD
+#include "camera_lcd.h"
+#endif
 
 char pyb_country_code[2];
 
@@ -294,6 +297,11 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&pyb_lcdspi_type) },
 #endif
 
+#if MBED_GR_LIBS
+#if MICROPY_PY_PYB_CAMERA_LCD
+    { MP_ROM_QSTR(MP_QSTR_CAMERA_LCD), MP_ROM_PTR(&pyb_camera_lcd_type) },
+#endif
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(pyb_module_globals, pyb_module_globals_table);

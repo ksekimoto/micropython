@@ -61,3 +61,5 @@
 
 #define MICROPY_HW_ENABLE_DAC   (0)
 
+#define MICROPY_PY_PYB_CAMERA_LCD   (1)
+
