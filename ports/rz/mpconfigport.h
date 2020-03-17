@@ -176,6 +176,16 @@
 #define MICROPY_PY_NETWORK          (1)
 #endif
 
+#if LVGL_ENABLE
+#define MICROPY_PY_LVGL                     (1)
+#define MICROPY_PY_LODEPNG                  (1)
+#define MICROPY_PY_RTCH                     (0)
+#else
+#define MICROPY_PY_LVGL                     (0)
+#define MICROPY_PY_LODEPNG                  (0)
+#define MICROPY_PY_RTCH                     (0)
+#endif
+
 // fatfs configuration used in ffconf.h
 #define MICROPY_FATFS_ENABLE_LFN       (1)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
@@ -218,6 +228,40 @@ extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
 extern const struct _mp_obj_module_t mp_module_onewire;
+#endif
+extern const struct _mp_obj_module_t mp_module_lvgl;
+extern const struct _mp_obj_module_t mp_module_rtch;
+extern const struct _mp_obj_module_t mp_module_lodepng;
+// extern const struct _mp_obj_module_t mp_module_ILI9341;
+// extern const struct _mp_obj_module_t mp_module_xpt2046;
+extern const struct _mp_obj_module_t mp_module_lvrz;
+
+#if MICROPY_PY_LVGL
+#define MICROPY_PORT_LVGL_DEF \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_lvgl), (mp_obj_t)&mp_module_lvgl }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_lvrz), (mp_obj_t)&mp_module_lvrz }, \
+//    { MP_OBJ_NEW_QSTR(MP_QSTR_ILI9341), (mp_obj_t)&mp_module_ILI9341 },
+//    { MP_OBJ_NEW_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&mp_module_xpt2046 },
+
+// lvesp needs to delete the timer task upon soft reset
+
+extern void lv_deinit(void);
+#define MICROPY_PORT_DEINIT_FUNC lv_deinit()
+
+#else
+#define MICROPY_PORT_LVGL_DEF
+#endif
+
+#if MICROPY_PY_LODEPNG
+#define MICROPY_PORT_LODEPNG_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_lodepng), (mp_obj_t)&mp_module_lodepng },
+#else
+#define MICROPY_PORT_LODEPNG_DEF
+#endif
+
+#if MICROPY_PY_RTCH
+#define MICROPY_PORT_RTCH_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_rtch), (mp_obj_t)&mp_module_rtch },
+#else
+#define MICROPY_PORT_RTCH_DEF
 #endif
 
 #if RZ_TODO
@@ -282,6 +326,9 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     /* WSOCKET_BUILTIN_MODULE */ \
     /* NETWORK_BUILTIN_MODULE */ \
     /* { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, */ \
+    MICROPY_PORT_LVGL_DEF \
+    MICROPY_PORT_LODEPNG_DEF \
+    MICROPY_PORT_RTCH_DEF
 
 /* by including extmod folder, the following modules can be used.
  *   binascii
@@ -337,7 +384,15 @@ struct _mp_bluetooth_nimble_root_pointers_t;
 #define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE
 #endif
 
+#if MICROPY_PY_LVGL
+#include "lib/lv_bindings/lvgl/src/lv_misc/lv_gc.h"
+#else
+#define LV_ROOTS
+#endif
+
 #define MICROPY_PORT_ROOT_POINTERS \
+    LV_ROOTS \
+    void *mp_lv_user_data; \
     const char *readline_hist[8]; \
     \
     mp_obj_t pyb_hid_report_desc; \
