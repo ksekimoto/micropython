@@ -87,22 +87,15 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
         }
 #endif
 #endif
-
-        #if MICROPY_HW_ENABLE_USB
-        byte c;
-        if (usb_vcp_recv_byte(&c) != 0) {
-            return c;
-        }
-        #endif
-        if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
-            return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
-        }
         #if MICROPY_HW_ENABLE_RZ_USB
         //byte c;
         //if ((c = usbcdc_read()) != 0) {
         //    return c;
         //}
         #endif
+        if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
+            return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
+        }
         int dupterm_c = mp_uos_dupterm_rx_chr();
         if (dupterm_c >= 0) {
             return dupterm_c;
@@ -122,11 +115,6 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
 #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);
 #endif
-    #if MICROPY_HW_ENABLE_USB
-    if (usb_vcp_is_enabled()) {
-        usb_vcp_send_strn(str, len);
-    }
-    #endif
     //#if MICROPY_HW_ENABLE_RZ_USB
     //uint8_t *p = (uint8_t *)str;
     //while (len--) {
@@ -176,9 +164,12 @@ bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, u
 void mp_hal_pin_config_speed(mp_hal_pin_obj_t pin_obj, uint32_t speed) {
 }
 
-#if 0
-MP_WEAK void mp_hal_get_mac(int idx, uint8_t buf[6]) {
-    // Generate a random locally administered MAC address (LAA)
+#if RZ_TODO
+/*******************************************************************************/
+// MAC address
+
+// Generate a random locally administered MAC address (LAA)
+void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
     uint8_t *id = (uint8_t *)MP_HAL_UNIQUE_ID_ADDRESS;
     buf[0] = 0x02; // LAA range
     buf[1] = (id[11] << 4) | (id[10] & 0xf);
@@ -186,5 +177,19 @@ MP_WEAK void mp_hal_get_mac(int idx, uint8_t buf[6]) {
     buf[3] = (id[7] << 4) | (id[6] & 0xf);
     buf[4] = id[2];
     buf[5] = (id[0] << 2) | idx;
+}
+
+// A board can override this if needed
+MP_WEAK void mp_hal_get_mac(int idx, uint8_t buf[6]) {
+    mp_hal_generate_laa_mac(idx, buf);
+}
+
+void mp_hal_get_mac_ascii(int idx, size_t chr_off, size_t chr_len, char *dest) {
+    static const char hexchr[16] = "0123456789ABCDEF";
+    uint8_t mac[6];
+    mp_hal_get_mac(idx, mac);
+    for (; chr_len; ++chr_off, --chr_len) {
+        *dest++ = hexchr[mac[chr_off >> 1] >> (4 * (1 - (chr_off & 1))) & 0xf];
+    }
 }
 #endif
