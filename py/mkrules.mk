@@ -22,16 +22,19 @@ endif
 
 vpath %.S . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.S
+	dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
+	dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
 	$(Q)$(AS) -o $@ $<
 
 define compile_c
 $(ECHO) "CC $<"
+dirname $@ | xargs mkdir -p
 $(Q)$(CC) $(CFLAGS) -c -MD -o $@ $<
 @# The following fixes the dependency file.
 @# See http://make.paulandlesley.org/autodep.html for details.
@@ -57,6 +60,7 @@ $(BUILD)/%.pp: %.c
 
 define compile_cpp
 $(ECHO) "CC $<"
+dirname $@ | xargs mkdir -p
 $(Q)$(CXX) $(CPPFLAGS) -c -MD -o $@ $<
 @# The following fixes the dependency file.
 @# See http://make.paulandlesley.org/autodep.html for details.
