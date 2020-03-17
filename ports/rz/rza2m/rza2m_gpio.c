@@ -63,6 +63,18 @@ void _gpio_config(uint32_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
     }
 }
 
+void _gpio_mode_af(uint32_t pin, uint8_t af) {
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask1 = GPIO_MASK1(pin);
+    uint32_t bit = GPIO_BIT(pin);
+    GPIO.PWPR.BIT.B0WI  = 0;
+    GPIO.PWPR.BIT.PFSWE = 1;
+    PPFS(port,bit) = (uint8_t)af;   /* af func */
+    GPIO.PWPR.BIT.PFSWE = 0;
+    GPIO.PWPR.BIT.B0WI  = 1;
+    PPMR(port) |= mask1;            /* af mode*/
+}
+
 void _gpio_mode_output(uint32_t pin) {
     uint32_t port = GPIO_PORT(pin);
     uint8_t mask1 = GPIO_MASK1(pin);

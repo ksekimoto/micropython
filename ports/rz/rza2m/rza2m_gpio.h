@@ -146,6 +146,7 @@ inline void bit_set(uint8_t *port, uint32_t bit) {
 }
 
 void _gpio_config(uint32_t pin, uint8_t mode, uint8_t pull, uint8_t alt);
+void _gpio_mode_af(uint32_t pin, uint8_t af);
 void _gpio_mode_output(uint32_t pin);
 void _gpio_mode_input(uint32_t pin);
 void _gpio_write(uint32_t pin, uint8_t state);
