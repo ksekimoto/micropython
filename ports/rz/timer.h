@@ -3,7 +3,6 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2015 Damien P. George
  * Copyright (c) 2020 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,23 +23,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RZ_MODMACHINE_H
-#define MICROPY_INCLUDED_RZ_MODMACHINE_H
+#ifndef RX_TIMER_H
+#define RX_TIMER_H
 
-#include "py/obj.h"
+extern const mp_obj_type_t pyb_timer_type;
 
-extern const mp_obj_type_t machine_timer_type;
+void timer_init0(void);
+void timer_deinit(void);
 
-void machine_init(void);
-void machine_deinit(void);
-void get_unique_id(uint8_t *id);
-
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_info_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_unique_id_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(machine_reset_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_bootloader_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_lightsleep_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(machine_deepsleep_obj);
-
-#endif // MICROPY_INCLUDED_RZ_MODMACHINE_H
+#endif // RX_TIMER_H
