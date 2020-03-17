@@ -26,6 +26,8 @@
 #ifndef MICROPY_INCLUDED_RZ_PENDSV_H
 #define MICROPY_INCLUDED_RZ_PENDSV_H
 
+#define PENDSV_ENABLE
+
 enum {
     PENDSV_DISPATCH_SOFT_TIMER,
     #if MICROPY_PY_NETWORK && MICROPY_PY_LWIP
@@ -40,7 +42,11 @@ enum {
     PENDSV_DISPATCH_MAX
 };
 
+#if defined(PENDSV_ENABLE)
 #define PENDSV_DISPATCH_NUM_SLOTS PENDSV_DISPATCH_MAX
+#else
+#define PENDSV_DISPATCH_NUM_SLOTS 0
+#endif
 
 typedef void (*pendsv_dispatch_t)(void);
 
