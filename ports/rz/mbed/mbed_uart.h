@@ -41,6 +41,14 @@ typedef struct _MBED_UART_RX_BUF {
     uint8_t *read_buf;
 } MBED_UART_RX_BUF;
 
+typedef struct _MBED_UART_TX_BUF {
+    bool is_sending;
+    uint16_t write_buf_len;
+    volatile uint16_t write_buf_head;
+    uint16_t write_buf_tail;
+    uint8_t *write_buf;
+} MBED_UART_TX_BUF;
+
 void mbed_uart_init(int ch, int baud, int bits, int parity, int stop, int flow);
 void mbed_uart_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int parity, int stop, int flow);
 void mbed_uart_deinit(int ch);
