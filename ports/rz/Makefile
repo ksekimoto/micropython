@@ -489,6 +489,7 @@ AR_MBED_FLAGS = rcs
 
 libs/$(LIB_MBED): $(OBJ_MBED)
 	$(ECHO) "LIB $@"
+	$(MKDIR) -p libs
 	$(Q)$(AR) $(AR_MBED_FLAGS) libs/$(LIB_MBED) $^
 
 #$(BUILD)/_frozen_mpy.c: frozentest.mpy #$(BUILD)/genhdr/qstrdefs.generated.h
