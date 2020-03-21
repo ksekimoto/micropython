@@ -57,7 +57,7 @@
 #define MBED_UART_RX_CH                 sci_rx_ch
 #define MBED_UART_INIT_WITH_PINS        sci_init_with_pins
 #define MBED_UART_DEINIT                sci_deinit
-#define MBED_UART_SET_KBD_INTERRUPT     sci_rz_set_callback
+#define MBED_UART_SET_KBD_INTERRUPT     sci_rx_set_callback
 #endif
 
 /// \moduleref pyb
@@ -235,7 +235,7 @@ void uart_deinit(pyb_uart_obj_t *self) {
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
-#if RZ_TODO
+//#if RZ_TODO
 #if MICROPY_KBD_EXCEPTION
     if (attached) {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)chk_kbd_interrupt);
@@ -243,7 +243,7 @@ void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)0);
     }
 #endif
-#endif
+//#endif
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {

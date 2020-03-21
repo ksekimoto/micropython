@@ -38,9 +38,7 @@
 // otherwise gcc-5 optimises it away.  It can point to the heap but is not
 // traced by GC.  This is okay because we only ever set it to
 // mp_kbd_exception which is in the root-pointer set.
-#if RZ_TODO
 void *pendsv_object;
-#endif
 
 #if defined(PENDSV_DISPATCH_NUM_SLOTS)
 uint32_t pendsv_dispatch_active;
@@ -66,17 +64,12 @@ void pendsv_init(void) {
 // the given exception object using nlr_jump in the context of the top-level
 // thread.
 void pendsv_kbd_intr(void) {
-#if RZ_TODO
     if (MP_STATE_VM(mp_pending_exception) == MP_OBJ_NULL) {
         mp_keyboard_interrupt();
     } else {
         MP_STATE_VM(mp_pending_exception) = MP_OBJ_NULL;
-#if RZ_TODO
         pendsv_object = &MP_STATE_VM(mp_kbd_exception);
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
-#endif
     }
-#endif
 }
 
 #if defined(PENDSV_DISPATCH_NUM_SLOTS)

@@ -27,11 +27,11 @@
 #include "rza2m_utils.h"
 
 __attribute__((always_inline)) void rz_enable_irq(void) {
-//    __asm__ __volatile__ ("cpsie i" : : : "memory");
+    __asm__ __volatile__ ("cpsie i" : : : "memory");
 }
 
 __attribute__((always_inline)) void rz_disable_irq(void) {
-//    __asm__ __volatile__ ("cpsid i" : : : "memory");
+    __asm__ __volatile__ ("cpsid i" : : : "memory");
 }
 
 #if RZ_TODO
