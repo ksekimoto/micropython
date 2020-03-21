@@ -59,3 +59,7 @@ genrst/
 /*.jlink
 /ports/rz/boards/.pydevproject
 /ports/rz/boards/.project
+/mpy-cross/lextab.py
+/mpy-cross/yacctab.py
+/ports/rz/lextab.py
+/ports/rz/yacctab.py
