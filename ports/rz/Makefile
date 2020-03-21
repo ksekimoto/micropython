@@ -21,8 +21,13 @@ CROSS = 1
 TARGET = TARGET_RZ_A2XX
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 0
-MBED_GR_LIBS = 0
+LVGL_ENABLE = 1
+MBED_OS = 1
+MBED_GR_LIBS = 1
+MBED_GR_LIBS_DRP_FOR_MBED = 1
+MBED_GR_LIBS_components_LCD = 1
+MBED_GR_LIBS_components_CAMERA = 1
+MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
@@ -181,6 +186,106 @@ endif
 # source files
 #######################################################################
 
+EXTMOD_SRC_C += $(addprefix extmod/,\
+	virtpin.c \
+        )
+
+ifeq ($(MICROPY_FLOAT_IMPL),double)
+SRC_LIBM = $(addprefix lib/libm_dbl/,\
+	__cos.c \
+	__expo2.c \
+	__fpclassify.c \
+	__rem_pio2.c \
+	__rem_pio2_large.c \
+	__signbit.c \
+	__sin.c \
+	__tan.c \
+	acos.c \
+	acosh.c \
+	asin.c \
+	asinh.c \
+	atan.c \
+	atan2.c \
+	atanh.c \
+	ceil.c \
+	cos.c \
+	cosh.c \
+	copysign.c \
+	erf.c \
+	exp.c \
+	expm1.c \
+	floor.c \
+	fmod.c \
+	frexp.c \
+	ldexp.c \
+	lgamma.c \
+	log.c \
+	log10.c \
+	log1p.c \
+	modf.c \
+	nearbyint.c \
+	pow.c \
+	rint.c \
+	scalbn.c \
+	sin.c \
+	sinh.c \
+	tan.c \
+	tanh.c \
+	tgamma.c \
+	trunc.c \
+	)
+ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
+# ToDo
+SRC_LIBM += lib/libm_dbl/thumb_vfp_sqrt.c
+else
+SRC_LIBM += lib/libm_dbl/sqrt.c
+endif
+else
+SRC_LIBM = $(addprefix lib/libm/,\
+	math.c \
+	acoshf.c \
+	asinfacosf.c \
+	asinhf.c \
+	atan2f.c \
+	atanf.c \
+	atanhf.c \
+	ef_rem_pio2.c \
+	erf_lgamma.c \
+	fmodf.c \
+	kf_cos.c \
+	kf_rem_pio2.c \
+	kf_sin.c \
+	kf_tan.c \
+	log1pf.c \
+	nearbyintf.c \
+	sf_cos.c \
+	sf_erf.c \
+	sf_frexp.c \
+	sf_ldexp.c \
+	sf_modf.c \
+	sf_sin.c \
+	sf_tan.c \
+	wf_lgamma.c \
+	wf_tgamma.c \
+	)
+ifeq ($(SUPPORTS_HARDWARE_FP_SINGLE),1)
+SRC_LIBM += lib/libm/thumb_vfp_sqrtf.c
+else
+SRC_LIBM += lib/libm/ef_sqrt.c
+endif
+endif
+
+EXTMOD_SRC_C = $(addprefix extmod/,\
+	modonewire.c \
+	)
+
+DRIVERS_SRC_C = $(addprefix drivers/,\
+	bus/softspi.c \
+	bus/softqspi.c \
+	memory/spiflash.c \
+	dht/dht.c \
+	)
+
 SRC_C = \
 	main.c \
 	lib/utils/interrupt_char.c \
@@ -189,6 +294,16 @@ SRC_C = \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 #	$(BUILD)/_frozen_mpy.c \
+
+#######################################################################
+# TARGET_RENESAS
+#######################################################################
+SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
+SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
+
+ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
+SRC_MBED_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
+endif
 
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/analogin_api.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/flash_api.c
@@ -215,58 +330,14 @@ SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/os_tick_ostm.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/RZ_A2_Init.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/system_RZ_A2M.c
 
+ifeq ($(MBED_OS), 1)
+#######################################################################
+# mbed-os cmsis
+#######################################################################
 SRC_MBED_C += lib/mbed-os/cmsis/TARGET_CORTEX_A/irq_ctrl_gic.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_critical_section_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_flash_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_gpio.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_itm_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_lp_ticker_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_common.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_default.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_ticker_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_us_ticker_api.c
-SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v7m.c
-SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v8m.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_application.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_assert.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_board.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_critical.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_error.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_error_hist.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_interface.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_mktime.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_mpu_mgmt.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_sdk_boot.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_semihost_api.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_sleep_manager.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_wait_api_no_rtos.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_stats.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_boot.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtos_rtx.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtx_handlers.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx4/cmsis_os1.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_systick.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/TARGET_CORTEX_A/handlers.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/RTX_Config.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_tick_ptim.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_delay.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evflags.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evr.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_kernel.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_lib.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_memory.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mempool.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_msgqueue.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mutex.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_semaphore.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_system.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_thread.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_timer.c
-
-SRC_MBED_S += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
-
+#######################################################################
+# mbed-os dirvers
+#######################################################################
 SRC_MBED_CPP += lib/mbed-os/drivers/AnalogIn.cpp
 SRC_MBED_CPP += lib/mbed-os/drivers/BusIn.cpp
 SRC_MBED_CPP += lib/mbed-os/drivers/BusInOut.cpp
@@ -291,8 +362,231 @@ SRC_MBED_CPP += lib/mbed-os/drivers/Timeout.cpp
 SRC_MBED_CPP += lib/mbed-os/drivers/Timer.cpp
 SRC_MBED_CPP += lib/mbed-os/drivers/TimerEvent.cpp
 SRC_MBED_CPP += lib/mbed-os/drivers/UARTSerial.cpp
+#######################################################################
+# mbed-os events
+#######################################################################
+#######################################################################
+# mbed-os features
+#######################################################################
+ifeq ($(MBED_OS_FEATURES_cellular), 1)
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/ATHandler.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/ATHandler_factory.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularBase.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularContext.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularDevice.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularInformation.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularNetwork.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularSMS.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_CellularStack.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/AT/AT_ControlPlane_netif.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/common/CellularLog.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/common/CellularStateMachine.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/divice/CellularContext.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/divice/CellularDevice.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/divice/CellularStateMachine.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/GEMALTO/CINTERION/GEMALTO_CINTERION.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/GEMALTO/CINTERION/GEMALTO_CINTERION_CellularContext.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/GEMALTO/CINTERION/GEMALTO_CINTERION_CellularInformation.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/GEMALTO/CINTERION/GEMALTO_CINTERION_CellularStack.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/GENERIC/GENERIC_AT3GPP/GENERIC_AT3GPP.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/MultiTech/DragonflyNano/PPP/SARA4_PPP.cpp
+SRC_MBED_CPP += lib/mbed-os/features/cellular/framework/targets/MultiTech/DragonflyNano/PPP/SARA4_PPP_CellularNetwork.cpp
+# ToDo
+endif
+ifeq ($(MBED_OS_FEATURES_cryptocell), 1)
+# ToDo
+endif
+ifeq ($(MBED_OS_FEATURES_deprecated_warnings), 1)
+# ToDo
+endif
+ifeq ($(MBED_OS_FEATURES_device_key), 1)
+# ToDo
+endif
+ifeq ($(MBED_OS_FEATURES_FEATURE_BLE), 1)
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/BLE.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/BLEInstanceBase.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/DiscoveredCharacteristic.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/GapScanningParams.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/gap/AdvertisingDataBuilder.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/gap/AdvertisingParameters.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/gap/ConnectionParameters.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/generic/FileSecurityDb.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/services/DFUService.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/services/UARTService.cpp
+SRC_MBED_CPP += lib/mbed-os/features/FEATURE_BLE/source/services/URIBeaconConfigService.cpp
+# ToDo
+endif
+ifeq ($(MBED_OS_FEATURES_FEATURE_BOOTLOADER), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_frameworks), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_lorawan), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_lwipstack), 1)
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/LWIPInterface.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/LWIPInterfaceEMAC.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/LWIPInterfaceL3IP.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/LWIPMemoryManager.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/LWIPStack.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip_tools.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/ppp_lwip.cpp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_api_lib.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_api_msg.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_err.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_netbuf.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_netdb.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_netifapi.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_sockets.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/api/lwip_tcpip.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/httpd/lwip_fs.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/httpd/lwip_fsdata.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/httpd/lwip_httpd.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/httpd/makefsdata/lwip_makefsdata.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/lwiperf/lwip_lwiperf.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/mdns/lwip_mdns.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/mqtt/lwip_mqtt.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/netbiosns/lwip_netbiosns.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmpv3.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmpv3_dummy.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmpv3_mbedtls.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_asn1.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_core.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_icmp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_interfaces.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_ip.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_snmp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_system.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_tcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_mib2_udp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_msg.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_netconn.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_pbuf_stream.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_raw.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_scalar.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_table.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_threadsync.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/snmp/lwip_snmp_traps.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/sntp/lwip_sntp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/apps/tftp/lwip_tftp_server.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_def.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_dns.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_inet_chksum.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_init.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_ip.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_mem.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_memp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_netif.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_pbuf.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_raw.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_stats.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_sys.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_tcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_tcp_in.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_tcp_out.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_timeouts.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/lwip_udp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_autoip.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_dhcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_etharp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_icmp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_igmp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_ip4.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_ip4_addr.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv4/lwip_ip4_frag.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_dhcp6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_ethip6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_icmp6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_inet6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_ip6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_ip6_addr.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_ip6_frag.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_mld6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/core/ipv6/lwip_nd6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/lwip_ethernet.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/lwip_ethernetif.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/lwip_lowpan6.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/lwip_slipif.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_auth.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_ccp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_chap-md5.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_chap-new.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_chap_ms.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_demand.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_eap.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_ecp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_eui64.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_fsm.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_ipcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_ipv6cp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_lcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_magic.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_mppe.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_multilink.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_ppp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_pppapi.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_pppcrypt.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_pppoe.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_pppol2tp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_pppos.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_upap.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_utils.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/lwip_vj.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/polarssl/lwip_arc4.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/polarssl/lwip_des.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/polarssl/lwip_md4.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/polarssl/lwip_md5.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/src/netif/ppp/polarssl/lwip_sha1.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/fuzz/fuzz.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/lwip_unittests.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/core/test_mem.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/core/test_pbuf.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/dhcp/test_dhcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/etharp/test_etharp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/mdns/test_mdns.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/tcp/tcp_helper.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/tcp/test_tcp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/tcp/test_tcp_oos.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip/test/unit/udp/test_udp.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip-sys/lwip_random.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip-sys/lwip_tcp_isn.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip-sys/arch/lwip_checksum.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip-sys/arch/lwip_memcpy.c
+SRC_MBED_CPP += lib/mbed-os/features/lwipstack/lwip-sys/arch/lwip_sys_arch.c
+endif
+ifeq ($(MBED_OS_FEATURES_mbedtls), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_nanostack), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_netsocket), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_nfc), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_storage), 1)
+endif
+ifeq ($(MBED_OS_FEATURES_unsupported), 1)
+endif
+#######################################################################
+# mbed-os hal
+#######################################################################
 SRC_MBED_CPP += lib/mbed-os/hal/LowPowerTickerWrapper.cpp
+SRC_MBED_C += lib/mbed-os/hal/mbed_critical_section_api.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_flash_api.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_gpio.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_itm_api.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_lp_ticker_api.c
 SRC_MBED_CPP += lib/mbed-os/hal/mbed_lp_ticker_wrapper.cpp
+SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_common.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_default.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_ticker_api.c
+SRC_MBED_C += lib/mbed-os/hal/mbed_us_ticker_api.c
+SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v7m.c
+SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v8m.c
+#SRC_MBED_C += lib/mbed-os/hal/TARGET_FLASH_CMSIS_ALGO/flash_common_algo.c
+#######################################################################
+# mbed-os platform (29 files)
+#######################################################################
 SRC_MBED_CPP += lib/mbed-os/platform/ATCmdParser.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/CallChain.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/CThunkBase.cpp
@@ -302,11 +596,29 @@ SRC_MBED_CPP += lib/mbed-os/platform/FilePath.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/FileSystemHandle.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/LocalFileSystem.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/mbed_alloc_wrappers.cpp
+SRC_MBED_C += lib/mbed-os/platform/mbed_application.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_assert.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_board.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_critical.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_error.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_error_hist.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_interface.c
 SRC_MBED_CPP += lib/mbed-os/platform/mbed_mem_trace.cpp
+SRC_MBED_C += lib/mbed-os/platform/mbed_mktime.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_mpu_mgmt.c
+SRC_MBED_CPP += lib/mbed-os/platform/mbed_poll.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/mbed_retarget.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/mbed_rtc_time.cpp
+SRC_MBED_C += lib/mbed-os/platform/mbed_sdk_boot.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_semihost_api.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_sleep_manager.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_stats.c
+SRC_MBED_C += lib/mbed-os/platform/mbed_wait_api_no_rtos.c
 SRC_MBED_CPP += lib/mbed-os/platform/mbed_wait_api_rtos.cpp
 SRC_MBED_CPP += lib/mbed-os/platform/Stream.cpp
+#######################################################################
+# mbed-os rtos
+#######################################################################
 SRC_MBED_CPP += lib/mbed-os/rtos/ConditionVariable.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/EventFlags.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/Kernel.cpp
@@ -315,8 +627,34 @@ SRC_MBED_CPP += lib/mbed-os/rtos/RtosTimer.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/Semaphore.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/ThisThread.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/Thread.cpp
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_boot.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtos_rtx.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtx_handlers.c
 SRC_MBED_CPP += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtx_idle.cpp
 SRC_MBED_CPP += lib/mbed-os/rtos/TARGET_CORTEX/SysTimer.cpp
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx4/cmsis_os1.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/RTX_Config.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/TARGET_CORTEX_A/handlers.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_delay.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evflags.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evr.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_kernel.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_lib.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_memory.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mempool.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_msgqueue.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mutex.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_semaphore.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_system.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_thread.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_timer.c
+SRC_MBED_S += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_systick.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_tick_ptim.c
+SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/TOOLCHAIN_GCC_ARM/mbed_boot_gcc_arm.c
+#######################################################################
+# mbed-os usb
+#######################################################################
 SRC_MBED_CPP += lib/mbed-os/usb/device/hal/mbed_usb_phy.cpp
 SRC_MBED_CPP += lib/mbed-os/usb/device/targets/TARGET_RENESAS/$(TARGET)/USBPhy_RZ_A2.cpp
 SRC_MBED_CPP += lib/mbed-os/usb/device/USBAudio/USBAudio.cpp
@@ -336,9 +674,24 @@ SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/LinkedListBase.cpp
 SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/OperationListBase.cpp
 SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/events/PolledQueue.cpp
 SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/events/TaskBase.cpp
+endif
 
 ifeq ($(MBED_GR_LIBS), 1)
-#SRC_MBED_CPP += lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
+ifeq ($(MBED_GR_LIBS_AlarmTimer), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/AlarmTimer/$(TARGET)/AlarmTimer.cpp
+endif
+ifeq ($(MBED_GR_LIBS_AsciiFont), 1)
+SRC_MBED_C += lib/mbed-gr-libs/AsciiFont/ascii.c
+SRC_MBED_CPP += lib/mbed-gr-libs/AsciiFont/AsciiFont.cpp
+endif
+ifeq ($(MBED_GR_LIBS_bd), 1)
+SRC_MBED_C += lib/mbed-gr-libs/bd/RomRamBlockDevice/RomRamBlockDevice.cpp
+endif
+ifeq ($(MBED_GR_LIBS_components_AUDIO), 1)
+endif
+ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
+endif
+ifeq ($(MBED_GR_LIBS_components_LCD), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/Display_shield_config/LcdCfg_Display_shield.cpp
 SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_config_40pin/LcdCfg_40pin_4_3inch.cpp
 SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_config_lvds_to_hdmi/LcdCfg_lvds_to_hdmi.cpp
@@ -349,23 +702,82 @@ SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_config_RSK_TFT/LcdCfg_RSK_TF
 #SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_shield_config/TouchKey_LCD_shield/TouchKey_4_3inch.cpp
 #SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_shield_config/TouchKey_LCD_shield/TouchKey_7_1inch.cpp
 #SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/LCD_shield_config/TouchKey_LCD_shield/TouchKey_RSK_TFT.cpp
+endif
+ifeq ($(MBED_GR_LIBS_components_WIFI), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/components/WIFI/esp32-driver/ESP32Interface.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/components/WIFI/esp32-driver/ESP32InterfaceAP.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/components/WIFI/esp32-driver/ESP32Stack.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/components/WIFI/esp32-driver/ESP32/ESP32.cpp
+endif
+ifeq ($(MBED_GR_LIBS_dcache-control), 1)
+SRC_MBED_C += lib/mbed-gr-libs/dcache-control/dcache-control.c
+endif
+ifeq ($(MBED_GR_LIBS_DeepStandby), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/DeepStandby/DeepStandby.cpp
+endif
+ifeq ($(MBED_GR_LIBS_DisplayApp), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/DisplayApp/DisplayApp.cpp
+endif
+ifeq ($(MBED_GR_LIBS_DRP_FOR_MBED), 1)
 SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/src/r_dk2_core.c
 SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/src/r_dk2_if.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_affine/r_drp_affine.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_argb2grayscale/r_drp_argb2grayscale.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2grayscale/r_drp_bayer2grayscale.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb/r_drp_bayer2rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb_color_correction/r_drp_bayer2rgb_color_correction.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive/r_drp_binarization_adaptive.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive_bit/r_drp_binarization_adaptive_bit.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_fixed/r_drp_binarization_fixed.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_calculate/r_drp_canny_calculate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_hysterisis/r_drp_canny_hysterisis.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_circle_fitting/r_drp_circle_fitting.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_corner_harris/r_drp_corner_harris.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping/r_drp_cropping.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping_rgb/r_drp_cropping_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_dilate/r_drp_dilate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_erode/r_drp_erode.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_find_contours/r_drp_find_contours.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gamma_correction/r_drp_gamma_correction.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gaussian_blur/r_drp_gaussian_blur.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram/r_drp_histogram.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization/r_drp_histogram_normalization.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization_rgb/r_drp_histogram_normalization_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_image_rotate/r_drp_image_rotate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_laplacian/r_drp_laplacian.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_median_blur/r_drp_median_blur.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_delete/r_drp_minutiae_delete.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_extract/r_drp_minutiae_extract.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_prewitt/r_drp_prewitt.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon/r_drp_reed_solomon.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon_gf8/r_drp_reed_solomon_gf8.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear/r_drp_resize_bilinear.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed/r_drp_resize_bilinear_fixed.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed_rgb/r_drp_resize_bilinear_fixed_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_nearest/r_drp_resize_nearest.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2grayscale_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2grayscale_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2yuv_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2yuv_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_sobel/r_drp_sobel.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_thinning/r_drp_thinning.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_unsharp_masking/r_drp_unsharp_masking.c
+endif
+ifeq ($(MBED_GR_LIBS_EasyAttach_CameraAndLCD), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/EasyAttach_CameraAndLCD/EasyAttach_CameraAndLCD.cpp
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/converter_wrapper.c
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/converter_wrapper.c
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/jcu_api.c
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/jcu_para.c
-SRC_MBED_CPP += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/JPEG_Coverter.cpp
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/$(TARGET)/jcu_reg.c
+endif
+ifeq ($(MBED_GR_LIBS_EasyPlayback), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/EasyPlayback/EasyPlayback.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/EasyPlayback/decoder/EasyDec_Mov.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/EasyPlayback/decoder/EasyDec_WavCnv2ch.cpp
+endif
+ifeq ($(MBED_GR_LIBS_GR-PEACH_video), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/GR-PEACH_video/DisplayBase.cpp
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/drivers/ceu/src/r_ceu_driver.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/drivers/ceu/userdef/ceu_userdef.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/drivers/r_mipi/src/r_mipi_api.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/drivers/r_mipi/userdef/r_mipi_userdef_api.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/rz_a2m_evb_vdc.c
-SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/lvds/lvds_pll_data.c
-SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/lvds/lvds_pll_main.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/src/r_spea.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/src/r_spea_check_parameter.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/src/r_spea_register.c
@@ -378,16 +790,94 @@ SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/dri
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/src/r_vdc_shared_param.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/userdef/spea_userdef.c
 SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/drivers/vdc/userdef/vdc_userdef.c
-SRC_MBED_C += lib/mbed-gr-libs/utility/mmu/r_mmu_lld.c
+SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/lvds/lvds_pll_data.c
+SRC_MBED_C += lib/mbed-gr-libs/GR-PEACH_video/targets/$(TARGET)/TARGET_RZA2M/lvds/lvds_pll_main.c
 endif
-
-ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
-SRC_MBED_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
+ifeq ($(MBED_GR_LIBS_GraphicsFramework), 1)
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/converter_wrapper.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/jcu_api.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/jcu_para.c
+SRC_MBED_CPP += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/JPEG_Coverter.cpp
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/jcu_driver/$(TARGET)/jcu_reg.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/porting/jcu_pl.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/jcu/userdef/jcu_user.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/DebugBreak.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/inline_body.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/locking.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/mcu_interrupts.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_debug.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_memory.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_RTX.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_unrecoverable.c
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/TOOLCHAIN_GCC/r_ospl_os_less_asm.s
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/src/r_ospl.c
+endif
+ifeq ($(MBED_GR_LIBS_R_BSP), 1)
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Aio.cpp
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Scux.cpp
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_SerialFamily.cpp
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Spdif.cpp
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Ssif.cpp
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/drv_src/ioif/aioif.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/dma/dma.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/dma/dma_if.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/dma/dma_ver.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/spdif/spdif.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/spdif/spdif_cfg.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/spdif/spdif_dma.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/spdif/spdif_if.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/spdif/spdif_ver.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif_cfg.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif_dma.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif_if.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif_int.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/ssif/ssif_ver.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/bsp_util.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/r_bsp_cmn.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/spdif_api.c
+SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/ssif_api.c
+endif
+ifeq ($(MBED_GR_LIBS_SDBlockDevice_GRBoard), 1)
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/SDHSBlockDevice.cpp
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_cd.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_cmd.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_init.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_int.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_mount.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_read.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_trns.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_util.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_write.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef/sd_dev_dmacdrv.c
+SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef/sd_dev_low.c
+endif
+ifeq ($(MBED_GR_LIBS_USBHost_custom), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBDeviceConnected.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBEndpoint.cpp
+#SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBHALHost_LPC17.cpp
+#SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBHALHost_RZ_A1.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBHALHost_RZ_A2.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/USBHost.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost/TARGET_RENESAS/TARGET_RZ_A2XX/NonCacheMem.c
+SRC_MBED_C += lib/mbed-gr-libs/USBHost_custom/USBHost3GModule/WANDongle.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHost3GModule/WANDongleSerialPort.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostHID/USBHostKeyboard.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostHID/USBHostMouse.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostHub/USBHostHub.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostMIDI/USBHostMIDI.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostMSD/USBHostMSD.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostSerial/USBHostSerial.cpp
+endif
 endif
 
 ifeq ($(MBED_HTTP), 1)
 endif
 
+#######################################################################
+# micropython rz CPU
+#######################################################################
+SRC_C += bufhelper.c
 SRC_C += help.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
@@ -403,16 +893,18 @@ SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
 SRC_C += softtimer.c
+SRC_C += spi.c
 SRC_C += systick.c
 SRC_C += uart.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
+SRC_CPP += mbed/mbed_spi.cpp
 SRC_CPP += mbed/mbed_timer.cpp
 SRC_CPP += mbed/mbed_uart.cpp
-ifeq ($(MBED_GR_LIBS), 1)
-SRC_C += camera_lcd.c
+ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
+EXTMOD_SRC_C += camera_lcd.c
 SRC_CPP += mbed/mbed_camera_lcd.cpp
 endif
 ifeq ($(LVGL_ENABLE) ,1)
@@ -428,6 +920,10 @@ OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 

@@ -58,8 +58,8 @@
 #include "rtc.h"
 #endif
 #include "i2c.h"
-#if RZ_TODO
 #include "spi.h"
+#if RZ_TODO
 #include "uart.h"
 #include "wdt.h"
 #include "pwm.h"
@@ -305,8 +305,8 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 #if MICROPY_PY_MACHINE_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
 #endif
-#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
+#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
     { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },
 #endif

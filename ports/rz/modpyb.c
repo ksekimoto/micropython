@@ -42,8 +42,8 @@
 #include "rtc.h"
 #endif
 #include "i2c.h"
-#if RZ_TODO
 #include "spi.h"
+#if RZ_TODO
 #include "uart.h"
 #endif
 #if 0
@@ -265,7 +265,9 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C), MP_ROM_PTR(&pyb_i2c_type) },
     #endif
+#endif
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&pyb_spi_type) },
+#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&pyb_uart_type) },
 #if MICROPY_HW_ENABLE_CAN
     { MP_ROM_QSTR(MP_QSTR_CAN), MP_ROM_PTR(&pyb_can_type) },
@@ -297,7 +299,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&pyb_lcdspi_type) },
 #endif
 
-#if MBED_GR_LIBS
+#if MBED_GR_LIBS && MBED_GR_LIBS_components_LCD
 #if MICROPY_PY_PYB_CAMERA_LCD
     { MP_ROM_QSTR(MP_QSTR_CAMERA_LCD), MP_ROM_PTR(&pyb_camera_lcd_type) },
 #endif

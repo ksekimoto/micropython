@@ -36,9 +36,9 @@
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
-#define MICROPY_HW_SPI0_SCK  (pin_P87)
-#define MICROPY_HW_SPI0_MISO (pin_P85)
-#define MICROPY_HW_SPI0_MOSI (pin_P86)
+#define MICROPY_HW_SPI1_SCK  (pin_P87)
+#define MICROPY_HW_SPI1_MISO (pin_P85)
+#define MICROPY_HW_SPI1_MOSI (pin_P86)
 
 // USRSW is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW0_PIN        (pin_PD6)

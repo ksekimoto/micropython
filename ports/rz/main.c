@@ -52,7 +52,7 @@
 #include "modmachine.h"
 #include "softtimer.h"
 //#include "i2c.h"
-//#include "spi.h"
+#include "spi.h"
 #include "uart.h"
 #include "timer.h"
 #include "led.h"
