@@ -28,9 +28,21 @@
 #ifndef PORTS_RZ_COMMON_H_
 #define PORTS_RZ_COMMON_H_
 
+#include "stdio.h"
+
 #include "gpio_api.h"
 #include "pinmap.h"
 #include "gpio_addrdefine.h"
 #include "mbed_drv_cfg.h"
+
+#include "rza2m_config.h"
+#include "rza2m_init.h"
+#include "rza2m_gpio.h"
+#include "rza2m_utils.h"
+
+#if defined(USE_DBG_PRINT)
+#include "debug_printf.h"
+#include "vsnprintf.h"
+#endif
 
 #endif /* PORTS_RZ_COMMON_H_ */
