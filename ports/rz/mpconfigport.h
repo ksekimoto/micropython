@@ -118,10 +118,10 @@
 #define MICROPY_PY_IO               (1)
 #define MICROPY_PY_IO_IOBASE        (1)
 #define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT) // because mp_type_fileio/textio point to fatfs impl
-#define MICROPY_PY_SYS_MAXSIZE      (0)
-#define MICROPY_PY_SYS_EXIT         (0)
-#define MICROPY_PY_SYS_STDFILES     (0)
-#define MICROPY_PY_SYS_STDIO_BUFFER (0)
+#define MICROPY_PY_SYS_MAXSIZE      (1)
+#define MICROPY_PY_SYS_EXIT         (1)
+#define MICROPY_PY_SYS_STDFILES     (1)
+#define MICROPY_PY_SYS_STDIO_BUFFER (1)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
 //#define MICROPY_PY_SYS_PLATFORM     "pyboard"
 #define MICROPY_PY_SYS_PLATFORM     "rzboard"
@@ -134,7 +134,7 @@
 // extended modules
 #define MICROPY_PY_UCTYPES          (1)
 #define MICROPY_PY_UZLIB            (1)
-#define MICROPY_PY_UJSON            (0)
+#define MICROPY_PY_UJSON            (1)
 #define MICROPY_PY_URE              (1)
 #define MICROPY_PY_URE_SUB          (1)
 #define MICROPY_PY_UHEAPQ           (1)
@@ -149,7 +149,7 @@
 #define MICROPY_PY_UTIMEQ           (1)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (3)
-#define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (0)
+#define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (1)
 #define MICROPY_PY_LWIP_SOCK_RAW    (MICROPY_PY_LWIP)
 #define MICROPY_PY_MACHINE          (1)
 #define MICROPY_PY_MACHINE_PULSE    (1)
@@ -222,8 +222,8 @@ extern const struct _mp_obj_module_t mp_module_uzlib;
 extern const struct _mp_obj_module_t mp_module_ujson;
 extern const struct _mp_obj_module_t mp_module_uheapq;
 extern const struct _mp_obj_module_t mp_module_uhashlib;
-#if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_uos;
+#if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
@@ -320,7 +320,7 @@ extern void lv_deinit(void);
     /* TWITTER_BUILTIN_MODULE */ \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */\
     /* SOCKET_BUILTIN_MODULE */ \
     /* WSOCKET_BUILTIN_MODULE */ \
@@ -351,7 +351,7 @@ extern void lv_deinit(void);
     { MP_ROM_QSTR(MP_QSTR_heapq), MP_ROM_PTR(&mp_module_uheapq) }, \
     { MP_ROM_QSTR(MP_QSTR_hashlib), MP_ROM_PTR(&mp_module_uhashlib) }, \
     { MP_ROM_QSTR(MP_QSTR_io), MP_ROM_PTR(&mp_module_io) }, \
-    /* { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, */ \
+    { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_random), MP_ROM_PTR(&mp_module_urandom) }, \
     /* { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, */\
     /* { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, */ \
