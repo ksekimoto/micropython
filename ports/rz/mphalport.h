@@ -31,7 +31,7 @@
 
 // timing functions
 
-//#include "irq.h"
+#include "irq.h"
 #define mp_hal_quiet_timing_enter() (1)
 #define mp_hal_quiet_timing_exit(irq_state) (void)(irq_state)
 #define mp_hal_delay_us_fast(us) mp_hal_delay_us(us)
