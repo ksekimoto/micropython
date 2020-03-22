@@ -45,7 +45,7 @@
 
 // Whether to enable storage on the internal flash of the MCU
 #ifndef MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
-#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (0)
+#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
 #endif
 
 // Whether to enable the RTC, exposed as pyb.RTC
