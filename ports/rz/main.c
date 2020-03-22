@@ -34,6 +34,10 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+#include "lib/oofatfs/ff.h"
+#include "extmod/vfs.h"
+#include "extmod/vfs_fat.h"
+#include "extmod/vfs_lfs.h"
 
 #if MICROPY_PY_LWIP
 #include "lwip/init.h"
@@ -48,7 +52,7 @@
 #include "pendsv.h"
 #include "pybthread.h"
 #include "gccollect.h"
-//#include "factoryreset.h"
+#include "factoryreset.h"
 #include "modmachine.h"
 #include "softtimer.h"
 //#include "i2c.h"
@@ -58,10 +62,10 @@
 #include "led.h"
 #include "pin.h"
 //#include "extint.h"
-//#include "usrsw.h"
+#include "usrsw.h"
 //#include "usb.h"
 //#include "rtc.h"
-//#include "storage.h"
+#include "storage.h"
 //#include "sdcard.h"
 //#include "sdram.h"
 //#include "rng.h"
@@ -191,61 +195,68 @@ STATIC int vfs_mount_and_chdir(mp_obj_t bdev, mp_obj_t mount_point) {
 
 // avoid inlining to avoid stack usage within main()
 MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
-    // init the vfs object
-    fs_user_mount_t *vfs_fat = &fs_user_mount_flash;
-    pyb_flash_init_vfs(vfs_fat);
+    if (reset_mode == 3) {
+        // Asked by user to reset filesystem
+        factory_reset_create_filesystem();
+    }
 
-    // try to mount the flash
-    FRESULT res = f_mount(&vfs_fat->fatfs);
+    // Default block device to entire flash storage
+    mp_obj_t bdev = MP_OBJ_FROM_PTR(&pyb_flash_obj);
 
-    if (reset_mode == 3 || res == FR_NO_FILESYSTEM) {
-        // no filesystem, or asked to reset it, so create a fresh one
+    #if MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2
 
-        // LED on to indicate creation of LFS
-        led_state(PYB_LED_GREEN, 1);
-        uint32_t start_tick = (uint32_t)mp_hal_ticks_ms();
+    // Try to detect the block device used for the main filesystem, based on the first block
 
-        uint8_t working_buf[FF_MAX_SS];
-        res = f_mkfs(&vfs_fat->fatfs, FM_FAT, 0, working_buf, sizeof(working_buf));
-        if (res == FR_OK) {
-            // success creating fresh LFS
-        } else {
-            printf("MPY: can't create flash filesystem\n");
-            return false;
+    uint8_t buf[FLASH_BLOCK_SIZE];
+    storage_read_blocks(buf, FLASH_PART1_START_BLOCK, 1);
+
+    mp_int_t len = -1;
+
+    #if MICROPY_VFS_LFS1
+    if (memcmp(&buf[40], "littlefs", 8) == 0) {
+        // LFS1
+        lfs1_superblock_t *superblock = (void*)&buf[12];
+        uint32_t block_size = lfs1_fromle32(superblock->d.block_size);
+        uint32_t block_count = lfs1_fromle32(superblock->d.block_count);
+        len = block_count * block_size;
+    }
+    #endif
+
+    #if MICROPY_VFS_LFS2
+    if (memcmp(&buf[8], "littlefs", 8) == 0) {
+        // LFS2
+        lfs2_superblock_t *superblock = (void*)&buf[20];
+        uint32_t block_size = lfs2_fromle32(superblock->block_size);
+        uint32_t block_count = lfs2_fromle32(superblock->block_count);
+        len = block_count * block_size;
+    }
+    #endif
+
+    if (len != -1) {
+        // Detected a littlefs filesystem so create correct block device for it
+        mp_obj_t args[] = { MP_OBJ_NEW_QSTR(MP_QSTR_len), MP_OBJ_NEW_SMALL_INT(len) };
+        bdev = pyb_flash_type.make_new(&pyb_flash_type, 0, 1, args);
         }
 
-        // set label
-        f_setlabel(&vfs_fat->fatfs, MICROPY_HW_FLASH_FS_LABEL);
+    #endif
 
-        // populate the filesystem with factory files
-        //factory_reset_make_files(&vfs_fat->fatfs);
+    // Try to mount the flash on "/flash" and chdir to it for the boot-up directory.
+    mp_obj_t mount_point = MP_OBJ_NEW_QSTR(MP_QSTR__slash_flash);
+    int ret = vfs_mount_and_chdir(bdev, mount_point);
 
-        // keep LED on for at least 200ms
-        systick_wait_at_least(start_tick, 200);
-        led_state(PYB_LED_GREEN, 0);
-    } else if (res == FR_OK) {
-        // mount sucessful
-    } else {
-    fail:
+    if (ret == -MP_ENODEV && bdev == MP_OBJ_FROM_PTR(&pyb_flash_obj) && reset_mode != 3) {
+        // No filesystem, bdev is still the default (so didn't detect a possibly corrupt littlefs),
+        // and didn't already create a filesystem, so try to create a fresh one now.
+        ret = factory_reset_create_filesystem();
+        if (ret == 0) {
+            ret = vfs_mount_and_chdir(bdev, mount_point);
+        }
+    }
+
+    if (ret != 0) {
         printf("MPY: can't mount flash\n");
         return false;
     }
-
-    // mount the flash device (there should be no other devices mounted at this point)
-    // we allocate this structure on the heap because vfs->next is a root pointer
-    mp_vfs_mount_t *vfs = m_new_obj_maybe(mp_vfs_mount_t);
-    if (vfs == NULL) {
-        goto fail;
-    }
-    vfs->str = "/flash";
-    vfs->len = 6;
-    vfs->obj = MP_OBJ_FROM_PTR(vfs_fat);
-    vfs->next = NULL;
-    MP_STATE_VM(vfs_mount_table) = vfs;
-
-    // The current directory is used as the boot up directory.
-    // It is set to the internal flash filesystem by default.
-    MP_STATE_PORT(vfs_cur) = vfs;
 
     return true;
 }
@@ -328,25 +339,6 @@ STATIC bool init_sdcard_fs(void) {
         return true;
     }
 }
-#endif
-
-#if MICROPY_ENABLE_COMPILER
-#if RZ_TODO
-void do_str(const char *src, mp_parse_input_kind_t input_kind) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, src, strlen(src), 0);
-        qstr source_name = lex->source_name;
-        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
-        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, true);
-        mp_call_function_0(module_fun);
-        nlr_pop();
-    } else {
-        // uncaught exception
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-}
-#endif
 #endif
 
 #if !MICROPY_HW_USES_BOOTLOADER
@@ -445,6 +437,7 @@ static int chk_kbd_interrupt(int d)
 
 void main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers
+    rza2m_init();
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif
@@ -679,13 +672,27 @@ soft_reset:
 
     // At this point everything is fully configured and initialised.
 
+    // Run the main script from the current directory.
+    if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
+        const char *main_py;
+        if (MP_STATE_PORT(pyb_config_main) == MP_OBJ_NULL) {
+            main_py = "main.py";
+        } else {
+            main_py = mp_obj_str_get_str(MP_STATE_PORT(pyb_config_main));
+        }
+        int ret = pyexec_file_if_exists(main_py);
+        if (ret & PYEXEC_FORCED_EXIT) {
+            goto soft_reset_exit;
+        }
+        if (!ret) {
+            flash_error(3);
+        }
+    }
+
     #if MICROPY_ENABLE_COMPILER
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
-#if MICROPY_HW_ENABLE_STORAGE
-        storage_flush();
-#endif
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             if (pyexec_raw_repl() != 0) {
                 break;
@@ -697,35 +704,15 @@ soft_reset:
         }
     }
     #endif
-#if 0
-    #if MICROPY_ENABLE_COMPILER
-    #if MICROPY_REPL_EVENT_DRIVEN
-    pyexec_event_repl_init();
-    for (;;) {
-        int c = mp_hal_stdin_rx_chr();
-        if (pyexec_event_repl_process_char(c)) {
-            break;
-        }
-    }
-    #else
-    pyexec_friendly_repl();
-    #endif
-
-    //do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    //do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
-    #else
-    pyexec_frozen_module("frozentest.py");
-    #endif
-#endif
 
 soft_reset_exit:
 
     // soft reset
 
-    //#if MICROPY_HW_ENABLE_STORAGE
-    //printf("MPY: sync filesystems\n");
-    //storage_flush();
-    //#endif
+    #if MICROPY_HW_ENABLE_STORAGE
+    printf("MPY: sync filesystems\n");
+    storage_flush();
+    #endif
 
     printf("MPY: soft reboot\n");
     #if MICROPY_HW_ENABLE_SERVO
