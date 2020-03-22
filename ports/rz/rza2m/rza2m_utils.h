@@ -29,8 +29,15 @@
 
 #include <stdint.h>
 
-__attribute__((always_inline)) void rz_enable_irq(void);
-__attribute__((always_inline)) void rz_disable_irq(void);
+static inline void rz_enable_irq(void) {
+    __asm__ __volatile__ ("cpsie i" : : : "memory");
+}
+
+static inline void rz_disable_irq(void) {
+    __asm__ __volatile__ ("cpsid i" : : : "memory");
+}
+
+
 #if RZ_TODO
 __attribute__((always_inline)) uint32_t rz_get_PRIMASK(void);
 __attribute__((always_inline) ) void rz_set_PRIMASK(uint32_t priMask);

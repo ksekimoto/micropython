@@ -26,6 +26,8 @@
 
 #include "rza2m_utils.h"
 
+#if RZ_TODO
+
 __attribute__((always_inline)) void rz_enable_irq(void) {
     __asm__ __volatile__ ("cpsie i" : : : "memory");
 }
@@ -34,7 +36,6 @@ __attribute__((always_inline)) void rz_disable_irq(void) {
     __asm__ __volatile__ ("cpsid i" : : : "memory");
 }
 
-#if RZ_TODO
 __attribute__((always_inline)) uint32_t rz_get_PRIMASK(void) {
     uint32_t result;
     __asm__ __volatile__ ("MRS %0, primask" : "=r" (result));
@@ -44,4 +45,5 @@ __attribute__((always_inline)) uint32_t rz_get_PRIMASK(void) {
 __attribute__((always_inline) ) void rz_set_PRIMASK(uint32_t priMask) {
     __asm__ __volatile__ ("MSR primask, %0" : : "r" (priMask) : "memory");
 }
+
 #endif
