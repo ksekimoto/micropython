@@ -472,8 +472,30 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     rz_disable_irq();
     sci_module_start(ch);
     _gpio_mode_input(rx_pin);
-    _gpio_mode_af(tx_pin, 4);
-    _gpio_mode_af(rx_pin, 4);
+    switch (ch) {
+        case 0:
+            _gpio_mode_af(tx_pin, 1);
+            _gpio_mode_af(rx_pin, 1);
+            break;
+        case 1:
+            _gpio_mode_af(tx_pin, 4);
+            _gpio_mode_af(rx_pin, 4);
+            break;
+        case 2:
+            _gpio_mode_af(tx_pin, 3);
+            _gpio_mode_af(rx_pin, 3);
+            break;
+        case 3:
+            _gpio_mode_af(tx_pin, 3);
+            _gpio_mode_af(rx_pin, 3);
+            break;
+        case 4:
+            _gpio_mode_af(tx_pin, 4);
+            _gpio_mode_af(rx_pin, 4);
+            break;
+        default:
+            break;
+    }
     sci->SCR.WORD = 0;
     if (bits == 7) {
         smr |= 0x40;
