@@ -6,8 +6,8 @@
 #define MICROPY_HW_MCU_PCLK1C       66000000
 #define MICROPY_HW_MCU_PCLK         (MICROPY_HW_MCU_PCLK0)
 
-#define MICROPY_HW_HAS_SWITCH       (0)
-#define MICROPY_HW_HAS_FLASH        (0)
+#define MICROPY_HW_HAS_SWITCH       (1)
+#define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
@@ -41,10 +41,10 @@
 #define MICROPY_HW_SPI1_MOSI (pin_P86)
 
 // USRSW is pulled low. Pressing the button makes the input go high.
-#define MICROPY_HW_USRSW0_PIN        (pin_PD6)
-#define MICROPY_HW_USRSW0_PULL       (GPIO_NOPULL)
-#define MICROPY_HW_USRSW0_EXTI_MODE  (GPIO_MODE_IT_FALLING)
-#define MICROPY_HW_USRSW0_PRESSED    (0)
+#define MICROPY_HW_USRSW_PIN        (pin_PD6)
+#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
+#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
+#define MICROPY_HW_USRSW_PRESSED    (0)
 #define MICROPY_HW_USRSW1_PIN        (pin_PD7)
 #define MICROPY_HW_USRSW1_PULL       (GPIO_NOPULL)
 #define MICROPY_HW_USRSW1_EXTI_MODE  (GPIO_MODE_IT_FALLING)
@@ -59,6 +59,7 @@
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
 
+#define MICROPY_HW_ENABLE_ADC   (0)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
 #define MICROPY_PY_PYB_CAMERA_LCD   (1)
