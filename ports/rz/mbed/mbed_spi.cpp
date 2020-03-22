@@ -70,7 +70,16 @@ void mbed_spi_set_spi_ch(uint32_t ch, uint32_t polarity, uint32_t phase) {
 
 void mbed_spi_transfer(uint32_t ch, uint32_t bits, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout) {
     spi_t *pspi = &MBED_SPI[ch];
-    spi_master_transfer(pspi, (const void *)src, (size_t)count, (void *)dst, (size_t)count, 8, 0, 0, DMA_USAGE_NEVER);
+    uint32_t src_count = count;
+    uint32_t dst_count = count;
+    if (src == NULL) {
+        src_count = 0;
+    }
+    if (dst == NULL) {
+        dst_count = 0;
+    }
+    spi_master_block_write(pspi, (const char *)src, (int)src_count, (char *)dst, (int)dst_count, (char)0xff);
+    //spi_master_transfer(pspi, (const void *)src, (size_t)src_count, (void *)dst, (size_t)dst_count, 8, 0, 0, DMA_USAGE_NEVER);
 }
 
 void mbed_spi_init(uint32_t ch, uint32_t cs, uint32_t baud, uint32_t bits, uint32_t mode) {
