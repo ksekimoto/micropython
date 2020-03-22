@@ -34,32 +34,34 @@
 #include "drivers/dht/dht.h"
 #include "irq.h"
 #include "led.h"
-#if RZ_TODO
 #include "timer.h"
+#if RZ_TODO
 #include "extint.h"
+#endif
 #include "usrsw.h"
+#if RZ_TODO
 #include "rng.h"
 #include "rtc.h"
 #endif
 #include "i2c.h"
 #include "spi.h"
-#if RZ_TODO
 #include "uart.h"
-#endif
 #if 0
 #include "can.h"
 #endif
 #if RZ_TODO
 #include "adc.h"
+#endif
 #include "storage.h"
+#if RZ_TODO
 #include "sdcard.h"
 #include "accel.h"
 #include "servo.h"
 #include "dac.h"
 #include "lcd.h"
 #include "usb.h"
-#include "portmodules.h"
 #endif
+#include "portmodules.h"
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
@@ -114,7 +116,6 @@ MP_DECLARE_CONST_FUN_OBJ_KW(pyb_main_obj); // defined in main.c
 // Get or set the UART object that the REPL is repeated on.
 // This is a legacy function, use of uos.dupterm is preferred.
 STATIC mp_obj_t pyb_repl_uart(size_t n_args, const mp_obj_t *args) {
-#if RZ_TODO
     if (n_args == 0) {
         if (MP_STATE_PORT(pyb_stdio_uart) == NULL) {
             return mp_const_none;
@@ -135,7 +136,6 @@ STATIC mp_obj_t pyb_repl_uart(size_t n_args, const mp_obj_t *args) {
         }
         return mp_const_none;
     }
-#endif
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_repl_uart_obj, 0, 1, pyb_repl_uart);
@@ -172,9 +172,9 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
 #if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_wfi), MP_ROM_PTR(&pyb_wfi_obj) },
+#endif
     { MP_ROM_QSTR(MP_QSTR_disable_irq), MP_ROM_PTR(&pyb_disable_irq_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable_irq), MP_ROM_PTR(&pyb_enable_irq_obj) },
-#endif
     #if IRQ_ENABLE_STATS
     { MP_ROM_QSTR(MP_QSTR_irq_stats), MP_ROM_PTR(&pyb_irq_stats_obj) },
     #endif
@@ -208,9 +208,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_elapsed_micros), MP_ROM_PTR(&pyb_elapsed_micros_obj) },
     { MP_ROM_QSTR(MP_QSTR_delay), MP_ROM_PTR(&mp_utime_sleep_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_udelay), MP_ROM_PTR(&mp_utime_sleep_us_obj) },
-#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_sync), MP_ROM_PTR(&mod_os_sync_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
     #endif
 
@@ -267,7 +265,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     #endif
 #endif
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&pyb_spi_type) },
-#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&pyb_uart_type) },
 #if MICROPY_HW_ENABLE_CAN
     { MP_ROM_QSTR(MP_QSTR_CAN), MP_ROM_PTR(&pyb_can_type) },
@@ -284,7 +281,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
 #if MICROPY_HW_HAS_MMA7660 || MICROPY_HW_HAS_KXTJ3
     { MP_ROM_QSTR(MP_QSTR_Accel), MP_ROM_PTR(&pyb_accel_type) },
-#endif
 #endif
 
 #if MICROPY_HW_HAS_LCD
