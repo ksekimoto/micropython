@@ -75,9 +75,7 @@ void _mp_hal_stdout_tx_strn(const char *str, int len);
 
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
-#if RZ_TODO
         flash_cache_commit();
-#endif
 #if 0
 #ifdef USE_HOST_MODE
         pyb_usb_host_process();
