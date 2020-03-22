@@ -50,8 +50,7 @@ QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
-FROZEN_DIR =
-FROZEN_MPY_DIR =
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 
@@ -212,8 +211,6 @@ endif
 
 SRC_LIB = $(addprefix lib/,\
 	libc/string0.c \
-	oofatfs/ff.c \
-	oofatfs/ffunicode.c \
 	mp-readline/readline.c \
 	timeutils/timeutils.c \
 	utils/pyexec.c \
