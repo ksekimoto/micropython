@@ -16,14 +16,21 @@ ifeq ($(wildcard $(BOARD_DIR)/.),)
 $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
+# enable debug_printf
+USE_DBG_PRINT = 0
+
+# enable micropython debug flag
+#MICROPY_DEBUG_VERBOSE = 1
+#MICROPY_DEBUG_PRINTERS = 1
+
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
 TARGET = TARGET_RZ_A2XX
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
-MBED_GR_LIBS = 1
+MBED_GR_LIBS = 0
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
@@ -74,6 +81,9 @@ INC += -I$(MCU_SERIES_LOW)
 INC += -Iboards/$(BOARD)
 INC += -Imbed
 INC += -Ilv
+ifeq ($(USE_DBG_PRINT) ,1)
+INC += -Idebug
+endif
 
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 INC_MBED += -ITARGET_RENESAS
@@ -169,6 +179,20 @@ ifeq ($(BOARD),GR_MANGO)
 CFLAGS += -DGRMANGO
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
+CFLAGS += -DMICROPY_VFS_FAT=1
+
+ifeq ($(USE_DBG_PRINT), 1)
+CFLAGS += -DUSE_DBG_PRINT
+#CFLAGS += -DMICROPY_DEBUG_PRINTERS=debug_printf
+endif
+
+ifeq ($(MICROPY_DEBUG_VERBOSE), 1)
+CFLAGS += -DMICROPY_DEBUG_VERBOSE=1
+endif
+
+ifeq ($(MICROPY_DEBUG_PRINTERS), 1)
+CFLAGS += -DMICROPY_DEBUG_PRINTERS=1
+endif
 
 CSUPEROPT = -Os # save some code space
 
@@ -186,9 +210,22 @@ endif
 # source files
 #######################################################################
 
+SRC_LIB = $(addprefix lib/,\
+	libc/string0.c \
+	oofatfs/ff.c \
+	oofatfs/ffunicode.c \
+	mp-readline/readline.c \
+	timeutils/timeutils.c \
+	utils/pyexec.c \
+	utils/interrupt_char.c \
+	utils/printf.c \
+	utils/sys_stdio_mphal.c \
+	utils/mpirq.c \
+	)
+
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	virtpin.c \
-        )
+    )
 
 ifeq ($(MICROPY_FLOAT_IMPL),double)
 SRC_LIBM = $(addprefix lib/libm_dbl/,\
@@ -288,11 +325,6 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 
 SRC_C = \
 	main.c \
-	lib/utils/interrupt_char.c \
-	lib/utils/printf.c \
-	lib/utils/pyexec.c \
-	lib/libc/string0.c \
-	lib/mp-readline/readline.c \
 #	$(BUILD)/_frozen_mpy.c \
 
 #######################################################################
@@ -879,13 +911,19 @@ endif
 #######################################################################
 SRC_C += bufhelper.c
 SRC_C += help.c
+SRC_C += factoryreset.c
+SRC_C += fatfs_port.c
+SRC_C += flash.c
+SRC_C += flashbdev.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
 SRC_C += i2c.c
+SRC_C += irq.c
 SRC_C += machine_uart.c
 SRC_C += machine_timer.c
 SRC_C += modmachine.c
 SRC_C += modpyb.c
+SRC_C += moduos.c
 SRC_C += mphalport.c
 SRC_C += led.c
 SRC_C += pendsv.c
@@ -894,21 +932,33 @@ SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
 SRC_C += softtimer.c
 SRC_C += spi.c
+SRC_C += storage.c
 SRC_C += systick.c
+#SRC_C += timer.c
 SRC_C += uart.c
+SRC_C += usrsw.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
+SRC_CPP += mbed/mbed_flash.cpp
 SRC_CPP += mbed/mbed_spi.cpp
 SRC_CPP += mbed/mbed_timer.cpp
 SRC_CPP += mbed/mbed_uart.cpp
+ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
 EXTMOD_SRC_C += camera_lcd.c
 SRC_CPP += mbed/mbed_camera_lcd.cpp
 endif
+endif
 ifeq ($(LVGL_ENABLE) ,1)
 SRC_C += lv/modlvrz.c
+endif
+
+ifeq ($(USE_DBG_PRINT) ,1)
+SRC_C += debug/debug_printf.c
+SRC_C += debug/vsnprintf.c
 endif
 
 #######################################################################
@@ -933,6 +983,21 @@ OBJ_MBED_CPP += $(addprefix $(BUILD)/, $(SRC_MBED_CPP:.cpp=.o))
 OBJ_MBED += $(OBJ_MBED_C) 
 OBJ_MBED += $(OBJ_MBED_S) 
 OBJ_MBED += $(OBJ_MBED_CPP) 
+
+# This file contains performance critical functions so turn up the optimisation
+# level.  It doesn't add much to the code size and improves performance a bit.
+# Don't use -O3 with this file because gcc tries to optimise memset in terms of itself.
+$(BUILD)/lib/libc/string0.o: COPT += -O2
+
+# We put several files into the first 16K section with the ISRs.
+# If we compile these using -O0 then it won't fit. So if you really want these
+# to be compiled with -O0, then edit boards/common.ld (in the .isr_vector section)
+# and comment out the following lines.
+$(BUILD)/$(OOFATFS_DIR)/ff.o: COPT += -Os
+$(filter $(PY_BUILD)/../extmod/vfs_fat_%.o, $(PY_O)): COPT += -Os
+$(PY_BUILD)/formatfloat.o: COPT += -Os
+$(PY_BUILD)/parsenum.o: COPT += -Os
+$(PY_BUILD)/mpprint.o: COPT += -Os
 
 all: $(BUILD)/firmware.elf
 
@@ -1004,6 +1069,8 @@ ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
+
+
 
 #$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 #	$(ECHO) "MISC freezing bytecode"
