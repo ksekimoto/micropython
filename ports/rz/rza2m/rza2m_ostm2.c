@@ -34,7 +34,7 @@
 
 #define OSTM2_1MS       ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 1000)
 #define OSTM2_100US     ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 10000)
-#define OSTM2_DEF_PER   ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 10000)
+#define OSTM2_DEF_PER   ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 1000)
 #define OSTM2_INT_PRI   15  /* lowest */
 #define OSTM2_INT_CNT
 
@@ -92,7 +92,7 @@ void rza2m_ostm2_init(void) {
 
     // timer settings
     OSTM2.OSTMnTT.BYTE = 0x01;  /* Stop the counter */
-    OSTM2.OSTMnCTL.BYTE = 0x03; /* Free running timer mode, interrupt enable */
+    OSTM2.OSTMnCTL.BYTE = 0x02; /* Free running timer mode, interrupt enable */
     OSTM2.OSTMnCMP.LONG = OSTM2.OSTMnCNT.LONG + rza2m_ostm2_irq_period;
     OSTM2.OSTMnTS.BYTE  = 0x1;  /* Start the counter */
     rza2m_ostm2_irq_active = false;
