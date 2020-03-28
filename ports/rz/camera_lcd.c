@@ -34,31 +34,31 @@
 #include "camera_lcd.h"
 
 STATIC mp_obj_t pyb_get_frame_buffer(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_frame_buffer();
-    int hw = (int)mbed_get_frame_hw();
-    int vw = (int)mbed_get_frame_vw();
-    int pic_size = (int)mbed_get_frame_pic_size();
+    uint8_t *buf = mbed_get_fb_ptr();
+    int hw = (int)mbed_get_lcd_hw();
+    int vw = (int)mbed_get_lcd_vw();
+    int pic_size = (int)mbed_get_lcd_pic_size();
     int size = (((hw * pic_size + 0x1f) & (~0x1f)) * vw);
     return mp_obj_new_bytearray_by_ref((size_t)size, (void *)buf);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pyb_get_frame_buffer_obj, pyb_get_frame_buffer);
 
 STATIC mp_obj_t pyb_start_camera(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_frame_buffer();
+    uint8_t *buf = mbed_get_fb_ptr();
     mbed_start_video_camera(buf);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pyb_start_camera_obj, pyb_start_camera);
 
 STATIC mp_obj_t pyb_start_lcd_ycbcr(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_frame_buffer();
+    uint8_t *buf = mbed_get_fb_ptr();
     mbed_start_lcd_ycbcr_display(buf);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pyb_start_lcd_ycbcr_obj, pyb_start_lcd_ycbcr);
 
 STATIC mp_obj_t pyb_start_lcd_rgb(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_frame_buffer();
+    uint8_t *buf = mbed_get_fb_ptr();
     mbed_start_lcd_rgb_display(buf);
     return mp_const_none;
 }

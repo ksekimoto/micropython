@@ -25,38 +25,60 @@
  */
 
 #include "mbed.h"
+#include "dcache-control.h"
 #include "EasyAttach_CameraAndLCD.h"
 #include "mbed_camera_lcd.h"
 
-#define VIDEO_PIXEL_HW         (640)
-#define VIDEO_PIXEL_VW         (480)
-
-#define DATA_SIZE_PER_PIC      (2u)
-#define FRAME_BUFFER_STRIDE    (((VIDEO_PIXEL_HW * DATA_SIZE_PER_PIC) + 31u) & ~31u)
-#define FRAME_BUFFER_HEIGHT    (VIDEO_PIXEL_VW)
+#define FRAME_BUFFER_STRIDE    (((LCD_PIXEL_WIDTH * DATA_SIZE_PER_PIC) + 31u) & ~31u)
+#define FRAME_BUFFER_HEIGHT    (LCD_PIXEL_HEIGHT)
 
 static uint8_t user_frame_buffer0[FRAME_BUFFER_STRIDE * FRAME_BUFFER_HEIGHT]__attribute((section("NC_BSS"),aligned(32)));
+static uint16_t lcd_hw = LCD_PIXEL_WIDTH;
+static uint16_t lcd_vw = LCD_PIXEL_HEIGHT;
 static uint16_t video_hw = VIDEO_PIXEL_HW;
 static uint16_t video_vw = VIDEO_PIXEL_VW;
 static uint16_t video_pic_size = DATA_SIZE_PER_PIC;
 
-static DisplayBase::video_input_channel_t channel;
+//static DisplayBase::video_input_channel_t channel;
 static DisplayBase *mbed_display;
 
-int mbed_get_frame_hw(void) {
+void mbed_ticker_thread(void *thread, uint32_t ms) {
+    static Ticker ticker;
+    ticker.attach_us((void (*)())thread, ms);
+}
+
+void mbed_set_pixel(int x, int y, uint16_t color) {
+    int i = (((LCD_PIXEL_WIDTH) + 31u) & ~31u) * y + x;
+    uint16_t *p = (uint16_t*)user_frame_buffer0;
+    p[i] = color;
+}
+
+uint8_t *mbed_get_fb_ptr(void) {
+    return (uint8_t *)&user_frame_buffer0;
+}
+
+uint32_t mbed_get_fb_size(void) {
+    return (uint32_t)(FRAME_BUFFER_STRIDE * FRAME_BUFFER_HEIGHT);
+}
+
+int mbed_get_lcd_hw(void) {
+    return lcd_hw;
+}
+
+int mbed_get_lcd_vw(void) {
+    return lcd_vw;
+}
+
+int mbed_get_video_hw(void) {
     return video_hw;
 }
 
-int mbed_get_frame_vw(void) {
+int mbed_get_video_vw(void) {
     return video_vw;
 }
 
-int mbed_get_frame_pic_size(void) {
+int mbed_get_lcd_pic_size(void) {
     return video_pic_size;
-}
-
-uint8_t *mbed_get_frame_buffer(void) {
-    return (uint8_t *)&user_frame_buffer0;
 }
 
 void mbed_start_video_camera(uint8_t *buf) {
@@ -76,18 +98,10 @@ void mbed_start_video_camera(uint8_t *buf) {
 void mbed_start_lcd_ycbcr_display(uint8_t *buf) {
    DisplayBase::rect_t rect;
 
-#if (LCD_PIXEL_HEIGHT > VIDEO_PIXEL_VW)
-   rect.vs = (LCD_PIXEL_HEIGHT - VIDEO_PIXEL_VW) / 2;  // centering
-#else
    rect.vs = 0;
-#endif
-   rect.vw = VIDEO_PIXEL_VW;
-#if (LCD_PIXEL_WIDTH > VIDEO_PIXEL_HW)
-   rect.hs = (LCD_PIXEL_WIDTH - VIDEO_PIXEL_HW) / 2;   // centering
-#else
+   rect.vw = LCD_PIXEL_HEIGHT;
    rect.hs = 0;
-#endif
-   rect.hw = VIDEO_PIXEL_HW;
+   rect.hw = LCD_PIXEL_WIDTH;
    mbed_display->Graphics_Read_Setting(
        DisplayBase::GRAPHICS_LAYER_0,
        (void *)buf,
@@ -106,18 +120,15 @@ void mbed_start_lcd_ycbcr_display(uint8_t *buf) {
 void mbed_start_lcd_rgb_display(uint8_t *buf) {
    DisplayBase::rect_t rect;
 
-#if (LCD_PIXEL_HEIGHT > VIDEO_PIXEL_VW)
-   rect.vs = (LCD_PIXEL_HEIGHT - VIDEO_PIXEL_VW) / 2;  // centering
-#else
+   for (uint32_t i = 0; i < sizeof(user_frame_buffer0); i += 2) {
+       user_frame_buffer0[i + 0] = 0x00;
+       user_frame_buffer0[i + 1] = 0x00;
+   }
+   dcache_clean(user_frame_buffer0, sizeof(user_frame_buffer0));
    rect.vs = 0;
-#endif
-   rect.vw = VIDEO_PIXEL_VW;
-#if (LCD_PIXEL_WIDTH > VIDEO_PIXEL_HW)
-   rect.hs = (LCD_PIXEL_WIDTH - VIDEO_PIXEL_HW) / 2;   // centering
-#else
+   rect.vw = LCD_PIXEL_HEIGHT;
    rect.hs = 0;
-#endif
-   rect.hw = VIDEO_PIXEL_HW;
+   rect.hw = LCD_PIXEL_WIDTH;
    mbed_display->Graphics_Read_Setting(
        DisplayBase::GRAPHICS_LAYER_0,
        (void *)buf,
@@ -127,10 +138,20 @@ void mbed_start_lcd_rgb_display(uint8_t *buf) {
        &rect
    );
    mbed_display->Graphics_Start(DisplayBase::GRAPHICS_LAYER_0);
-
-   //ThisThread::sleep_for(50);
    wait_ms(50);
    EasyAttach_LcdBacklight(true);
+}
+
+void mbed_lcd_init(void) {
+    mbed_display = new DisplayBase();
+    EasyAttach_Init(*mbed_display);
+    mbed_start_lcd_rgb_display((uint8_t *)&user_frame_buffer0);
+}
+
+void mbed_lcd_deinit(void) {
+    if (mbed_display) {
+        delete mbed_display;
+    }
 }
 
 void mbed_camera_lcd_init(void) {

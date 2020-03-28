@@ -33,17 +33,31 @@ extern "C" {
 #endif
 
 /* LCD Parameter */
-#define LCD_INPUT_CLOCK                     (66.67)  /* not use */
+#define LCD_INPUT_CLOCK     (66.67)  /* not use */
+#define LCD_PIXEL_WIDTH     (800)
+#define LCD_PIXEL_HEIGHT    (480)
 
+#define VIDEO_PIXEL_HW      (800)
+#define VIDEO_PIXEL_VW      (480)
+
+#define DATA_SIZE_PER_PIC      (2u)
+
+void mbed_ticker_thread(void *thread, uint32_t ms);
 void mbed_camera_lcd_init(void);
 void mbed_camera_lcd_deinit(void);
 void mbed_start_video_camera(uint8_t *buf);
 void mbed_start_lcd_ycbcr_display(uint8_t *buf);
 void mbed_start_lcd_rgb_display(uint8_t *buf);
-uint8_t *mbed_get_frame_buffer(void);
-int mbed_get_frame_hw(void);
-int mbed_get_frame_vw(void);
-int mbed_get_frame_pic_size(void);
+void mbed_lcd_init(void);
+void mbed_lcd_deinit(void);
+uint8_t *mbed_get_fb_ptr(void);
+uint32_t mbed_get_fb_size(void);
+void mbed_set_pixel(int x, int y, uint16_t color);
+int mbed_get_lcd_hw(void);
+int mbed_get_lcd_vw(void);
+int mbed_get_lcd_pic_size(void);
+int mbed_get_video_hw(void);
+int mbed_get_video_vw(void);
 
 #ifdef __cplusplus
 };
