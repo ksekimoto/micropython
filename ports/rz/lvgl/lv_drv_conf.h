@@ -17,8 +17,8 @@
  * DELAY INTERFACE
  *********************/
 #define LV_DRV_DELAY_INCLUDE  <stdint.h>            /*Dummy include by default*/
-#define LV_DRV_DELAY_US(us)  /*delay_us(us)*/       /*Delay the given number of microseconds*/
-#define LV_DRV_DELAY_MS(ms)  /*delay_ms(ms)*/       /*Delay the given number of milliseconds*/
+#define LV_DRV_DELAY_US(us)  delay_us(us)       /*Delay the given number of microseconds*/
+#define LV_DRV_DELAY_MS(ms)  delay_ms(ms)       /*Delay the given number of milliseconds*/
 
 /*********************
  * DISPLAY INTERFACE
