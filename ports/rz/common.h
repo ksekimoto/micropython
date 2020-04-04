@@ -35,9 +35,13 @@
 #include "gpio_addrdefine.h"
 #include "mbed_drv_cfg.h"
 
+#include "bootstrap.h"
 #include "rza2m_config.h"
-#include "rza2m_init.h"
+#include "rza2m_ether.h"
 #include "rza2m_gpio.h"
+#include "rza2m_init.h"
+#include "rza2m_ostm2.h"
+#include "rza2m_sci.h"
 #include "rza2m_utils.h"
 
 #if defined(USE_DBG_PRINT)
