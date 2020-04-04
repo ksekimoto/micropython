@@ -25,7 +25,7 @@
  * THE SOFTWARE.
  */
 
-#include "common.h"
+#include "rza2m_gpio.h"
 #include "pin.h"
 
 
