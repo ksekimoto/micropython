@@ -26,8 +26,10 @@ ifeq ($(LVGL_ENABLE),1)
 LVGL_BINDING_DIR = $(TOP)/lib/lv_bindings
 LVGL_DIR = $(LVGL_BINDING_DIR)/lvgl
 LVGL_GENERIC_DRV_DIR = $(LVGL_BINDING_DIR)/driver/generic
+LV_CFLAGS += -DLV_CONF_INCLUDE_SIMPLE
 INC += -I$(LVGL_BINDING_DIR)
-ALL_LVGL_SRC = $(shell find $(LVGL_DIR) -type f -name '*.h') $(LVGL_BINDING_DIR)/lv_conf.h
+#ALL_LVGL_SRC = $(shell find $(LVGL_DIR) -type f -name '*.h') $(LVGL_BINDING_DIR)/lv_conf.h
+ALL_LVGL_SRC = $(shell find $(LVGL_DIR) -type f -name '*.h') lvgl/lv_conf.h
 LVGL_PP = $(BUILD)/lvgl/lvgl.pp.c
 LVGL_MPY = $(BUILD)/lvgl/lv_mpy.c
 LVGL_MPY_METADATA = $(BUILD)/lvgl/lv_mpy.json
