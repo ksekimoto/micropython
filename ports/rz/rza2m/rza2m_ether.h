@@ -91,7 +91,7 @@ struct ei_device {
 #define ETH_MII_MODE    1
 #define ETH_MODE_SEL    ETH_MII_MODE
 #define ETH_BUF_SIZE    1536
-#define ETH_BUF_NUM     4
+#define ETH_BUF_NUM     8
 
 #define ACT     0x80000000
 #define DL      0x40000000

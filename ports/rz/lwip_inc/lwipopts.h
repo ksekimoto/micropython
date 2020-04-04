@@ -75,6 +75,7 @@ extern uint32_t rng_get(void);
 // lwip takes 15800 bytes; TCP d/l: 380k/s local, 7.2k/s remote
 // TCP u/l is very slow
 
+#if 0
 // lwip takes 26700 bytes; TCP dl/ul are around 750/600 k/s on local network
 #define MEM_SIZE (8000)
 #define TCP_MSS (800)
@@ -82,7 +83,8 @@ extern uint32_t rng_get(void);
 #define TCP_SND_BUF (8 * TCP_MSS)
 #define MEMP_NUM_TCP_SEG (32)
 
-#if 0
+#else
+
 // lwip takes 45600 bytes; TCP dl/ul are around 1200/1000 k/s on local network
 #define MEM_SIZE (16000)
 #define TCP_MSS (1460)

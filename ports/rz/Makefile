@@ -41,6 +41,8 @@ MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
 MICROPY_PY_LWIP = 1
+MICROPY_SSL_MBEDTLS=1
+MICROPY_PY_USSL=1
 endif
 # LAN debug
 LAN_NEW = 0
@@ -157,7 +159,8 @@ CFLAGS_COMMON += -DLVGL_ENABLE=1
 CFLAGS_COMMON += -DLV_CONF_INCLUDE_SIMPLE
 endif
 
-CFLAGS_MBED_COMMON += $(INC_MBED) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -DMBEDTLS_USER_CONFIG_FILE="./mbedtls_entropy_config.h" -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DMBEDTLS_TEST_NULL_ENTROPY -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
+CFLAGS_MBED_COMMON += $(INC_MBED) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
+#CFLAGS_MBED_COMMON += -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DMBEDTLS_USER_CONFIG_FILE="./mbedtls_entropy_config.h" -DMBEDTLS_TEST_NULL_ENTROPY 
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_CTHUNK_COUNT_MAX=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE=115200
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_STDIO_BAUD_RATE=115200
@@ -265,6 +268,9 @@ endif
 SRC_LIB = $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
+	netutils/netutils.c \
+	netutils/trace.c \
+	netutils/dhcpserver.c \
 	timeutils/timeutils.c \
 	utils/pyexec.c \
 	utils/interrupt_char.c \
@@ -1046,6 +1052,89 @@ endif
 ifeq ($(USE_DBG_PRINT) ,1)
 SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+SRC_MOD += mbedtls/mbedtls_port.c
+SRC_MOD += $(addprefix lib/,\
+	mbedtls/library/aes.c \
+	mbedtls/library/aesni.c \
+	mbedtls/library/arc4.c \
+	mbedtls/library/aria.c \
+	mbedtls/library/asn1parse.c \
+	mbedtls/library/asn1write.c \
+	mbedtls/library/base64.c \
+	mbedtls/library/bignum.c \
+	mbedtls/library/blowfish.c \
+	mbedtls/library/camellia.c \
+	mbedtls/library/ccm.c \
+	mbedtls/library/certs.c \
+	mbedtls/library/chacha20.c \
+	mbedtls/library/chachapoly.c \
+	mbedtls/library/cipher_wrap.c \
+	mbedtls/library/cipher.c \
+	mbedtls/library/cmac.c \
+	mbedtls/library/ctr_drbg.c \
+	mbedtls/library/debug.c \
+	mbedtls/library/des.c \
+	mbedtls/library/dhm.c \
+	mbedtls/library/ecdh.c \
+	mbedtls/library/ecdsa.c \
+	mbedtls/library/ecjpake.c \
+	mbedtls/library/ecp.c \
+	mbedtls/library/ecp_curves.c \
+	mbedtls/library/entropy.c \
+	mbedtls/library/entropy_poll.c \
+	mbedtls/library/error.c \
+	mbedtls/library/gcm.c \
+	mbedtls/library/havege.c \
+	mbedtls/library/hmac_drbg.c \
+	mbedtls/library/md.c \
+	mbedtls/library/md_wrap.c \
+	mbedtls/library/md2.c \
+	mbedtls/library/md4.c \
+	mbedtls/library/md5.c \
+	mbedtls/library/memory_buffer_alloc.c \
+	mbedtls/library/oid.c \
+	mbedtls/library/padlock.c \
+	mbedtls/library/pem.c \
+	mbedtls/library/pk.c \
+	mbedtls/library/pk_wrap.c \
+	mbedtls/library/pkcs11.c \
+	mbedtls/library/pkcs12.c \
+	mbedtls/library/pkcs5.c \
+	mbedtls/library/pkparse.c \
+	mbedtls/library/pkwrite.c \
+	mbedtls/library/platform.c \
+	mbedtls/library/platform_util.c \
+	mbedtls/library/poly1305.c \
+	mbedtls/library/ripemd160.c \
+	mbedtls/library/rsa.c \
+	mbedtls/library/rsa_internal.c \
+	mbedtls/library/sha1.c \
+	mbedtls/library/sha256.c \
+	mbedtls/library/sha512.c \
+	mbedtls/library/ssl_cache.c \
+	mbedtls/library/ssl_ciphersuites.c \
+	mbedtls/library/ssl_cli.c \
+	mbedtls/library/ssl_cookie.c \
+	mbedtls/library/ssl_srv.c \
+	mbedtls/library/ssl_ticket.c \
+	mbedtls/library/ssl_tls.c \
+	mbedtls/library/threading.c \
+	mbedtls/library/timing.c \
+	mbedtls/library/version.c \
+	mbedtls/library/version_features.c \
+	mbedtls/library/x509.c \
+	mbedtls/library/x509_create.c \
+	mbedtls/library/x509_crl.c \
+	mbedtls/library/x509_crt.c \
+	mbedtls/library/x509_csr.c \
+	mbedtls/library/x509write_crt.c \
+	mbedtls/library/x509write_csr.c \
+)
 endif
 
 #######################################################################
