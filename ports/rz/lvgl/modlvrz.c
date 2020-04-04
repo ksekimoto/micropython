@@ -5,7 +5,7 @@
 #include "mbed_camera_lcd.h"
 #include "pendsv.h"
 
-//#if LVGL_ENABLE
+#if LVGL_ENABLE
 
 /* Defines the LittlevGL tick rate in milliseconds. */
 /* Increasing this value might help with CPU usage at the cost of lower
@@ -145,4 +145,4 @@ const mp_obj_module_t mp_module_lvrz = {
     .globals = (mp_obj_dict_t*)&mp_module_lvrz_globals
 };
 
-//#endif
+#endif
