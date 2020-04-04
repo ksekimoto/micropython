@@ -118,3 +118,7 @@ mp_uint_t mp_hal_ticks_us(void) {
 unsigned long mtick(void) {
     return  mbed_timer_get_ticks();
 }
+
+unsigned long utick(void) {
+    return  (unsigned long)mp_hal_ticks_us();
+}
