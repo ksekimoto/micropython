@@ -32,7 +32,6 @@
 
 //#include MICROPY_PIN_DEFS_PORT_H
 #include "py/obj.h"
-#include "common.h"
 
 typedef struct {
   mp_obj_base_t base;

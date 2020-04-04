@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RX_STORAGE_H
-#define MICROPY_INCLUDED_RX_STORAGE_H
+#ifndef MICROPY_INCLUDED_RZ_STORAGE_H
+#define MICROPY_INCLUDED_RZ_STORAGE_H
 
 #include "drivers/memory/spiflash.h"
 
@@ -70,4 +70,4 @@ extern const struct _pyb_flash_obj_t pyb_flash_obj;
 struct _fs_user_mount_t;
 void pyb_flash_init_vfs(struct _fs_user_mount_t *vfs);
 
-#endif // MICROPY_INCLUDED_RX_STORAGE_H
+#endif // MICROPY_INCLUDED_RZ_STORAGE_H

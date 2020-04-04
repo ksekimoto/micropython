@@ -23,12 +23,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef RX_TIMER_H
-#define RX_TIMER_H
+#ifndef RZ_TIMER_H
+#define RZ_TIMER_H
 
 extern const mp_obj_type_t pyb_timer_type;
 
 void timer_init0(void);
 void timer_deinit(void);
 
-#endif // RX_TIMER_H
+#endif // RZ_TIMER_H
