@@ -13,7 +13,7 @@
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_SERVO     (0)
 #define MICROPY_HW_ENABLE_RZ_USB    (0)
-#define MICROPY_HW_ETH_RZ           (0)
+#define MICROPY_HW_ETH_RZ           (1)
 
 // UART config
 #define MICROPY_HW_UART0_RX         (pin_P41)

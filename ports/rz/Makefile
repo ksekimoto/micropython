@@ -1,8 +1,7 @@
 # Select the board to build for: if not given on the command line,
 # then default to GR_MANGO
 BOARD ?= GR_MANGO
-
-CROSS ?= 0
+CROSS ?= 1
 
 ifeq ($(wildcard boards/$(BOARD)/.),)
 $(error Invalid BOARD specified)
@@ -17,7 +16,7 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-USE_DBG_PRINT = 0
+#USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -28,9 +27,11 @@ CROSS = 1
 TARGET = TARGET_RZ_A2XX
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
-MBED_GR_LIBS = 1
+MBED_OS_EMAC=0
+MBED_OS_EVENTS=0
+MBED_GR_LIBS = 0
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
@@ -39,7 +40,10 @@ MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
+MICROPY_PY_LWIP = 1
 endif
+# LAN debug
+LAN_NEW = 0
 
 include ../../py/mkenv.mk
 -include mpconfigport.mk
@@ -85,6 +89,17 @@ ifeq ($(USE_DBG_PRINT) ,1)
 INC += -Idebug
 endif
 
+ifeq ($(MICROPY_PY_LWIP),1)
+INC += -I$(TOP)/lib/lwip/src/include
+INC += -Ilwip_inc -Ilwip_utils
+endif
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+INC += -I$(TOP)/lib/mbedtls/include
+endif
+ifeq ($(MICROPY_SSL_AXTLS),1)
+INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
+endif
+
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 INC_MBED += -ITARGET_RENESAS
 INC_MBED += -ITARGET_RENESAS/$(TARGET)
@@ -119,6 +134,14 @@ INC += -Ilib/mbed-gr-libs/GR-PEACH_video
 
 INC += -Ilib/lv_bindings/lvgl
 
+ifeq ($(MBED_OS_EMAC),1)
+INC += emac-drivers/TARGET_RZ_A2_EMAC
+INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/
+INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src
+INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/phy
+INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/targets/TARGET_GR_MANGO
+endif
+
 endif
 
 #######################################################################
@@ -134,7 +157,7 @@ CFLAGS_COMMON += -DLVGL_ENABLE=1
 CFLAGS_COMMON += -DLV_CONF_INCLUDE_SIMPLE
 endif
 
-CFLAGS_MBED_COMMON += $(INC_MBED) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -DMBEDTLS_USER_CONFIG_FILE="mbedtls_entropy_config.h" -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DMBEDTLS_TEST_NULL_ENTROPY -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
+CFLAGS_MBED_COMMON += $(INC_MBED) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -DMBEDTLS_USER_CONFIG_FILE="./mbedtls_entropy_config.h" -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DMBEDTLS_TEST_NULL_ENTROPY -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_CTHUNK_COUNT_MAX=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE=115200
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_STDIO_BAUD_RATE=115200
@@ -163,6 +186,10 @@ CFLAGS_MBED_COMMON += -DMBED_GR_LIBS_DRP_FOR_MBED=1
 CFLAGS_MBED_COMMON += -DMBED_GR_LIBS_components_LCD=1
 CFLAGS_MBED_COMMON += -DMBED_GR_LIBS_components_CAMERA=1
 CFLAGS_MBED_COMMON += -DMBED_GR_LIBS_EasyAttach_CameraAndLCD=1
+endif
+
+ifeq ($(MBED_OS_EMAC),1)
+CFLAGS_MBED_COMMON += -DMBED_CONF_EVENTS_SHARED_EVENTSIZE=10
 endif
 
 #CFLAGS_COMMON += -DDEVICE_SERIAL=1 -DDEVICE_SERIAL_ASYNCH=1 -DMBED_CONF_PLATFORM_CTHUNK_COUNT_MAX=1 -DMBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE=115200 
@@ -207,6 +234,28 @@ CFLAGS += -O0 -ggdb
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
+endif
+
+ifeq ($(MICROPY_PY_LWIP),1)
+CFLAGS += -DMICROPY_PY_LWIP=1
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS += -DMICROPY_SSL_MBEDTLS=1
+endif
+
+ifeq ($(MICROPY_PY_USSL),1)
+CFLAGS += -DMICROPY_PY_USSL=1
+endif
+
+ifeq ($(MICROPY_SSL_AXTLS),1)
+CFLAGS += -DMICROPY_SSL_AXTLS
+CFLAGS += -DMICROPY_STREAMS_POSIX_API
+endif
+
+ifeq ($(MBED_OS_EMAC),1)
+CFLAGS += -DMBED_OS_EMAC
+CPPFLAGS += -DMBED_OS_EMAC
 endif
 
 #######################################################################
@@ -398,6 +447,13 @@ SRC_MBED_CPP += lib/mbed-os/drivers/UARTSerial.cpp
 #######################################################################
 # mbed-os events
 #######################################################################
+ifeq ($(MBED_OS_EVENTS), 1)
+SRC_MBED_CPP += lib/mbed-os/events/EventQueue.cpp
+SRC_MBED_CPP += lib/mbed-os/events/mbed_shared_queues.cpp
+SRC_MBED_CPP += lib/mbed-os/events/equeue/equeue_mbed.cpp
+SRC_MBED_C += lib/mbed-os/events/equeue/equeue_posix.c
+SRC_MBED_C += lib/mbed-os/events/equeue/equeue.c
+endif
 #######################################################################
 # mbed-os features
 #######################################################################
@@ -593,6 +649,12 @@ endif
 ifeq ($(MBED_OS_FEATURES_nanostack), 1)
 endif
 ifeq ($(MBED_OS_FEATURES_netsocket), 1)
+endif
+ifeq ($(MBED_OS_EMAC),1)
+SRC_CPP += lib/mbed-os/features/netsocket/emac-drivers/TARGET_RZ_A2_EMAC/rza2_emac.cpp
+SRC_C += lib/mbed-os/features/netsocket/emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/phy/phy.c
+SRC_C += lib/mbed-os/features/netsocket/emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/r_ether_rza2.c
+SRC_C += lib/mbed-os/features/netsocket/emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/targets/TARGET_GR_MANGO/r_ether_setting_rza2m.c
 endif
 ifeq ($(MBED_OS_FEATURES_nfc), 1)
 endif
@@ -911,26 +973,44 @@ endif
 # micropython rz CPU
 #######################################################################
 SRC_C += bufhelper.c
-SRC_C += help.c
+ifeq ($(LAN_NEW),1)
+SRC_C += eth.c
+else
+SRC_C += ethernetif.c
+endif
 SRC_C += factoryreset.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
 SRC_C += flashbdev.c
 SRC_C += gccollect.c
 SRC_S += gchelper_a9.S
+SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
+SRC_C += led.c
 SRC_C += machine_uart.c
 SRC_C += machine_timer.c
 SRC_C += modmachine.c
+SRC_C += modnetwork.c
+SRC_C += modnwrxeth.c
 SRC_C += modpyb.c
+SRC_C += modusocket.c
 SRC_C += moduos.c
 SRC_C += mphalport.c
-SRC_C += led.c
+ifeq ($(LAN_NEW),1)
+SRC_C += network_lan.c
+else
+SRC_C += modnwrxeth.c
+endif
 SRC_C += pendsv.c
+ifeq ($(MBED_OS_EMAC),1)
+else
+SRC_C += phy.c
+endif
 SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
+SRC_C += rng.c
 SRC_C += softtimer.c
 SRC_C += spi.c
 SRC_C += storage.c
@@ -938,7 +1018,13 @@ SRC_C += systick.c
 #SRC_C += timer.c
 SRC_C += uart.c
 SRC_C += usrsw.c
+SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+ifeq ($(MBED_OS_EMAC),1)
+SRC_CPP += mbed/mbed_ether.cpp
+else
+SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
+endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c

@@ -24,36 +24,15 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "iodefine.h"
-#include "rza2m_config.h"
-#include "rza2m_init.h"
+#ifndef PORTS_RX_MBEDTLS_TRNG_API_H_
+#define PORTS_RX_MBEDTLS_TRNG_API_H_
 
-void internal_flash_init(void);
+#if DEVICE_TRNG
 
-void rza2m_software_reset(void) {
-    volatile uint16_t data;
-    WDT.WTCNT.WORD = 0x5A00;
-    data = WDT.WRCSR.WORD;
-    WDT.WTCNT.WORD = 0x5A00;
-    WDT.WRCSR.WORD = 0xA500;
-    WDT.WTCSR.WORD = 0xA578;
-    WDT.WRCSR.WORD = 0x5A40;
-    while(1){}
-}
+void trng_init(trng_t *obj);
+void trng_free(trng_t *obj);
+int trng_get_bytes(trng_t *obj, uint8_t *output, size_t length, size_t *output_length);
 
-void rza2m_init(void) {
-    bootstrap();
-    //exti_init();
-    //exti_deinit();
-    //udelay_init();
-    //rx_rtc_init();
-#ifdef USE_DBG_PRINT
-    sci_init_default(DEBUG_CH, SCI_BAUD);
-    sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    sci_tx_str(DEBUG_CH, (uint8_t *)"rza2m_init\r\n");
 #endif
-    //usb_init();
-    //internal_flash_init();
-}
 
+#endif /* PORTS_RX_MBEDTLS_TRNG_API_H_ */

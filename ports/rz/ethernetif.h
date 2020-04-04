@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Kentaro Sekimoto
+ * Copyright (c) 2020, Kentaro Sekimoto
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,36 +24,14 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "iodefine.h"
-#include "rza2m_config.h"
-#include "rza2m_init.h"
+#ifndef PORTS_RZ_ETHERNETIF_H_
+#define PORTS_RZ_ETHERNETIF_H_
 
-void internal_flash_init(void);
+err_t low_level_output(struct netif *netif, struct pbuf *p);
+void ethernetif_input(struct netif *netif);
+err_t ethernetif_init(struct netif *netif);
+void ethernetif_set_link(struct netif *netif);
+err_t ethernetif_update_config(struct netif *netif);
+void ethernetif_input_cb(void);
 
-void rza2m_software_reset(void) {
-    volatile uint16_t data;
-    WDT.WTCNT.WORD = 0x5A00;
-    data = WDT.WRCSR.WORD;
-    WDT.WTCNT.WORD = 0x5A00;
-    WDT.WRCSR.WORD = 0xA500;
-    WDT.WTCSR.WORD = 0xA578;
-    WDT.WRCSR.WORD = 0x5A40;
-    while(1){}
-}
-
-void rza2m_init(void) {
-    bootstrap();
-    //exti_init();
-    //exti_deinit();
-    //udelay_init();
-    //rx_rtc_init();
-#ifdef USE_DBG_PRINT
-    sci_init_default(DEBUG_CH, SCI_BAUD);
-    sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    sci_tx_str(DEBUG_CH, (uint8_t *)"rza2m_init\r\n");
-#endif
-    //usb_init();
-    //internal_flash_init();
-}
-
+#endif /* PORTS_RZ_ETHERNETIF_H_ */

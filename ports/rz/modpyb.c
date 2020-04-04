@@ -39,8 +39,8 @@
 #include "extint.h"
 #endif
 #include "usrsw.h"
-#if RZ_TODO
 #include "rng.h"
+#if RZ_TODO
 #include "rtc.h"
 #endif
 #include "i2c.h"

@@ -36,6 +36,7 @@ extern "C" {
 #define UART_CH SCI_CH
 #define UART_TxStr sci_tx_str
 #define PCLK    66000000
+#define ETH_CH  0
 
 //#define PRI_ETH     (14)
 //#define PRI_SCI     (3)

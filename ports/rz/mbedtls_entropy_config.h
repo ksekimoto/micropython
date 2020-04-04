@@ -1,0 +1,9 @@
+
+#ifndef MBEDTLS_ENTROPY_CONFIG_H
+#define MBEDTLS_ENTROPY_CONFIG_H
+
+#ifndef MBEDTLS_SHA1_C
+#define MBEDTLS_SHA1_C
+#endif
+
+#endif // MBEDTLS_ENTROPY_CONFIG_H

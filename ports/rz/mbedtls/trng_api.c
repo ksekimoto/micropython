@@ -24,36 +24,48 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "iodefine.h"
-#include "rza2m_config.h"
-#include "rza2m_init.h"
+#include <stdio.h>
 
-void internal_flash_init(void);
+#include "py/runtime.h"
+#include "py/mphal.h"
 
-void rza2m_software_reset(void) {
-    volatile uint16_t data;
-    WDT.WTCNT.WORD = 0x5A00;
-    data = WDT.WRCSR.WORD;
-    WDT.WTCNT.WORD = 0x5A00;
-    WDT.WRCSR.WORD = 0xA500;
-    WDT.WTCSR.WORD = 0xA578;
-    WDT.WRCSR.WORD = 0x5A40;
-    while(1){}
+void trng_init(trng_t *obj)
+{
 }
 
-void rza2m_init(void) {
-    bootstrap();
-    //exti_init();
-    //exti_deinit();
-    //udelay_init();
-    //rx_rtc_init();
-#ifdef USE_DBG_PRINT
-    sci_init_default(DEBUG_CH, SCI_BAUD);
-    sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    sci_tx_str(DEBUG_CH, (uint8_t *)"rza2m_init\r\n");
-#endif
-    //usb_init();
-    //internal_flash_init();
+void trng_free(trng_t *obj)
+{
 }
+
+int trng_get_bytes(trng_t *obj, uint8_t *output, size_t length, size_t *output_length)
+{
+    uint32_t skip;
+    uint32_t data;
+    size_t idx = 0;
+    int i;
+
+    /* Get Random data */
+    while (idx < length) {
+
+        data = RNG_GetRandomData();
+
+        for (i = 0; ((i < 4) && (idx < length)); i++) {
+            output[idx++] = (data >> (i * 8)) & 0xFF;
+        }
+
+        /* Skip next 32 random numbers for better entropy */
+        for (skip = 0; skip < 32; skip++) {
+            RNG_GetRandomData();
+        }
+    }
+
+    *output_length = idx;
+
+    /* Zeroize to avoid leakage of entropy on the stack. Also ensure this is not removed by compiler optimizations */
+    *((volatile uint32_t*) &data) = 0;
+
+    return (idx == length ? 0 : -1);
+}
+
+
 

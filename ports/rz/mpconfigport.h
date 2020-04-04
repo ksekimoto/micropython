@@ -34,7 +34,6 @@
 #include <stdint.h>
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
-#include "common.h"
 
 // memory allocation policies
 #ifndef MICROPY_GC_STACK_ENTRY_TYPE
@@ -145,7 +144,7 @@
 #define MICROPY_PY_UBINASCII        (1)
 #define MICROPY_PY_URANDOM          (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
-#define MICROPY_PY_USELECT          (0)
+#define MICROPY_PY_USELECT          (1)
 #define MICROPY_PY_UTIMEQ           (1)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (3)
@@ -164,8 +163,8 @@
 #define MICROPY_PY_MACHINE_SPI_MAKE_NEW machine_hard_spi_make_new
 #define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
-//#define MICROPY_PY_UWEBSOCKET       (MICROPY_PY_LWIP)
-//#define MICROPY_PY_WEBREPL          (MICROPY_PY_LWIP)
+#define MICROPY_PY_UWEBSOCKET       (MICROPY_PY_LWIP)
+#define MICROPY_PY_WEBREPL          (MICROPY_PY_LWIP)
 #ifndef MICROPY_PY_FRAMEBUF
 #define MICROPY_PY_FRAMEBUF         (1)
 #endif
@@ -225,8 +224,10 @@ extern const struct _mp_obj_module_t mp_module_uhashlib;
 extern const struct _mp_obj_module_t mp_module_uos;
 #if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_utime;
+#endif
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
+#if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_onewire;
 #endif
 extern const struct _mp_obj_module_t mp_module_lvgl;
@@ -270,6 +271,7 @@ extern void lv_deinit(void);
 #else
 #define MYMODULE_BUILTIN_MODULE
 #endif
+#endif
 
 #if MICROPY_PY_USOCKET && MICROPY_PY_LWIP
 // usocket implementation provided by lwIP
@@ -312,7 +314,6 @@ extern void lv_deinit(void);
 #else
 #define TWITTER_BUILTIN_MODULE
 #endif
-#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     /* MYMODULE_BUILTIN_MODULE */ \
@@ -322,9 +323,9 @@ extern void lv_deinit(void);
     { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     /* { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, */\
-    /* SOCKET_BUILTIN_MODULE */ \
+    SOCKET_BUILTIN_MODULE \
     /* WSOCKET_BUILTIN_MODULE */ \
-    /* NETWORK_BUILTIN_MODULE */ \
+    NETWORK_BUILTIN_MODULE \
     /* { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, */ \
     MICROPY_PORT_LVGL_DEF \
     MICROPY_PORT_LODEPNG_DEF \
@@ -354,8 +355,8 @@ extern void lv_deinit(void);
     { MP_ROM_QSTR(MP_QSTR_os), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_random), MP_ROM_PTR(&mp_module_urandom) }, \
     /* { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, */\
-    /* { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, */ \
-    /* SOCKET_BUILTIN_MODULE_WEAK_LINKS */ \
+    { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, \
+    SOCKET_BUILTIN_MODULE_WEAK_LINKS \
     /* WSOCKET_BUILTIN_MODULE_WEAK_LINKS */ \
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
@@ -421,7 +422,7 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     /* struct _pyb_can_obj_t *pyb_can_obj_all[MICROPY_HW_MAX_CAN]; */ \
     \
     /* list of registered NICs */ \
-    /* mp_obj_list_t mod_network_nic_list; */ \
+    mp_obj_list_t mod_network_nic_list; \
     \
     /* MICROPY_PORT_ROOT_POINTER_MBEDTLS */ \
     /* MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE */ \
@@ -525,7 +526,7 @@ static inline mp_uint_t disable_irq(void) {
     do { \
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
-        /* SOCKET_POLL */ \
+         SOCKET_POLL \
         /* __WFI(); */ \
     } while (0);
 

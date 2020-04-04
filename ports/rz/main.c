@@ -73,7 +73,7 @@
 //#include "servo.h"
 //#include "dac.h"
 //#include "can.h"
-//#include "modnetwork.h"
+#include "modnetwork.h"
 //#include "usb_entry.h"
 #include "mbed_timer.h"
 
@@ -134,7 +134,9 @@ void NORETURN __fatal_error(const char *msg) {
         }
         if (i >= 16) {
             // to conserve power
+#if RZ_TODO
             __WFI();
+#endif
         }
     }
 }
