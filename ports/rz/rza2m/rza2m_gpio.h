@@ -58,28 +58,6 @@ enum CPU_PIN {
     JP00 = 0x150, JP01,
 };
 
-enum AF_INDEX {
-    AF_GPIO = 0,
-    AF_MTU1 = 1,
-    AF_MTU2 = 2,
-    AF_TIO = 3,
-    AF_TCLK = 4,
-    AF_TM = 5,
-    AF_PO1 = 6,
-    AF_PO2 = 7,
-    AF_ADT = 9,
-    AF_SCI1 = 10,
-    AF_SCI2 = 11,
-    AF_SPI = 13,
-    AF_RIIC = 15,
-    AF_USB_ET = 17,
-    AF_USB_RMII = 18,
-    AF_USB1 = 19,
-    AF_ED = 24,
-    AF_USB2 = 35,
-    AF_END = 0xff,
-};
-
 #define  GPIO_MODE_INPUT        1
 #define  GPIO_MODE_OUTPUT_PP    2
 #define  GPIO_MODE_OUTPUT_OD    3
@@ -147,6 +125,7 @@ inline void bit_set(uint8_t *port, uint32_t bit) {
 
 void _gpio_config(uint32_t pin, uint8_t mode, uint8_t pull, uint8_t alt);
 void _gpio_mode_af(uint32_t pin, uint8_t af);
+void _gpio_mode_gpio(uint32_t pin);
 void _gpio_mode_output(uint32_t pin);
 void _gpio_mode_input(uint32_t pin);
 void _gpio_write(uint32_t pin, uint8_t state);

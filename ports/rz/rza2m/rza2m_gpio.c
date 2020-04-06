@@ -75,6 +75,12 @@ void _gpio_mode_af(uint32_t pin, uint8_t af) {
     PPMR(port) |= mask1;            /* af mode*/
 }
 
+void _gpio_mode_gpio(uint32_t pin) {
+    uint32_t port = GPIO_PORT(pin);
+    uint8_t mask1 = GPIO_MASK1(pin);
+    PPMR(port) &= ~mask1;    /* gpio */
+}
+
 void _gpio_mode_output(uint32_t pin) {
     uint32_t port = GPIO_PORT(pin);
     uint8_t mask1 = GPIO_MASK1(pin);
