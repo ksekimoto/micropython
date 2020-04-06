@@ -41,8 +41,10 @@ MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
 MICROPY_PY_LWIP = 1
-MICROPY_SSL_MBEDTLS=1
-MICROPY_PY_USSL=1
+MICROPY_SSL_MBEDTLS = 1
+MICROPY_PY_USSL = 1
+MBED_UART_WRAPPER = 0
+MBED_SPI_WRAPPER = 0
 endif
 # LAN debug
 LAN_NEW = 0
@@ -153,6 +155,14 @@ endif
 LIB_MBED = libmbed.a
 LD = gcc
 #-Wstack-usage=$(STACK_USAGE)
+
+ifeq ($(MBED_UART_WRAPPER),1)
+CFLAGS_COMMON += -DMBED_UART_WRAPPER
+endif
+
+ifeq ($(MBED_SPI_WRAPPER),1)
+CFLAGS_COMMON += -DMBED_SPI_WRAPPER
+endif
 
 ifeq ($(LVGL_ENABLE),1)
 CFLAGS_COMMON += -DLVGL_ENABLE=1
@@ -1033,10 +1043,18 @@ SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
 endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
+ifeq ($(MBED_UART_WRAPPER),1)
+SRC_CPP += mbed/mbed_uart.cpp
+else
 SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
+endif
+ifeq ($(MBED_SPI_WRAPPER),1)
+SRC_CPP += mbed/mbed_spi.cpp
+else
+SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
+endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
 SRC_CPP += mbed/mbed_flash.cpp
-SRC_CPP += mbed/mbed_spi.cpp
 SRC_CPP += mbed/mbed_timer.cpp
 SRC_CPP += mbed/mbed_uart.cpp
 ifeq ($(MBED_GR_LIBS), 1)

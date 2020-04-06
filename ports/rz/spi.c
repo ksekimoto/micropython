@@ -36,7 +36,7 @@
 #include "spi.h"
 #include "mbed_spi.h"
 
-#define MBED_SPI_WRAPPER
+//#define MBED_SPI_WRAPPER
 
 #if defined(MBED_SPI_WRAPPER)
 #include "mbed_spi.h"
@@ -49,6 +49,13 @@
 #define MBED_SPI_DEINIT         mbed_spi_deinit
 #else
 #include "rza2m_spi.h"
+#define MBED_SPI_SET_BITS       rz_spi_set_bits
+#define MBED_SPI_SET_CLK        rz_spi_set_clk
+#define MBED_SPI_SET_FIRSTBIT   rz_spi_set_firstbit
+#define MBED_SPI_SET_SPI_CH     rz_spi_set_spi_ch
+#define MBED_SPI_TRANSFER       rz_spi_transfer
+#define MBED_SPI_INIT           rz_spi_init
+#define MBED_SPI_DEINIT         rz_spi_deinit
 #endif
 
 /// \moduleref pyb

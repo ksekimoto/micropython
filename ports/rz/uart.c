@@ -38,9 +38,9 @@
 #include "pendsv.h"
 #include "common.h"
 
-//#define MBED_URT_WRAPPER
+//#define MBED_UART_WRAPPER
 
-#if defined(MBED_URT_WRAPPER)
+#if defined(MBED_UART_WRAPPER)
 #include "mbed_uart.h"
 #define MBED_UART_TX_WAIT               mbed_uart_tx_wait
 #define MBED_UART_RX_ANY                mbed_uart_rx_any
