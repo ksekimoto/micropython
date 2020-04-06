@@ -134,9 +134,7 @@ void NORETURN __fatal_error(const char *msg) {
         }
         if (i >= 16) {
             // to conserve power
-#if RZ_TODO
             __WFI();
-#endif
         }
     }
 }
@@ -151,7 +149,7 @@ void nlr_jump_fail(void *val) {
 void MP_WEAK __assert_func(const char *file, int line, const char *func, const char *expr) {
     (void)func;
     printf("Assertion '%s' failed, at file %s:%d\n", expr, file, line);
-    __fatal_error("Assertion failed");
+    __fatal_error("");
 }
 #endif
 
@@ -267,7 +265,6 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
 #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
 STATIC bool init_sdcard_fs(void) {
     bool first_part = true;
-    fatfs_sd = (FATFS *)0;
     for (int part_num = 1; part_num <= 4; ++part_num) {
         // create vfs object
         fs_user_mount_t *vfs_fat = m_new_obj_maybe(fs_user_mount_t);
@@ -291,8 +288,6 @@ STATIC bool init_sdcard_fs(void) {
                 // the first available partition is traditionally called "sd" for simplicity
                 vfs->str = "/sd";
                 vfs->len = 3;
-                fs_user_mount_sd = vfs_fat;
-                fatfs_sd = &(vfs_fat->fatfs);
             } else {
                 // subsequent partitions are numbered by their index in the partition table
                 if (part_num == 2) {
@@ -579,26 +574,12 @@ soft_reset:
     bool mounted_sdcard = false;
     #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
     // if an SD card is present then mount it on /sd/
-#if defined(GRCITRUS)
     if (sdcard_is_present()) {
         // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
-        if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
+        if (!mounted_flash || mp_vfs_import_stat("SKIPSD") == MP_IMPORT_STAT_NO_EXIST) {
             mounted_sdcard = init_sdcard_fs();
         }
     }
-#elif defined(GRSAKURA)
-    // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
-    if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
-        mounted_sdcard = init_sdcard_fs();
-    }
-#else
-    if (sdcard_is_present()) {
-        // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
-        if (f_stat(&fs_user_mount_flash.fatfs, "/SKIPSD", NULL) != FR_OK) {
-            mounted_sdcard = init_sdcard_fs();
-        }
-    }
-#endif
     #endif
 
     // if the SD card isn't used as the USB MSC medium then use the internal flash
@@ -606,10 +587,10 @@ soft_reset:
     //    pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_FLASH;
     //}
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
-    //if (mounted_sdcard) {
-    //    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd));
-    //    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd_slash_lib));
-    //}
+    if (mounted_sdcard) {
+        mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd));
+        mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd_slash_lib));
+    }
     if (mounted_flash) {
         mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_flash));
         mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_flash_slash_lib));
@@ -669,7 +650,7 @@ soft_reset:
     #endif
 
     #if MICROPY_PY_NETWORK
-    //mod_network_init();
+    mod_network_init();
     #endif
 
     // At this point everything is fully configured and initialised.
@@ -721,7 +702,7 @@ soft_reset_exit:
     //servo_deinit();
     #endif
     #if MICROPY_PY_NETWORK
-    //mod_network_deinit();
+    mod_network_deinit();
     #endif
     soft_timer_deinit();
     //timer_deinit();

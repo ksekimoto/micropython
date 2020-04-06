@@ -392,8 +392,6 @@ struct _mp_bluetooth_nimble_root_pointers_t;
 #endif
 
 #define MICROPY_PORT_ROOT_POINTERS \
-    LV_ROOTS \
-    void *mp_lv_user_data; \
     const char *readline_hist[8]; \
     \
     mp_obj_t pyb_hid_report_desc; \
@@ -426,6 +424,8 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     MICROPY_PORT_ROOT_POINTER_MBEDTLS \
     /* MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE */ \
+    LV_ROOTS \
+    void *mp_lv_user_data; \
 
 // type definitions for the specific machine
 
@@ -446,7 +446,7 @@ typedef long mp_off_t;
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
 //static inline void __WFI(void) {
-//    __asm__("wfi");
+//    __asm__ __volatile__ ("wfi");
 //}
 
 // We have inlined IRQ functions for efficiency (they are generally
@@ -516,7 +516,7 @@ static inline mp_uint_t disable_irq(void) {
             pyb_thread_yield(); \
             MP_THREAD_GIL_ENTER(); \
         } else { \
-        /*    __WFI(); */ \
+            __WFI(); \
         } \
     } while (0);
 
@@ -526,8 +526,8 @@ static inline mp_uint_t disable_irq(void) {
     do { \
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
-         SOCKET_POLL \
-        /* __WFI(); */ \
+        SOCKET_POLL \
+        __WFI(); \
     } while (0);
 
 #define MICROPY_THREAD_YIELD()

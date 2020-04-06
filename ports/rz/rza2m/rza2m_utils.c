@@ -26,6 +26,10 @@
 
 #include "rza2m_utils.h"
 
+void __WFI(void) {
+    __asm__ __volatile__ ("wfi");
+}
+
 #if RZ_TODO
 
 __attribute__((always_inline)) void rz_enable_irq(void) {
