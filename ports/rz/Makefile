@@ -1010,8 +1010,9 @@ SRC_C += modmachine.c
 SRC_C += modnetwork.c
 SRC_C += modnwrxeth.c
 SRC_C += modpyb.c
-SRC_C += modusocket.c
 SRC_C += moduos.c
+SRC_C += modusocket.c
+SRC_C += modutime.c
 SRC_C += mphalport.c
 ifeq ($(LAN_NEW),1)
 SRC_C += network_lan.c
@@ -1027,6 +1028,7 @@ SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
 SRC_C += rng.c
+SRC_C += rtc.c
 SRC_C += softtimer.c
 SRC_C += spi.c
 SRC_C += storage.c
@@ -1043,6 +1045,7 @@ SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
 endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
 ifeq ($(MBED_UART_WRAPPER),1)
 SRC_CPP += mbed/mbed_uart.cpp
 else

@@ -46,21 +46,19 @@
 #include "gccollect.h"
 #include "irq.h"
 #include "pybthread.h"
-#if RZ_TODO
 #include "rng.h"
 #include "storage.h"
-#endif
 #include "pin.h"
-#if RZ_TODO
 #include "timer.h"
+#if RZ_TODO
 #include "adc.h"
 #include "usb.h"
-#include "rtc.h"
 #endif
+#include "rtc.h"
 #include "i2c.h"
 #include "spi.h"
-#if RZ_TODO
 #include "uart.h"
+#if RZ_TODO
 #include "wdt.h"
 #include "pwm.h"
 #endif
@@ -177,9 +175,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);
 
 // Resets the pyboard in a manner similar to pushing the external RESET button.
 STATIC mp_obj_t machine_reset(void) {
-#if RZ_TODO
     rza2m_software_reset();
-#endif
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);
@@ -298,8 +294,8 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Pin),                 MP_ROM_PTR(&pin_type) },
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
 
-#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
+#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&pyb_adc_type) },
 #endif
 #if MICROPY_PY_MACHINE_I2C

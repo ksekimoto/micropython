@@ -21,12 +21,28 @@
  * See file LICENSE.txt for further informations on licensing terms.
  ***************************************************************************/
 /**
- * @file  RTC0.cpp
+ * @file  RTC1.cpp
  * @brief RX63Nマイコン内蔵の時計機能（RTC：リアル・タイム・クロック）を使うためのライブラリです。
  *
  * RTCクラスはこのライブラリをC++でカプセル化して使いやすくしたものです。
  *
  * Modified 27th May 2014 by Yuuki Okamiya from RL78duino.cpp
+ */
+
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2015 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -62,6 +78,9 @@
 #include "common.h"
 #include "rza2m_rtc.h"
 
+#define USE_EXTAL_CLK
+#define READ_LOOP_MAX    (2000)
+
 rz_rtc_cb_t rz_rtc_func = NULL;
 
 static inline uint8_t int_to_bcd(int num) {
@@ -74,43 +93,43 @@ static inline int bcd_to_int(uint8_t bcd)
 }
 
 int rz_rtc_get_year(void) {
-    return bcd_to_int(RTC0.RYRCNT.WORD) + 2000;
+    return bcd_to_int(RTC1.RYRCNT.WORD) + 2000;
 }
 
 int rz_rtc_get_month(void) {
-    return bcd_to_int(RTC0.RMONCNT.BYTE);
+    return bcd_to_int(RTC1.RMONCNT.BYTE);
 }
 
 int rz_rtc_get_date(void) {
-    return bcd_to_int(RTC0.RDAYCNT.BYTE);
+    return bcd_to_int(RTC1.RDAYCNT.BYTE);
 }
 
 int rz_rtc_get_hour(void) {
-    return bcd_to_int(0x3f & RTC0.RHRCNT.BYTE);
+    return bcd_to_int(0x3f & RTC1.RHRCNT.BYTE);
 }
 
 int rz_rtc_get_minute(void) {
-    return bcd_to_int(RTC0.RMINCNT.BYTE);
+    return bcd_to_int(RTC1.RMINCNT.BYTE);
 }
 
 int rz_rtc_get_second(void) {
-    return bcd_to_int(RTC0.RSECCNT.BYTE);
+    return bcd_to_int(RTC1.RSECCNT.BYTE);
 }
 
 int rz_rtc_get_weekday(void) {
-    return bcd_to_int(RTC0.RWKCNT.BYTE);
+    return bcd_to_int(RTC1.RWKCNT.BYTE);
 }
 
 void rz_rtc_alarm_on() {
     /* Enable alarm and periodic interrupts*/
-    RTC0.RCR1.BIT.AIE = 1;
-    while (!RTC0.RCR1.BIT.AIE) { ; }
+    RTC1.RCR1.BIT.AIE = 1;
+    while (!RTC1.RCR1.BIT.AIE) { ; }
 }
 
 void rz_rtc_alarm_off() {
     /* Disable alarm and periodic interrupts*/
-    RTC0.RCR1.BIT.AIE = 0;
-    while (RTC0.RCR1.BIT.AIE) { ; }
+    RTC1.RCR1.BIT.AIE = 0;
+    while (RTC1.RCR1.BIT.AIE) { ; }
 }
 
 
@@ -118,24 +137,24 @@ void rz_rtc_set_alarm_time(int hour, int min, int week_flag) {
     /* Configure the alarm as follows -
      Alarm time - 12:00:00
      Enable the hour, minutes and seconds alarm      */
-    RTC0.RMINAR.BYTE = int_to_bcd(min);
-    RTC0.RHRAR.BYTE = int_to_bcd(hour);
+    RTC1.RMINAR.BYTE = int_to_bcd(min);
+    RTC1.RHRAR.BYTE = int_to_bcd(hour);
     if (week_flag <= 0x06) {
-        RTC0.RWKAR.BYTE = week_flag;
+        RTC1.RWKAR.BYTE = week_flag;
     }
-    RTC0.RMINAR.BIT.ENB = 1;
-    RTC0.RHRAR.BIT.ENB = 1;
+    RTC1.RMINAR.BIT.ENB = 1;
+    RTC1.RHRAR.BIT.ENB = 1;
     if (week_flag <= 0x06) {
-        RTC0.RWKAR.BIT.ENB = 1;
+        RTC1.RWKAR.BIT.ENB = 1;
     } else {
-        RTC0.RWKAR.BIT.ENB = 0;
+        RTC1.RWKAR.BIT.ENB = 0;
     }
     /* Enable alarm and interrupts*/
     rz_rtc_alarm_on();
     /* Enable RTC Alarm interrupts */
-    IPR(RTC, ALM)= 3u;
-    IEN(RTC, ALM)= 1u;
-    IR(RTC, ALM)= 0u;
+    //IPR(RTC, ALM)= 3u;
+    //IEN(RTC, ALM)= 1u;
+    //IR(RTC, ALM)= 0u;
 }
 
 /*
@@ -150,89 +169,72 @@ void rz_rtc_set_alarm_time(int hour, int min, int week_flag) {
 void rz_rtc_correct(int adj, int aadjp) {
     int tmp_int;
     if (adj == 0) {
-        RTC0.RADJ.BYTE = 0x00;
-        while (RTC0.RADJ.BYTE != 0x00) { ; }
+        RTC1.RADJ.BYTE = 0x00;
+        while (RTC1.RADJ.BYTE != 0x00) { ; }
     } else if (adj > 0) {
-        RTC0.RADJ.BYTE = 0x00;
-        while (RTC0.RADJ.BYTE != 0x00) { ; }
+        RTC1.RADJ.BYTE = 0x00;
+        while (RTC1.RADJ.BYTE != 0x00) { ; }
         /* enable adjustment */
-        RTC0.RCR2.BIT.AADJE = 1;
-        while (RTC0.RCR2.BIT.AADJE != 1) { ; }
-        RTC0.RCR2.BIT.AADJP =
+        RTC1.RCR2.BIT.AADJE = 1;
+        while (RTC1.RCR2.BIT.AADJE != 1) { ; }
+        RTC1.RCR2.BIT.AADJP =
             aadjp == RTC_PERIOD_MINUTE ? RTC_PERIOD_MINUTE : RTC_PERIOD_SECOND;
-        while (RTC0.RCR2.BIT.AADJP != 1) { ; }
+        while (RTC1.RCR2.BIT.AADJP != 1) { ; }
         tmp_int = 0x40 | (0x3F & adj);  /* 0x40 + */
-        RTC0.RADJ.BYTE = tmp_int;
-        while (RTC0.RADJ.BYTE != tmp_int) { ; }
+        RTC1.RADJ.BYTE = tmp_int;
+        while (RTC1.RADJ.BYTE != tmp_int) { ; }
     } else {
-        RTC0.RADJ.BYTE = 0x00;
-        while (RTC0.RADJ.BYTE != 0x00) { ; }
+        RTC1.RADJ.BYTE = 0x00;
+        while (RTC1.RADJ.BYTE != 0x00) { ; }
         /* enable adjustment */
-        RTC0.RCR2.BIT.AADJE = 1;
-        while (RTC0.RCR2.BIT.AADJE != 1) { ; }
-        RTC0.RCR2.BIT.AADJP =
+        RTC1.RCR2.BIT.AADJE = 1;
+        while (RTC1.RCR2.BIT.AADJE != 1) { ; }
+        RTC1.RCR2.BIT.AADJP =
             aadjp == RTC_PERIOD_MINUTE ? RTC_PERIOD_MINUTE : RTC_PERIOD_SECOND;
-        while (RTC0.RCR2.BIT.AADJP != 1) { ; }
+        while (RTC1.RCR2.BIT.AADJP != 1) { ; }
         tmp_int = 0x80 | (0x3F & abs(adj)); /* 0x80 - */
-        RTC0.RADJ.BYTE = tmp_int;
-        while (RTC0.RADJ.BYTE != tmp_int) { ; }
+        RTC1.RADJ.BYTE = tmp_int;
+        while (RTC1.RADJ.BYTE != tmp_int) { ; }
     }
 }
 
 void rz_rtc_set_time(rtc_t *time) {
     /* Write 0 to RTC start bit */
-    RTC0.RCR2.BIT.START = 0x0;
+    RTC1.RCR2.BIT.START = 0x0;
     /* Wait for start bit to clear */
-    while (0 != RTC0.RCR2.BIT.START) { ; }
+    while (0 != RTC1.RCR2.BIT.START) { ; }
     /* Alarm enable bits are undefined after a reset,
      disable non-required alarm features */
-    RTC0.RWKAR.BIT.ENB = 0;
-    RTC0.RDAYAR.BIT.ENB = 0;
-    RTC0.RMONAR.BIT.ENB = 0;
-    RTC0.RYRAREN.BIT.ENB = 0;
+    RTC1.RWKAR.BIT.ENB = 0;
+    RTC1.RDAYAR.BIT.ENB = 0;
+    RTC1.RMONAR.BIT.ENB = 0;
+    RTC1.RYRAREN.BIT.ENB = 0;
     /* Operate RTC in 24-hr mode */
-    RTC0.RCR2.BIT.HR24 = 0x1;
-    RTC0.RYRCNT.WORD = int_to_bcd(time->year % 100);
-    RTC0.RMONCNT.BYTE = int_to_bcd(time->month);
-    RTC0.RDAYCNT.BYTE = int_to_bcd(time->date);
-    RTC0.RHRCNT.BYTE = int_to_bcd(time->hour);
-    RTC0.RMINCNT.BYTE = int_to_bcd(time->minute);
-    RTC0.RSECCNT.BYTE = int_to_bcd(time->second);
-    RTC0.RWKCNT.BYTE = int_to_bcd(time->weekday);
+    RTC1.RCR2.BIT.HR24 = 0x1;
+    RTC1.RYRCNT.WORD = int_to_bcd(time->year % 100);
+    RTC1.RMONCNT.BYTE = int_to_bcd(time->month);
+    RTC1.RDAYCNT.BYTE = int_to_bcd(time->date);
+    RTC1.RHRCNT.BYTE = int_to_bcd(time->hour);
+    RTC1.RMINCNT.BYTE = int_to_bcd(time->minute);
+    RTC1.RSECCNT.BYTE = int_to_bcd(time->second);
+    RTC1.RWKCNT.BYTE = int_to_bcd(time->weekday);
     /* Start the clock */
-    RTC0.RCR2.BIT.START = 0x1;
+    RTC1.RCR2.BIT.START = 0x1;
     /* Wait until the start bit is set to 1 */
-    while (1 != RTC0.RCR2.BIT.START) { ; }
+    while (1 != RTC1.RCR2.BIT.START) { ; }
 }
 
 void rz_rtc_get_time(rtc_t *time) {
-#if defined(RX63N)
-    IEN(RTC, CUP)= 0;
-    RTC0.RCR1.BIT.CIE = 1;
-    do {
-        IR(RTC, CUP) = 0;
-        time->year = bcd_to_int(RTC0.RYRCNT.WORD) + 2000;
-        time->month = bcd_to_int(RTC0.RMONCNT.BYTE);
-        time->date = bcd_to_int(RTC0.RDAYCNT.BYTE);
-        time->hour = bcd_to_int(0x3f & RTC0.RHRCNT.BYTE);
-        time->minute = bcd_to_int(RTC0.RMINCNT.BYTE);
-        time->second = bcd_to_int(RTC0.RSECCNT.BYTE);
-        time->weekday = bcd_to_int(RTC0.RWKCNT.BYTE);
-    } while (IR(RTC, CUP));
-    RTC0.RCR1.BIT.CIE = 0;
-#endif
-#if defined(RX65N)
     // ToDo: implement interrupt configuration
-    RTC0.RCR1.BIT.CIE = 1;
-    time->year = bcd_to_int(RTC0.RYRCNT.WORD) + 2000;
-    time->month = bcd_to_int(RTC0.RMONCNT.BYTE);
-    time->date = bcd_to_int(RTC0.RDAYCNT.BYTE);
-    time->hour = bcd_to_int(0x3f & RTC0.RHRCNT.BYTE);
-    time->minute = bcd_to_int(RTC0.RMINCNT.BYTE);
-    time->second = bcd_to_int(RTC0.RSECCNT.BYTE);
-    time->weekday = bcd_to_int(RTC0.RWKCNT.BYTE);
-    RTC0.RCR1.BIT.CIE = 0;
-#endif
+    RTC1.RCR1.BIT.CIE = 1;
+    time->year = bcd_to_int(RTC1.RYRCNT.WORD) + 2000;
+    time->month = bcd_to_int(RTC1.RMONCNT.BYTE);
+    time->date = bcd_to_int(RTC1.RDAYCNT.BYTE);
+    time->hour = bcd_to_int(0x3f & RTC1.RHRCNT.BYTE);
+    time->minute = bcd_to_int(RTC1.RMINCNT.BYTE);
+    time->second = bcd_to_int(RTC1.RSECCNT.BYTE);
+    time->weekday = bcd_to_int(RTC1.RWKCNT.BYTE);
+    RTC1.RCR1.BIT.CIE = 0;
 }
 
 static void wait(volatile int count) {
@@ -242,58 +244,49 @@ static void wait(volatile int count) {
 }
 
 void rz_rtc_init(void) {
-    SYSTEM.PRCR.WORD = 0xA503;
-    /* Check if the MCU has come from a cold start (power on reset) */
-    if (0 == SYSTEM.RSTSR1.BIT.CWSF) {
-        /* Set the warm start flag */
-        SYSTEM.RSTSR1.BIT.CWSF = 1;
-        /* Disable the sub-clock oscillator */
-        SYSTEM.SOSCCR.BIT.SOSTP = 1;
-        /* Wait for register modification to complete */
-        while (1 != SYSTEM.SOSCCR.BIT.SOSTP) { ; }
-        /* Disable the input from the sub-clock */
-        RTC0.RCR3.BYTE = 0x0C;
-        /* Wait for the register modification to complete */
-        while (0 != RTC0.RCR3.BIT.RTCEN) { ; }
-        /* Wait for at least 5 cycles of sub-clock */
-        wait(0x1000);
-        /* Start sub-clock */
-        SYSTEM.SOSCCR.BIT.SOSTP = 0;
-        /* Perform 8 delay iterations */
-        for (uint8_t i = 0; i < 8; i++) {
-            /* Wait in while loop for ~0.5 seconds */
-            wait(0xFFFFE);
-        }
-    } else {
-        /* Start sub-clock */
-        SYSTEM.SOSCCR.BIT.SOSTP = 0;
-        /* Wait for the register modification to complete */
-        while (0 != SYSTEM.SOSCCR.BIT.SOSTP) { ; }
+    volatile int i;
+    CPG.STBCR5.BIT.MSTP52 = 0;
+#if defined(USE_RTCX1_CLK)
+    RTC1.RCR4.BIT.RCKSEL = 0;
+    RTC1.RCR3.BIT.RTCEN  = 1;
+#elif defined(USE_EXTAL_CLK)
+    RTC1.RCR4.BIT.RCKSEL = 1;
+    RTC1.RCR3.BIT.RTCEN  = 0;
+#endif
+    i = 0;
+    while (i < 1000) {
+        i++;
     }
-    /* Set RTC clock input from sub-clock, and supply to RTC module */
-    RTC0.RCR4.BIT.RCKSEL = 0;
-    RTC0.RCR3.BIT.RTCEN = 1;
-    /* Wait for at least 5 cycles of sub-clock */
-    wait(0x1000);
-    /* It is now safe to set the RTC registers */
-    /* Stop the clock */
-    RTC0.RCR2.BIT.START = 0x0;
-    /* Wait for start bit to clear */
-    while (0 != RTC0.RCR2.BIT.START) { ; }
-    /* Reset the RTC unit */
-    RTC0.RCR2.BIT.RESET = 1;
-    /* Wait until reset is complete */
-    while (RTC0.RCR2.BIT.RESET) { ; }
-    /* call back */
-    rz_rtc_func = NULL;
-    /* Start the clock */
-    RTC0.RCR2.BIT.START = 0x1;
-    /* Wait until the start bit is set to 1 */
-    while (1 != RTC0.RCR2.BIT.START) { ; }
+
+    RTC_BCNT1.RCR2.BIT.START = 0;
+    for (i = 0; (i < READ_LOOP_MAX) && (RTC1.RCR2.BIT.START != 0); i++) {
+        ;
+    }
+#if defined(USE_EXTAL_CLK)
+    // Clockin  = 24MHz
+    RTC1.RFRH.WORD = 0x0001;
+    RTC1.RFRL.WORD = 0x6E35;
+#endif
+
+    RTC1.RCR2.BIT.CNTMD = 1;
+    for (i = 0; (i < READ_LOOP_MAX) && (RTC1.RCR2.BIT.CNTMD != 1); i++) {
+        ;
+    }
+
+    RTC1.RCR2.BIT.RESET = 1;
+    for (i = 0; (i < READ_LOOP_MAX) && (RTC1.RCR2.BIT.RESET != 0); i++) {
+        ;
+    }
+
+    RTC1.RCR1.BIT.AIE = 1;
+    RTC1.RCR1.BIT.PIE = 0;
+
+    RTC1.RCR2.BIT.START = 1;
+    for (i = 0; (i < READ_LOOP_MAX) && (RTC1.RCR2.BIT.START != 1); i++) {
+        ;
+    }
 }
 
 void rz_rtc_deinit(void) {
-    RTC0.RCR3.BIT.RTCEN = 0;
-    RTC0.RCR4.BIT.RCKSEL = 1;
     rz_rtc_func = NULL;
 }
