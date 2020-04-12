@@ -4,8 +4,8 @@
 
 MEMORY
 {
-  BOOT_LOADER (rx) : ORIGIN = 0x50000000,       LENGTH = 0x00000000
-  ROM (rx)         : ORIGIN = 0x50000000,       LENGTH = 0x01000000
+  BOOT_LOADER (rx) : ORIGIN = 0x50000000,       LENGTH = 0x00011000
+  ROM (rx)         : ORIGIN = 0x50011000,       LENGTH = 0x00FEF000
   RAM_NV (rwx)     : ORIGIN = 0x80000000,       LENGTH = 0x00020000
   L_TTB (rw)       : ORIGIN = 0x80020000,       LENGTH = 0x00005000
   RAM (rwx)        : ORIGIN = 0x80025000,       LENGTH = 0x003DB000
@@ -42,6 +42,11 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    .boot :
+    {
+        KEEP(*(._boot_loader)) 
+        KEEP(*(.boot_loader)) 
+    } > BOOT_LOADER 
     .text :
     {
         _stext = .;

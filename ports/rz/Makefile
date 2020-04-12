@@ -25,6 +25,7 @@ endif
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
 TARGET = TARGET_RZ_A2XX
+TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
 LVGL_ENABLE = 0
@@ -46,6 +47,34 @@ MICROPY_PY_USSL = 1
 MBED_UART_WRAPPER = 0
 MBED_SPI_WRAPPER = 0
 endif
+
+ifeq ($(BOARD),GR_MANGO_DD)
+CROSS = 1
+BOOT_LOADER = 1
+TARGET = TARGET_RZ_A2XX
+TARGET_BOARD = TARGET_GR_MANGO
+TARGET_LD = boards/$(BOARD)/$(BOARD).ld
+STACK_USAGE = 16384
+LVGL_ENABLE = 0
+MBED_OS = 1
+MBED_OS_EMAC=0
+MBED_OS_EVENTS=0
+MBED_GR_LIBS = 0
+MBED_GR_LIBS_DRP_FOR_MBED = 1
+MBED_GR_LIBS_dcache-control = 1
+MBED_GR_LIBS_components_LCD = 1
+MBED_GR_LIBS_components_CAMERA = 1
+MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
+MBED_HTTP = 0
+MBED_CONSOLE = 1
+OVERRIDE_CONSOLE_USBSERIAL = 0
+MICROPY_PY_LWIP = 1
+MICROPY_SSL_MBEDTLS = 1
+MICROPY_PY_USSL = 1
+MBED_UART_WRAPPER = 0
+MBED_SPI_WRAPPER = 0
+endif
+
 # LAN debug
 LAN_NEW = 0
 
@@ -110,24 +139,24 @@ INC_MBED += -ITARGET_RENESAS/$(TARGET)
 INC_MBED += -ITARGET_RENESAS/$(TARGET)/common
 INC_MBED += -ITARGET_RENESAS/$(TARGET)/common/r_cache
 INC_MBED += -ITARGET_RENESAS/$(TARGET)/common/r_cache/inc
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine/iobitmasks
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine/iodefines
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
+INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
 
 INC += -ITARGET_RENESAS
 INC += -ITARGET_RENESAS/$(TARGET)
 INC += -ITARGET_RENESAS/$(TARGET)/common
 INC += -ITARGET_RENESAS/$(TARGET)/common/r_cache
 INC += -ITARGET_RENESAS/$(TARGET)/common/r_cache/inc
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine/iobitmasks
-INC += -ITARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/inc/iodefine/iodefines
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
+INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
 INC += -Ilib/mbed-os
 INC += -Ilib/mbed-os/hal
 INC += -Ilib/mbed-os/drivers
@@ -221,6 +250,9 @@ LDFLAGS += -DMBED_APP_START=0x50000000 -DMBED_APP_SIZE=0x1000000 -DMBED_ROM_STAR
 #CFLAGS += -D$(MCU_SERIES_CAP)
 #CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
 ifeq ($(BOARD),GR_MANGO)
+CFLAGS += -DGRMANGO
+endif
+ifeq ($(BOARD),GR_MANGO_DD)
 CFLAGS += -DGRMANGO
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
@@ -396,8 +428,8 @@ SRC_C = \
 #######################################################################
 # TARGET_RENESAS
 #######################################################################
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
+SRC_MBED_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
+SRC_MBED_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
 
 ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_MBED_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
@@ -418,15 +450,15 @@ SRC_MBED_C += TARGET_RENESAS/$(TARGET)/spi_api.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/us_ticker.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/common/rza_io_regrw.c
 SRC_MBED_C += TARGET_RENESAS/$(TARGET)/common/r_cache/src/lld/r_cache_lld_rza2m.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/PeripheralPins.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/cmsis_nvic.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/mbed_sf_boot.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/mmu_RZ_A2M.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/nvic_wrapper.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/octaram_init.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/os_tick_ostm.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/RZ_A2_Init.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/TARGET_$(BOARD)/device/system_RZ_A2M.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/PeripheralPins.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/cmsis_nvic.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mbed_sf_boot.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mmu_RZ_A2M.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/nvic_wrapper.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/octaram_init.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/os_tick_ostm.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/RZ_A2_Init.c
+SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/system_RZ_A2M.c
 
 ifeq ($(MBED_OS), 1)
 #######################################################################
@@ -988,6 +1020,9 @@ endif
 #######################################################################
 # micropython rz CPU
 #######################################################################
+ifeq ($(BOOT_LOADER),1)
+SRC_C += boards/$(BOARD)/$(BOARD)_bl.c
+endif
 SRC_C += bufhelper.c
 ifeq ($(LAN_NEW),1)
 SRC_C += eth.c
@@ -1196,7 +1231,7 @@ $(PY_BUILD)/formatfloat.o: COPT += -Os
 $(PY_BUILD)/parsenum.o: COPT += -Os
 $(PY_BUILD)/mpprint.o: COPT += -Os
 
-all: $(BUILD)/firmware.elf
+all: $(BUILD)/firmware.bin
 
 #$(OBJ_MBED_S: $(SRC_MBED_S)
 #	$(ECHO) "CC $<"
@@ -1267,8 +1302,6 @@ CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
-
-
 #$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 #	$(ECHO) "MISC freezing bytecode"
 #	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
@@ -1277,11 +1310,17 @@ $(BUILD)/firmware.elf: $(OBJ) libs/$(LIB_MBED)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $^
 	$(Q)$(OBJCOPY) -O srec $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
-	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
 	$(Q)$(SIZE) $@
 
+ifeq ($(BOOT_LOADER),1)
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
+	$(Q)$(OBJCOPY) -O binary -j .boot -j .isr_vector -j .text -j .ARM.extab -j .ARM.exidx -j .copy.table -j .zero.table -j .ram_code -j .data -j .nc_data -j .octa_data $^ $(BUILD)/firmware.bin
+	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
+else
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .ARM.extab -j .ARM.exidx -j .copy.table -j .zero.table -j .ram_code -j .data -j .nc_data -j .octa_data $^ $(BUILD)/firmware.bin
+	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
+endif
 
 #$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 #	$(ECHO) "Create $@"
