@@ -64,9 +64,9 @@ static const uint32_t CLK_PINS[SPI_CH_NUM] = {
 };
 
 void rz_spi_get_pins(uint32_t ch, uint32_t *mosi, uint32_t *miso, uint32_t *clk) {
-    *mosi = MOSI_PINS[ch * 3 + 1];
-    *miso = MISO_PINS[ch * 3 + 2];
-    *clk = CLK_PINS[ch * 3];
+    *mosi = MOSI_PINS[ch];
+    *miso = MISO_PINS[ch];
+    *clk = CLK_PINS[ch];
 }
 
 static void rz_spi_set_MSTP(uint32_t ch, int bit) {
@@ -132,9 +132,9 @@ void rz_spi_set_mode(uint32_t ch, uint32_t polarity, uint32_t phase) {
 }
 
 void rz_spi_select_spi_pin(uint32_t ch) {
-    uint32_t clk_pin = CLK_PINS[ch * 3 + 0];
-    uint32_t mosi_pin = MOSI_PINS[ch * 3 + 1];
-    uint32_t miso_pin = MISO_PINS[ch * 3 + 2];
+    uint32_t clk_pin = CLK_PINS[ch];
+    uint32_t mosi_pin = MOSI_PINS[ch];
+    uint32_t miso_pin = MISO_PINS[ch];
     _gpio_mode_output(clk_pin);
     _gpio_mode_output(mosi_pin);
     _gpio_mode_input(miso_pin);
@@ -160,9 +160,9 @@ void rz_spi_select_spi_pin(uint32_t ch) {
 }
 
 void rz_spi_reset_spi_pin(uint32_t ch) {
-    uint32_t clk_pin = CLK_PINS[ch * 3 + 0];
-    uint32_t mosi_pin = MOSI_PINS[ch * 3 + 1];
-    uint32_t miso_pin = MISO_PINS[ch * 3 + 2];
+    uint32_t clk_pin = CLK_PINS[ch];
+    uint32_t mosi_pin = MOSI_PINS[ch];
+    uint32_t miso_pin = MISO_PINS[ch];
     _gpio_mode_gpio(clk_pin);
     _gpio_mode_gpio(mosi_pin);
     _gpio_mode_gpio(miso_pin);
@@ -174,8 +174,8 @@ void rz_spi_set_spi_ch(uint32_t ch, uint32_t polarity, uint32_t phase) {
 
     rz_spi_select_spi_pin(ch);
     prspi->SPCR.BYTE = 0;       /* stop SPI */
-    prspi->SPSR.BYTE = 0xa0;
-    prspi->SPPCR.BYTE = 0;      /* fixed idle value, disable loop-back mode */
+    prspi->SPSR.BYTE = 0x60;
+    prspi->SPPCR.BYTE = 0x20;   /* fixed idle value, disable loop-back mode */
     prspi->SPSCR.BYTE = 0;      /* Disable sequence control */
     prspi->SPDCR.BYTE = 0x20;   /* SPLW=1 long access */
     prspi->SPCMD0.WORD = 0x0700;/* LSBF=0, SPB=7, BRDV=0, CPOL=0, CPHA=0 */
@@ -189,7 +189,7 @@ void rz_spi_set_spi_ch(uint32_t ch, uint32_t polarity, uint32_t phase) {
     } else {
         prspi->SPCMD0.BIT.CPHA = 1; /* CPHA(Clock Phase) */
     }
-    prspi->SPCR.BYTE = 0xC8;    /* Start SPI in master mode */
+    prspi->SPCR.BYTE = 0x48;    /* Start SPI in master mode */
 }
 
 void rz_spi_reset_spi_ch(uint32_t ch) {
@@ -203,6 +203,9 @@ uint8_t rz_spi_write_byte(uint32_t ch, uint8_t b) {
             ;
     }
     prspi->SPDR.LONG = (uint32_t)(b);
+    while (prspi->SPSR.BIT.SPRF == 0) {
+            ;
+    }
     return (uint8_t)(prspi->SPDR.LONG);
 }
 
@@ -214,6 +217,10 @@ void rz_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
                 ;
         }
         prspi->SPDR.LONG = (uint32_t)(*buf++);
+        while (prspi->SPSR.BIT.SPRF == 0) {
+                ;
+        }
+        prspi->SPDR.LONG;
     }
 }
 
@@ -225,6 +232,10 @@ void rz_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
                 ;
         }
         prspi->SPDR.LONG = (uint32_t)(*buf++);
+        while (prspi->SPSR.BIT.SPRF == 0) {
+                ;
+        }
+        prspi->SPDR.LONG;
     }
     rz_spi_set_bits(ch, 8);
 }
@@ -238,6 +249,10 @@ void rz_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
                 ;
         }
         prspi->SPDR.LONG = (uint32_t)(*buf++);
+        while (prspi->SPSR.BIT.SPRF == 0) {
+                ;
+        }
+        prspi->SPDR.LONG;
         rz_enable_irq();
     }
     rz_spi_set_bits(ch, 8);
@@ -260,13 +275,21 @@ void rz_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
         while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
-        prspi->SPDR.LONG = (uint32_t)(*src);
+        if (src != 0) {
+            prspi->SPDR.BYTE.LL = (uint8_t)(*src);
+            src++;
+        } else {
+            prspi->SPDR.BYTE.LL = (uint8_t)0x00;
+        }
         while (prspi->SPSR.BIT.SPRF == 0) {
                 ;
         }
-        *dst = (uint8_t)(prspi->SPDR.LONG);
-        src++;
-        dst++;
+        if (dst != 0) {
+            *dst = (uint8_t)(prspi->SPDR.BYTE.LL);
+            dst++;
+        } else {
+            prspi->SPDR.BYTE.LL;
+        }
     }
 }
 
@@ -277,13 +300,21 @@ void rz_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src, uint32_t count
         while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
-        prspi->SPDR.LONG = (uint32_t)(*src);
+        if (src != 0) {
+            prspi->SPDR.WORD.L = (uint16_t)(*src);
+            src++;
+        } else {
+            prspi->SPDR.WORD.L = (uint16_t)0x00;
+        }
         while (prspi->SPSR.BIT.SPRF == 0) {
                 ;
         }
-        *dst = (uint16_t)(prspi->SPDR.LONG);
-        src++;
-        dst++;
+        if (dst != 0) {
+            *dst = (uint16_t)(prspi->SPDR.WORD.L);
+            dst++;
+        } else {
+            prspi->SPDR.WORD.L;
+        }
     }
     rz_spi_set_bits(ch, 8);
 }
@@ -295,13 +326,21 @@ void rz_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
         while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
-        prspi->SPDR.LONG = (uint32_t)(*src);
+        if (src != 0) {
+            prspi->SPDR.LONG = (uint32_t)(*src);
+            src++;
+        } else {
+            prspi->SPDR.LONG = (uint32_t)0x00;
+        }
         while (prspi->SPSR.BIT.SPRF == 0) {
                 ;
         }
-        *dst = (uint32_t)(prspi->SPDR.LONG);
-        src++;
-        dst++;
+        if (dst != 0) {
+            *dst = (uint32_t)(prspi->SPDR.LONG);
+            dst++;
+        } else {
+            prspi->SPDR.LONG;
+        }
     }
     rz_spi_set_bits(ch, 8);
 }
