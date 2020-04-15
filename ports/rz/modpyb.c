@@ -40,9 +40,7 @@
 #endif
 #include "usrsw.h"
 #include "rng.h"
-#if RZ_TODO
 #include "rtc.h"
-#endif
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"

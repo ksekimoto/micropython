@@ -10,7 +10,7 @@
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
-#define MICROPY_HW_ENABLE_RTC       (0)
+#define MICROPY_HW_ENABLE_RTC       (1)
 #define MICROPY_HW_ENABLE_SERVO     (0)
 #define MICROPY_HW_ENABLE_RZ_USB    (0)
 #define MICROPY_HW_ETH_RZ           (1)
@@ -41,11 +41,11 @@
 #define MICROPY_HW_SPI1_MOSI (pin_P86)
 
 // USRSW is pulled low. Pressing the button makes the input go high.
-#define MICROPY_HW_USRSW_PIN        (pin_PD6)
+#define MICROPY_HW_USRSW_PIN        (pin_PD7)
 #define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
 #define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
 #define MICROPY_HW_USRSW_PRESSED    (0)
-#define MICROPY_HW_USRSW1_PIN        (pin_PD7)
+#define MICROPY_HW_USRSW1_PIN        (pin_PD6)
 #define MICROPY_HW_USRSW1_PULL       (GPIO_NOPULL)
 #define MICROPY_HW_USRSW1_EXTI_MODE  (GPIO_MODE_IT_FALLING)
 #define MICROPY_HW_USRSW1_PRESSED    (0)
