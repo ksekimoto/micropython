@@ -110,13 +110,13 @@
         vm_hook_divisor = MICROPY_VM_HOOK_COUNT; \
         extern void ets_loop_iter(void); \
         ets_loop_iter(); \
-    }
+}
 #define MICROPY_VM_HOOK_LOOP MICROPY_VM_HOOK_POLL
 #define MICROPY_VM_HOOK_RETURN MICROPY_VM_HOOK_POLL
 
 // type definitions for the specific machine
 
-#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void*)((mp_uint_t)(p)))
+#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((mp_uint_t)(p)))
 
 #define MP_SSIZE_MAX (0x7fffffff)
 
@@ -131,14 +131,22 @@ typedef uint32_t sys_prot_t; // for modlwip
 #include <sys/types.h>
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
-void *esp_native_code_commit(void*, size_t);
-#define MP_PLAT_COMMIT_EXEC(buf, len) esp_native_code_commit(buf, len)
+void *esp_native_code_commit(void *, size_t, void *);
+#define MP_PLAT_COMMIT_EXEC(buf, len, reloc) esp_native_code_commit(buf, len, reloc)
 
 // printer for debugging output, goes to UART only
 extern const struct _mp_print_t mp_debug_print;
 
+#if MICROPY_VFS_FAT
 #define mp_type_fileio mp_type_vfs_fat_fileio
 #define mp_type_textio mp_type_vfs_fat_textio
+#elif MICROPY_VFS_LFS1
+#define mp_type_fileio mp_type_vfs_lfs1_fileio
+#define mp_type_textio mp_type_vfs_lfs1_textio
+#elif MICROPY_VFS_LFS2
+#define mp_type_fileio mp_type_vfs_lfs2_fileio
+#define mp_type_textio mp_type_vfs_lfs2_textio
+#endif
 
 // use vfs's functions for import stat and builtin open
 #define mp_import_stat mp_vfs_import_stat
@@ -183,5 +191,6 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PY_SYS_PLATFORM "esp8266"
 
 #define MP_FASTCODE(n) __attribute__((section(".iram0.text." #n))) n
+#define MICROPY_WRAP_MP_KEYBOARD_INTERRUPT(f) MP_FASTCODE(f)
 
 #define _assert(expr) ((expr) ? (void)0 : __assert_func(__FILE__, __LINE__, __func__, #expr))

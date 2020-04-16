@@ -70,6 +70,7 @@
 #define MICROPY_EMERGENCY_EXCEPTION_BUF_SIZE (0)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_HELPER_REPL         (1)
+#define MICROPY_REPL_INFO           (1)
 #define MICROPY_REPL_EMACS_KEYS     (1)
 #define MICROPY_REPL_AUTO_INDENT    (1)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_MPZ)
@@ -84,9 +85,6 @@
 #define MICROPY_ENABLE_SCHEDULER    (1)
 #define MICROPY_SCHEDULER_DEPTH     (8)
 #define MICROPY_VFS                 (1)
-#ifndef MICROPY_VFS_FAT
-#define MICROPY_VFS_FAT             (1)
-#endif
 
 // control over Python builtins
 #define MICROPY_PY_FUNCTION_ATTRS   (1)
@@ -99,6 +97,7 @@
 #define MICROPY_PY_BUILTINS_MEMORYVIEW (1)
 #define MICROPY_PY_BUILTINS_FROZENSET (1)
 #define MICROPY_PY_BUILTINS_SLICE_ATTRS (1)
+#define MICROPY_PY_BUILTINS_SLICE_INDICES (1)
 #define MICROPY_PY_BUILTINS_ROUND_INT (1)
 #define MICROPY_PY_ALL_SPECIAL_METHODS (1)
 #define MICROPY_PY_BUILTINS_COMPILE (MICROPY_ENABLE_COMPILER)
@@ -107,7 +106,9 @@
 #define MICROPY_PY_BUILTINS_INPUT   (1)
 #define MICROPY_PY_BUILTINS_POW3    (1)
 #define MICROPY_PY_BUILTINS_HELP    (1)
+#ifndef MICROPY_PY_BUILTINS_HELP_TEXT
 #define MICROPY_PY_BUILTINS_HELP_TEXT stm32_help_text
+#endif
 #define MICROPY_PY_BUILTINS_HELP_MODULES (1)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
 #define MICROPY_PY_ARRAY_SLICE_ASSIGN (1)
@@ -133,21 +134,46 @@
 #endif
 
 // extended modules
+#ifndef MICROPY_PY_UASYNCIO
+#define MICROPY_PY_UASYNCIO         (1)
+#endif
+#ifndef MICROPY_PY_UCTYPES
 #define MICROPY_PY_UCTYPES          (1)
+#endif
+#ifndef MICROPY_PY_UZLIB
 #define MICROPY_PY_UZLIB            (1)
+#endif
+#ifndef MICROPY_PY_UJSON
 #define MICROPY_PY_UJSON            (1)
+#endif
+#ifndef MICROPY_PY_URE
 #define MICROPY_PY_URE              (1)
+#endif
+#ifndef MICROPY_PY_URE_SUB
 #define MICROPY_PY_URE_SUB          (1)
+#endif
+#ifndef MICROPY_PY_UHEAPQ
 #define MICROPY_PY_UHEAPQ           (1)
+#endif
+#ifndef MICROPY_PY_UHASHLIB
 #define MICROPY_PY_UHASHLIB         (1)
+#endif
 #define MICROPY_PY_UHASHLIB_MD5     (MICROPY_PY_USSL)
 #define MICROPY_PY_UHASHLIB_SHA1    (MICROPY_PY_USSL)
 #define MICROPY_PY_UCRYPTOLIB       (MICROPY_PY_USSL)
+#ifndef MICROPY_PY_UBINASCII
 #define MICROPY_PY_UBINASCII        (1)
+#endif
+#ifndef MICROPY_PY_URANDOM
 #define MICROPY_PY_URANDOM          (1)
+#endif
+#ifndef MICROPY_PY_URANDOM_EXTRA_FUNCS
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
+#endif
 #define MICROPY_PY_USELECT          (1)
+#ifndef MICROPY_PY_UTIMEQ
 #define MICROPY_PY_UTIMEQ           (1)
+#endif
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (3)
 #define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (1)
@@ -268,6 +294,13 @@ struct _mp_bluetooth_nimble_root_pointers_t;
 #define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE
 #endif
 
+#if MICROPY_BLUETOOTH_BTSTACK
+struct _mp_bluetooth_btstack_root_pointers_t;
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK struct _mp_bluetooth_btstack_root_pointers_t *bluetooth_btstack_root_pointers;
+#else
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK
+#endif
+
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8]; \
     \
@@ -282,7 +315,7 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; \
     \
-    struct _soft_timer_entry_t *soft_timer_head; \
+    struct _soft_timer_entry_t *soft_timer_heap; \
     \
     /* pointers to all Timer objects (if they have been created) */ \
     struct _pyb_timer_obj_t *pyb_timer_obj_all[MICROPY_HW_MAX_TIMER]; \
@@ -301,18 +334,22 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     MICROPY_PORT_ROOT_POINTER_MBEDTLS \
     MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE \
+        MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK \
 
 // type definitions for the specific machine
 
-#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void*)((mp_uint_t)(p) | 1))
+#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((uint32_t)(p) | 1))
 
 #define MP_SSIZE_MAX (0x7fffffff)
 
+// Assume that if we already defined the obj repr then we also defined these items
+#ifndef MICROPY_OBJ_REPR
 #define UINT_FMT "%u"
 #define INT_FMT "%d"
-
 typedef int mp_int_t; // must be pointer size
 typedef unsigned int mp_uint_t; // must be pointer size
+#endif
+
 typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
@@ -341,8 +378,8 @@ static inline mp_uint_t disable_irq(void) {
 #if MICROPY_PY_THREAD
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
         if (pyb_thread_enabled) { \
             MP_THREAD_GIL_EXIT(); \
             pyb_thread_yield(); \
@@ -356,8 +393,8 @@ static inline mp_uint_t disable_irq(void) {
 #else
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
         __WFI(); \
     } while (0);
 
@@ -368,6 +405,10 @@ static inline mp_uint_t disable_irq(void) {
 #define MICROPY_PY_LWIP_ENTER   uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
 #define MICROPY_PY_LWIP_REENTER irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
 #define MICROPY_PY_LWIP_EXIT    restore_irq_pri(irq_state);
+
+// Bluetooth calls must run at a raised IRQ priority
+#define MICROPY_PY_BLUETOOTH_ENTER MICROPY_PY_LWIP_ENTER
+#define MICROPY_PY_BLUETOOTH_EXIT MICROPY_PY_LWIP_EXIT
 
 // We need an implementation of the log2 function which is not a macro
 #define MP_NEED_LOG2 (1)

@@ -47,17 +47,31 @@
 #define MICROPY_PY_BLUETOOTH_GATTS_ON_READ_CALLBACK (0)
 #endif
 
-// Common constants.
-#ifndef MP_BLUETOOTH_MAX_ATTR_SIZE
-#define MP_BLUETOOTH_MAX_ATTR_SIZE (20)
+// This is used to protect the ringbuffer.
+#ifndef MICROPY_PY_BLUETOOTH_ENTER
+#define MICROPY_PY_BLUETOOTH_ENTER mp_uint_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
+#define MICROPY_PY_BLUETOOTH_EXIT MICROPY_END_ATOMIC_SECTION(atomic_state);
 #endif
+
+// Common constants.
+#ifndef MP_BLUETOOTH_DEFAULT_ATTR_LEN
+#define MP_BLUETOOTH_DEFAULT_ATTR_LEN (20)
+#endif
+
+#define MP_BLUETOOTH_CCCB_LEN (2)
 
 // Advertisement packet lengths
 #define MP_BLUETOOTH_GAP_ADV_MAX_LEN (32)
 
+// These match the spec values for these flags so can be passed directly to the stack.
 #define MP_BLUETOOTH_CHARACTERISTIC_FLAG_READ     (1 << 1)
+#define MP_BLUETOOTH_CHARACTERISTIC_FLAG_WRITE_NO_RESPONSE (1 << 2)
 #define MP_BLUETOOTH_CHARACTERISTIC_FLAG_WRITE    (1 << 3)
 #define MP_BLUETOOTH_CHARACTERISTIC_FLAG_NOTIFY   (1 << 4)
+
+// For mp_bluetooth_gattc_write, the mode parameter
+#define MP_BLUETOOTH_WRITE_MODE_NO_RESPONSE     (0)
+#define MP_BLUETOOTH_WRITE_MODE_WITH_RESPONSE   (1)
 
 // Type value also doubles as length.
 #define MP_BLUETOOTH_UUID_TYPE_16  (2)
@@ -151,8 +165,8 @@ int mp_bluetooth_init(void);
 // Disables the Bluetooth stack. Is a no-op when not enabled.
 void mp_bluetooth_deinit(void);
 
-// Returns true when the Bluetooth stack is enabled.
-bool mp_bluetooth_is_enabled(void);
+// Returns true when the Bluetooth stack is active.
+bool mp_bluetooth_is_active(void);
 
 // Gets the MAC addr of this device in big-endian format.
 void mp_bluetooth_get_device_addr(uint8_t *addr);
@@ -166,11 +180,11 @@ void mp_bluetooth_gap_advertise_stop(void);
 
 // Start adding services. Must be called before mp_bluetooth_register_service.
 int mp_bluetooth_gatts_register_service_begin(bool append);
-// // Add a service with the given list of characteristics to the queue to be registered.
+// Add a service with the given list of characteristics to the queue to be registered.
 // The value_handles won't be valid until after mp_bluetooth_register_service_end is called.
 int mp_bluetooth_gatts_register_service(mp_obj_bluetooth_uuid_t *service_uuid, mp_obj_bluetooth_uuid_t **characteristic_uuids, uint8_t *characteristic_flags, mp_obj_bluetooth_uuid_t **descriptor_uuids, uint8_t *descriptor_flags, uint8_t *num_descriptors, uint16_t *handles, size_t num_characteristics);
 // Register any queued services.
-int mp_bluetooth_gatts_register_service_end();
+int mp_bluetooth_gatts_register_service_end(void);
 
 // Read the value from the local gatts db (likely this has been written by a central).
 int mp_bluetooth_gatts_read(uint16_t value_handle, uint8_t **value, size_t *value_len);
@@ -213,7 +227,7 @@ int mp_bluetooth_gattc_discover_descriptors(uint16_t conn_handle, uint16_t start
 int mp_bluetooth_gattc_read(uint16_t conn_handle, uint16_t value_handle);
 
 // Write the value to the remote peripheral.
-int mp_bluetooth_gattc_write(uint16_t conn_handle, uint16_t value_handle, const uint8_t *value, size_t *value_len);
+int mp_bluetooth_gattc_write(uint16_t conn_handle, uint16_t value_handle, const uint8_t *value, size_t *value_len, unsigned int mode);
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -235,7 +249,7 @@ bool mp_bluetooth_gatts_on_read_request(uint16_t conn_handle, uint16_t value_han
 void mp_bluetooth_gap_on_scan_complete(void);
 
 // Notify modbluetooth of a scan result.
-void mp_bluetooth_gap_on_scan_result(uint8_t addr_type, const uint8_t *addr, bool connectable, const int8_t rssi, const uint8_t *data, size_t data_len);
+void mp_bluetooth_gap_on_scan_result(uint8_t addr_type, const uint8_t *addr, uint8_t adv_type, const int8_t rssi, const uint8_t *data, size_t data_len);
 
 // Notify modbluetooth that a service was found (either by discover-all, or discover-by-uuid).
 void mp_bluetooth_gattc_on_primary_service_result(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle, mp_obj_bluetooth_uuid_t *service_uuid);
@@ -247,10 +261,44 @@ void mp_bluetooth_gattc_on_characteristic_result(uint16_t conn_handle, uint16_t 
 void mp_bluetooth_gattc_on_descriptor_result(uint16_t conn_handle, uint16_t handle, mp_obj_bluetooth_uuid_t *descriptor_uuid);
 
 // Notify modbluetooth that a read has completed with data (or notify/indicate data available, use `event` to disambiguate).
-void mp_bluetooth_gattc_on_data_available(uint16_t event, uint16_t conn_handle, uint16_t value_handle, const uint8_t *data, size_t data_len);
+// Note: these functions are to be called in a group protected by MICROPY_PY_BLUETOOTH_ENTER/EXIT.
+// _start returns the number of bytes to submit to the calls to _chunk, followed by a call to _end.
+size_t mp_bluetooth_gattc_on_data_available_start(uint16_t event, uint16_t conn_handle, uint16_t value_handle, size_t data_len);
+void mp_bluetooth_gattc_on_data_available_chunk(const uint8_t *data, size_t data_len);
+void mp_bluetooth_gattc_on_data_available_end(void);
 
 // Notify modbluetooth that a write has completed.
 void mp_bluetooth_gattc_on_write_status(uint16_t conn_handle, uint16_t value_handle, uint16_t status);
 #endif
+
+// For stacks that don't manage attribute value data (currently all of them), helpers
+// to store this in a map, keyed by value handle.
+
+typedef struct {
+    // Pointer to heap-allocated data.
+    uint8_t *data;
+    // Allocated size of data.
+    size_t data_alloc;
+    // Current bytes in use.
+    size_t data_len;
+    // Whether new writes append or replace existing data (default false).
+    bool append;
+} mp_bluetooth_gatts_db_entry_t;
+
+typedef mp_map_t *mp_gatts_db_t;
+
+STATIC inline void mp_bluetooth_gatts_db_create(mp_gatts_db_t *db) {
+    *db = m_new(mp_map_t, 1);
+}
+
+STATIC inline void mp_bluetooth_gatts_db_reset(mp_gatts_db_t db) {
+    mp_map_init(db, 0);
+}
+
+void mp_bluetooth_gatts_db_create_entry(mp_gatts_db_t db, uint16_t handle, size_t len);
+mp_bluetooth_gatts_db_entry_t *mp_bluetooth_gatts_db_lookup(mp_gatts_db_t db, uint16_t handle);
+int mp_bluetooth_gatts_db_read(mp_gatts_db_t db, uint16_t handle, uint8_t **value, size_t *value_len);
+int mp_bluetooth_gatts_db_write(mp_gatts_db_t db, uint16_t handle, const uint8_t *value, size_t value_len);
+int mp_bluetooth_gatts_db_resize(mp_gatts_db_t db, uint16_t handle, size_t len, bool append);
 
 #endif // MICROPY_INCLUDED_EXTMOD_MODBLUETOOTH_H

@@ -19,11 +19,11 @@ include ../../py/mkenv.mk
 QSTR_DEFS = qstrdefsport.h #$(BUILD)/pins_qstr.h
 QSTR_GLOBAL_DEPENDENCIES = $(BOARD_DIR)/mpconfigboard.h
 
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
 MICROPY_PY_USSL = 1
 MICROPY_SSL_AXTLS = 1
 AXTLS_DEFS_EXTRA = -Dabort=abort_ -DRT_MAX_PLAIN_LENGTH=1024 -DRT_EXTRA=4096
-MICROPY_FATFS ?= 1
-MICROPY_PY_BTREE ?= 1
 BTREE_DEFS_EXTRA = -DDEFPSIZE=1024 -DMINCACHE=3
 
 FROZEN_MANIFEST ?= boards/manifest.py
@@ -40,7 +40,7 @@ PORT ?= /dev/ttyACM0
 BAUD ?= 115200
 FLASH_MODE ?= qio
 FLASH_SIZE ?= detect
-CROSS_COMPILE = xtensa-lx106-elf-
+CROSS_COMPILE ?= xtensa-lx106-elf-
 ESP_SDK = $(shell $(CC) -print-sysroot)/usr
 
 INC += -I.
@@ -61,7 +61,7 @@ CFLAGS_XTENSA = -fsingle-precision-constant -Wdouble-promotion \
 CFLAGS = $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib -DUART_OS=$(UART_OS) \
 	$(CFLAGS_XTENSA) $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) -I$(BOARD_DIR)
 
-LD_FILES ?= boards/esp8266.ld
+LD_FILES ?= boards/esp8266_2m.ld
 LDFLAGS = -nostdlib -T $(LD_FILES) -Map=$(@:.elf=.map) --cref
 LIBS = -L$(ESP_SDK)/lib -lmain -ljson -llwip_open -lpp -lnet80211 -lwpa -lphy -lnet80211 $(LDFLAGS_MOD)
 
@@ -139,6 +139,7 @@ LIB_SRC_C = $(addprefix lib/,\
 	libm/asinfacosf.c \
 	libm/atanf.c \
 	libm/atan2f.c \
+	libm/roundf.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
 	timeutils/timeutils.c \
@@ -146,12 +147,6 @@ LIB_SRC_C = $(addprefix lib/,\
 	utils/interrupt_char.c \
 	utils/sys_stdio_mphal.c \
 	)
-
-ifeq ($(MICROPY_FATFS), 1)
-LIB_SRC_C += \
-	lib/oofatfs/ff.c \
-	lib/oofatfs/ffunicode.c
-endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \

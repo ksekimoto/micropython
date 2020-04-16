@@ -4,10 +4,13 @@ include ../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
 
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-BOARD ?= netduino2
+BOARD ?= mps2-an385
 
 ifeq ($(BOARD),netduino2)
 CFLAGS += -mthumb -mcpu=cortex-m3 -mfloat-abi=soft
@@ -31,14 +34,11 @@ LDSCRIPT = mps2.ld
 SRC_BOARD_O = lib/utils/gchelper_m3.o
 endif
 
-CROSS_COMPILE = arm-none-eabi-
-
-TINYTEST = $(TOP)/lib/tinytest
+CROSS_COMPILE ?= arm-none-eabi-
 
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -I$(TINYTEST)
 
 CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 $(COPT) \
 	 -ffunction-sections -fdata-sections
@@ -71,6 +71,7 @@ SRC_RUN_C = \
 
 SRC_TEST_C = \
 	test_main.c \
+	lib/tinytest/tinytest.c \
 
 LIB_SRC_C += $(addprefix lib/,\
 	libc/string0.c \
@@ -92,6 +93,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	libm/asinfacosf.c \
 	libm/atanf.c \
 	libm/atan2f.c \
+	libm/roundf.c \
 	utils/sys_stdio_mphal.c \
 	)
 
@@ -104,9 +106,12 @@ OBJ_COMMON += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ_RUN =
 OBJ_RUN += $(addprefix $(BUILD)/, $(SRC_RUN_C:.c=.o))
 
+ALL_OBJ_RUN = $(OBJ_COMMON) $(OBJ_RUN)
+
 OBJ_TEST =
 OBJ_TEST += $(addprefix $(BUILD)/, $(SRC_TEST_C:.c=.o))
-OBJ_TEST += $(BUILD)/tinytest.o
+
+ALL_OBJ_TEST = $(OBJ_COMMON) $(OBJ_TEST)
 
 # All object files, needed to get dependencies correct
 OBJ = $(OBJ_COMMON) $(OBJ_RUN) $(OBJ_TEST)
@@ -127,8 +132,8 @@ run: $(BUILD)/firmware.elf
 	qemu-system-arm -machine $(BOARD) $(QEMU_EXTRA) -nographic -monitor null -semihosting -kernel $<
 
 ## `$(LD)` doesn't seem to like `--specs` for some reason, but we can just use `$(CC)` here.
-$(BUILD)/firmware.elf: $(OBJ_COMMON) $(OBJ_RUN)
-	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+$(BUILD)/firmware.elf: $(LDSCRIPT) $(ALL_OBJ_RUN)
+	$(Q)$(LD) $(LDFLAGS) -o $@ $(ALL_OBJ_RUN) $(LIBS)
 	$(Q)$(SIZE) $@
 
 include $(TOP)/py/mkrules.mk

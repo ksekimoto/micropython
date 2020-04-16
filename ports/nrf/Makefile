@@ -38,17 +38,19 @@ endif
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h
 
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
+
 # include py core make definitions
 include ../../py/py.mk
 
 GIT_SUBMODULES = lib/nrfx lib/tinyusb
 
-MICROPY_FATFS ?= 0
-FATFS_DIR = lib/oofatfs
+MICROPY_VFS_FAT ?= 0
 MPY_CROSS = ../../mpy-cross/mpy-cross
 MPY_TOOL = ../../tools/mpy-tool.py
 
-CROSS_COMPILE = arm-none-eabi-
+CROSS_COMPILE ?= arm-none-eabi-
 
 INC += -I.
 INC += -I../..
@@ -57,7 +59,6 @@ INC += -I./../../lib/cmsis/inc
 INC += -I./modules/machine
 INC += -I./modules/ubluepy
 INC += -I./modules/music
-INC += -I./modules/random
 INC += -I./modules/ble
 INC += -I./modules/board
 INC += -I../../lib/mp-readline
@@ -152,6 +153,7 @@ SRC_LIB += $(addprefix lib/,\
         libm/asinfacosf.c \
         libm/atanf.c \
         libm/atan2f.c \
+        libm/roundf.c \
 	)
 
 endif
@@ -231,6 +233,7 @@ SRC_C += \
 	pin_named_pins.c \
 	fatfs_port.c \
 	drivers/flash.c \
+	drivers/rng.c \
 	drivers/softpwm.c \
 	drivers/ticker.c \
 	drivers/bluetooth/ble_drv.c \
@@ -293,7 +296,6 @@ DRIVERS_SRC_C += $(addprefix modules/,\
 	music/modmusic.c \
 	music/musictunes.c \
 	ble/modble.c \
-	random/modrandom.c \
 	)
 
 # Custom micropython startup file with smaller interrupt vector table
@@ -318,7 +320,7 @@ OBJ += $(addprefix $(BUILD)/, $(SYSTEM_C_SRC:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
 OBJ += $(BUILD)/pins_gen.o
 
-$(BUILD)/$(FATFS_DIR)/ff.o: COPT += -Os
+$(BUILD)/$(OOFATFS_DIR)/ff.o: COPT += -Os
 $(filter $(PY_BUILD)/../extmod/vfs_fat_%.o, $(PY_O)): COPT += -Os
 
 .PHONY: all flash deploy sd binary hex
