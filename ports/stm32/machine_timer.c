@@ -77,7 +77,7 @@ STATIC mp_obj_t machine_timer_init_helper(machine_timer_obj_t *self, size_t n_ar
 
 STATIC mp_obj_t machine_timer_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     machine_timer_obj_t *self = m_new_obj(machine_timer_obj_t);
-    self->base.type = &machine_timer_type;
+    self->pairheap.base.type = &machine_timer_type;
 
     // Get timer id (only soft timer (-1) supported at the moment)
     mp_int_t id = -1;
@@ -87,7 +87,7 @@ STATIC mp_obj_t machine_timer_make_new(const mp_obj_type_t *type, size_t n_args,
         ++args;
     }
     if (id != -1) {
-        mp_raise_ValueError("Timer doesn't exist");
+        mp_raise_ValueError(MP_ERROR_TEXT("Timer doesn't exist"));
     }
 
     if (n_args > 0 || n_kw > 0) {
@@ -128,5 +128,5 @@ const mp_obj_type_t machine_timer_type = {
     .name = MP_QSTR_Timer,
     .print = machine_timer_print,
     .make_new = machine_timer_make_new,
-    .locals_dict = (mp_obj_dict_t*)&machine_timer_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&machine_timer_locals_dict,
 };

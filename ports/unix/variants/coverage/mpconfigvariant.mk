@@ -1,17 +1,19 @@
 PROG ?= micropython-coverage
 
-COPT = -O0
+# Disable optimisations and enable assert() on coverage builds.
+DEBUG ?= 1
 
-CFLAGS_EXTRA += \
+CFLAGS += \
 	-fprofile-arcs -ftest-coverage \
 	-Wdouble-promotion -Wformat -Wmissing-declarations -Wmissing-prototypes -Wsign-compare \
 	-Wold-style-definition -Wpointer-arith -Wshadow -Wuninitialized -Wunused-parameter \
 	-DMICROPY_UNIX_COVERAGE
 
-LDFLAGS_EXTRA += -fprofile-arcs -ftest-coverage
+LDFLAGS += -fprofile-arcs -ftest-coverage
 
 FROZEN_MANIFEST = manifest_coverage.py
 
+MICROPY_ROM_TEXT_COMPRESSION = 1
 MICROPY_VFS_FAT = 1
 MICROPY_VFS_LFS1 = 1
 MICROPY_VFS_LFS2 = 1

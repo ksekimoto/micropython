@@ -28,6 +28,15 @@
 
 #include "py/runtime.h"
 
+#if MICROPY_OBJ_IMMEDIATE_OBJS
+
+#define BOOL_VALUE(o) ((o) == mp_const_false ? 0 : 1)
+
+#else
+
+#define BOOL_VALUE(o) (((mp_obj_bool_t *)MP_OBJ_TO_PTR(o))->value)
+#endif
+
 typedef struct _mp_obj_bool_t {
     mp_obj_base_t base;
     bool value;
@@ -76,6 +85,7 @@ STATIC mp_obj_t bool_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_
 
 const mp_obj_type_t mp_type_bool = {
     { &mp_type_type },
+    .flags = MP_TYPE_FLAG_EQ_CHECKS_OTHER_TYPE, // can match all numeric types
     .name = MP_QSTR_bool,
     .print = bool_print,
     .make_new = bool_make_new,

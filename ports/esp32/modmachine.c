@@ -73,7 +73,7 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
         // set
         mp_int_t freq = mp_obj_get_int(args[0]) / 1000000;
         if (freq != 20 && freq != 40 && freq != 80 && freq != 160 && freq != 240) {
-            mp_raise_ValueError("frequency must be 20MHz, 40MHz, 80Mhz, 160MHz or 240MHz");
+            mp_raise_ValueError(MP_ERROR_TEXT("frequency must be 20MHz, 40MHz, 80Mhz, 160MHz or 240MHz"));
         }
         esp_pm_config_esp32_t pm;
         pm.max_freq_mhz = freq;
@@ -120,11 +120,11 @@ STATIC mp_obj_t machine_sleep_helper(wake_type_t wake_type, size_t n_args, const
 
     if (machine_rtc_config.wake_on_touch) {
         if (esp_sleep_enable_touchpad_wakeup() != ESP_OK) {
-            mp_raise_msg(&mp_type_RuntimeError, "esp_sleep_enable_touchpad_wakeup() failed");
+            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("esp_sleep_enable_touchpad_wakeup() failed"));
         }
     }
 
-    switch(wake_type) {
+    switch (wake_type) {
         case MACHINE_WAKE_SLEEP:
             esp_light_sleep_start();
             break;
@@ -146,7 +146,7 @@ STATIC mp_obj_t machine_deepsleep(size_t n_args, const mp_obj_t *pos_args, mp_ma
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(machine_deepsleep_obj, 0,  machine_deepsleep);
 
 STATIC mp_obj_t machine_reset_cause(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    switch(rtc_get_reset_reason(0)) {
+    switch (rtc_get_reset_reason(0)) {
         case POWERON_RESET:
             return MP_OBJ_NEW_SMALL_INT(MP_PWRON_RESET);
             break;
@@ -196,7 +196,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);
 
 STATIC mp_obj_t machine_soft_reset(void) {
     pyexec_system_exit = PYEXEC_FORCED_EXIT;
-    nlr_raise(mp_obj_new_exception(&mp_type_SystemExit));
+    mp_raise_type(&mp_type_SystemExit);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(machine_soft_reset_obj, machine_soft_reset);
 
@@ -289,7 +289,7 @@ STATIC MP_DEFINE_CONST_DICT(machine_module_globals, machine_module_globals_table
 
 const mp_obj_module_t mp_module_machine = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&machine_module_globals,
+    .globals = (mp_obj_dict_t *)&machine_module_globals,
 };
 
 #endif // MICROPY_PY_MACHINE

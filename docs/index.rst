@@ -13,3 +13,4 @@ MicroPython documentation and references
     esp32/quickref.rst
     wipy/quickref.rst
     rxboard/quickref.rst
+    unix/quickref.rst
