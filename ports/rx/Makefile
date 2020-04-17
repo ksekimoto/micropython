@@ -243,8 +243,6 @@ LIBS =
 
 SRC_LIB = $(addprefix lib/,\
 	libc/string0.c \
-	oofatfs/ff.c \
-	oofatfs/ffunicode.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
 	netutils/trace.c \
@@ -340,6 +338,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	kf_tan.c \
 	log1pf.c \
 	nearbyintf.c \
+	roundf.c \
 	sf_cos.c \
 	sf_erf.c \
 	sf_frexp.c \
@@ -510,6 +509,10 @@ ifneq ($(MICROPY_PY_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
 CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+ifeq ($(MICROPY_PY_LWIP),1)
+# When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
+CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
+endif
 SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
 SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
 	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
