@@ -4,4 +4,5 @@ LD_FILES = boards/GR_ROSE/gr_rose.ld
 START_FILE = rx65n/startup_rx65n.S
 
 # MicroPython settings
-MICROPY_VFS_FAT = 1
+MICROPY_VFS_LFS2 = 1
+#MICROPY_VFS_FAT = 1
