@@ -1380,7 +1380,7 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
                 } else { // return only partial packet
                     memcpy((void *)data, (const void *)(q + 1), (size_t)amount);
                     q->len -= amount;
-                    memmove((void *)(q + 1), (const void *)(q + 1) + amount, (size_t)q->len);
+                    memmove((void *)(q + 1), (const void *)((char *)(q + 1) + amount)), (size_t)q->len);
                     *data_len = amount;
 #if defined(DEBUG_ESP8266_DRIVER)
                     debug_printf("esp8266_recv() amount=%d\r\n", amount);
