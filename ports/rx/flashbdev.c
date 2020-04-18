@@ -112,7 +112,8 @@ int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
             }
             return 0;
     }
-    return -MP_EINVAL;
+    //return -MP_EINVAL;
+    return -1;
 }
 
 static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
