@@ -42,8 +42,8 @@ volatile static unsigned long cmt_count[4] = { 0L, 0L, 0L, 0L };
 volatile static unsigned long cmt_compare[4] = { 0L, 0L, 0L, 0L };
 volatile static unsigned long cmt_period[4] = { 0L, 0L, 0L, 0L };
 
-static CMT_TIMER_FUNC cmt_timer_func[4] = {0};
-static void *cmt_timer_param[4] = {0};
+static CMT_TIMER_FUNC cmt_timer_func[4] = {0, 0, 0, 0};
+static void *cmt_timer_param[4] = {0, 0, 0, 0};
 
 static void isr_timer(unsigned int ch) {
     cmt_count[ch] += 1L;
@@ -64,7 +64,7 @@ void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void) {
 void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void) {
     isr_timer(1);
     cmt_timer_callback(1);
-    SysTick_Handler();
+    //SysTick_Handler();
 }
 void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void) {
     isr_timer(2);

@@ -51,9 +51,11 @@ include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
+# Files that are generated and needed before the QSTR build.
+QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
+QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
@@ -125,13 +127,12 @@ INC += -Isd
 #######################################################################
 # C flags.
 #######################################################################
-#CFLAGS += $(INC) -Wall -Werror -std=c99 -nostdlib $(COPT)
-CFLAGS += -Wall -Werror -Wno-missing-braces
-#CFLAGS += -w
-CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
-#CFLAGS += -fno-leading-underscore
-
+CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=c99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(COPT)
+#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
+CFLAGS += -Wno-missing-braces
 CFLAGS += -I$(BOARD_DIR)
+
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
 CFLAGS += -Os -g
@@ -157,12 +158,14 @@ CFLAGS += -DGRSAKURA
 endif
 ifeq ($(BOARD),GR_ROSE)
 CFLAGS += -DGRROSE
+CFLAGS += -fpu
 endif
 ifeq ($(BOARD),GR_ROSE_DD)
 CFLAGS += -DGRROSE
+CFLAGS += -fpu
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
-CFLAGS += -DMICROPY_VFS_FAT=1
+#CFLAGS += -DMICROPY_VFS_FAT=1
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
@@ -233,10 +236,13 @@ endif
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
 LDFLAGS += -nostdlib
+LDFLAGS += -L boards
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
-LDFLAGS += -Wl,-Map=$@.map
-#LDFLAGS += --cref --gc-sections
+#LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
+#LDFLAGS += --gc-sections
+LDFLAGS += -Wl,-Map=$@.map -Wl,--cref -Wl,--defsym=_estack_reserve=8 -Wl,-static
+#LDFLAGS += -Wl,--gc-sections
 
 LIBS =
 
@@ -388,6 +394,7 @@ SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += machine_i2c.c
+SRC_C += machine_timer.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
 #SRC_C += modnwcc3k.c

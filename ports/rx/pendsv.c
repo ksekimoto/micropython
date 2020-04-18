@@ -30,6 +30,7 @@
 #include "py/runtime.h"
 #include "lib/utils/interrupt_char.h"
 #include "pendsv.h"
+#include "rx65n_timer.h"
 
 // This variable is used to save the exception object between a ctrl-C and the
 // PENDSV call that actually raises the exception.  It must be non-static
@@ -41,6 +42,7 @@ void *pendsv_object;
 #if defined(PENDSV_DISPATCH_NUM_SLOTS)
 uint32_t pendsv_dispatch_active;
 pendsv_dispatch_t pendsv_dispatch_table[PENDSV_DISPATCH_NUM_SLOTS];
+void pendsv_dispatch_handler(void);
 #endif
 
 void pendsv_init(void) {
@@ -48,6 +50,7 @@ void pendsv_init(void) {
     pendsv_dispatch_active = false;
     #endif
     // set PendSV interrupt at lowest priority
+    cmt_timer_set_callback(1, (CMT_TIMER_FUNC)pendsv_dispatch_handler, (void *)NULL);
 }
 
 // Call this function to raise a pending exception during an interrupt.

@@ -29,6 +29,8 @@
 
 #include "py/obj.h"
 
+extern const mp_obj_type_t machine_timer_type;
+
 void machine_init(void);
 void machine_deinit(void);
 void get_unique_id(uint8_t *id);
