@@ -3,7 +3,7 @@
 #define MICROPY_HW_MCU_SYSCLK       120000000
 #define MICROPY_HW_MCU_PCLK         60000000
 
-#define MICROPY_HW_HAS_SWITCH       (0)
+#define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
@@ -60,10 +60,10 @@
 #define MICROPY_HW_SPI2_MISO (pin_PE7)
 #define MICROPY_HW_SPI2_MOSI (pin_PE6)
 // USRSW is pulled low. Pressing the button makes the input go high.
-//#define MICROPY_HW_USRSW_PIN        (pin_PA7)
-//#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
-//#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
-//#define MICROPY_HW_USRSW_PRESSED    (0)
+#define MICROPY_HW_USRSW_PIN        (pin_P32)
+#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
+#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
+#define MICROPY_HW_USRSW_PRESSED    (0)
 
 // LEDs
 #define MICROPY_HW_LED1             (pin_PA0)
