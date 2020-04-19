@@ -1023,12 +1023,14 @@ endif
 ifeq ($(BOOT_LOADER),1)
 SRC_C += boards/$(BOARD)/$(BOARD)_bl.c
 endif
+SRC_C += adc.c
 SRC_C += bufhelper.c
 ifeq ($(LAN_NEW),1)
 SRC_C += eth.c
 else
 SRC_C += ethernetif.c
 endif
+SRC_C += extint.c
 SRC_C += factoryreset.c
 SRC_C += fatfs_port.c
 SRC_C += flash.c
@@ -1072,6 +1074,8 @@ SRC_C += systick.c
 SRC_C += uart.c
 SRC_C += usrsw.c
 SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_adc.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_exti.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
 ifeq ($(MBED_OS_EMAC),1)
 SRC_CPP += mbed/mbed_ether.cpp

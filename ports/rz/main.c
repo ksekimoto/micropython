@@ -61,7 +61,7 @@
 #include "timer.h"
 #include "led.h"
 #include "pin.h"
-//#include "extint.h"
+#include "extint.h"
 #include "usrsw.h"
 //#include "usb.h"
 //#include "rtc.h"
@@ -552,7 +552,7 @@ soft_reset:
 
     readline_init0();
     pin_init0();
-    //extint_init0();
+    extint_init0();
     //timer_init0();
     mbed_timer_init();
 

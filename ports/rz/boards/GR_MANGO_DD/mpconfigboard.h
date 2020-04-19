@@ -59,7 +59,7 @@
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
 
-#define MICROPY_HW_ENABLE_ADC   (0)
+#define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
 #define MICROPY_PY_PYB_CAMERA_LCD   (1)

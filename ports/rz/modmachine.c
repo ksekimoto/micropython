@@ -50,8 +50,8 @@
 #include "storage.h"
 #include "pin.h"
 #include "timer.h"
-#if RZ_TODO
 #include "adc.h"
+#if RZ_TODO
 #include "usb.h"
 #endif
 #include "rtc.h"
@@ -293,9 +293,7 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
 
     { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
-#if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&pyb_adc_type) },
-#endif
 #if MICROPY_PY_MACHINE_I2C
     { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
 #endif
