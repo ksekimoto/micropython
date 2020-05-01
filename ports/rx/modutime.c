@@ -37,8 +37,8 @@
 #include "portmodules.h"
 #include "rtc.h"
 
-RTC_DateTypeDef dummy_date = DUMMY_DATE;
-RTC_TimeTypeDef dummy_time = DUMMY_TIME;
+static const RTC_DateTypeDef dummy_date = DUMMY_DATE;
+static const RTC_TimeTypeDef dummy_time = DUMMY_TIME;
 
 /// \module time - time related functions
 ///

@@ -1157,8 +1157,6 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
 }
 
 #if MICROPY_HW_ENABLE_SDCARD
-#define BMP_HEADER_SIZE 0x8a
-char BmpHeader[BMP_HEADER_SIZE];
 
 inline int BYTEARRAY4_TO_INT(char *a) {
     return (int)*(uint32_t *)a;
@@ -1169,6 +1167,8 @@ inline int BYTEARRAY2_TO_INT(char *a) {
 }
 
 int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
+    #define BMP_HEADER_SIZE 0x8a
+    char BmpHeader[BMP_HEADER_SIZE];
     FIL fp;
     bool ret;
     int ofs, wx, wy, depth, lineBytes, bufSize;
