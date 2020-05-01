@@ -130,7 +130,12 @@ INC += -Isd
 CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=c99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
 #CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
+#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
+CFLAGS += -Wno-error=tautological-compare
+CFLAGS += -Wno-error=unused-const-variable
+CFLAGS += -Wno-error=nonnull
+CFLAGS += -Wno-error=nonnull-compare
 CFLAGS += -I$(BOARD_DIR)
 
 ifeq ($(DEBUG), 1)
