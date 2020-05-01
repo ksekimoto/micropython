@@ -400,6 +400,7 @@ SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += machine_i2c.c
 SRC_C += machine_timer.c
+SRC_C += machine_uart.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
 #SRC_C += modnwcc3k.c
@@ -516,6 +517,10 @@ SRC_C += time_utils.c
 SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
+
+ifeq ($(MICROPY_PY_LWIP),1)
+SRC_MOD += lwip_utils/sntp_client.c
+endif
 
 ifneq ($(MICROPY_PY_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
