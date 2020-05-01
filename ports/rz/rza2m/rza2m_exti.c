@@ -239,7 +239,7 @@ void exti_init(void) {
     int i;
     for (i = 0; i < IRQ_NUM; i++) {
         exit_irq_obj[i].int_enable = 0;
-        exit_irq_obj[i].pin = PNC;
+        exit_irq_obj[i].pin = PIN_END;
     }
 }
 
@@ -247,11 +247,11 @@ void exti_deinit(void) {
     int i;
     for (i = 0; i < IRQ_NUM; i++) {
         GIC_DisableIRQ((IRQn_Type)(IRQ0_IRQn + i));
-        if (exit_irq_obj[i].pin != PNC) {
+        if (exit_irq_obj[i].pin != PIN_END) {
             _gpio_mode_af(exit_irq_obj[i].pin, 0);
         }
         exit_irq_obj[i].int_enable = 0;
-        exit_irq_obj[i].pin = PNC;
+        exit_irq_obj[i].pin = PIN_END;
     }
     exti_bounce_init();
 }

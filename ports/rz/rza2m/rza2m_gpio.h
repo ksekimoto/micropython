@@ -56,7 +56,7 @@ enum CPU_PIN {
     PK0 = 0x130, PK1, PK2, PK3, PK4, PK5, PK6, PK7,
     PL0 = 0x140, PL1, PL2, PL3, PL4, PL5, PL6, PL7,
     JP00 = 0x150, JP01,
-    PNC = 0xffff
+    PIN_END = 0xffff
 };
 
 #define  GPIO_MODE_INPUT        1
