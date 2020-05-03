@@ -24,14 +24,29 @@
  * THE SOFTWARE.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
+#include "lwip/netif.h"
+#include "lwip/opt.h"
+#include "lwip_inc/lwipopts.h"
+#include "lwip/init.h"
+#include "lwip/tcp.h"
+#include "lwip/udp.h"
+#include "lwip/dns.h"
+#include "lwip/igmp.h"
+#include "lwip/dhcp.h"
+#include "netif/etharp.h"
+#include "lwip/dhcp.h"
+#include "lwip/timeouts.h"
+#include "lwip/prot/dhcp.h"
+#include "ethernetif.h"
+#include "sntp_client.h"
 #include "modnetwork.h"
 #include "eth.h"
 
 #if defined(MICROPY_HW_ETH_RX)
-
-#include "lwip/netif.h"
 
 typedef struct _network_lan_obj_t {
     mp_obj_base_t base;
@@ -53,26 +68,55 @@ STATIC void network_lan_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
     );
 }
 
+err_t eth_netif_output(struct netif *netif, struct pbuf *p);
+err_t ethernetif_init(struct netif *netif) ;
+void ethernetif_input(struct netif *netif);
+
+/*
+ * lwip initialize
+ */
+STATIC void network_lan_init(eth_t *self) {
+    for (struct netif *netif = netif_list; netif != NULL; netif = netif->next) {
+        if (netif == &self->netif) {
+            netif_remove(netif);
+            break;
+        }
+    }
+    ip_addr_t ipconfig[4];
+    ipconfig[0].addr = 0;
+    ipconfig[1].addr = 0;
+    ipconfig[2].addr = 0;
+    ipconfig[3].addr = 0;
+
+    //g_netif = &self->netif;
+    memset(&self->netif, 0, sizeof(struct netif));
+    self-> netif.linkoutput = eth_netif_output;
+
+    netif_add(&self->netif, &ipconfig[0], &ipconfig[1], &ipconfig[2], self, ethernetif_init, ethernet_input);
+    netif_set_default(&self->netif);
+    dns_setserver(0, &ipconfig[3]);
+}
+
 STATIC mp_obj_t network_lan_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     const network_lan_obj_t *self = &network_lan_eth0;
-    eth_init(self->eth, MP_HAL_MAC_ETH0);
+    //rx_ether_obj.poll_callback = network_lan_poll;
+    // Hardware init
+    network_lan_init(&eth_instance);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t network_lan_active(size_t n_args, const mp_obj_t *args) {
     network_lan_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     if (n_args == 1) {
-        return mp_obj_new_bool(eth_link_status(self->eth));
+        return mp_obj_new_bool(self->eth->netif.flags & NETIF_FLAG_UP);
     } else {
-        int ret;
         if (mp_obj_is_true(args[1])) {
-            ret = eth_start(self->eth);
+            netif_set_up(&self->eth->netif);
+            netif_set_link_up(&self->eth->netif);
         } else {
-            ret = eth_stop(self->eth);
-        }
-        if (ret < 0) {
-            mp_raise_OSError(-ret);
+            netif_set_link_down(&self->eth->netif);
+            netif_set_down(&self->eth->netif);
         }
         return mp_const_none;
     }
