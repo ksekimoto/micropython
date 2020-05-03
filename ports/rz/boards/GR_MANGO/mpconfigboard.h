@@ -8,10 +8,10 @@
 
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
-#define MICROPY_HW_ENABLE_SDCARD    (0)
-#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
+#define MICROPY_HW_ENABLE_SDCARD    (1)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (1)
 #define MICROPY_HW_ENABLE_RTC       (1)
-#define MICROPY_HW_ENABLE_SERVO     (0)
+#define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RZ_USB    (0)
 #define MICROPY_HW_ETH_RZ           (1)
 
@@ -59,8 +59,21 @@
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
 
+// SD card detect switch
+#define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P64)
+#define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
+#define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
+#define MICROPY_HW_SDCARD_SPI_CH    (0)
+#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC0)
+#define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
+#define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
+#define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
+
 #define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
+
+#define PYB_SERVO_NUM       (1)
+#define BOARD_SERVO1_PIN    (pin_PH0)
 
 #define MICROPY_PY_PYB_CAMERA_LCD   (1)
 
