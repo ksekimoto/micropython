@@ -37,7 +37,6 @@ static char encoding_table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
         'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
         'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/' };
 static char decoding_init = 0;
-static char decoding_table[256] = { 0 };
 static int mod_table[] = { 0, 2, 1 };
 
 
@@ -64,15 +63,17 @@ char *base64_encode(const unsigned char *data, int input_length,
     return encoded_data;
 }
 
-static void build_decoding_table() {
+static void build_decoding_table(char *decoding_table) {
     for (int i = 0; i < 64; i++)
         decoding_table[(unsigned char) encoding_table[i]] = i;
 }
 
 char *base64_decode(const unsigned char *data, int input_length,
         char *decoded_data, int *output_length) {
+    char decoding_table[256];
+
     if (decoding_init == 0) {
-        build_decoding_table();
+        build_decoding_table(decoding_table);
         decoding_init = 1;
     }
     if (input_length % 4 != 0)
