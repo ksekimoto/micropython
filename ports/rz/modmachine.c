@@ -60,8 +60,8 @@
 #include "uart.h"
 #if RZ_TODO
 #include "wdt.h"
-#include "pwm.h"
 #endif
+#include "pwm.h"
 #include "common.h"
 
 #define PYB_RESET_SOFT      (0)
