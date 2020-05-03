@@ -41,7 +41,7 @@ USB_CDC_MSC = 3
 USB_MODE = 3
 
 # LAN debug
-LAN_NEW = 0
+LAN_NEW = 1
 
 # Include modules
 USE_FONT = 1
@@ -136,6 +136,11 @@ CFLAGS += -Wno-error=tautological-compare
 CFLAGS += -Wno-error=unused-const-variable
 CFLAGS += -Wno-error=nonnull
 CFLAGS += -Wno-error=nonnull-compare
+CFLAGS += -Wno-tautological-compare
+CFLAGS += -Wno-error=unused-function
+CFLAGS += -Wno-unused-function
+CFLAGS += -Wno-error=unused-variable
+
 CFLAGS += -I$(BOARD_DIR)
 
 ifeq ($(DEBUG), 1)
