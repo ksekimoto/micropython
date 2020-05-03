@@ -63,10 +63,10 @@
 #include "pin.h"
 #include "extint.h"
 #include "usrsw.h"
-//#include "usb.h"
-//#include "rtc.h"
+#include "usb.h"
+#include "rtc.h"
 #include "storage.h"
-//#include "sdcard.h"
+#include "sdcard.h"
 //#include "sdram.h"
 //#include "rng.h"
 //#include "accel.h"
@@ -309,15 +309,15 @@ STATIC bool init_sdcard_fs(void) {
             }
 
             //#if MICROPY_HW_ENABLE_USB
-            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
-                // if no USB MSC medium is selected then use the SD card
-                pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
-            }
+            //if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
+            //    // if no USB MSC medium is selected then use the SD card
+            //    pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
+            //}
             //#endif
 
             //#if MICROPY_HW_ENABLE_USB
             // only use SD card as current directory if that's what the USB medium is
-            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
+            //if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
             //#endif
             {
                 if (first_part) {

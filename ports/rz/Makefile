@@ -32,12 +32,13 @@ LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
-MBED_GR_LIBS = 0
+MBED_GR_LIBS = 1
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
+MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
@@ -59,12 +60,13 @@ LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
-MBED_GR_LIBS = 0
+MBED_GR_LIBS = 1
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
+MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
@@ -157,13 +159,18 @@ INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
 INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
 INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
 INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
-INC += -Ilib/mbed-os
-INC += -Ilib/mbed-os/hal
-INC += -Ilib/mbed-os/drivers
-INC += -Ilib/mbed-os/platform
-INC += -Ilib/mbed-os/cmsis/TARGET_CORTEX_A
-INC += -Ilib/mbed-gr-libs/EasyAttach_CameraAndLCD
-INC += -Ilib/mbed-gr-libs/GR-PEACH_video
+INC += -I$(TOP)/lib/mbed-os
+INC += -I$(TOP)/lib/mbed-os/hal
+INC += -I$(TOP)/lib/mbed-os/drivers
+INC += -I$(TOP)/lib/mbed-os/platform
+INC += -I$(TOP)/lib/mbed-os/cmsis/TARGET_CORTEX_A
+INC += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
+INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc/access
+INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef
 
 INC += -Ilib/lv_bindings/lvgl
 
@@ -828,7 +835,7 @@ SRC_MBED_C += lib/mbed-gr-libs/AsciiFont/ascii.c
 SRC_MBED_CPP += lib/mbed-gr-libs/AsciiFont/AsciiFont.cpp
 endif
 ifeq ($(MBED_GR_LIBS_bd), 1)
-SRC_MBED_C += lib/mbed-gr-libs/bd/RomRamBlockDevice/RomRamBlockDevice.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/bd/RomRamBlockDevice/RomRamBlockDevice.cpp
 endif
 ifeq ($(MBED_GR_LIBS_components_AUDIO), 1)
 endif
@@ -956,11 +963,11 @@ SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/TOOLCHAIN_GCC/r_os
 SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/src/r_ospl.c
 endif
 ifeq ($(MBED_GR_LIBS_R_BSP), 1)
-SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Aio.cpp
-SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Scux.cpp
-SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_SerialFamily.cpp
-SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Spdif.cpp
-SRC_MBED_C += lib/mbed-gr-libs/R_BSP/common/R_BSP_Ssif.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_Aio.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_Scux.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_SerialFamily.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_Spdif.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_Ssif.cpp
 SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/drv_src/ioif/aioif.c
 SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/dma/dma.c
 SRC_MBED_C += lib/mbed-gr-libs/R_BSP/RenesasBSP/$(TARGET)/dma/dma_if.c
@@ -982,7 +989,7 @@ SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/spdif_api.c
 SRC_MBED_C += lib/mbed-gr-libs/R_BSP/tools/ssif_api.c
 endif
 ifeq ($(MBED_GR_LIBS_SDBlockDevice_GRBoard), 1)
-SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/SDHSBlockDevice.cpp
+SRC_MBED_CPP += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/SDHSBlockDevice.cpp
 SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_cd.c
 SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_cmd.c
 SRC_MBED_C += lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/access/sd_init.c
@@ -1064,8 +1071,11 @@ endif
 SRC_C += pin.c
 SRC_C += pin_defs_rz.c
 SRC_C += pin_named_pins.c
+SRC_C += pwm.c
 SRC_C += rng.c
 SRC_C += rtc.c
+SRC_C += sdcard.c
+SRC_C += servo.c
 SRC_C += softtimer.c
 SRC_C += spi.c
 SRC_C += storage.c
@@ -1083,6 +1093,8 @@ else
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
 endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_mtu.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_servo.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
 SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
 ifeq ($(MBED_UART_WRAPPER),1)
@@ -1097,6 +1109,7 @@ SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
 endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
 SRC_CPP += mbed/mbed_flash.cpp
+SRC_CPP += mbed/mbed_sd.cpp
 SRC_CPP += mbed/mbed_timer.cpp
 SRC_CPP += mbed/mbed_uart.cpp
 ifeq ($(MBED_GR_LIBS), 1)

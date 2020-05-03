@@ -47,10 +47,12 @@
 #endif
 #include "adc.h"
 #include "storage.h"
-#if RZ_TODO
 #include "sdcard.h"
+#if RZ_TODO
 #include "accel.h"
+#endif
 #include "servo.h"
+#if RZ_TODO
 #include "dac.h"
 #include "lcd.h"
 #include "usb.h"
@@ -59,9 +61,7 @@
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
-#if RZ_TODO
 #include "pwm.h"
-#endif
 #if MICROPY_PY_PYB_FONT
 #include "font.h"
 #endif
