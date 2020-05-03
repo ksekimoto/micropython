@@ -4,7 +4,12 @@
 // Feb. 9, 2013 - Added H1V2/H2V1 support, cleaned up macros, signed shift fixes 
 // Also integrated and tested changes from Chris Phoenix <cphoenix@gmail.com>.
 //------------------------------------------------------------------------------
+#include "py/runtime.h"
+#include "py/mphal.h"
 #include "picojpeg.h"
+
+#if MICROPY_PY_PYB_LCDSPI
+
 //------------------------------------------------------------------------------
 // Set to 1 if right shifts on signed ints are always unsigned (logical) shifts
 // When 1, arithmetic right shifts will be emulated by using a logical shift
@@ -2321,3 +2326,5 @@ unsigned char pjpeg_decode_init(pjpeg_image_info_t *pInfo, pjpeg_need_bytes_call
       
    return 0;
 }
+
+#endif

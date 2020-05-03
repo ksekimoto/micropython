@@ -25,6 +25,8 @@
 #include "jpeg.h"
 #endif
 
+#if MICROPY_PY_PYB_LCDSPI
+
 #define LCDSPI_OPTIMIZE
 
 #define HIGH    1
@@ -1551,3 +1553,5 @@ const mp_obj_type_t pyb_lcdspi_type = {
     .make_new = lcdspi_obj_make_new,
     .locals_dict = (mp_obj_dict_t*)&lcdspi_locals_dict,
 };
+
+#endif

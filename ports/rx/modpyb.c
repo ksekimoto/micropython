@@ -267,7 +267,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_FONT), MP_ROM_PTR(&pyb_font_type) },
 #endif
 
-#if MICROPY_PY_PYB_FONT
+#if MICROPY_PY_PYB_LCDSPI
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&pyb_lcdspi_type) },
 #endif
 

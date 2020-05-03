@@ -30,7 +30,7 @@
 #include "lib/netutils/netutils.h"
 #include "modnetwork.h"
 
-#if defined(MICROPY_HW_ETH_RX)
+#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
 
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"

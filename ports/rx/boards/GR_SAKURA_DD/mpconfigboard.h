@@ -97,8 +97,9 @@
 
 #define MICROPY_HW_HAS_ESP8266      (0)
 #define MICROPY_PY_PYB_TWITTER      (0)
-#define MICROPY_PY_PYB_UNICODE_FONT (0)
 #define MICROPY_PY_PYB_LCDSPI       (0)
+#define MICROPY_PY_PYB_FONT         (0)
+#define MICROPY_PY_PYB_UNICODE_FONT (0)
 
 #define PYB_SERVO_NUM   (6)
 #define BOARD_SERVO1_PIN    (pin_P13)

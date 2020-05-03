@@ -28,6 +28,9 @@
 #include <string.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
+
+#if MICROPY_HW_ETH_RX
+
 #include "lwip/netif.h"
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"
@@ -45,8 +48,6 @@
 #include "sntp_client.h"
 #include "modnetwork.h"
 #include "eth.h"
-
-#if defined(MICROPY_HW_ETH_RX)
 
 typedef struct _network_lan_obj_t {
     mp_obj_base_t base;

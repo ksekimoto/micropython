@@ -94,9 +94,9 @@
 
 #define MICROPY_HW_HAS_ESP8266      (0)
 #define MICROPY_PY_PYB_TWITTER      (0)
+#define MICROPY_PY_PYB_LCDSPI       (1)
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
-#define MICROPY_PY_PYB_LCDSPI       (1)
 // Add MICRO_SSL_MBEDTLS=1 as a parameter of make command when adding MBEDTLS
 //#define MICROPY_SSL_MBEDTLS         (1)
 // Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module
