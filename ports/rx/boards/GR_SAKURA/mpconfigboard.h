@@ -86,6 +86,12 @@
 
 // Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
 //#define MICROPY_PY_LWIP (1)
+#define MICROPY_HW_ETH_MAC_ADDRESS_0    0x00
+#define MICROPY_HW_ETH_MAC_ADDRESS_1    0x0E
+#define MICROPY_HW_ETH_MAC_ADDRESS_2    0x2A
+#define MICROPY_HW_ETH_MAC_ADDRESS_3    0x03
+#define MICROPY_HW_ETH_MAC_ADDRESS_4    0x02
+#define MICROPY_HW_ETH_MAC_ADDRESS_5    0x01
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
