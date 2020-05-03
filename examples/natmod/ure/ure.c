@@ -1,4 +1,3 @@
-#define MICROPY_ENABLE_DYNRUNTIME (1)
 #define MICROPY_STACK_CHECK (1)
 #define MICROPY_PY_URE (1)
 #define MICROPY_PY_URE_MATCH_GROUPS (1)
@@ -16,7 +15,7 @@ void mp_stack_check(void) {
     // Assumes descending stack on target
     volatile char dummy;
     if (stack_top - &dummy >= STACK_LIMIT) {
-        mp_raise_msg(&mp_type_RuntimeError, "maximum recursion depth exceeded");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("maximum recursion depth exceeded"));
     }
 }
 

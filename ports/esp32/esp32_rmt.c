@@ -53,23 +53,12 @@ typedef struct _esp32_rmt_obj_t {
     gpio_num_t pin;
     uint8_t clock_div;
     mp_uint_t num_items;
-    rmt_item32_t* items;
+    rmt_item32_t *items;
 } esp32_rmt_obj_t;
-
-// Defined in machine_time.c; simply added the error message
-// Fixme: Should use this updated error hadline more widely in the ESP32 port.
-//        At least update the method in machine_time.c.
-STATIC esp_err_t check_esp_err(esp_err_t code) {
-    if (code) {
-        mp_raise_msg(&mp_type_OSError, esp_err_to_name(code));
-    }
-
-    return code;
-}
 
 STATIC mp_obj_t esp32_rmt_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_id,        MP_ARG_REQUIRED |                  MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_id,        MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_pin,       MP_ARG_REQUIRED | MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_clock_div,                   MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 8} }, // 100ns resolution
     };
@@ -80,7 +69,7 @@ STATIC mp_obj_t esp32_rmt_make_new(const mp_obj_type_t *type, size_t n_args, siz
     mp_uint_t clock_div = args[2].u_int;
 
     if (clock_div < 1 || clock_div > 255) {
-        mp_raise_ValueError("clock_div must be between 1 and 255");
+        mp_raise_ValueError(MP_ERROR_TEXT("clock_div must be between 1 and 255"));
     }
 
     esp32_rmt_obj_t *self = m_new_obj_with_finaliser(esp32_rmt_obj_t);
@@ -91,7 +80,7 @@ STATIC mp_obj_t esp32_rmt_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     rmt_config_t config;
     config.rmt_mode = RMT_MODE_TX;
-    config.channel = (rmt_channel_t) self->channel_id;
+    config.channel = (rmt_channel_t)self->channel_id;
     config.gpio_num = self->pin;
     config.mem_block_num = 1;
     config.tx_config.loop_en = 0;
@@ -154,7 +143,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp32_rmt_clock_div_obj, esp32_rmt_clock_div);
 STATIC mp_obj_t esp32_rmt_wait_done(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_self,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_timeout, MP_ARG_KW_ONLY  | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_timeout, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -178,7 +167,7 @@ STATIC mp_obj_t esp32_rmt_write_pulses(size_t n_args, const mp_obj_t *pos_args, 
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_self,   MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_pulses, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_start,  MP_ARG_KW_ONLY  | MP_ARG_INT, {.u_int = 1} },
+        { MP_QSTR_start,  MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -189,16 +178,16 @@ STATIC mp_obj_t esp32_rmt_write_pulses(size_t n_args, const mp_obj_t *pos_args, 
     mp_uint_t start = args[2].u_int;
 
     if (start < 0 || start > 1) {
-        mp_raise_ValueError("start must be 0 or 1");
+        mp_raise_ValueError(MP_ERROR_TEXT("start must be 0 or 1"));
     }
 
     size_t pulses_length = 0;
-    mp_obj_t* pulses_ptr = NULL;
+    mp_obj_t *pulses_ptr = NULL;
     mp_obj_get_array(pulses, &pulses_length, &pulses_ptr);
 
     mp_uint_t num_items = (pulses_length / 2) + (pulses_length % 2);
     if (num_items > self->num_items) {
-        self->items = (rmt_item32_t*)m_realloc(self->items, num_items * sizeof(rmt_item32_t *));
+        self->items = (rmt_item32_t *)m_realloc(self->items, num_items * sizeof(rmt_item32_t *));
         self->num_items = num_items;
     }
 
@@ -233,5 +222,5 @@ const mp_obj_type_t esp32_rmt_type = {
     .name = MP_QSTR_RMT,
     .print = esp32_rmt_print,
     .make_new = esp32_rmt_make_new,
-    .locals_dict = (mp_obj_dict_t*)&esp32_rmt_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&esp32_rmt_locals_dict,
 };
