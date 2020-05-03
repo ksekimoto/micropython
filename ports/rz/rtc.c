@@ -31,6 +31,7 @@
 #include "extint.h"
 #include "rtc.h"
 #include "irq.h"
+#include "systick.h"
 #include "rza2m_rtc.h"
 
 #define RTC_INIT_YEAR   2019
