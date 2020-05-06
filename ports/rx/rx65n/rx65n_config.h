@@ -40,7 +40,7 @@ extern "C" {
 #define PRI_ETH     (14)
 #define PRI_SCI     (3)
 #define PRI_TIM0    (15)    // 10us
-#define PRI_TIM1    (5)     // 1ms
+#define PRI_TIM1    (2)     // 1ms for pendsv
 #define PRI_TIM2    (12)
 #define PRI_TIM3    (12)
 //#define PRI_USB     (14)  defined in usb_hal.h

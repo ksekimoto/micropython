@@ -28,7 +28,9 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "irq.h"
+#include "pendsv.h"
 #include "systick.h"
+#include "softtimer.h"
 //#include "pybthread.h"
 
 // ToDo: implement the same functionality
@@ -41,6 +43,7 @@
 #define MICROPY_HW_MCU_PCLK 48000000
 #endif
 #endif
+static volatile uint32_t uwTick;
 
 systick_dispatch_t systick_dispatch_table[SYSTICK_DISPATCH_NUM_SLOTS];
 
@@ -48,9 +51,8 @@ void SysTick_Handler(void) {
     // Instead of calling HAL_IncTick we do the increment here of the counter.
     // This is purely for efficiency, since SysTick is called 1000 times per
     // second at the highest interrupt priority.
-    //uint32_t uw_tick = uwTick + 1;
-    //uwTick = uw_tick;
-    uint32_t uw_tick = mtick();
+    uint32_t uw_tick = mtick() + 1;
+    uwTick = uw_tick;
 
     // Read the systick control regster. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
@@ -61,6 +63,10 @@ void SysTick_Handler(void) {
     systick_dispatch_t f = systick_dispatch_table[uw_tick & (SYSTICK_DISPATCH_NUM_SLOTS - 1)];
     if (f != NULL) {
         f(uw_tick);
+    }
+
+    if (soft_timer_next == mtick()) {
+        pendsv_schedule_dispatch(PENDSV_DISPATCH_SOFT_TIMER, soft_timer_handler);
     }
 
     #if MICROPY_PY_THREAD

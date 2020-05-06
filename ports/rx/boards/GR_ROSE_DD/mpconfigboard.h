@@ -3,7 +3,7 @@
 #define MICROPY_HW_MCU_SYSCLK       120000000
 #define MICROPY_HW_MCU_PCLK         60000000
 
-#define MICROPY_HW_HAS_SWITCH       (0)
+#define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
@@ -60,10 +60,10 @@
 #define MICROPY_HW_SPI2_MISO (pin_PE7)
 #define MICROPY_HW_SPI2_MOSI (pin_PE6)
 // USRSW is pulled low. Pressing the button makes the input go high.
-//#define MICROPY_HW_USRSW_PIN        (pin_PA7)
-//#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
-//#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
-//#define MICROPY_HW_USRSW_PRESSED    (0)
+#define MICROPY_HW_USRSW_PIN        (pin_P32)
+#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
+#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
+#define MICROPY_HW_USRSW_PRESSED    (0)
 
 // LEDs
 #define MICROPY_HW_LED1             (pin_PA0)
@@ -83,14 +83,20 @@
 
 // Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
 //#define MICROPY_PY_LWIP (1)
+#define MICROPY_HW_ETH_MAC_ADDRESS_0    0x00
+#define MICROPY_HW_ETH_MAC_ADDRESS_1    0x0E
+#define MICROPY_HW_ETH_MAC_ADDRESS_2    0x2A
+#define MICROPY_HW_ETH_MAC_ADDRESS_3    0x05
+#define MICROPY_HW_ETH_MAC_ADDRESS_4    0x04
+#define MICROPY_HW_ETH_MAC_ADDRESS_5    0x03
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
 #define MICROPY_HW_HAS_ESP8266      (0)
 #define MICROPY_PY_PYB_TWITTER      (0)
+#define MICROPY_PY_PYB_LCDSPI       (1)
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
-#define MICROPY_PY_PYB_LCDSPI       (1)
 // Add MICRO_SSL_MBEDTLS=1 as a parameter of make command when adding MBEDTLS
 //#define MICROPY_SSL_MBEDTLS         (1)
 // Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module

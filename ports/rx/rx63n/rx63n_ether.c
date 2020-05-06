@@ -74,10 +74,6 @@
 #include "rx63n_ether.h"
 #include "phy.h"
 
-#if defined(GRCITRUS)
-
-#else
-
 #if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
 
 static ethfifo RX_DESC_SECTION rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
@@ -530,4 +526,3 @@ void rx_ether_input_callback(void) {
 
 #endif // ICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP
 
-#endif // GRCITRUS

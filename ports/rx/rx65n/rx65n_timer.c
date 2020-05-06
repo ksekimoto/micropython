@@ -58,19 +58,24 @@ void SysTick_Handler(void);
 void __attribute__ ((interrupt)) INT_Excep_CMT0_CMI0(void) {
     isr_timer(0);
     cmt_timer_callback(0);
+    if ((cmt_count[0] % 100UL) == 0) {
+        SysTick_Handler();
+    }
 }
+
 /*
  * 1msec timer
  */
 void __attribute__ ((interrupt)) INT_Excep_CMT1_CMI1(void) {
     isr_timer(1);
     cmt_timer_callback(1);
-    SysTick_Handler();
 }
+
 void __attribute__ ((interrupt)) INT_Excep_CMT2_CMI2(void) {
     isr_timer(2);
     cmt_timer_callback(2);
 }
+
 void __attribute__ ((interrupt)) INT_Excep_CMT3_CMI3(void) {
     isr_timer(3);
     cmt_timer_callback(1);

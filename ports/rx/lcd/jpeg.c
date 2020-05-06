@@ -33,14 +33,15 @@
 #include "jpeg.h"
 #include "picojpeg.h"
 
-//#define	DEBUG		// Define if you want to debug
+#if MICROPY_PY_PYB_LCDSPI && MICROPY_HW_ENABLE_SDCARD
+
+//#define   DEBUG       // Define if you want to debug
 #ifdef DEBUG
 #  define DEBUG_PRINT(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
 #else
 #  define DEBUG_PRINT(m,v)    // do nothing
 #endif
 
-#if MICROPY_HW_ENABLE_SDCARD
 static FIL g_pInFile;
 static uint32_t g_nInFileSize;
 static uint32_t g_nInFileOfs;
@@ -278,3 +279,4 @@ int jpeg_read(jpeg_t *jpeg) {
     return 1;
 }
 #endif
+

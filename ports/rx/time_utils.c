@@ -66,10 +66,8 @@
 #include <sys/time.h>
 #include <sys/times.h>
 
-#define ASCBUFSIZE  (26 + 2)
-struct tm tmbuf;                // For gmtime() and localtime()
-char ascbuf[ASCBUFSIZE];        // For asctime()
 
+#define ASCBUFSIZE  (26 + 2)
 #define YEAR0                   1900
 #define EPOCH_YR                1970
 #define SECS_DAY                (24L * 60L * 60L)
@@ -83,26 +81,26 @@ char ascbuf[ASCBUFSIZE];        // For asctime()
 int _daylight = 0;                  // Non-zero if daylight savings time is used
 long _dstbias = 0;                  // Offset for Daylight Saving Time
 long _timezone = 0;                 // Difference in seconds between GMT and local time
-char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
+//char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
 
-const char *_days[] = {
+const char * const _days[] = {
   "Sunday", "Monday", "Tuesday", "Wednesday",
   "Thursday", "Friday", "Saturday"
 };
 
-const char *_days_abbrev[] = {
+const char * const _days_abbrev[] = {
   "Sun", "Mon", "Tue", "Wed",
   "Thu", "Fri", "Sat"
 };
 
-const char *_months[] = {
+const char * const _months[] = {
   "January", "February", "March",
   "April", "May", "June",
   "July", "August", "September",
   "October", "November", "December"
 };
 
-const char *_months_abbrev[] = {
+const char * const _months_abbrev[] = {
   "Jan", "Feb", "Mar",
   "Apr", "May", "Jun",
   "Jul", "Aug", "Sep",
@@ -157,10 +155,12 @@ struct tm *localtime_r(const time_t *timer, struct tm *tmbuf) {
 
 #ifndef KERNEL
 struct tm *gmtime(const time_t *timer) {
+  struct tm tmbuf;
   return gmtime_r(timer, &tmbuf);
 }
 
 struct tm *localtime(const time_t *timer) {
+  struct tm tmbuf;
   return localtime_r(timer, &tmbuf);
 }
 #endif
@@ -284,6 +284,7 @@ char *ctime_r(const time_t *timer, char *buf) {
 }
 
 char *asctime(const struct tm *tm) {
+  char ascbuf[ASCBUFSIZE];
   return asctime_r(tm, ascbuf);
 }
 

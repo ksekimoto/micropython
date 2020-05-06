@@ -46,9 +46,9 @@ typedef enum {
 #define CHAR_WIDTH_8BIT (0)
 #define CHAR_WIDTH_9BIT (1)
 
-#define UART_WORDLENGTH_8B  (0)
-#define UART_STOPBITS_1     (0)
-#define UART_STOPBITS_2     (1)
+#define UART_WORDLENGTH_8B  (8)
+#define UART_STOPBITS_1     (1)
+#define UART_STOPBITS_2     (2)
 #define UART_PARITY_NONE    (0)
 #define UART_PARITY_ODD     (1)
 #define UART_PARITY_EVEN    (2)
@@ -75,12 +75,11 @@ extern const mp_obj_type_t pyb_uart_type;
 
 void uart_init0(void);
 void uart_deinit_all(void);
-bool uart_exists(int uart_id);
+bool uart_exists(uint uart_id);
 bool uart_init(pyb_uart_obj_t *uart_obj,
     uint32_t baudrate, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow);
 void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf);
 void uart_deinit(pyb_uart_obj_t *uart_obj);
-void uart_irq_handler(mp_uint_t uart_id);
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached);
 uint32_t uart_get_baudrate(pyb_uart_obj_t *self);

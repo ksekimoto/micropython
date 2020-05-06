@@ -41,7 +41,7 @@ USB_CDC_MSC = 3
 USB_MODE = 3
 
 # LAN debug
-LAN_NEW = 0
+LAN_NEW = 1
 
 # Include modules
 USE_FONT = 1
@@ -51,9 +51,11 @@ include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
+# Files that are generated and needed before the QSTR build.
+QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
+QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
@@ -125,13 +127,22 @@ INC += -Isd
 #######################################################################
 # C flags.
 #######################################################################
-#CFLAGS += $(INC) -Wall -Werror -std=c99 -nostdlib $(COPT)
-CFLAGS += -Wall -Werror -Wno-missing-braces
-#CFLAGS += -w
-CFLAGS += $(INC) -std=c99 -nostdlib $(COPT)
-#CFLAGS += -fno-leading-underscore
+CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=c99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(COPT)
+#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
+#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
+CFLAGS += -Wno-missing-braces
+CFLAGS += -Wno-error=tautological-compare
+CFLAGS += -Wno-error=unused-const-variable
+CFLAGS += -Wno-error=nonnull
+CFLAGS += -Wno-error=nonnull-compare
+CFLAGS += -Wno-tautological-compare
+CFLAGS += -Wno-error=unused-function
+CFLAGS += -Wno-unused-function
+CFLAGS += -Wno-error=unused-variable
 
 CFLAGS += -I$(BOARD_DIR)
+
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
 CFLAGS += -Os -g
@@ -157,12 +168,14 @@ CFLAGS += -DGRSAKURA
 endif
 ifeq ($(BOARD),GR_ROSE)
 CFLAGS += -DGRROSE
+CFLAGS += -fpu
 endif
 ifeq ($(BOARD),GR_ROSE_DD)
 CFLAGS += -DGRROSE
+CFLAGS += -fpu
 endif
 CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
-CFLAGS += -DMICROPY_VFS_FAT=1
+#CFLAGS += -DMICROPY_VFS_FAT=1
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
@@ -233,18 +246,19 @@ endif
 #LDFLAGS += $(patsubst %,-L%,$(LINC))
 LDFLAGS += -g
 LDFLAGS += -nostdlib
+LDFLAGS += -L boards
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
-LDFLAGS += -Wl,-Map=$@.map
-#LDFLAGS += --cref --gc-sections
+#LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
+#LDFLAGS += --gc-sections
+LDFLAGS += -Wl,-Map=$@.map -Wl,--cref -Wl,--defsym=_estack_reserve=8 -Wl,-static
+#LDFLAGS += -Wl,--gc-sections
 
 LIBS =
 
 
 SRC_LIB = $(addprefix lib/,\
 	libc/string0.c \
-	oofatfs/ff.c \
-	oofatfs/ffunicode.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
 	netutils/trace.c \
@@ -340,6 +354,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	kf_tan.c \
 	log1pf.c \
 	nearbyintf.c \
+	roundf.c \
 	sf_cos.c \
 	sf_erf.c \
 	sf_frexp.c \
@@ -389,6 +404,8 @@ SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += machine_i2c.c
+SRC_C += machine_timer.c
+SRC_C += machine_uart.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
 #SRC_C += modnwcc3k.c
@@ -506,10 +523,18 @@ SRC_S = $(MCU_SERIES_LOW)/startup_$(MCU_SERIES_LOW).S
 SRC_S += setjmp.S
 SRC_S += gchelper.S
 
+ifeq ($(MICROPY_PY_LWIP),1)
+SRC_MOD += lwip_utils/sntp_client.c
+endif
+
 ifneq ($(MICROPY_PY_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
 CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+ifeq ($(MICROPY_PY_LWIP),1)
+# When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
+CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
+endif
 SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
 SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
 	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \

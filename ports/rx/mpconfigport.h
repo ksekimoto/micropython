@@ -443,8 +443,8 @@ static inline mp_uint_t disable_irq(void) {
 #if MICROPY_PY_THREAD
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
         SOCKET_POLL \
         if (pyb_thread_enabled) { \
             MP_THREAD_GIL_EXIT(); \
@@ -459,8 +459,8 @@ static inline mp_uint_t disable_irq(void) {
 #else
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
         SOCKET_POLL \
         __WFI(); \
     } while (0);

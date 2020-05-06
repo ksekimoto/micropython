@@ -25,6 +25,8 @@
 #include "jpeg.h"
 #endif
 
+#if MICROPY_PY_PYB_LCDSPI
+
 #define LCDSPI_OPTIMIZE
 
 #define HIGH    1
@@ -1157,8 +1159,6 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
 }
 
 #if MICROPY_HW_ENABLE_SDCARD
-#define BMP_HEADER_SIZE 0x8a
-char BmpHeader[BMP_HEADER_SIZE];
 
 inline int BYTEARRAY4_TO_INT(char *a) {
     return (int)*(uint32_t *)a;
@@ -1169,6 +1169,8 @@ inline int BYTEARRAY2_TO_INT(char *a) {
 }
 
 int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
+    #define BMP_HEADER_SIZE 0x8a
+    char BmpHeader[BMP_HEADER_SIZE];
     FIL fp;
     bool ret;
     int ofs, wx, wy, depth, lineBytes, bufSize;
@@ -1551,3 +1553,5 @@ const mp_obj_type_t pyb_lcdspi_type = {
     .make_new = lcdspi_obj_make_new,
     .locals_dict = (mp_obj_dict_t*)&lcdspi_locals_dict,
 };
+
+#endif

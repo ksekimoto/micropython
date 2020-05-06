@@ -33,7 +33,7 @@ typedef struct _pyb_wdt_obj_t {
     mp_obj_base_t base;
 } pyb_wdt_obj_t;
 
-STATIC pyb_wdt_obj_t pyb_wdt = {{&pyb_wdt_type}};
+STATIC const pyb_wdt_obj_t pyb_wdt = {{&pyb_wdt_type}};
 
 STATIC mp_obj_t pyb_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     // parse arguments
@@ -47,7 +47,7 @@ STATIC mp_obj_t pyb_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
     mp_int_t id = args[ARG_id].u_int;
     if (id != 0) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "WDT(%d) doesn't exist", id));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("WDT(%d) doesn't exist"), id);
     }
 
     // timeout is in milliseconds
@@ -61,9 +61,9 @@ STATIC mp_obj_t pyb_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_
     // convert milliseconds to ticks
     timeout *= 8; // 32kHz / 4 = 8 ticks per millisecond (approx)
     if (timeout <= 0) {
-        mp_raise_ValueError("WDT timeout too short");
+        mp_raise_ValueError(MP_ERROR_TEXT("WDT timeout too short"));
     } else if (timeout > 0xfff) {
-        mp_raise_ValueError("WDT timeout too long");
+        mp_raise_ValueError(MP_ERROR_TEXT("WDT timeout too long"));
     }
     timeout -= 1;
 

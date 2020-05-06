@@ -119,7 +119,7 @@ STATIC mp_obj_t pyb_repl_uart(size_t n_args, const mp_obj_t *args) {
             MP_STATE_PORT(pyb_stdio_uart) = MP_OBJ_TO_PTR(args[0]);
             uart_attach_to_repl(MP_STATE_PORT(pyb_stdio_uart), true);
         } else {
-            mp_raise_ValueError("need a UART object");
+            mp_raise_ValueError(MP_ERROR_TEXT("need a UART object"));
         }
         return mp_const_none;
     }
@@ -267,7 +267,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_FONT), MP_ROM_PTR(&pyb_font_type) },
 #endif
 
-#if MICROPY_PY_PYB_FONT
+#if MICROPY_PY_PYB_LCDSPI
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&pyb_lcdspi_type) },
 #endif
 

@@ -30,6 +30,8 @@
 #include "py/mphal.h"
 #include "common.h"
 
+#if MICROPY_PY_PYB_FONT
+
 #define MISAKIFONT4X8
 #define MISAKIFONT6X12
 #if MICROPY_PY_PYB_UNICODE_FONT
@@ -571,5 +573,7 @@ void font_Init(mrb_state *mrb)
 	mrb_define_method(mrb, fontModule, "cnvUtf8ToUnicode", mrb_font_cnvUtf8ToUnicode, MRB_ARGS_REQ(2));
 	mrb_define_method(mrb, fontModule, "getUnicodeAtIndex", mrb_font_getUnicodeAtIndex, MRB_ARGS_REQ(2));
 }
+
+#endif
 
 #endif
