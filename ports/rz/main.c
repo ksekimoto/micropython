@@ -70,7 +70,7 @@
 //#include "sdram.h"
 //#include "rng.h"
 //#include "accel.h"
-//#include "servo.h"
+#include "servo.h"
 //#include "dac.h"
 //#include "can.h"
 #include "modnetwork.h"
