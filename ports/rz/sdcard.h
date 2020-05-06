@@ -51,4 +51,25 @@ extern const struct _mp_obj_base_t pyb_sdcard_obj;
 struct _fs_user_mount_t;
 void sdcard_init_vfs(struct _fs_user_mount_t *vfs, int part);
 
+
+#if mbed_sd_wrapper
+#include "mbed_sd.h"
+#define sdcard_init                     mbed_sdcard_init
+#define sdcard_is_present               mbed_sdcard_is_present
+#define sdcard_power_on                 mbed_sdcard_power_on
+#define sdcard_power_off                mbed_sdcard_power_off
+#define sdcard_get_capacity_in_bytes    mbed_sdcard_get_capacity_in_bytes
+#define sdcard_read_blocks              mbed_sdcard_read_blocks
+#define sdcard_write_blocks             mbed_sdcard_write_blocks
+#else
+#include "rza2m_sd.h"
+#define sdcard_init                     rza2m_sdcard_init
+#define sdcard_is_present               rza2m_sdcard_is_present
+#define sdcard_power_on                 rza2m_sdcard_power_on
+#define sdcard_power_off                rza2m_sdcard_power_off
+#define sdcard_get_capacity_in_bytes    rza2m_sdcard_get_capacity_in_bytes
+#define sdcard_read_blocks              rza2m_sdcard_read_blocks
+#define sdcard_write_blocks             rza2m_sdcard_write_blocks
+#endif
+
 #endif // MICROPY_INCLUDED_RX_SDCARD_H

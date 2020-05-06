@@ -50,7 +50,6 @@
 #include "pin.h"
 #include "pin_static_af.h"
 #include "bufhelper.h"
-#include "mbed_sd.h"
 
 //#if MICROPY_HW_ENABLE_SDCARD
 
@@ -486,37 +485,6 @@ static uint32_t sd_writeblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
 
 #endif
 
-static uint32_t sd_sectors = 0;
-static const uint32_t sd_blocksize = SDCARD_BLOCK_SIZE;
-
-void sdcard_init(void) {
-    mbed_sdcard_init();
-}
-
-bool sdcard_is_present(void) {
-    return mbed_sdcard_is_present();
-}
-
-bool sdcard_power_on(void) {
-    return mbed_sdcard_power_on();
-}
-
-void sdcard_power_off(void) {
-    mbed_sdcard_power_off();
-}
-
-uint64_t sdcard_get_capacity_in_bytes(void) {
-    return mbed_sdcard_get_capacity_in_bytes();
-}
-
-mp_uint_t sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
-    return mbed_sdcard_read_blocks(dest, block_num, num_blocks);
-}
-
-mp_uint_t sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
-    return mbed_sdcard_write_blocks(src, block_num, num_blocks);
-}
-
 /******************************************************************************/
 // MicroPython bindings
 //
@@ -529,7 +497,6 @@ STATIC mp_obj_t pyb_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, si
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     //mbed_sdcard_init();
-    sd_sectors = (uint32_t)((uint64_t)sdcard_get_capacity_in_bytes() / (uint64_t)sd_blocksize);
     // return singleton object
     return MP_OBJ_FROM_PTR(&pyb_sdcard_obj);
 }
@@ -556,8 +523,8 @@ STATIC mp_obj_t sd_info(mp_obj_t self) {
         return mp_const_none;
     }
     mp_obj_t tuple[3] = {
-        mp_obj_new_int_from_ull((uint64_t)sd_sectors * (uint64_t)sd_blocksize),
-        mp_obj_new_int_from_uint(sd_blocksize),
+        mp_obj_new_int_from_ull((uint64_t)sdcard_get_capacity_in_bytes()),
+        mp_obj_new_int_from_uint(SDCARD_BLOCK_SIZE),
         mp_obj_new_int(0L),
     };
     return mp_obj_new_tuple(3, tuple);

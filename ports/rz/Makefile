@@ -38,7 +38,8 @@ MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
-MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
+MBED_GR_LIBS_GR-PEACH_video = 1
+MBED_GR_LIBS_utility = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
@@ -47,6 +48,7 @@ MICROPY_SSL_MBEDTLS = 1
 MICROPY_PY_USSL = 1
 MBED_UART_WRAPPER = 0
 MBED_SPI_WRAPPER = 0
+MBED_SD_WRAPPER = 0
 endif
 
 ifeq ($(BOARD),GR_MANGO_DD)
@@ -66,7 +68,8 @@ MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
-MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
+MBED_GR_LIBS_GR-PEACH_video = 1
+MBED_GR_LIBS_utility = 1
 MBED_HTTP = 0
 MBED_CONSOLE = 1
 OVERRIDE_CONSOLE_USBSERIAL = 0
@@ -75,6 +78,7 @@ MICROPY_SSL_MBEDTLS = 1
 MICROPY_PY_USSL = 1
 MBED_UART_WRAPPER = 0
 MBED_SPI_WRAPPER = 0
+MBED_SD_WRAPPER = 0
 endif
 
 # LAN debug
@@ -117,6 +121,9 @@ INC += -I$(TOP)
 INC += -I$(BUILD)
 
 INC += -I$(MCU_SERIES_LOW)
+ifneq ($(MBED_SD_WRAPPER),1)
+INC += -I$(MCU_SERIES_LOW)/sd
+endif
 INC += -Iboards/$(BOARD)
 INC += -Imbed
 INC += -Ilvgl
@@ -166,12 +173,13 @@ INC += -I$(TOP)/lib/mbed-os/platform
 INC += -I$(TOP)/lib/mbed-os/cmsis/TARGET_CORTEX_A
 INC += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
 INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
+ifeq ($(MBED_SD_WRAPPER),1)
 INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver
 INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/inc
 INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc
 INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc/access
 INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef
-
+endif
 INC += -Ilib/lv_bindings/lvgl
 
 ifeq ($(MBED_OS_EMAC),1)
@@ -191,6 +199,11 @@ endif
 LIB_MBED = libmbed.a
 LD = gcc
 #-Wstack-usage=$(STACK_USAGE)
+
+ifeq ($(MBED_SD_WRAPPER),1)
+MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
+CFLAGS_COMMON += -DMBED_SD_WRAPPER
+endif
 
 ifeq ($(MBED_UART_WRAPPER),1)
 CFLAGS_COMMON += -DMBED_UART_WRAPPER
@@ -250,8 +263,8 @@ CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -f
 CPPFLAGS += -std=gnu++98 -fno-rtti -Wvla -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -O0 -g3 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
 LD = arm-none-eabi-g++
 #LDFLAGS = -nostdlib -Xlinker -T $(TARGET_LD) -Map=$@.map --cref --gc-sections
-LDFLAGS += -DMBED_APP_START=0x50000000 -DMBED_APP_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DMBED_BOOT_STACK_SIZE=1024 -T $(TARGET_LD) -Wl,-Map=$@.map -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access -specs=nosys.specs -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group
-#LDFLAGS += -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r 
+LDFLAGS += -DMBED_APP_START=0x50000000 -DMBED_APP_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DMBED_BOOT_STACK_SIZE=1024 -T $(TARGET_LD) -Wl,-Map=$@.map -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_memalign_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access -specs=nosys.specs -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group
+#LDFLAGS += -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_calloc_r
 #LDFLAGS += -lmbed -Llibs
 
 #CFLAGS += -D$(MCU_SERIES_CAP)
@@ -1019,6 +1032,10 @@ SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostMIDI/USBHostMIDI.cpp
 SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostMSD/USBHostMSD.cpp
 SRC_MBED_CPP += lib/mbed-gr-libs/USBHost_custom/USBHostSerial/USBHostSerial.cpp
 endif
+ifeq ($(MBED_GR_LIBS_utility), 1)
+SRC_MBED_C += lib/mbed-gr-libs/utility/mmu/r_mmu_lld.c
+endif
+
 endif
 
 ifeq ($(MBED_HTTP), 1)
@@ -1109,15 +1126,34 @@ SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
 endif
 SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
 SRC_CPP += mbed/mbed_flash.cpp
-SRC_CPP += mbed/mbed_sd.cpp
 SRC_CPP += mbed/mbed_timer.cpp
 SRC_CPP += mbed/mbed_uart.cpp
+
+ifeq ($(MBED_SD_WRAPPER),1)
+# Doesn't work
+SRC_CPP += mbed/mbed_sd.cpp
+else
+SRC_C += $(MCU_SERIES_LOW)/rza2m_sd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_dev_low.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_device.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_cd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_cmd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_int.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_init.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_mount.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_read.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_trns.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_util.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_write.c
+endif
+
 ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
 EXTMOD_SRC_C += camera_lcd.c
 SRC_CPP += mbed/mbed_camera_lcd.cpp
 endif
 endif
+
 ifeq ($(LVGL_ENABLE) ,1)
 SRC_C += lvgl/modlvrz.c
 endif

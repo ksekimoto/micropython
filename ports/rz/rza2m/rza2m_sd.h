@@ -24,55 +24,21 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rza2m_utils.h"
+#ifndef PORTS_RZ_RZA2M_RZA2M_SD_H_
+#define PORTS_RZ_RZA2M_RZA2M_SD_H_
 
-void __WFI(void) {
-    __asm__ __volatile__ ("wfi");
-}
+typedef struct _sd_map {
+    uint32_t pin;
+    uint32_t ch;
+    uint8_t af_no;
+} sd_map_t;
 
+void rza2m_sdcard_init(void);
+bool rza2m_sdcard_is_present(void);
+bool rza2m_sdcard_power_on(void);
+void rza2m_sdcard_power_off(void);
+uint64_t rza2m_sdcard_get_capacity_in_bytes(void);
+uint32_t rza2m_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks);
+uint32_t rza2m_sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks);
 
-uint32_t _get_irq(void) {
-    register uint32_t pri = 0;
-/*
-    __asm__ volatile (
-        "MRC    p15,4,r1,c15,c0,0\n\t"
-        "LDR    r0,[r1,#ICCPMR_OFFSET]\n\t"
-        "MOV    r0,r0,LSR #3\n\t"
-        "BX     lr\n\t"
-        : [r0] "=r" (pri) :
-    );
-*/
-    return pri;
-}
-
-void __enable_irq(uint32_t state) {
-    __asm__ __volatile__ ("cpsie i" : : : "memory");
-}
-
-uint32_t __disable_irq(void) {
-    uint32_t state = (uint32_t)_get_irq();
-    __asm__ __volatile__ ("cpsid i" : : : "memory");
-    return state;
-}
-
-#if RZ_TODO
-
-__attribute__((always_inline)) void rz_enable_irq(void) {
-    __asm__ __volatile__ ("cpsie i" : : : "memory");
-}
-
-__attribute__((always_inline)) void rz_disable_irq(void) {
-    __asm__ __volatile__ ("cpsid i" : : : "memory");
-}
-
-__attribute__((always_inline)) uint32_t rz_get_PRIMASK(void) {
-    uint32_t result;
-    __asm__ __volatile__ ("MRS %0, primask" : "=r" (result));
-    return (result);
-}
-
-__attribute__((always_inline) ) void rz_set_PRIMASK(uint32_t priMask) {
-    __asm__ __volatile__ ("MSR primask, %0" : : "r" (priMask) : "memory");
-}
-
-#endif
+#endif /* PORTS_RZ_RZA2M_RZA2M_SD_H_ */

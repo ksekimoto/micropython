@@ -75,7 +75,7 @@ uint64_t mbed_sdcard_get_capacity_in_bytes(void) {
 
 uint mbed_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
     int ret;
-    ret = mbed_sd_bd->read((void *)dest, (bd_addr_t)sd_block_size * (bd_addr_t)block_num, (bd_size_t)num_blocks);
+    ret = mbed_sd_bd->read((void *)dest, (bd_addr_t)sd_block_size * (bd_addr_t)block_num, (bd_addr_t)sd_block_size * (bd_size_t)num_blocks);
     if (ret > 0) {
         return 0;
     } else {
@@ -85,7 +85,7 @@ uint mbed_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blo
 
 uint mbed_sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
     int ret;
-    ret = mbed_sd_bd->program((const void *)src, (bd_addr_t)sd_block_size * (bd_addr_t)block_num, (bd_size_t)num_blocks);
+    ret = mbed_sd_bd->program((const void *)src, (bd_addr_t)sd_block_size * (bd_addr_t)block_num, (bd_addr_t)sd_block_size * (bd_size_t)num_blocks);
     if (ret > 0) {
         return 0;
     } else {
