@@ -21,7 +21,6 @@ QSTR_GLOBAL_REQUIREMENTS += $(HEADER_BUILD)/mpversion.h
 # some code is performance bottleneck and compiled with other optimization options
 CSUPEROPT = -O3
 
-<<<<<<< HEAD
 ifeq ($(LVGL_ENABLE),1)
 #LittlevGL
 LVGL_BINDING_DIR = $(TOP)/lib/lv_bindings
@@ -110,7 +109,6 @@ INC += -I$(TOP)/$(LWIP_DIR)/include
 CFLAGS_MOD += -DMICROPY_PY_LWIP=1
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS_MOD += -Wno-address
 SRC_MOD += extmod/modlwip.c lib/netutils/netutils.c
-SRC_MOD += lwip_utils/sntp_client.c
 SRC_MOD += $(addprefix $(LWIP_DIR)/,\
 	core/def.c \
 	core/dns.c \
@@ -181,13 +179,13 @@ CFLAGS_MOD += -DMICROPY_PY_BTREE=1
 # and we have separate BTREE_DEFS so the definitions don't interfere with other source code
 $(BUILD)/$(BTREE_DIR)/%.o: CFLAGS += -Wno-old-style-definition -Wno-sign-compare -Wno-unused-parameter $(BTREE_DEFS)
 $(BUILD)/extmod/modbtree.o: CFLAGS += $(BTREE_DEFS)
-=======
+endif
+
 # Enable building 32-bit code on 64-bit host.
 ifeq ($(MICROPY_FORCE_32BIT),1)
 CC += -m32
 CXX += -m32
 LD += -m32
->>>>>>> upstream_master
 endif
 
 # External modules written in C.
