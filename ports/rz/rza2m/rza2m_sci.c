@@ -62,7 +62,7 @@ void sci_isr_te4(void);
 
 #define SCI_PCLK    66000000
 #define SCI_CH_NUM 5
-#define SCI_BUF_SIZE 512
+#define SCI_BUF_SIZE 4096
 #define SCI_DEFAULT_PRIORITY 4
 #define SCI_DEFAULT_BAUD    115200
 
