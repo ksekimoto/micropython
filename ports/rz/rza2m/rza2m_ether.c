@@ -87,11 +87,6 @@ static ethfifo txdesc[ETH_BUF_NUM] __attribute((section("NC_BSS"),aligned(32)));
 static int8_t  rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute((section("NC_BSS"),aligned(32)));
 static int8_t  txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute((section("NC_BSS"),aligned(32)));
 
-//static ethfifo rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
-//static ethfifo txdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
-//static int8_t  rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
-//static int8_t  txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
-
 typedef volatile struct st_etherc *st_etherc_p;
 static st_etherc_p ETHERCP[ETH_NUM] = {
     (st_etherc_p)0xE8204100,
