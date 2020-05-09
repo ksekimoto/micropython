@@ -32,6 +32,10 @@
 #include "diskio.h"
 #include "rza2m_sd.h"
 
+#if defined(USE_DBG_PRINT)
+//#define DEBUG_SD
+#endif
+
 #ifndef SD_SECTOR_SIZE
 #define SD_SECTOR_SIZE 512
 #endif
@@ -62,11 +66,19 @@ DRESULT sd_disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
 static BYTE pdrv = 1;
 
 void rza2m_sdcard_init(void) {
+#if defined(DEBUG_SD)
+    DSTATUS ret = sd_disk_initialize(pdrv);
+    debug_printf("SDI:%d\r\n", ret);
+#else
     sd_disk_initialize(pdrv);
+#endif
 }
 
 bool rza2m_sdcard_is_present(void) {
     DSTATUS ret = sd_disk_status(pdrv);
+#if defined(DEBUG_SD)
+    debug_printf("SDP:%d\r\n", ret);
+#endif
     if (ret == 0) {
         return true;
     } else {
@@ -88,15 +100,27 @@ void rza2m_sdcard_power_off(void) {
 uint64_t rza2m_sdcard_get_capacity_in_bytes(void) {
     uint32_t size = 0;
     sd_get_size(pdrv, &size, NULL);
+#if defined(DEBUG_SD)
+    debug_printf("SDS:%lx\r\n", (uint64_t)(size * SD_SECTOR_SIZE));
+#endif
     return (uint64_t)(size * SD_SECTOR_SIZE);
 }
 
+static uint8_t nc_buf[512] __attribute__ ((section("NC_BSS"), aligned(32)));
 uint32_t rza2m_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
     DRESULT ret = sd_disk_read(pdrv, (BYTE *)dest, (DWORD)block_num, (UINT)num_blocks);
+#if defined(DEBUG_SD)
+    //debug_printf("SDR:%x:%x:%0x\r\n", block_num, num_blocks, dest);
+    debug_printf("SDR:%x:%x:%x\r\n", block_num, num_blocks, ret);
+#endif
     return (uint32_t)ret;
 }
 
 uint32_t rza2m_sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
     DRESULT ret = sd_disk_write(pdrv, (const BYTE *)src, (DWORD)block_num, (UINT)num_blocks);
+#if defined(DEBUG_SD)
+    //debug_printf("SDW:%x:%x:%0x\r\n", block_num, num_blocks, src);
+    debug_printf("SDW:%x:%x:%x\r\n", block_num, num_blocks, ret);
+#endif
     return (uint32_t)ret;
 }
