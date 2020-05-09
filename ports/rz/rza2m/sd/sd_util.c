@@ -172,6 +172,7 @@ int32_t _sd_set_port(st_sdhndl_t *p_hndl, int32_t port)
 
     if (SD_MEDIA_IO == p_hndl->media_type)    /* IO */
     {
+#if defined(SDIO_SUPPORT)
         /* ==== change io bus width and clear pull-up DAT3 (issue CMD52)==== */
         if (SD_PORT_SERIAL == port)
         {
@@ -184,7 +185,6 @@ int32_t _sd_set_port(st_sdhndl_t *p_hndl, int32_t port)
             io_buff = 0x02;
         }
 
-#if defined(SDIO_SUPPORT)
         /* data:00'h or 02'h func:0 address:07'h verify write */
         if (_sdio_direct(p_hndl, &io_buff, 0, 0x07, 1, SD_IO_VERIFY_WRITE) != SD_OK)
         {

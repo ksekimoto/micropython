@@ -302,6 +302,7 @@ int32_t sd_mount(int32_t sd_port, uint32_t mode, uint32_t voltage)
         /* Cast to an appropriate type */
         (void)_sd_calc_erase_sector(p_hndl);
     }
+#if defined(SDIO_SUPPORT)
     /* if io or combo, set io part speed */
     if (p_hndl->media_type & SD_MEDIA_IO)
     {
@@ -318,6 +319,7 @@ int32_t sd_mount(int32_t sd_port, uint32_t mode, uint32_t voltage)
         /* Enable SDIO interrupt */
         SDMMC.SDIO_MODE.LONGLONG = (uint64_t)(SDMMC.SDIO_MODE.LONGLONG | SDIO_MODE_IOMOD);
     }
+#endif
 
     /* ---- set mount flag ---- */
     p_hndl->mount = SD_MOUNT_UNLOCKED_CARD;
@@ -370,6 +372,7 @@ int32_t _sd_card_init(st_sdhndl_t *p_hndl)
     if_cond_0 = p_hndl->if_cond[0];
     if_cond_1 = p_hndl->if_cond[1];
 
+#if defined(SDIO_SUPPORT)
     if (p_hndl->sup_card & SD_MODE_IO)
     {
         just_sdio_flag = 0;                             /* basically treate as Combo */
@@ -478,6 +481,7 @@ int32_t _sd_card_init(st_sdhndl_t *p_hndl)
             p_hndl->error = SD_OK;
         }
     }
+#endif
 
     /* ==== transfer idle state (issue CMD0) ==== */
     if (SD_MEDIA_UNKNOWN == p_hndl->media_type)
@@ -622,10 +626,12 @@ static int32_t _sd_card_init_get_rca(st_sdhndl_t *p_hndl)
             }
             if (0x00 != p_hndl->rca[0])
             {
+#if defined(SDIO_SUPPORT)
                 if (p_hndl->media_type & SD_MEDIA_IO)
                 {
                     p_hndl->io_flag |= SD_IO_POWER_INIT;
                 }
+#endif
                 break;
             }
         }
@@ -647,12 +653,14 @@ static int32_t _sd_card_init_get_rca(st_sdhndl_t *p_hndl)
         }
     }
 
+#if defined(SDIO_SUPPORT)
     /* ==== stand-by state  ==== */
 
     if (SD_MEDIA_IO == p_hndl->media_type)
     {
         return SD_OK;
     }
+#endif
 
     /* ---- get CSD (issue CMD9) ---- */
     if (_sd_card_send_cmd_arg(p_hndl, CMD9, SD_RSP_R2_CSD, p_hndl->rca[0], 0x0000)
@@ -981,6 +989,7 @@ int32_t sd_unmount(int32_t sd_port)
         return SD_ERR;  /* not initialized */
     }
 
+#if defined(SDIO_SUPPORT)
     if ( (SD_MEDIA_IO == p_hndl->media_type) || (SD_MEDIA_COMBO == p_hndl->media_type) )
     {
         /* media has SDIO */
@@ -994,6 +1003,7 @@ int32_t sd_unmount(int32_t sd_port)
             /* dont care error */
         }
     }
+#endif
 
     /* ---- clear mount flag ---- */
     p_hndl->mount = SD_UNMOUNT_CARD;
