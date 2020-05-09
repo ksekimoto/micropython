@@ -69,6 +69,15 @@
 #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
+// Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
+//#define MICROPY_PY_LWIP (1)
+#define MICROPY_HW_ETH_MAC_ADDRESS_0    0x00
+#define MICROPY_HW_ETH_MAC_ADDRESS_1    0x0E
+#define MICROPY_HW_ETH_MAC_ADDRESS_2    0x2A
+#define MICROPY_HW_ETH_MAC_ADDRESS_3    0x07
+#define MICROPY_HW_ETH_MAC_ADDRESS_4    0x06
+#define MICROPY_HW_ETH_MAC_ADDRESS_5    0x05
+
 #define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
