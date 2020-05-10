@@ -88,12 +88,15 @@ void rz_spi_set_bits(uint32_t ch, uint32_t bits) {
     if (bits == 8) {
         prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) \
             | 0x0700; // Command Reg: SPI mode: 8bit
+        prspi->SPDCR.BYTE = (prspi->SPDCR.BYTE & ~0x60) | 0x20;
     } else if (bits == 16) {
         prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) \
             | 0x0f00; // Command Reg: SPI mode: 16bit
+        prspi->SPDCR.BYTE = (prspi->SPDCR.BYTE & ~0x60) | 0x40;
     } else if (bits == 32) {
         prspi->SPCMD0.WORD = (prspi->SPCMD0.WORD & ~0x0f00) \
             | 0x0300; // Command Reg: SPI mode: 32bit
+        prspi->SPDCR.BYTE = (prspi->SPDCR.BYTE & ~0x60) | 0x60;
     }
 }
 
@@ -102,7 +105,7 @@ void rz_spi_set_clk(uint32_t ch, uint32_t baud) {
         return;
     rspip prspi = RSPIP[ch];
     prspi->SPCR.BIT.SPE = 0;
-    prspi->SPBR.BYTE = (uint8_t)(BCLK / 2 / baud - 1);
+    prspi->SPBR.BYTE = (uint8_t)((BCLK / 2 / baud) - 1);
     prspi->SPCR.BIT.SPE = 1;
 }
 
@@ -197,150 +200,75 @@ void rz_spi_reset_spi_ch(uint32_t ch) {
     rz_spi_reset_spi_pin(ch);
 }
 
-uint8_t rz_spi_write_byte(uint32_t ch, uint8_t b) {
-    rspip prspi = RSPIP[ch];
-    while (prspi->SPSR.BIT.TEND == 0) {
-            ;
-    }
-    prspi->SPDR.LONG = (uint32_t)(b);
-    while (prspi->SPSR.BIT.SPRF == 0) {
-            ;
-    }
-    return (uint8_t)(prspi->SPDR.LONG);
-}
-
-void rz_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
-    rspip prspi = RSPIP[ch];
-    rz_spi_set_bits(ch, 8);
-    while (count--) {
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
-        prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (prspi->SPSR.BIT.SPRF == 0) {
-                ;
-        }
-        prspi->SPDR.LONG;
-    }
-}
-
-void rz_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
-    rspip prspi = RSPIP[ch];
-    rz_spi_set_bits(ch, 16);
-    while (count--) {
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
-        prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (prspi->SPSR.BIT.SPRF == 0) {
-                ;
-        }
-        prspi->SPDR.LONG;
-    }
-    rz_spi_set_bits(ch, 8);
-}
-
-void rz_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
-    rspip prspi = RSPIP[ch];
-    rz_spi_set_bits(ch, 32);
-    while (count--) {
-        rz_disable_irq();
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
-        prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (prspi->SPSR.BIT.SPRF == 0) {
-                ;
-        }
-        prspi->SPDR.LONG;
-        rz_enable_irq();
-    }
-    rz_spi_set_bits(ch, 8);
-}
-
-void rz_spi_write_bytes(uint32_t ch, uint32_t bits, uint8_t *buf, uint32_t count) {
-    if (bits == 8) {
-        rz_spi_write_bytes8(ch, buf, count);
-    } else if (bits == 16) {
-        rz_spi_write_bytes16(ch, (uint16_t *)buf, count >> 1);
-    } else if (bits == 32) {
-        rz_spi_write_bytes32(ch, (uint32_t *)buf, count >> 2);
-    }
-}
-
 void rz_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
+    uint8_t dummy;
     rspip prspi = RSPIP[ch];
     rz_spi_set_bits(ch, 8);
     while (count--) {
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
         if (src != 0) {
             prspi->SPDR.BYTE.LL = (uint8_t)(*src);
             src++;
         } else {
             prspi->SPDR.BYTE.LL = (uint8_t)0x00;
         }
-        while (prspi->SPSR.BIT.SPRF == 0) {
+        while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
         if (dst != 0) {
             *dst = (uint8_t)(prspi->SPDR.BYTE.LL);
             dst++;
         } else {
-            prspi->SPDR.BYTE.LL;
+            dummy = (uint8_t)prspi->SPDR.BYTE.LL;
         }
     }
 }
 
 void rz_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src, uint32_t count) {
+    uint16_t dummy;
     rspip prspi = RSPIP[ch];
     rz_spi_set_bits(ch, 16);
     while (count--) {
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
         if (src != 0) {
             prspi->SPDR.WORD.L = (uint16_t)(*src);
             src++;
         } else {
             prspi->SPDR.WORD.L = (uint16_t)0x00;
         }
-        while (prspi->SPSR.BIT.SPRF == 0) {
+        while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
         if (dst != 0) {
             *dst = (uint16_t)(prspi->SPDR.WORD.L);
             dst++;
         } else {
-            prspi->SPDR.WORD.L;
+            dummy = (uint16_t)prspi->SPDR.WORD.L;
         }
     }
     rz_spi_set_bits(ch, 8);
 }
 
 void rz_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count) {
+    uint32_t dummy;
     rspip prspi = RSPIP[ch];
     rz_spi_set_bits(ch, 32);
     while (count--) {
-        while (prspi->SPSR.BIT.TEND == 0) {
-                ;
-        }
+        rz_disable_irq();
         if (src != 0) {
             prspi->SPDR.LONG = (uint32_t)(*src);
             src++;
         } else {
             prspi->SPDR.LONG = (uint32_t)0x00;
         }
-        while (prspi->SPSR.BIT.SPRF == 0) {
+        while (prspi->SPSR.BIT.TEND == 0) {
                 ;
         }
         if (dst != 0) {
             *dst = (uint32_t)(prspi->SPDR.LONG);
             dst++;
         } else {
-            prspi->SPDR.LONG;
+            dummy = (uint32_t)prspi->SPDR.LONG;
         }
+        rz_enable_irq();
     }
     rz_spi_set_bits(ch, 8);
 }
