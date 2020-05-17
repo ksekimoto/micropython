@@ -49,6 +49,8 @@ MICROPY_PY_USSL = 1
 MBED_UART_WRAPPER = 0
 MBED_SPI_WRAPPER = 0
 MBED_SD_WRAPPER = 0
+USE_FONT = 1
+USE_LCD = 1
 endif
 
 ifeq ($(BOARD),GR_MANGO_DD)
@@ -79,6 +81,8 @@ MICROPY_PY_USSL = 1
 MBED_UART_WRAPPER = 0
 MBED_SPI_WRAPPER = 0
 MBED_SD_WRAPPER = 0
+USE_FONT = 1
+USE_LCD = 1
 endif
 
 # LAN debug
@@ -190,6 +194,13 @@ INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/phy
 INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/targets/TARGET_GR_MANGO
 endif
 
+endif
+
+ifeq ($(USE_FONT), 1)
+INC += -Ifont
+endif
+ifeq ($(USE_LCD), 1)
+INC += -Ilcd
 endif
 
 #######################################################################
@@ -1163,6 +1174,14 @@ SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
 endif
 
+ifeq ($(USE_FONT), 1)
+SRC_C += font/font.c
+endif
+ifeq ($(USE_LCD), 1)
+SRC_C += lcd/lcdspi.c
+SRC_C += lcd/jpeg.c
+SRC_C += lcd/picojpeg.c
+endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 #CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
 CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'

@@ -200,6 +200,15 @@ void rz_spi_reset_spi_ch(uint32_t ch) {
     rz_spi_reset_spi_pin(ch);
 }
 
+uint8_t rz_spi_write_byte(uint32_t ch, uint8_t b) {
+    rspip prspi = RSPIP[ch];
+    prspi->SPDR.BYTE.LL = (uint8_t)b;
+    while (prspi->SPSR.BIT.TEND == 0) {
+            ;
+    }
+    return (uint8_t)prspi->SPDR.BYTE.LL;
+}
+
 void rz_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
     uint8_t dummy;
     rspip prspi = RSPIP[ch];
