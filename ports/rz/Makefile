@@ -1,11 +1,19 @@
 # Select the board to build for: if not given on the command line,
 # then default to GR_MANGO
 BOARD ?= GR_MANGO
+
 CROSS ?= 1
 
-ifeq ($(wildcard boards/$(BOARD)/.),)
-$(error Invalid BOARD specified)
-endif
+# enable debug_printf
+#USE_DBG_PRINT = 1
+
+# LAN debug
+LAN_NEW = 0
+
+# enable micropython debug flag
+#MICROPY_DEBUG_VERBOSE = 1
+#MICROPY_DEBUG_PRINTERS = 1
+
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
@@ -14,13 +22,6 @@ BOARD_DIR ?= boards/$(BOARD)
 ifeq ($(wildcard $(BOARD_DIR)/.),)
 $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
-
-# enable debug_printf
-#USE_DBG_PRINT = 1
-
-# enable micropython debug flag
-#MICROPY_DEBUG_VERBOSE = 1
-#MICROPY_DEBUG_PRINTERS = 1
 
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
@@ -85,16 +86,20 @@ USE_FONT = 1
 USE_LCD = 1
 endif
 
-# LAN debug
-LAN_NEW = 0
-
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
+# Files that are generated and needed before the QSTR build.
+#QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h $(BUILD)/modstm_qstr.h
+QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
+
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h 
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h
+QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
+QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
+
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
@@ -102,20 +107,25 @@ FROZEN_MANIFEST ?= boards/manifest.py
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-#GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
 
 #######################################################################
 # MCU configuration
 #######################################################################
-
-# Select the cross compile prefix
-CROSS_COMPILE ?= arm-none-eabi-
 
 # MCU_SERIERS is defined in mpconfigboard.mk file under board folder
 ifeq ($(MCU_SERIES),RZA2M)
 MCU_SERIES_LOW = rza2m
 MCU_SERIES_CAP = RZA2M
 endif
+MCU_SERIES_UPPER = $(shell echo $(MCU_SERIES) | tr '[:lower:]' '[:upper:]')
+
+LD_DIR=boards
+
+
+
+# Select the cross compile prefix
+CROSS_COMPILE ?= arm-none-eabi-
 
 #######################################################################
 # C include
@@ -123,29 +133,34 @@ endif
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-
-INC += -I$(MCU_SERIES_LOW)
-ifneq ($(MBED_SD_WRAPPER),1)
-INC += -I$(MCU_SERIES_LOW)/sd
-endif
 INC += -Iboards/$(BOARD)
+ifeq ($(MICROPY_PY_LWIP),1)
+INC += -I$(TOP)/lib/lwip/src/include
+INC += -Ilwip_inc -Ilwip_utils
+endif
+ifeq ($(USE_FONT), 1)
+INC += -Ifont
+endif
+ifeq ($(USE_LCD), 1)
+INC += -Ilcd
+endif
 INC += -Imbed
 INC += -Ilvgl
 ifeq ($(USE_DBG_PRINT) ,1)
 INC += -Idebug
 endif
 
-ifeq ($(MICROPY_PY_LWIP),1)
-INC += -I$(TOP)/lib/lwip/src/include
-INC += -Ilwip_inc -Ilwip_utils
-endif
-ifeq ($(MICROPY_SSL_MBEDTLS),1)
-INC += -I$(TOP)/lib/mbedtls/include
-endif
-ifeq ($(MICROPY_SSL_AXTLS),1)
-INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
-endif
+#ifeq ($(MICROPY_SSL_MBEDTLS),1)
+#INC += -I$(TOP)/lib/mbedtls/include
+#endif
+#ifeq ($(MICROPY_SSL_AXTLS),1)
+#INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
+#endif
 
+INC += -I$(MCU_SERIES_LOW)
+ifneq ($(MBED_SD_WRAPPER),1)
+INC += -I$(MCU_SERIES_LOW)/sd
+endif
 ifeq ($(TARGET), TARGET_RZ_A2XX)
 INC_MBED += -ITARGET_RENESAS
 INC_MBED += -ITARGET_RENESAS/$(TARGET)
@@ -196,16 +211,89 @@ endif
 
 endif
 
-ifeq ($(USE_FONT), 1)
-INC += -Ifont
-endif
-ifeq ($(USE_LCD), 1)
-INC += -Ilcd
-endif
-
 #######################################################################
 # C flags.
 #######################################################################
+
+# Options for particular MCU series
+CFLAGS_MCU_f0 = $(CFLAGS_CORTEX_M) -mtune=cortex-m0 -mcpu=cortex-m0
+CFLAGS_MCU_f4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
+CFLAGS_MCU_f7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
+CFLAGS_MCU_l0 = $(CFLAGS_CORTEX_M) -mtune=cortex-m0plus -mcpu=cortex-m0plus
+CFLAGS_MCU_l4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
+CFLAGS_MCU_h7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
+CFLAGS_MCU_wb = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
+
+CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += -Wno-error=sign-compare
+CFLAGS += -Wno-error=override-init
+CFLAGS += -Wno-error=implicit-function-declaration
+CFLAGS += -Wno-error=incompatible-pointer-types
+CFLAGS += -Wno-error=unused-variable
+CFLAGS += -Wno-error=unused-function
+CFLAGS += -Wno-error=main
+CFLAGS += -Wno-error=float-conversion
+CFLAGS += -Wno-error=unused-but-set-variable
+CFLAGS += -Wno-error=return-type
+CFLAGS += -Wno-error=maybe-uninitialized
+CFLAGS += -Wno-error=missing-braces
+CFLAGS += -Wno-error=double-promotion
+CFLAGS += -Wno-error=type-limits
+CFLAGS += -Wno-error=overflow
+CFLAGS += -Wno-error=attributes
+#CFLAGS += -D$(CMSIS_MCU)
+#CFLAGS += $(CFLAGS_MCU_$(MCU_SERIES))
+CFLAGS += $(COPT)
+CFLAGS += -I$(BOARD_DIR)
+#CFLAGS += -DSTM32_HAL_H='<stm32$(MCU_SERIES)xx_hal.h>'
+#CFLAGS += -DMICROPY_HW_VTOR=$(TEXT0_ADDR)
+
+# Configure for nan-boxing object model if requested
+ifeq ($(NANBOX),1)
+CFLAGS += -DMP_CONFIGFILE='"mpconfigport_nanbox.h"'
+ifneq ($(MICROPY_FLOAT_IMPL),none)
+MICROPY_FLOAT_IMPL = double
+endif
+endif
+
+# Configure floating point support
+ifeq ($(MICROPY_FLOAT_IMPL),double)
+CFLAGS += -DMICROPY_FLOAT_IMPL=MICROPY_FLOAT_IMPL_DOUBLE
+else
+ifeq ($(MICROPY_FLOAT_IMPL),none)
+CFLAGS += -DMICROPY_FLOAT_IMPL=MICROPY_FLOAT_IMPL_NONE
+else
+CFLAGS += -DMICROPY_FLOAT_IMPL=MICROPY_FLOAT_IMPL_FLOAT
+CFLAGS += -fsingle-precision-constant
+endif
+endif
+
+#LDFLAGS = -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Map=$(@:.elf=.map) --cref
+#LDFLAGS += --defsym=_estack_reserve=8
+LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+
+# Remove uncalled code from the final image.
+CFLAGS += -fdata-sections -ffunction-sections
+#LDFLAGS += --gc-sections
+
+# Debugging/Optimization
+#ifeq ($(DEBUG), 1)
+#CFLAGS += -g -DPENDSV_DEBUG
+#COPT = -O0
+#else
+#COPT += -Os -DNDEBUG
+#endif
+#CSUPEROPT = -Os # save some code space
+
+ifeq ($(DEBUG), 1)
+CFLAGS += -ggdb
+COPT = -O0
+else
+COPT += -Os -DNDEBUG
+endif
+
+# Options for mpy-cross
+MPY_CROSS_FLAGS += -march=armv7m
 
 LIB_MBED = libmbed.a
 LD = gcc
@@ -286,8 +374,8 @@ endif
 ifeq ($(BOARD),GR_MANGO_DD)
 CFLAGS += -DGRMANGO
 endif
-CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
-CFLAGS += -DMICROPY_VFS_FAT=1
+#CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
+#CFLAGS += -DMICROPY_VFS_FAT=1
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
@@ -300,16 +388,6 @@ endif
 
 ifeq ($(MICROPY_DEBUG_PRINTERS), 1)
 CFLAGS += -DMICROPY_DEBUG_PRINTERS=1
-endif
-
-CSUPEROPT = -Os # save some code space
-
-# Tune for Debugging or Optimization
-ifeq ($(DEBUG), 1)
-CFLAGS += -O0 -ggdb
-else
-CFLAGS += -Os -DNDEBUG
-CFLAGS += -fdata-sections -ffunction-sections
 endif
 
 ifeq ($(MICROPY_PY_LWIP),1)
@@ -338,7 +416,7 @@ endif
 # source files
 #######################################################################
 
-SRC_LIB = $(addprefix lib/,\
+LIB_SRC_C = $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
@@ -352,12 +430,12 @@ SRC_LIB = $(addprefix lib/,\
 	utils/mpirq.c \
 	)
 
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	virtpin.c \
-    )
-
+#EXTMOD_SRC_C += $(addprefix extmod/,\
+#	virtpin.c \
+#    )
+#
 ifeq ($(MICROPY_FLOAT_IMPL),double)
-SRC_LIBM = $(addprefix lib/libm_dbl/,\
+LIBM_SRC_C = $(addprefix lib/libm_dbl/,\
 	__cos.c \
 	__expo2.c \
 	__fpclassify.c \
@@ -402,12 +480,12 @@ SRC_LIBM = $(addprefix lib/libm_dbl/,\
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
 # ToDo
-SRC_LIBM += lib/libm_dbl/thumb_vfp_sqrt.c
+LIBM_SRC_C += lib/libm_dbl/thumb_vfp_sqrt.c
 else
-SRC_LIBM += lib/libm_dbl/sqrt.c
+LIBM_SRC_C += lib/libm_dbl/sqrt.c
 endif
 else
-SRC_LIBM = $(addprefix lib/libm/,\
+LIBM_SRC_C = $(addprefix lib/libm/,\
 	math.c \
 	acoshf.c \
 	asinfacosf.c \
@@ -424,6 +502,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	kf_tan.c \
 	log1pf.c \
 	nearbyintf.c \
+	roundf.c \
 	sf_cos.c \
 	sf_erf.c \
 	sf_frexp.c \
@@ -435,10 +514,17 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_SINGLE),1)
-SRC_LIBM += lib/libm/thumb_vfp_sqrtf.c
+LIBM_SRC_C += lib/libm/thumb_vfp_sqrtf.c
 else
-SRC_LIBM += lib/libm/ef_sqrt.c
+LIBM_SRC_C += lib/libm/ef_sqrt.c
 endif
+endif
+
+LIBM_O = $(addprefix $(BUILD)/, $(LIBM_SRC_C:.c=.o))
+
+# Too many warnings in libm_dbl, disable for now.
+ifeq ($(MICROPY_FLOAT_IMPL),double)
+$(LIBM_O): CFLAGS := $(filter-out -Wdouble-promotion -Wfloat-conversion, $(CFLAGS))
 endif
 
 EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -454,7 +540,6 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 
 SRC_C = \
 	main.c \
-#	$(BUILD)/_frozen_mpy.c \
 
 #######################################################################
 # TARGET_RENESAS
@@ -1182,88 +1267,92 @@ SRC_C += lcd/lcdspi.c
 SRC_C += lcd/jpeg.c
 SRC_C += lcd/picojpeg.c
 endif
-ifeq ($(MICROPY_SSL_MBEDTLS),1)
-#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
-CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
-SRC_MOD += mbedtls/mbedtls_port.c
-SRC_MOD += $(addprefix lib/,\
-	mbedtls/library/aes.c \
-	mbedtls/library/aesni.c \
-	mbedtls/library/arc4.c \
-	mbedtls/library/aria.c \
-	mbedtls/library/asn1parse.c \
-	mbedtls/library/asn1write.c \
-	mbedtls/library/base64.c \
-	mbedtls/library/bignum.c \
-	mbedtls/library/blowfish.c \
-	mbedtls/library/camellia.c \
-	mbedtls/library/ccm.c \
-	mbedtls/library/certs.c \
-	mbedtls/library/chacha20.c \
-	mbedtls/library/chachapoly.c \
-	mbedtls/library/cipher_wrap.c \
-	mbedtls/library/cipher.c \
-	mbedtls/library/cmac.c \
-	mbedtls/library/ctr_drbg.c \
-	mbedtls/library/debug.c \
-	mbedtls/library/des.c \
-	mbedtls/library/dhm.c \
-	mbedtls/library/ecdh.c \
-	mbedtls/library/ecdsa.c \
-	mbedtls/library/ecjpake.c \
-	mbedtls/library/ecp.c \
-	mbedtls/library/ecp_curves.c \
-	mbedtls/library/entropy.c \
-	mbedtls/library/entropy_poll.c \
-	mbedtls/library/error.c \
-	mbedtls/library/gcm.c \
-	mbedtls/library/havege.c \
-	mbedtls/library/hmac_drbg.c \
-	mbedtls/library/md.c \
-	mbedtls/library/md_wrap.c \
-	mbedtls/library/md2.c \
-	mbedtls/library/md4.c \
-	mbedtls/library/md5.c \
-	mbedtls/library/memory_buffer_alloc.c \
-	mbedtls/library/oid.c \
-	mbedtls/library/padlock.c \
-	mbedtls/library/pem.c \
-	mbedtls/library/pk.c \
-	mbedtls/library/pk_wrap.c \
-	mbedtls/library/pkcs11.c \
-	mbedtls/library/pkcs12.c \
-	mbedtls/library/pkcs5.c \
-	mbedtls/library/pkparse.c \
-	mbedtls/library/pkwrite.c \
-	mbedtls/library/platform.c \
-	mbedtls/library/platform_util.c \
-	mbedtls/library/poly1305.c \
-	mbedtls/library/ripemd160.c \
-	mbedtls/library/rsa.c \
-	mbedtls/library/rsa_internal.c \
-	mbedtls/library/sha1.c \
-	mbedtls/library/sha256.c \
-	mbedtls/library/sha512.c \
-	mbedtls/library/ssl_cache.c \
-	mbedtls/library/ssl_ciphersuites.c \
-	mbedtls/library/ssl_cli.c \
-	mbedtls/library/ssl_cookie.c \
-	mbedtls/library/ssl_srv.c \
-	mbedtls/library/ssl_ticket.c \
-	mbedtls/library/ssl_tls.c \
-	mbedtls/library/threading.c \
-	mbedtls/library/timing.c \
-	mbedtls/library/version.c \
-	mbedtls/library/version_features.c \
-	mbedtls/library/x509.c \
-	mbedtls/library/x509_create.c \
-	mbedtls/library/x509_crl.c \
-	mbedtls/library/x509_crt.c \
-	mbedtls/library/x509_csr.c \
-	mbedtls/library/x509write_crt.c \
-	mbedtls/library/x509write_csr.c \
-)
+
+ifeq ($(MICROPY_PY_BLUETOOTH),1)
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH=1
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE=1
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_GATTS_ON_READ_CALLBACK=1
 endif
+
+ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
+CFLAGS_MOD += -DMICROPY_PY_NETWORK_CYW43=1
+SRC_C += sdio.c
+EXTMOD_SRC_C += extmod/network_cyw43.c
+DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
+LIBS += $(TOP)/drivers/cyw43/libcyw43.a
+endif
+
+ifneq ($(MICROPY_PY_WIZNET5K),0)
+WIZNET5K_DIR=drivers/wiznet5k
+INC += -I$(TOP)/$(WIZNET5K_DIR)
+CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+ifeq ($(MICROPY_PY_LWIP),1)
+# When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
+CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
+endif
+SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
+SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
+	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
+	ethernet/wizchip_conf.c \
+	ethernet/socket.c \
+	internet/dns/dns.c \
+	)
+endif
+
+# for CC3000 module
+ifeq ($(MICROPY_PY_CC3K),1)
+CC3000_DIR=drivers/cc3000
+INC += -I$(TOP)/$(CC3000_DIR)/inc
+CFLAGS_MOD += -DMICROPY_PY_CC3K=1
+SRC_MOD += modnwcc3k.c
+SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
+	cc3000_common.c \
+	evnt_handler.c \
+	hci.c \
+	netapp.c \
+	nvmem.c \
+	security.c \
+	socket.c \
+	wlan.c \
+	ccspi.c \
+	inet_ntop.c \
+	inet_pton.c \
+	patch.c \
+	patch_prog.c \
+	)
+endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+SRC_MOD += mbedtls/mbedtls_port.c
+endif
+
+ifeq ($(MICROPY_PY_BLUETOOTH),1)
+
+SRC_C += modbluetooth_hci.c
+
+ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+$(error Cannot enable both NimBLE and BTstack at the same time)
+endif
+endif
+
+ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+include $(TOP)/extmod/nimble/nimble.mk
+SRC_C += nimble.c
+endif
+
+ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+include $(TOP)/extmod/btstack/btstack.mk
+SRC_C += btstack.c
+endif
+
+ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
+DRIVERS_SRC_C += drivers/cyw43/cywbt.c
+endif
+
+endif
+
 
 #######################################################################
 # object files
@@ -1271,13 +1360,14 @@ endif
 
 OBJ =
 OBJ += $(PY_O)
+OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(LIBM_O)
+OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
 
@@ -1357,9 +1447,6 @@ libs/$(LIB_MBED): $(OBJ_MBED)
 	$(MKDIR) -p libs
 	$(Q)$(AR) $(AR_MBED_FLAGS) libs/$(LIB_MBED) $^
 
-#$(BUILD)/_frozen_mpy.c: frozentest.mpy #$(BUILD)/genhdr/qstrdefs.generated.h
-#	$(ECHO) "MISC freezing bytecode"
-#	$(Q)$(TOP)/tools/mpy-tool.py -f -q #$(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
@@ -1374,9 +1461,9 @@ CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
-#$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-#	$(ECHO) "MISC freezing bytecode"
-#	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
+$(BUILD)/firmware.hex: $(BUILD)/firmware.elf
+	$(ECHO) "GEN $@"
+	$(Q)$(OBJCOPY) -O ihex $< $@
 
 $(BUILD)/firmware.elf: $(OBJ) libs/$(LIB_MBED)
 	$(ECHO) "LINK $@"
@@ -1394,28 +1481,8 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
 endif
 
-#$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
-#	$(ECHO) "Create $@"
-#	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
 
-#deploy: $(BUILD)/firmware.dfu
-#	$(ECHO) "Writing $< to the board"
-#	$(Q)$(PYTHON) $(PYDFU) -u $<
 
-# Run emulation build on a POSIX system with suitable terminal settings
-#run:
-#	stty raw opost -echo
-#	build/firmware.elf
-#	@echo Resetting terminal...
-# This sleep is useful to spot segfaults
-#	sleep 1
-#	reset
-
-#test: $(BUILD)/firmware.elf
-#	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | #$(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
-
-#test: $(BUILD)/firmware.elf
-#	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = $(BOARD_DIR)/pins.csv
 AF_FILE = boards/$(MCU_SERIES_LOW)_af.csv
@@ -1423,7 +1490,6 @@ PREFIX_FILE = boards/$(MCU_SERIES_LOW)_prefix.c
 GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
 GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
 GEN_PINS_QSTR = $(BUILD)/pins_qstr.h
-GEN_PINS_AD_CONST = $(HEADER_BUILD)/pins_ad_const.h
 GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
 #GEN_PINS_AF_DEFS = $(HEADER_BUILD)/pins_af_defs.h
 GEN_PINS_AF_PY = $(BUILD)/pins_af.py
@@ -1437,7 +1503,7 @@ GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
 GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_MOD) $(SRC_LIB) $(EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_MOD) $(LIB_SRC_C) $(EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)
@@ -1458,19 +1524,39 @@ main.c: $(GEN_CDCINF_HEADER)
 
 # Use a pattern rule here so that make will only call make-pins.py once to make
 # both pins_$(BOARD).c and pins.h
-.PRECIOUS: $(GEN_PINS_SRC)
 $(BUILD)/%_$(BOARD).c $(HEADER_BUILD)/%.h $(HEADER_BUILD)/%_af_const.h $(HEADER_BUILD)/%_af_defs.h $(BUILD)/%_qstr.h: $(BOARD_DIR)/%.csv $(MAKE_PINS) $(AF_FILE) $(PREFIX_FILE) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
-	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) --prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) --qstr $(GEN_PINS_QSTR) --ad-const $(GEN_PINS_AD_CONST) --af-const $(GEN_PINS_AF_CONST) --af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
+	$(Q)$(PYTHON) $(MAKE_PINS) --board $(BOARD_PINS) --af $(AF_FILE) \
+		--prefix $(PREFIX_FILE) --hdr $(GEN_PINS_HDR) \
+		--qstr $(GEN_PINS_QSTR) --af-const $(GEN_PINS_AF_CONST) \
+		--af-py $(GEN_PINS_AF_PY) > $(GEN_PINS_SRC)
 
-$(BUILD)/pins_$(BOARD).o: $(GEN_PINS_SRC)
+$(BUILD)/pins_$(BOARD).o: $(BUILD)/pins_$(BOARD).c
 	$(call compile_c)
 
-$(GEN_CDCINF_HEADER): $(GEN_CDCINF_FILE) $(FILE2H)
+#GEN_PLLFREQTABLE_HDR = $(HEADER_BUILD)/pllfreqtable.h
+#GEN_STMCONST_HDR = $(HEADER_BUILD)/modstm_const.h
+#GEN_STMCONST_QSTR = $(BUILD)/modstm_qstr.h
+#GEN_STMCONST_MPZ = $(HEADER_BUILD)/modstm_mpz.h
+#CMSIS_MCU_HDR = $(CMSIS_DIR)/$(CMSIS_MCU_LOWER).h
+
+#modmachine.c: $(GEN_PLLFREQTABLE_HDR)
+#$(GEN_PLLFREQTABLE_HDR): $(PLLVALUES) | $(HEADER_BUILD)
+#	$(ECHO) "GEN $@"
+#	$(Q)$(PYTHON) $(PLLVALUES) -c -m $(MCU_SERIES) #file:$(BOARD_DIR)/stm32$(MCU_SERIES)xx_hal_conf.h > $@
+
+#$(BUILD)/modstm.o: $(GEN_STMCONST_HDR)
+# Use a pattern rule here so that make will only call make-stmconst.py once to
+# make both modstm_const.h and modstm_qstr.h
+#$(HEADER_BUILD)/%_const.h $(BUILD)/%_qstr.h: $(CMSIS_MCU_HDR) #make-stmconst.py | $(HEADER_BUILD)
+#	$(ECHO) "GEN stmconst $@"
+#	$(Q)$(PYTHON) make-stmconst.py --qstr $(GEN_STMCONST_QSTR) --mpz #$(GEN_STMCONST_MPZ) $(CMSIS_MCU_HDR) > $(GEN_STMCONST_HDR)
+
+$(GEN_CDCINF_HEADER): $(GEN_CDCINF_FILE) $(FILE2H) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
 	$(Q)$(PYTHON) $(FILE2H) $< > $@
 
-$(GEN_CDCINF_FILE): $(CDCINF_TEMPLATE) $(INSERT_USB_IDS) $(USB_IDS_FILE)
+$(GEN_CDCINF_FILE): $(CDCINF_TEMPLATE) $(INSERT_USB_IDS) $(USB_IDS_FILE) | $(HEADER_BUILD)
 	$(ECHO) "GEN $@"
 	$(Q)$(PYTHON) $(INSERT_USB_IDS) $(USB_IDS_FILE) $< > $@
 
