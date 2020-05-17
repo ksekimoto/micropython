@@ -241,6 +241,8 @@ CFLAGS += -Wno-error=double-promotion
 CFLAGS += -Wno-error=type-limits
 CFLAGS += -Wno-error=overflow
 CFLAGS += -Wno-error=attributes
+CFLAGS += -Wno-error=array-bounds
+CFLAGS += -Wno-error=aggressive-loop-optimizations
 #CFLAGS += -D$(CMSIS_MCU)
 #CFLAGS += $(CFLAGS_MCU_$(MCU_SERIES))
 CFLAGS += $(COPT)
@@ -287,7 +289,7 @@ CFLAGS += -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -ggdb
-COPT = -O0
+COPT = -Os
 else
 COPT += -Os -DNDEBUG
 endif
@@ -358,7 +360,7 @@ CFLAGS_COMMON += $(INC)
 CFLAGS_COMMON += $(CFLAGS_MBED_COMMON)
 #CFLAGS_COMMON += -MMD
 #CFLAGS_COMMON += -MF $(@:%.o=%.d)
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -O0 -g3 -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
+CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
 CPPFLAGS += -std=gnu++98 -fno-rtti -Wvla -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -O0 -g3 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
 LD = arm-none-eabi-g++
 #LDFLAGS = -nostdlib -Xlinker -T $(TARGET_LD) -Map=$@.map --cref --gc-sections
