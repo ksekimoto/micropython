@@ -99,6 +99,12 @@ else ifeq ($(MICROPY_SSL_MBEDTLS),1)
 MICROPY_SSL_MBEDTLS_INCLUDE ?= $(TOP)/lib/mbedtls/include
 CFLAGS_MOD += -DMICROPY_SSL_MBEDTLS=1 -I$(MICROPY_SSL_MBEDTLS_INCLUDE)
 #LDFLAGS_MOD += -L$(TOP)/lib/mbedtls/library -lmbedx509 -lmbedtls -lmbedcrypto
+# Enable building 32-bit code on 64-bit host.
+ifeq ($(MICROPY_FORCE_32BIT),1)
+CC += -m32
+CXX += -m32
+LD += -m32
+endif
 endif
 endif
 
@@ -179,13 +185,6 @@ CFLAGS_MOD += -DMICROPY_PY_BTREE=1
 # and we have separate BTREE_DEFS so the definitions don't interfere with other source code
 $(BUILD)/$(BTREE_DIR)/%.o: CFLAGS += -Wno-old-style-definition -Wno-sign-compare -Wno-unused-parameter $(BTREE_DEFS)
 $(BUILD)/extmod/modbtree.o: CFLAGS += $(BTREE_DEFS)
-endif
-
-# Enable building 32-bit code on 64-bit host.
-ifeq ($(MICROPY_FORCE_32BIT),1)
-CC += -m32
-CXX += -m32
-LD += -m32
 endif
 
 # External modules written in C.
