@@ -28,13 +28,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "py/compile.h"
 #include "py/runtime.h"
-#include "py/repl.h"
+#include "py/stackctrl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
+#include "py/mphal.h"
+#include "lib/mp-readline/readline.h"
 #include "lib/utils/pyexec.h"
 #include "lib/oofatfs/ff.h"
+#include "lib/littlefs/lfs1.h"
+#include "lib/littlefs/lfs1_util.h"
+#include "lib/littlefs/lfs2.h"
+#include "lib/littlefs/lfs2_util.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "extmod/vfs_lfs.h"
@@ -92,7 +97,7 @@ STATIC pyb_thread_t pyb_thread_main;
 #endif
 
 #if MICROPY_HW_ENABLE_STORAGE
-STATIC fs_user_mount_t fs_user_mount_flash;
+//STATIC fs_user_mount_t fs_user_mount_flash;
 #endif
 
 #if MICROPY_HW_ENABLE_SDCARD
@@ -173,26 +178,6 @@ STATIC mp_obj_t pyb_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
 MP_DEFINE_CONST_FUN_OBJ_KW(pyb_main_obj, 1, pyb_main);
 
 #if MICROPY_HW_ENABLE_STORAGE
-STATIC int vfs_mount_and_chdir(mp_obj_t bdev, mp_obj_t mount_point) {
-    nlr_buf_t nlr;
-    mp_int_t ret = -MP_EIO;
-    if (nlr_push(&nlr) == 0) {
-        mp_obj_t args[] = { bdev, mount_point };
-        mp_vfs_mount(2, args, (mp_map_t*)&mp_const_empty_map);
-        mp_vfs_chdir(mount_point);
-        ret = 0; // success
-        nlr_pop();
-    } else {
-        mp_obj_base_t *exc = nlr.ret_val;
-        if (mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(exc->type), MP_OBJ_FROM_PTR(&mp_type_OSError))) {
-            mp_obj_t v = mp_obj_exception_get_value(MP_OBJ_FROM_PTR(exc));
-            mp_obj_get_int_maybe(v, &ret); // get errno value
-            ret = -ret;
-        }
-    }
-    return ret;
-}
-
 // avoid inlining to avoid stack usage within main()
 MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     if (reset_mode == 3) {
@@ -242,14 +227,14 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
 
     // Try to mount the flash on "/flash" and chdir to it for the boot-up directory.
     mp_obj_t mount_point = MP_OBJ_NEW_QSTR(MP_QSTR__slash_flash);
-    int ret = vfs_mount_and_chdir(bdev, mount_point);
+    int ret = mp_vfs_mount_and_chdir_protected(bdev, mount_point);
 
     if (ret == -MP_ENODEV && bdev == MP_OBJ_FROM_PTR(&pyb_flash_obj) && reset_mode != 3) {
         // No filesystem, bdev is still the default (so didn't detect a possibly corrupt littlefs),
         // and didn't already create a filesystem, so try to create a fresh one now.
         ret = factory_reset_create_filesystem();
         if (ret == 0) {
-            ret = vfs_mount_and_chdir(bdev, mount_point);
+            ret = mp_vfs_mount_and_chdir_protected(bdev, mount_point);
         }
     }
 
@@ -292,7 +277,7 @@ STATIC bool init_sdcard_fs(void) {
                 // subsequent partitions are numbered by their index in the partition table
                 if (part_num == 2) {
                     vfs->str = "/sd2";
-                } else if (part_num == 2) {
+                } else if (part_num == 3) {
                     vfs->str = "/sd3";
                 } else {
                     vfs->str = "/sd4";
@@ -676,6 +661,9 @@ soft_reset:
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
+#if MICROPY_HW_ENABLE_STORAGE
+        storage_flush();
+#endif
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             if (pyexec_raw_repl() != 0) {
                 break;

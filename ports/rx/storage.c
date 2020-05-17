@@ -45,7 +45,7 @@
 
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"
-#endif \
+#endif
 
 #define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
 #define STORAGE_IDLE_TICK(tick) (((tick) & ~(SYSTICK_DISPATCH_NUM_SLOTS - 1) & STORAGE_SYSTICK_MASK) == 0)
