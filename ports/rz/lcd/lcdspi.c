@@ -29,6 +29,9 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "common.h"
+#include "extmod/vfs.h"
+#include "extmod/vfs_fat.h"
+#include "ff.h"
 
 #include "PCF8833.h"
 #include "S1D15G10.h"
@@ -37,13 +40,9 @@
 #include "ST7789.h"
 #include "font.h"
 #include "rza2m_gpio.h"
-#include "lcdspi.h"
-//#include "sd.h"
-
-#define MR_JPEG
-#ifdef MR_JPEG
+#include "rza2m_spi.h"
 #include "jpeg.h"
-#endif
+#include "lcdspi.h"
 
 #if MICROPY_PY_PYB_LCDSPI
 
@@ -1243,13 +1242,11 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
     return (unsigned short)u;
 }
 
-#if MICROPY_HW_ENABLE_SDCARD_
-
-inline int BYTEARRAY4_TO_INT(char *a) {
+static int BYTEARRAY4_TO_INT(char *a) {
     return (int)*(uint32_t *)a;
 }
 
-inline int BYTEARRAY2_TO_INT(char *a) {
+static int BYTEARRAY2_TO_INT(char *a) {
     return (int)*(uint16_t *)a;
 }
 
@@ -1257,24 +1254,30 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     #define BMP_HEADER_SIZE 0x8a
     char BmpHeader[BMP_HEADER_SIZE];
     FIL fp;
-    bool ret;
+    FRESULT res;
+    fs_user_mount_t *vfs_fat;
+    const char *p_out;
     int ofs, wx, wy, depth, lineBytes, bufSize;
     int bitmapDy = 1;
 
-    if (sd_exists((char *)filename) != true) {
+    mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
+    if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
+        vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
+    } else {
 #if defined(DEBUG_LCDSPI)
-        debug_printf("File doesn't exist", filename);
+        debug_printf("Cannot find user mount for %s\n", filename);
 #endif
         return -1;
     }
-    ret = sd_open(&fp, (char *)filename, FA_READ);
-    if (!ret) {
+    res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
+    if (res != FR_OK) {
 #if defined(DEBUG_LCDSPI)
         debug_printf("File can't be opened", filename);
 #endif
         return -1;
     }
-    sd_read(&fp, (unsigned char *)BmpHeader, (int)BMP_HEADER_SIZE);
+    uint32_t readed;
+    f_read(&fp, (void *)BmpHeader, (UINT)BMP_HEADER_SIZE, (UINT *)&readed);
     ofs = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x0a]);
     wx = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x12]);
     wy = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x16]);
@@ -1287,20 +1290,20 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     unsigned char *bitmapOneLine = (unsigned char *)malloc(bufSize);
     if (!bitmapOneLine) {
 #if defined(DEBUG_LCDSPI)
-        debug_printf("Memory allocation failed.", -1);
+        debug_printf("Memory allocation failed.");
 #endif
-        sd_close(&fp);
+        f_close(&fp);
         return -1;
     }
-    sd_seek(&fp, (unsigned long)ofs);
+    f_lseek (&fp, (FSIZE_t)ofs);
     if (depth == 16) {
         for (int ty = wy - 1 - bitmapDy; ty >= 0; ty -= bitmapDy) {
-            sd_read(&fp, (unsigned char *)bitmapOneLine, bufSize);
+            f_read(&fp, (void *)bitmapOneLine, (UINT)bufSize, (UINT *)&readed);
             lcdspi_bitbltex565(lcdspi, x, y + ty, wx, bitmapDy, (uint16_t *)bitmapOneLine);
         }
     } else if (depth == 24) {
         for (int ty = wy - 1 - bitmapDy; ty >= 0; ty -= bitmapDy) {
-            sd_read(&fp, (unsigned char *)bitmapOneLine, bufSize);
+            f_read(&fp, (void *)bitmapOneLine, (UINT)bufSize, (UINT *)&readed);
             for (int i = 0; i < wx; i++) {
                 uint16_t b = (uint16_t)bitmapOneLine[i * 3];
                 uint16_t g = (uint16_t)bitmapOneLine[i * 3 + 1];
@@ -1317,10 +1320,7 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     return 1;
 }
-#endif
 
-#if MICROPY_HW_ENABLE_SDCARD_
-#ifdef MR_JPEG
 int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_t jpeg;
     uint8_t *img;
@@ -1344,7 +1344,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_decode(&jpeg, (char *)filename, split);
     if (jpeg.err != 0) {
 #if defined(DEBUG_LCDSPI)
-        debug_printf("jpeg decode error", -1);
+        debug_printf("jpeg decode error");
 #endif
         return -1;
     }
@@ -1363,7 +1363,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     dispBuf = (unsigned short *)malloc(alloc_size);
     if (!dispBuf) {
 #if defined(DEBUG_LCDSPI)
-        debug_printf("dispBuf allocation failed.", -1);
+        debug_printf("dispBuf allocation failed.");
 #endif
         return -1;
     } else {
@@ -1418,7 +1418,10 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
             }
             lcdspi_bitbltex565(lcdspi, x + sx, y + sy, MCUWidth, disp_height, (uint16_t *)dispBuf);
         }
-    } debug_printf("err=", jpeg.err);
+    }
+#if defined(DEBUG_LCDSPI)
+    debug_printf("err=", jpeg.err);
+#endif
     if (jpeg.err == 0 || jpeg.err == PJPG_NO_MORE_BLOCKS) {
         if (!split_disp) {
             lcdspi_bitbltex565(lcdspi, x, y, width, height, (uint16_t *)dispBuf);
@@ -1426,14 +1429,12 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     if (dispBuf) {
 #if defined(DEBUG_LCDSPI)
-        debug_printf("dispBuf deallocated", 0);
+        debug_printf("dispBuf deallocated");
 #endif
         free(dispBuf);
     }
     return 1;
 }
-#endif
-#endif
 
 /// \classmethod \constructor(id)
 /// Create an LCDSPI object
@@ -1618,7 +1619,6 @@ STATIC mp_obj_t pyb_lcdspi_bitblt(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcdspi_bitblt_obj, 6, 6, pyb_lcdspi_bitblt);
 
-#if MICROPY_HW_ENABLE_SDCARD_
 STATIC mp_obj_t pyb_lcdspi_disp_bmp_sd(size_t n_args, const mp_obj_t *args) {
     pyb_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     int x = mp_obj_get_int(args[1]);
@@ -1638,7 +1638,6 @@ STATIC mp_obj_t pyb_lcdspi_disp_jpeg_sd(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcdspi_disp_jpeg_sd_obj, 4, 4, pyb_lcdspi_disp_jpeg_sd);
-#endif
 
 STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&pyb_lcdspi_clear_obj) },
@@ -1648,10 +1647,8 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_puts), MP_ROM_PTR(&pyb_lcdspi_puts_obj) },
     { MP_ROM_QSTR(MP_QSTR_pututf8), MP_ROM_PTR(&pyb_lcdspi_pututf8_obj) },
     { MP_ROM_QSTR(MP_QSTR_bitblt), MP_ROM_PTR(&pyb_lcdspi_bitblt_obj) },
-#if MICROPY_HW_ENABLE_SDCARD_
     { MP_ROM_QSTR(MP_QSTR_disp_bmp_sd), MP_ROM_PTR(&pyb_lcdspi_disp_bmp_sd_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_sd), MP_ROM_PTR(&pyb_lcdspi_disp_jpeg_sd_obj) },
-#endif
     { MP_ROM_QSTR(MP_QSTR_C_PCF8833), MP_ROM_INT(PCF8833) },
     { MP_ROM_QSTR(MP_QSTR_C_S1D15G10), MP_ROM_INT(S1D15G10) },
     { MP_ROM_QSTR(MP_QSTR_C_ILI9340), MP_ROM_INT(ILI9340) },
