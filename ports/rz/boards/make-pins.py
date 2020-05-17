@@ -298,7 +298,7 @@ def main():
     pins.print()
     pins.print_header(args.hdr_filename)
     pins.print_qstr(args.qstr_filename)
-    pins.print_ad_hdr(args.ad_const_filename)
+#    pins.print_ad_hdr(args.ad_const_filename)
 
 if __name__ == "__main__":
     main()
