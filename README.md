@@ -229,7 +229,7 @@ The supported boards are
 - [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
 
 <p align="center">
-  <img src="https://www.renesas.com/img/gadget-renesas/gr-rose/gr-rose-board.jpg" alt="GR-ROSE"/>
+  <img src="https://user-images.githubusercontent.com/3172869/82746147-82660c00-9dc7-11ea-9dfb-f6c94c8e3fdc.jpg" alt="GR-ROSE"/>
 </p>
 
 [GR_CITRUS](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-citrus.html)
@@ -238,15 +238,15 @@ The supported boards are
 - [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
 
 <p align="center">
-  <img src="https://www.renesas.com/img/gadget-renesas/gr-citrus/gr-citrus-board.jpg" alt="GR-CITRUS"/>
+  <img src="https://user-images.githubusercontent.com/3172869/82746167-c0fbc680-9dc7-11ea-9723-80d6eb817c4c.jpg" alt="GR-CITRUS"/>
 </p>
 
 [GR_SAKURA](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-sakura.html)
 
-  [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
 
 <p align="center">
-  <img src="https://www.renesas.com/img/gadget-renesas/gr-sakura/gr-sakura-full-board.jpg" alt="GR-SAKURA"/>
+  <img src="https://user-images.githubusercontent.com/3172869/82746178-d96be100-9dc7-11ea-99ee-b1f7f5ae04c1.jpg" alt="GR-SAKURA"/>
 </p>
 
 The compiled elf/mot/bin binary files are created under 
