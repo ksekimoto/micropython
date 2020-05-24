@@ -1,4 +1,106 @@
+The MicroPython project
+=======================
+
+The repository includes the MicroPython ported to Renesas RX MPU, based on the [MicroPython](https://github.com/micropython/micropython).
+
+The RX version
+-----------------
+
+The supported boards are
+
+[GR_ROSE](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-rose.html)
+    
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_rose/latest/MPY-GR_ROSE_DD.bin)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/en) (English)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/3172869/82746147-82660c00-9dc7-11ea-9dfb-f6c94c8e3fdc.jpg" alt="GR-ROSE"/>
+</p>
+
+[GR_CITRUS](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-citrus.html)
+
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_citrus/latest/MPY-GR_CITRUS_DD.bin)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/3172869/82746167-c0fbc680-9dc7-11ea-9723-80d6eb817c4c.jpg" alt="GR-CITRUS"/>
+</p>
+
+[GR_SAKURA](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-sakura.html)
+
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/3172869/82746220-51d2a200-9dc8-11ea-802f-53727c92029f.jpg" alt="GR-SAKURA"/>
+</p>
+
+Build
+-----
+
+The "rx" port requires an Renesas GCC for RX compiler, rx-elf-gcc, and 
+associated bin-utils. :
+https://gcc-renesas.com/rx-download-toolchains/ 
+
+To build:
+
+    $ git submodule update --init
+    $ cd mpy-cross
+    $ make
+    $ cd ../ports/rx
+    $ make BOARD=GR_CITURS
+
+To build on Ubuntu 18.04
+
+    $ sudo apt-get update -qq || true
+    $ sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+    $ sudo apt-get install -y bzip2
+    $ sudo apt-get install -y wget
+    $ sudo apt-get install -y build-essential        
+    $ sudo apt-get install -y python3
+    $ wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz" -k -O rx-elf-gcc-4.9.4.tar.gz
+    $ tar xvf rx-elf-gcc-4.9.4.tar.gz
+    $ sudo mv ./rx-elf-gcc-4.9.4 /opt
+    $ sudo chmod 777 /opt/rx-elf-gcc-4.9.4
+    $ export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    $ sudo apt-get install -y git
+    $ git clone https://github.com/ksekimoto/micropython.git
+    $ cd micropython
+    $ git submodule update --init
+    $ cd mpy-cross
+    $ make
+    $ cd ../ports/rx
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD clean 2>&1 | tee GR_CITRUS_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD 2>&1 | tee GR_CITRUS_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD clean 2>&1 | tee GR_ROSE_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD 2>&1 | tee GR_ROSE_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD clean 2>&1 | tee GR_SAKURA_DD_build.log
+    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD 2>&1 | tee GR_SAKURA_DD_build.log
+
+
+The compiled elf/mot/bin binary files are created under 
+build-'board name' folder
+
+    firmware.elf
+    firmware.mot
+    firmware.bin
+
+You can flash the mot file by using Renesas Flash Development Toolkit:
+https://www.renesas.com/us/en/products/software-tools/tools/programmer/flash-development-toolkit-programming-gui.html#productInfo
+
+Also you can flash the firmware.bin for USB MAS Storage firmware via
+Drag and Drop on Windows Explorer.
+To build the bin file, you need to specify "BOARD=BOARDNAME_DD", such as
+"BOARD=GR_CITRUS_DD" or "BOARD=GR_SAKURA_DD". 
+
+At default, 256KB of flash drive is allocated from internal flash ROM 
+area (0xFFFA0000-0xFFFDFFFF).
+
+
+
+
 [![Build Status](https://travis-ci.org/micropython/micropython.png?branch=master)](https://travis-ci.org/micropython/micropython) [![Coverage Status](https://coveralls.io/repos/micropython/micropython/badge.png?branch=master)](https://coveralls.io/r/micropython/micropython?branch=master)
+
 
 The MicroPython project
 =======================
@@ -178,94 +280,6 @@ does not work it may be because you don't have the correct permissions, and
 need to use `sudo make deploy`.
 See the README.md file in the ports/stm32/ directory for further details.
 
-The RX version
------------------
-
-The "rx" port requires an Renesas GCC for RX compiler, rx-elf-gcc, and 
-associated bin-utils. :
-https://gcc-renesas.com/rx-download-toolchains/ 
-
-To build:
-
-    $ git submodule update --init
-    $ cd mpy-cross
-    $ make
-    $ cd ../ports/rx
-    $ make BOARD=GR_CITURS
-
-To build on Ubuntu 18.04
-
-    $ sudo apt-get update -qq || true
-    $ sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
-    $ sudo apt-get install -y bzip2
-    $ sudo apt-get install -y wget
-    $ sudo apt-get install -y build-essential        
-    $ sudo apt-get install -y python3
-    $ wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz" -k -O rx-elf-gcc-4.9.4.tar.gz
-    $ tar xvf rx-elf-gcc-4.9.4.tar.gz
-    $ sudo mv ./rx-elf-gcc-4.9.4 /opt
-    $ sudo chmod 777 /opt/rx-elf-gcc-4.9.4
-    $ export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
-    $ sudo apt-get install -y git
-    $ git clone https://github.com/ksekimoto/micropython.git
-    $ cd micropython
-    $ git submodule update --init
-    $ cd mpy-cross
-    $ make
-    $ cd ../ports/rx
-    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD clean 2>&1 | tee GR_CITRUS_DD_build.log
-    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD 2>&1 | tee GR_CITRUS_DD_build.log
-    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD clean 2>&1 | tee GR_ROSE_DD_build.log
-    $ make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD 2>&1 | tee GR_ROSE_DD_build.log
-    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD clean 2>&1 | tee GR_SAKURA_DD_build.log
-    $ make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD 2>&1 | tee GR_SAKURA_DD_build.log
-
-The supported boards are
-
-[GR_ROSE](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-rose.html)
-    
-- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_rose/latest/MPY-GR_ROSE_DD.bin)
-- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/en) (English)
-- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3172869/82746147-82660c00-9dc7-11ea-9dfb-f6c94c8e3fdc.jpg" alt="GR-ROSE"/>
-</p>
-
-[GR_CITRUS](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-citrus.html)
-
-- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_citrus/latest/MPY-GR_CITRUS_DD.bin)
-- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3172869/82746167-c0fbc680-9dc7-11ea-9723-80d6eb817c4c.jpg" alt="GR-CITRUS"/>
-</p>
-
-[GR_SAKURA](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-sakura.html)
-
-- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3172869/82746220-51d2a200-9dc8-11ea-802f-53727c92029f.jpg" alt="GR-SAKURA"/>
-</p>
-
-The compiled elf/mot/bin binary files are created under 
-build-'board name' folder
-
-    firmware.elf
-    firmware.mot
-    firmware.bin
-
-You can flash the mot file by using Renesas Flash Development Toolkit:
-https://www.renesas.com/us/en/products/software-tools/tools/programmer/flash-development-toolkit-programming-gui.html#productInfo
-
-Also you can flash the firmware.bin for USB MAS Storage firmware via
-Drag and Drop on Windows Explorer.
-To build the bin file, you need to specify "BOARD=BOARDNAME_DD", such as
-"BOARD=GR_CITRUS_DD" or "BOARD=GR_SAKURA_DD". 
-
-At default, 256KB of flash drive is allocated from internal flash ROM 
-area (0xFFFA0000-0xFFFDFFFF).
 
 Contributing
 ------------
