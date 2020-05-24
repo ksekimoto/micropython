@@ -16,7 +16,7 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -132,14 +132,15 @@ CFLAGS += $(COPT)
 #CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
 #CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
-CFLAGS += -Wno-error=tautological-compare
-CFLAGS += -Wno-error=unused-const-variable
-CFLAGS += -Wno-error=nonnull
-CFLAGS += -Wno-error=nonnull-compare
-CFLAGS += -Wno-tautological-compare
-CFLAGS += -Wno-error=unused-function
-CFLAGS += -Wno-unused-function
-CFLAGS += -Wno-error=unused-variable
+CFLAGS += -Wno-error=pointer-arith
+#CFLAGS += -Wno-error=tautological-compare
+#CFLAGS += -Wno-error=unused-const-variable
+#CFLAGS += -Wno-error=nonnull
+#CFLAGS += -Wno-error=nonnull-compare
+#CFLAGS += -Wno-tautological-compare
+#CFLAGS += -Wno-error=unused-function
+#CFLAGS += -Wno-unused-function
+#CFLAGS += -Wno-error=unused-variable
 
 CFLAGS += -I$(BOARD_DIR)
 

@@ -115,7 +115,7 @@ typedef struct _packet {
     // data follows
 } _packet_t;
 
-void esp8266_driver_init(void);
+void esp8266_driver_init(uint32_t ch, uint32_t baud);
 bool esp8266_driver_reset(void);
 bool esp8266_AT(void);
 bool esp8266_AT_RST(void);
