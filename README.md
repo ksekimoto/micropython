@@ -222,16 +222,31 @@ To build on Ubuntu 18.04
 
 The supported boards are
 
-    GR_CITRUS (http://gadget.renesas.com/en/product/citrus.html )
+[GR_ROSE](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-rose.html)
+    
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_rose/latest/MPY-GR_ROSE_DD.bin)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/en) (English)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
 
 <p align="center">
-  <img src="http://gadget.renesas.com/en/product/images/gr-citrus.jpg" alt="GR-CITRUS"/>
+  <img src="https://www.renesas.com/img/gadget-renesas/gr-rose/gr-rose-board.jpg" alt="GR-ROSE"/>
 </p>
 
-    GR_SAKURA (http://gadget.renesas.com/en/product/sakura.html )
+[GR_CITRUS](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-citrus.html)
+
+- [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_citrus/latest/MPY-GR_CITRUS_DD.bin)
+- [How to use](https://github.com/ksekimoto/micropython/tree/rx/rx_releases/docs/ja) (Japanese)
 
 <p align="center">
-  <img src="http://gadget.renesas.com/en/product/images/gr-sakura.jpg" alt="GR-SAKURA"/>
+  <img src="https://www.renesas.com/img/gadget-renesas/gr-citrus/gr-citrus-board.jpg" alt="GR-CITRUS"/>
+</p>
+
+[GR_SAKURA](https://www.renesas.com/jp/ja/products/gadget-renesas/boards/gr-sakura.html)
+
+  [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
+
+<p align="center">
+  <img src="https://www.renesas.com/img/gadget-renesas/gr-sakura/gr-sakura-full-board.jpg" alt="GR-SAKURA"/>
 </p>
 
 The compiled elf/mot/bin binary files are created under 
