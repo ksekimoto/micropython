@@ -246,7 +246,7 @@ The supported boards are
 - [Prebuild Image File](https://github.com/ksekimoto/micropython/blob/rx/rx_releases/gr_sakura/latest/MPY-GR_SAKURA_DD.bin)
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/3172869/82746178-d96be100-9dc7-11ea-99ee-b1f7f5ae04c1.jpg" alt="GR-SAKURA"/>
+  <img src="https://user-images.githubusercontent.com/3172869/82746220-51d2a200-9dc8-11ea-802f-53727c92029f.jpg" alt="GR-SAKURA"/>
 </p>
 
 The compiled elf/mot/bin binary files are created under 
