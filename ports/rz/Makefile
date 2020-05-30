@@ -5,7 +5,7 @@ BOARD ?= GR_MANGO
 CROSS ?= 1
 
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # LAN debug
 LAN_NEW = 0
@@ -13,7 +13,6 @@ LAN_NEW = 0
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
 #MICROPY_DEBUG_PRINTERS = 1
-
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
@@ -121,8 +120,6 @@ endif
 MCU_SERIES_UPPER = $(shell echo $(MCU_SERIES) | tr '[:lower:]' '[:upper:]')
 
 LD_DIR=boards
-
-
 
 # Select the cross compile prefix
 CROSS_COMPILE ?= arm-none-eabi-
@@ -243,6 +240,7 @@ CFLAGS += -Wno-error=overflow
 CFLAGS += -Wno-error=attributes
 CFLAGS += -Wno-error=array-bounds
 CFLAGS += -Wno-error=aggressive-loop-optimizations
+CFLAGS += -Wno-error=sequence-point
 #CFLAGS += -D$(CMSIS_MCU)
 #CFLAGS += $(CFLAGS_MCU_$(MCU_SERIES))
 CFLAGS += $(COPT)
@@ -270,6 +268,9 @@ CFLAGS += -fsingle-precision-constant
 endif
 endif
 
+#LD = arm-none-eabi-ld
+LD = arm-none-eabi-g++
+ifeq ($(LD),arm-none-eabi-ld)
 #LDFLAGS = -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Map=$(@:.elf=.map) --cref
 #LDFLAGS += --defsym=_estack_reserve=8
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
@@ -277,6 +278,25 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 # Remove uncalled code from the final image.
 CFLAGS += -fdata-sections -ffunction-sections
 #LDFLAGS += --gc-sections
+
+else
+# Remove uncalled code from the final image.
+CFLAGS += -fdata-sections -ffunction-sections
+LDFLAGS += -Wl,--gc-sections
+
+LDFLAGS += -T $(TARGET_LD) -Wl,-Map=$@.map
+#LDFLAGS += -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_calloc_r
+LDFLAGS += -Wl,--wrap,main -Wl,--wrap,_memalign_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n 
+LDFLAGS += -Wl,--start-group -Wl,--end-group 
+LDFLAGS += -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
+LDFLAGS += -g
+LDFLAGS += -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -specs=nosys.specs 
+endif
+LDFLAGS_MBED += -DMBED_APP_START=0x50000000 -DMBED_APP_SIZE=0x1000000
+LDFLAGS_MBED += -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000
+LDFLAGS_MBED += -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DMBED_BOOT_STACK_SIZE=1024
+#LDFLAGS += -lmbed -Llibs
+LDFLAGS += $(LDFLAGS_MBED)
 
 # Debugging/Optimization
 #ifeq ($(DEBUG), 1)
@@ -289,7 +309,8 @@ CFLAGS += -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -ggdb
-COPT = -Os
+#CFLAGS += -g3
+COPT += -Os
 else
 COPT += -Os -DNDEBUG
 endif
@@ -298,7 +319,7 @@ endif
 MPY_CROSS_FLAGS += -march=armv7m
 
 LIB_MBED = libmbed.a
-LD = gcc
+#LD = gcc
 #-Wstack-usage=$(STACK_USAGE)
 
 ifeq ($(MBED_SD_WRAPPER),1)
@@ -361,12 +382,7 @@ CFLAGS_COMMON += $(CFLAGS_MBED_COMMON)
 #CFLAGS_COMMON += -MMD
 #CFLAGS_COMMON += -MF $(@:%.o=%.d)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
-CPPFLAGS += -std=gnu++98 -fno-rtti -Wvla -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -O0 -g3 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
-LD = arm-none-eabi-g++
-#LDFLAGS = -nostdlib -Xlinker -T $(TARGET_LD) -Map=$@.map --cref --gc-sections
-LDFLAGS += -DMBED_APP_START=0x50000000 -DMBED_APP_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DMBED_BOOT_STACK_SIZE=1024 -T $(TARGET_LD) -Wl,-Map=$@.map -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_memalign_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access -specs=nosys.specs -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group
-#LDFLAGS += -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_calloc_r
-#LDFLAGS += -lmbed -Llibs
+CPPFLAGS += -std=gnu++98 -fno-rtti -Wvla -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
 
 #CFLAGS += -D$(MCU_SERIES_CAP)
 #CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)

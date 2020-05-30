@@ -1,10 +1,27 @@
 /*
- * sLcdSpi.cpp
+ * This file is part of the MicroPython project, http://micropython.org/
  *
- * Copyright (c) 2017 Kentaro Sekimoto
+ * The MIT License (MIT)
  *
- * This software is released under the MIT License.
+ * Copyright (c) 2020 Kentaro Sekimoto
  *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 #include <stdio.h>
@@ -12,22 +29,31 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "common.h"
-#include "lcdspi.h"
+#include "extmod/vfs.h"
+#include "extmod/vfs_fat.h"
+#include "lib/oofatfs/ff.h"
 
 #include "PCF8833.h"
 #include "S1D15G10.h"
 #include "ST7735.h"
 #include "ILI9340.h"
+#include "ST7789.h"
 #include "font.h"
-#include "sd.h"
-#define MR_JPEG
-#ifdef MR_JPEG
 #include "jpeg.h"
-#endif
+#include "lcdspi.h"
 
 #if MICROPY_PY_PYB_LCDSPI
 
-#define LCDSPI_OPTIMIZE
+//#define TEST_LCDSPI
+#ifdef TEST_LCDSPI
+#include "sLcdSpiTest.h"
+#endif
+
+#if defined(USE_DBG_PRINT)
+#define DEBUG_LCDSPI
+#endif
+
+//#define LCDSPI_OPTIMIZE
 
 #define HIGH    1
 #define LOW     0
@@ -40,18 +66,8 @@ static void ST7735_Reset();
 static void ST7735_Initialize();
 static void ILI9340_Reset();
 static void ILI9340_Initialize();
-
-//#define TEST_LCDSPI
-#ifdef TEST_LCDSPI
-#include "sLcdSpiTest.h"
-#endif
-
-//#define	DEBUG		// Define if you want to debug
-#ifdef DEBUG
-#  define DEBUG_PRINT(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
-#else
-#  define DEBUG_PRINT(m,v)    // do nothing
-#endif
+static void ST7789_Reset();
+static void ST7789_Initialize();
 
 static volatile int g_spi_id = 0;
 // ToDo
@@ -121,20 +137,6 @@ static lcdspi_pins_t lcdspi_pins_def = {
 };
 #endif
 
-enum {
-    PCF8833 = 0,
-    S1D15G10,
-    ST7735,
-    ILI9340,
-};
-
-enum {
-    NOKIA6100_0,
-    NOKIA6100_1,
-    T180,
-    M022C9340SPI,
-};
-
 /*
  * const uint8_t id;
  * const uint8_t PASET;
@@ -155,6 +157,10 @@ static const lcdspi_ctrl_info_t lcdspi_ctrl_ST7735 = {
 
 static const lcdspi_ctrl_info_t lcdspi_ctrl_ILI9340 = {
     ILI9340, ILI9340_PASET, ILI9340_CASET, ILI9340_RAMWR
+};
+
+static const lcdspi_ctrl_info_t lcdspi_ctrl_ST7789 = {
+    ST7789, ST7789_PASET, ST7789_CASET, ST7789_RAMWR
 };
 
 /*
@@ -227,14 +233,30 @@ static const lcdspi_info_t lcdspi_info_M022C9340SPI = {
     0,
 };
 
+static const lcdspi_info_t lcdspi_info_13LCDSPI = {
+    (const char *)"AITENDO_M022C9340SPI",
+    RASPI13LCDSPI,
+    ST7789_Initialize,
+    ST7789_Reset,
+    &lcdspi_ctrl_ST7789,
+    240,
+    240,
+    240,
+    240,
+    0,
+    0,
+};
+
 #if 0
 static const lcdspi_info_t *lcdspi_info_all[] = {
     &lcdspi_info_NOKIA6100_0,
     &lcdspi_info_NOKIA6100_1,
     &lcdspi_info_T180,
     &lcdspi_info_M022C9340SPI,
+    $lcdspi_info_13LCDSPI,
 };
 #endif
+
 
 /*
  *  int spi_id;
@@ -251,6 +273,7 @@ static lcdspi_t lcdspi_all[] = {
     {-1, &lcdspi_info_NOKIA6100_1, 0, 0, 2000000, 0, 0},
     {-1, &lcdspi_info_T180, 0, 0, 2000000, 0, 0},
     {-1, &lcdspi_info_M022C9340SPI, 0, 0, 4000000, 0, 0},
+    {-1, &lcdspi_info_13LCDSPI, 0, 0, 4000000, 0, 0},
 };
 
 typedef struct _pyb_lcdspi_obj_t {
@@ -392,6 +415,22 @@ void SPISW_LCD_dat8_1(uint8_t dat) {
     gpio_write(_csPin, HIGH);
 }
 
+void SPI_cmd_data_1(uint8_t cmd, uint8_t *data, uint32_t data_size) {
+    gpio_write(_csPin, LOW);
+    gpio_write(_rsPin, LOW);
+    SPI_Write(cmd);
+    gpio_write(_rsPin, HIGH);
+    while (data_size-- > 0) {
+        SPI_Write(*data++);
+    }
+    gpio_write(_csPin, HIGH);
+}
+
+/* ********************************************************************* */
+/* LCD Controller: PCF8833                                               */
+/* LCD: Nokia 6100                                                       */
+/* ********************************************************************* */
+
 void lcdspi_spi_init(int spi_id, lcdspi_t *lcdspi) {
     if (spi_id >= 0) {
         SPIHW_SetPinMode();
@@ -399,7 +438,7 @@ void lcdspi_spi_init(int spi_id, lcdspi_t *lcdspi) {
         gpio_mode_output(_resetPin);
         gpio_mode_output(_rsPin);
         // ToDo
-        rx_spi_init(spi_id, lcdspi->lcdspi_pins->csPin->pin, lcdspi->baud, 8, 0);
+        rx_spi_init(spi_id, lcdspi->lcdspi_pins->csPin->pin, lcdspi->baud, 8, (lcdspi->phase << 1 | lcdspi->polarity) & 0x3);
         rx_spi_get_conf(spi_id, &lcdspi->spcmd, &lcdspi->spbr);
     } else {
         SPISW_SetPinMode();
@@ -736,11 +775,95 @@ static void ILI9340_Initialize() {
     SPISW_LCD_cmd8_1(0x11);
     delay_ms(120);
 
-    SPISW_LCD_cmd8_1(0x29);
+    //SPISW_LCD_cmd8_1(0x29);
     SPISW_LCD_cmd8_1(0x2c);
 }
 
+/* ********************************************************************* */
+/* LCD Controller: ST7789                                                */
+/* ********************************************************************* */
+
+static void ST7789_Reset() {
+    gpio_write(_csPin, LOW);
+    gpio_write(_resetPin, HIGH);
+    delay_ms(50);
+    gpio_write(_resetPin, LOW);
+    delay_ms(50);
+    gpio_write(_resetPin, HIGH);
+    delay_ms(150);
+    gpio_write(_csPin, HIGH);
+}
+
+static void ST7789_Initialize() {
+    uint8_t data;
+    ST7789_Reset();
+
+#if 1
+    /* soft reset */
+    SPISW_LCD_cmd8_1(0x01);
+    delay_ms(50);
+    /* sleep out */
+    SPISW_LCD_cmd8_1(0x11);
+    /* color mode */
+    SPISW_LCD_cmd8_1(0x3a);
+    SPISW_LCD_dat8_1(ST7789_COLORMODE_65K | ST7789_COLORMODE_16BIT);
+    delay_ms(50);
+    /* MADCTL */
+    SPISW_LCD_cmd8_1(0x36);
+    SPISW_LCD_dat8_1(0x10);
+    /* inversion mode on */
+    SPISW_LCD_cmd8_1(0x21);
+    delay_ms(10);
+    /* norm on */
+    SPISW_LCD_cmd8_1(0x13);
+    delay_ms(10);
+    /* disp on */
+    SPISW_LCD_cmd8_1(0x29);
+    delay_ms(500);
+#else
+    /* soft reset */
+    SPI_cmd_data_1(0x01, &data, 0);
+    delay_ms(150);
+    /* sleep out */
+    SPI_cmd_data_1(0x11, &data, 0);
+    /* color mode */
+    data = (ST7789_COLORMODE_65K | ST7789_COLORMODE_16BIT);
+    SPI_cmd_data_1(0x3a, &data, 1);
+    delay_ms(50);
+    /* MADCTL */
+    data = 0x10;
+    SPI_cmd_data_1(0x36, &data, 1);
+    /* inversion mode on */
+    SPISW_LCD_cmd8_1(0x21);
+    delay_ms(10);
+    /* norm on */
+    SPISW_LCD_cmd8_1(0x13);
+    delay_ms(10);
+    /* disp on */
+    SPISW_LCD_cmd8_1(0x29);
+    delay_ms(1000);
+#endif
+}
+
+/*
+ * common functions
+ */
+
 static void ILI9340_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+#if 0
+    uint8_t data[4];
+    data[0] = (uint8_t)(x1 >> 8);
+    data[1] = (uint8_t)(x1 & 0xff);
+    data[2] = (uint8_t)(x2 >> 8);
+    data[3] = (uint8_t)(x2 & 0xff);
+    SPI_cmd_data_1(ILI9340_CASET, &data[0], 4);
+    data[0] = (uint8_t)(y1 >> 8);
+    data[1] = (uint8_t)(y1 & 0xff);
+    data[2] = (uint8_t)(y2 >> 8);
+    data[3] = (uint8_t)(y2 & 0xff);
+    SPI_cmd_data_1(ILI9340_PASET, &data[0], 4);
+    SPI_cmd_data_1(ILI9340_RAMWR, &data[0], 0);
+#else
     SPISW_LCD_cmd8_1(ILI9340_CASET);
     SPISW_LCD_dat8_1((uint8_t)(x1 >> 8));
     SPISW_LCD_dat8_1((uint8_t)(x1 & 0xff));
@@ -752,6 +875,7 @@ static void ILI9340_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) 
     SPISW_LCD_dat8_1((uint8_t)(y2 >> 8));
     SPISW_LCD_dat8_1((uint8_t)(y2 & 0xff));
     SPISW_LCD_cmd8_1(ILI9340_RAMWR);
+#endif
 }
 
 void lcdspi_clear(lcdspi_t *lcdspi) {
@@ -777,8 +901,8 @@ void lcdspi_clear(lcdspi_t *lcdspi) {
             SPISW_LCD_dat8_0(0);
             SPISW_LCD_dat8_0(0);
         }
-    }
-    if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735) {
+    } else {
+    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         ILI9340_addrset((uint16_t)0, (uint16_t)0, (uint16_t)(PWX - 1), (uint16_t)(PWY - 1));
         for (y = 0; y < PWY; y++) {
             for (x = 0; x < PWX; x++) {
@@ -802,7 +926,7 @@ static void lcdspi_screen_init(lcdspi_screen_t *lcdspi_screen) {
     lcdspi_screen->unit_wy = 8;
 }
 
-static void lcdspi_int(lcdspi_t *lcdspi) {
+static void lcdspi_init(lcdspi_t *lcdspi) {
     int spi_id = lcdspi->spi_id;
     g_spi_id = spi_id;
     lcdspi_spi_init(spi_id, lcdspi);
@@ -822,7 +946,7 @@ void lcdspi_deinit(lcdspi_t *lcdspi) {
 
 void lcdspi_bitbltex565(lcdspi_t *lcdspi, int x, int y, int width, int height, uint16_t *data) {
     int spi_id = lcdspi->spi_id;
-    uint8_t PASET = lcdspi->lcdspi_info->lcdspi_ctrl_info->PASET;
+    uint8_t PASET = lcdspi->lcdspi_info->lcdspi_ctrl_info->PASET; // @suppress("Type cannot be resolved")
     uint8_t CASET = lcdspi->lcdspi_info->lcdspi_ctrl_info->CASET;
     uint8_t RAMWR = lcdspi->lcdspi_info->lcdspi_ctrl_info->RAMWR;
     int lcd_ctrl_id = lcdspi->lcdspi_info->lcdspi_ctrl_info->id;
@@ -848,8 +972,8 @@ void lcdspi_bitbltex565(lcdspi_t *lcdspi, int x, int y, int width, int height, u
                 SPISW_LCD_dat8_0(G4B4(v2));
             }
         }
-    }
-    if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735) {
+    } else {
+    // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         for (j = 0; j < height; j++) {
             ILI9340_addrset((uint16_t)x, (uint16_t)(y + j), (uint16_t)(x + width), (uint16_t)(y + j + 1));
             for (i = 0; i < width; i += 1) {
@@ -923,8 +1047,8 @@ void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, int cx, int cy, 
                 SPISW_LCD_dat8_0((uint8_t)(0xff & col1));
             }
         }
-    }
-    if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735) {
+    } else {
+    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         for (y = 0; y < wy; y++) {
             ILI9340_addrset((uint16_t)(cx * ux + text_sx),
                 (uint16_t)(cy * uy + y + text_sy),
@@ -1001,8 +1125,8 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, int cx, int 
             }
             off++;
         }
-    }
-    if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735) {
+    } else {
+    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7735) {
         for (y = 0; y < wy; y++) {
             ILI9340_addrset((uint16_t)(cx * ux + text_sx),
                 (uint16_t)(cy * uy + y + text_sy),
@@ -1158,13 +1282,11 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
     return (unsigned short)u;
 }
 
-#if MICROPY_HW_ENABLE_SDCARD
-
-inline int BYTEARRAY4_TO_INT(char *a) {
+static int BYTEARRAY4_TO_INT(char *a) {
     return (int)*(uint32_t *)a;
 }
 
-inline int BYTEARRAY2_TO_INT(char *a) {
+static int BYTEARRAY2_TO_INT(char *a) {
     return (int)*(uint16_t *)a;
 }
 
@@ -1172,42 +1294,56 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     #define BMP_HEADER_SIZE 0x8a
     char BmpHeader[BMP_HEADER_SIZE];
     FIL fp;
-    bool ret;
+    FRESULT res;
+    fs_user_mount_t *vfs_fat;
+    const char *p_out;
     int ofs, wx, wy, depth, lineBytes, bufSize;
     int bitmapDy = 1;
 
-    if (sd_exists((char *)filename) != true) {
-        DEBUG_PRINT("File doesn't exist", filename);
+    mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
+    if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
+        vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
+    } else {
+#if defined(DEBUG_LCDSPI)
+        debug_printf("Cannot find user mount for %s\n", filename);
+#endif
         return -1;
     }
-    ret = sd_open(&fp, (char *)filename, FA_READ);
-    if (!ret) {
-        DEBUG_PRINT("File can't be opened", filename);
+    res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
+    if (res != FR_OK) {
+#if defined(DEBUG_LCDSPI)
+        debug_printf("File can't be opened", filename);
+#endif
         return -1;
     }
-    sd_read(&fp, (unsigned char *)BmpHeader, (int)BMP_HEADER_SIZE);
+    uint32_t readed;
+    f_read(&fp, (void *)BmpHeader, (UINT)BMP_HEADER_SIZE, (UINT *)&readed);
     ofs = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x0a]);
     wx = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x12]);
     wy = BYTEARRAY4_TO_INT((char *)&BmpHeader[0x16]);
     depth = BYTEARRAY2_TO_INT((char *)&BmpHeader[0x1c]);
     lineBytes = wx * depth / 8;
     bufSize = lineBytes * bitmapDy;
-    DEBUG_PRINT("wx=", wx); DEBUG_PRINT("wy=", wy); DEBUG_PRINT("depth=", depth); DEBUG_PRINT("bufSize=", bufSize);
+#if defined(DEBUG_LCDSPI)
+    debug_printf("wx=", wx); debug_printf("wy=", wy); debug_printf("depth=", depth); debug_printf("bufSize=", bufSize);
+#endif
     unsigned char *bitmapOneLine = (unsigned char *)malloc(bufSize);
     if (!bitmapOneLine) {
-        DEBUG_PRINT("Memory allocation failed.", -1);
-        sd_close(&fp);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("Memory allocation failed.");
+#endif
+        f_close(&fp);
         return -1;
     }
-    sd_seek(&fp, (unsigned long)ofs);
+    f_lseek (&fp, (FSIZE_t)ofs);
     if (depth == 16) {
         for (int ty = wy - 1 - bitmapDy; ty >= 0; ty -= bitmapDy) {
-            sd_read(&fp, (unsigned char *)bitmapOneLine, bufSize);
+            f_read(&fp, (void *)bitmapOneLine, (UINT)bufSize, (UINT *)&readed);
             lcdspi_bitbltex565(lcdspi, x, y + ty, wx, bitmapDy, (uint16_t *)bitmapOneLine);
         }
     } else if (depth == 24) {
         for (int ty = wy - 1 - bitmapDy; ty >= 0; ty -= bitmapDy) {
-            sd_read(&fp, (unsigned char *)bitmapOneLine, bufSize);
+            f_read(&fp, (void *)bitmapOneLine, (UINT)bufSize, (UINT *)&readed);
             for (int i = 0; i < wx; i++) {
                 uint16_t b = (uint16_t)bitmapOneLine[i * 3];
                 uint16_t g = (uint16_t)bitmapOneLine[i * 3 + 1];
@@ -1224,10 +1360,7 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     return 1;
 }
-#endif
 
-#if MICROPY_HW_ENABLE_SDCARD
-#ifdef MR_JPEG
 int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_t jpeg;
     uint8_t *img;
@@ -1250,7 +1383,9 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_init(&jpeg);
     jpeg_decode(&jpeg, (char *)filename, split);
     if (jpeg.err != 0) {
-        DEBUG_PRINT("jpeg decode error", -1);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("jpeg decode error");
+#endif
         return -1;
     }
     decoded_width = jpeg.decoded_width;
@@ -1267,10 +1402,14 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     dispBuf = (unsigned short *)malloc(alloc_size);
     if (!dispBuf) {
-        DEBUG_PRINT("dispBuf allocation failed.", -1);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("dispBuf allocation failed.");
+#endif
         return -1;
     } else {
-        DEBUG_PRINT("dispBuf allocated", alloc_size);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("dispBuf allocated", alloc_size);
+#endif
     }
     while (jpeg_read(&jpeg)) {
         img = jpeg.pImage;
@@ -1286,7 +1425,9 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
                     if (jpeg.comps == 1) {
                         if ((cx < _disp_wx) && (cy < _disp_wy / dDiv)) {
                             if (split_disp) {
-                                DEBUG_PRINT("ofs", ty * decoded_width + tx);
+#if defined(DEBUG_LCDSPI)
+                                debug_printf("ofs", ty * decoded_width + tx);
+#endif
                                 dispBuf[ty * decoded_width + tx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
                             } else {
                                 dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
@@ -1295,7 +1436,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
                     } else {
                         //if ((cx < _disp_wx) && (cy < _disp_wy/dDiv)) {
                         if (split_disp) {
-                            //DEBUG_PRINT("ofs", ty * decoded_width + tx);
+                            //debug_printf("ofs", ty * decoded_width + tx);
                             dispBuf[ty * MCUWidth + tx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
                         } else {
                             dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
@@ -1307,8 +1448,8 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
             }
         }
         if (split_disp) {
-            //DEBUG_PRINT("sx", sx);
-            //DEBUG_PRINT("sy", sy);
+            //debug_printf("sx", sx);
+            //debug_printf("sy", sy);
             int disp_height;
             if ((jpeg.MCUy + 1) * MCUHeight > height) {
                 disp_height = height - sy;
@@ -1317,26 +1458,29 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
             }
             lcdspi_bitbltex565(lcdspi, x + sx, y + sy, MCUWidth, disp_height, (uint16_t *)dispBuf);
         }
-    } DEBUG_PRINT("err=", jpeg.err);
+    }
+#if defined(DEBUG_LCDSPI)
+    debug_printf("err=", jpeg.err);
+#endif
     if (jpeg.err == 0 || jpeg.err == PJPG_NO_MORE_BLOCKS) {
         if (!split_disp) {
             lcdspi_bitbltex565(lcdspi, x, y, width, height, (uint16_t *)dispBuf);
         }
     }
     if (dispBuf) {
-        DEBUG_PRINT("dispBuf deallocated", 0);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("dispBuf deallocated");
+#endif
         free(dispBuf);
     }
     return 1;
 }
-#endif
-#endif
 
 /// \classmethod \constructor(id)
 /// Create an LCDSPI object
 ///
 STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din };
+    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din, ARG_polarity, ARG_phase };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_lcd_id,   MP_ARG_REQUIRED | MP_ARG_INT,   {.u_int = 0} },
         { MP_QSTR_font_id,  MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 0} },
@@ -1348,6 +1492,8 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         { MP_QSTR_reset,    MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_rs,       MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_din,      MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_polarity, MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 1} },
+        { MP_QSTR_phase,    MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 0} }
     };
     // parse args
     mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
@@ -1365,9 +1511,9 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (!find_font_id(font_id)) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "FONT(%d) doesn't exist", font_id));
     }
-    self->lcdspi_screen.font = fontList[font_id];
-    /* set spi hw channel */
-    self->lcdspi->spi_id = vals[ARG_spi_id].u_int;
+    self->lcdspi_screen.font = get_font_by_id(font_id);
+    /* set spi hw channel should be minus 1 */
+    self->lcdspi->spi_id = vals[ARG_spi_id].u_int - 1;
     if (self->lcdspi->spi_id > 2) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "SPI_ID <= 2"));
     }
@@ -1376,6 +1522,8 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* set spi pins from input */
     /* baud */
     self->lcdspi->baud = vals[ARG_baud].u_int;
+    self->lcdspi->polarity = vals[ARG_polarity].u_int;
+    self->lcdspi->phase = vals[ARG_phase].u_int;
     /* cs */
     if (vals[ARG_cs].u_obj == MP_OBJ_NULL) {
         _csPin = self->lcdspi_pins.csPin->pin;
@@ -1430,7 +1578,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         self->lcdspi_pins.dinPin = MP_OBJ_TO_PTR(vals[ARG_din].u_obj);
         _dinPin = self->lcdspi_pins.dinPin->pin;
     }
-    lcdspi_int(self->lcdspi);
+    lcdspi_init(self->lcdspi);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -1443,8 +1591,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_lcdspi_clear_obj, pyb_lcdspi_clear);
 
 STATIC mp_obj_t pyb_lcdspi_font_id(mp_obj_t self_in, mp_obj_t idx) {
     pyb_lcdspi_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int font_idx = mp_obj_get_int(idx);
-    lcdspi_set_font(self->lcdspi, fontList[font_idx]);
+    int font_id = mp_obj_get_int(idx);
+    font_t *font = get_font_by_id(font_id);
+    if (font) {
+        lcdspi_set_font(self->lcdspi, font);
+    }
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_lcdspi_font_id_obj, pyb_lcdspi_font_id);
@@ -1508,7 +1659,6 @@ STATIC mp_obj_t pyb_lcdspi_bitblt(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcdspi_bitblt_obj, 6, 6, pyb_lcdspi_bitblt);
 
-#if MICROPY_HW_ENABLE_SDCARD
 STATIC mp_obj_t pyb_lcdspi_disp_bmp_sd(size_t n_args, const mp_obj_t *args) {
     pyb_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     int x = mp_obj_get_int(args[1]);
@@ -1528,7 +1678,6 @@ STATIC mp_obj_t pyb_lcdspi_disp_jpeg_sd(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcdspi_disp_jpeg_sd_obj, 4, 4, pyb_lcdspi_disp_jpeg_sd);
-#endif
 
 STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&pyb_lcdspi_clear_obj) },
@@ -1538,10 +1687,18 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_puts), MP_ROM_PTR(&pyb_lcdspi_puts_obj) },
     { MP_ROM_QSTR(MP_QSTR_pututf8), MP_ROM_PTR(&pyb_lcdspi_pututf8_obj) },
     { MP_ROM_QSTR(MP_QSTR_bitblt), MP_ROM_PTR(&pyb_lcdspi_bitblt_obj) },
-#if MICROPY_HW_ENABLE_SDCARD
     { MP_ROM_QSTR(MP_QSTR_disp_bmp_sd), MP_ROM_PTR(&pyb_lcdspi_disp_bmp_sd_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_sd), MP_ROM_PTR(&pyb_lcdspi_disp_jpeg_sd_obj) },
-#endif
+    { MP_ROM_QSTR(MP_QSTR_C_PCF8833), MP_ROM_INT(PCF8833) },
+    { MP_ROM_QSTR(MP_QSTR_C_S1D15G10), MP_ROM_INT(S1D15G10) },
+    { MP_ROM_QSTR(MP_QSTR_C_ILI9340), MP_ROM_INT(ILI9340) },
+    { MP_ROM_QSTR(MP_QSTR_C_ST7735), MP_ROM_INT(ST7735) },
+    { MP_ROM_QSTR(MP_QSTR_C_ST7789), MP_ROM_INT(ST7789) },
+    { MP_ROM_QSTR(MP_QSTR_M_NOKIA6100_0), MP_ROM_INT(NOKIA6100_0) },
+    { MP_ROM_QSTR(MP_QSTR_M_NOKIA6100_1), MP_ROM_INT(NOKIA6100_1) },
+    { MP_ROM_QSTR(MP_QSTR_M_T180), MP_ROM_INT(T180) },
+    { MP_ROM_QSTR(MP_QSTR_M_M022C9340SPI), MP_ROM_INT(M022C9340SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_RASPI13LCDSPI), MP_ROM_INT(RASPI13LCDSPI) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(lcdspi_locals_dict, lcdspi_locals_dict_table);

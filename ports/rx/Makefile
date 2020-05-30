@@ -174,7 +174,7 @@ ifeq ($(BOARD),GR_ROSE_DD)
 CFLAGS += -DGRROSE
 CFLAGS += -fpu
 endif
-CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
+#CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 #CFLAGS += -DMICROPY_VFS_FAT=1
 
 ifeq ($(USE_DBG_PRINT), 1)

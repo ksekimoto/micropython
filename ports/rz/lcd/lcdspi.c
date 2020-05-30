@@ -35,8 +35,9 @@
 
 #include "PCF8833.h"
 #include "S1D15G10.h"
-#include "ST7735.h"
+#include "ILI9341.h"
 #include "ILI9340.h"
+#include "ST7735.h"
 #include "ST7789.h"
 #include "font.h"
 #include "rza2m_gpio.h"
@@ -64,10 +65,12 @@ static void PCF8833_Reset();
 static void PCF8833_Initialize();
 static void S1D15G10_Reset();
 static void S1D15G10_Initialize();
-static void ST7735_Reset();
-static void ST7735_Initialize();
+static void ILI9341_Reset();
+static void ILI9341_Initialize();
 static void ILI9340_Reset();
 static void ILI9340_Initialize();
+static void ST7735_Reset();
+static void ST7735_Initialize();
 static void ST7789_Reset();
 static void ST7789_Initialize();
 
@@ -107,6 +110,10 @@ static const lcdspi_ctrl_info_t lcdspi_ctrl_S1D15G10 = {
 
 static const lcdspi_ctrl_info_t lcdspi_ctrl_ST7735 = {
     ST7735, ST7735_PASET, ST7735_CASET, ST7735_RAMWR
+};
+
+static const lcdspi_ctrl_info_t lcdspi_ctrl_ILI9341 = {
+    ILI9341, ILI9341_PASET, ILI9341_CASET, ILI9341_RAMWR
 };
 
 static const lcdspi_ctrl_info_t lcdspi_ctrl_ILI9340 = {
@@ -201,6 +208,20 @@ static const lcdspi_info_t lcdspi_info_13LCDSPI = {
     0,
 };
 
+static const lcdspi_info_t lcdspi_info_28LCDSPI = {
+    (const char *)"Adafruit_28_320x240",
+    RASPI28LCDSPI,
+    ILI9341_Initialize,
+    ILI9341_Reset,
+    &lcdspi_ctrl_ILI9341,
+    240,
+    320,
+    240,
+    320,
+    0,
+    0,
+};
+
 #if 0
 static const lcdspi_info_t *lcdspi_info_all[] = {
     &lcdspi_info_NOKIA6100_0,
@@ -227,7 +248,8 @@ static lcdspi_t lcdspi_all[] = {
     {-1, &lcdspi_info_NOKIA6100_1, 0, 0, 2000000, 0, 0},
     {-1, &lcdspi_info_T180, 0, 0, 2000000, 0, 0},
     {-1, &lcdspi_info_M022C9340SPI, 0, 0, 4000000, 0, 0},
-    {-1, &lcdspi_info_13LCDSPI, 0, 0, 4000000, 0, 0},
+    {-1, &lcdspi_info_13LCDSPI, 0, 0, 24000000, 0, 0},
+    {-1, &lcdspi_info_28LCDSPI, 0, 0, 12000000, 0, 0},
 };
 
 typedef struct _pyb_lcdspi_obj_t {
@@ -618,11 +640,11 @@ static void ST7735_Initialize() {
 }
 
 /* ********************************************************************* */
-/* LCD Controller: ILI9340                                               */
+/* LCD Controller: ILI9341                                               */
 /* LCD: xxxxxxxxxx                                                       */
 /* ********************************************************************* */
 
-static void ILI9340_Reset() {
+static void ILI9341_Reset() {
     delay_ms(100);
     _gpio_write(_resetPin, LOW);
     delay_ms(400);
@@ -630,75 +652,79 @@ static void ILI9340_Reset() {
     delay_ms(100);
 }
 
-static void ILI9340_Initialize() {
+static void ILI9341_Initialize() {
     //SPI_Initialize();
-    ILI9340_Reset();
+    ILI9341_Reset();
 
-    SPISW_LCD_cmd8_1(0xcb);
+    SPISW_LCD_cmd8_1(0x01); /* software reset */
+    delay_ms(10);
+    SPISW_LCD_cmd8_1(0x28); /* display off */
+
+    SPISW_LCD_cmd8_1(0xcb); /* power control a */
     SPISW_LCD_dat8_1(0x39);
     SPISW_LCD_dat8_1(0x2c);
     SPISW_LCD_dat8_1(0x00);
     SPISW_LCD_dat8_1(0x34);
     SPISW_LCD_dat8_1(0x02);
 
-    SPISW_LCD_cmd8_1(0xcf);
+    SPISW_LCD_cmd8_1(0xcf); /* power control b */
     SPISW_LCD_dat8_1(0x00);
     SPISW_LCD_dat8_1(0xc1);
     SPISW_LCD_dat8_1(0x30);
 
-    SPISW_LCD_cmd8_1(0xe8);
+    SPISW_LCD_cmd8_1(0xe8); /* driver timing control a */
     SPISW_LCD_dat8_1(0x85);
     SPISW_LCD_dat8_1(0x00);
     SPISW_LCD_dat8_1(0x78);
 
-    SPISW_LCD_cmd8_1(0xea);
+    SPISW_LCD_cmd8_1(0xea); /* driver timing control b */
     SPISW_LCD_dat8_1(0x00);
     SPISW_LCD_dat8_1(0x00);
 
-    SPISW_LCD_cmd8_1(0xed);
+    SPISW_LCD_cmd8_1(0xed); /* power on sequence control */
     SPISW_LCD_dat8_1(0x64);
     SPISW_LCD_dat8_1(0x03);
     SPISW_LCD_dat8_1(0x12);
     SPISW_LCD_dat8_1(0x81);
 
-    SPISW_LCD_cmd8_1(0xf7);
-    SPISW_LCD_dat8_1(0x20);
+//    SPISW_LCD_cmd8_1(0xf7); /* pump ratio control */
+//    SPISW_LCD_dat8_1(0x20);
 
-    SPISW_LCD_cmd8_1(0xc0);
+    SPISW_LCD_cmd8_1(0xc0); /* power control 1 */
     SPISW_LCD_dat8_1(0x23);
 
-    SPISW_LCD_cmd8_1(0xc1);
+    SPISW_LCD_cmd8_1(0xc1); /* power control 2 */
     SPISW_LCD_dat8_1(0x10);
 
-    SPISW_LCD_cmd8_1(0xc5);
+    SPISW_LCD_cmd8_1(0xc5); /* vcom control 1 */
     SPISW_LCD_dat8_1(0x3e);
     SPISW_LCD_dat8_1(0x28);
 
-    SPISW_LCD_cmd8_1(0xc7);
+    SPISW_LCD_cmd8_1(0xc7); /* vcom control 2 */
     SPISW_LCD_dat8_1(0x86);
 
-    SPISW_LCD_cmd8_1(0x36);
+    SPISW_LCD_cmd8_1(0x36); /* madctl */
     SPISW_LCD_dat8_1(0x48);
 
-    SPISW_LCD_cmd8_1(0x3a);
-    SPISW_LCD_dat8_1(0x55);
+    SPISW_LCD_cmd8_1(0x3a); /* pixel format */
+    SPISW_LCD_dat8_1(0x55); /* 16bit */
 
-    SPISW_LCD_cmd8_1(0xb1);
+    SPISW_LCD_cmd8_1(0xb1); /* set frame control */
     SPISW_LCD_dat8_1(0x00);
-    SPISW_LCD_dat8_1(0x18);
+    SPISW_LCD_dat8_1(0x18); /* value */
 
-    SPISW_LCD_cmd8_1(0xb6);
+    SPISW_LCD_cmd8_1(0xb6); /* display function control */
     SPISW_LCD_dat8_1(0x08);
     SPISW_LCD_dat8_1(0x82);
     SPISW_LCD_dat8_1(0x27);
 
-    SPISW_LCD_cmd8_1(0xf2);
-    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_cmd8_1(0xf2); /* enable 3g */
+    SPISW_LCD_dat8_1(0x02); /* false */
 
-    SPISW_LCD_cmd8_1(0x26);
+    SPISW_LCD_cmd8_1(0x26); /* gamma set */
     SPISW_LCD_dat8_1(0x01);
 
-    SPISW_LCD_cmd8_1(0xe0);
+    SPISW_LCD_cmd8_1(0xe0); /* positive gamma correction */
     SPISW_LCD_dat8_1(0x0f);
     SPISW_LCD_dat8_1(0x31);
     SPISW_LCD_dat8_1(0x2b);
@@ -715,7 +741,7 @@ static void ILI9340_Initialize() {
     SPISW_LCD_dat8_1(0x09);
     SPISW_LCD_dat8_1(0x00);
 
-    SPISW_LCD_cmd8_1(0xe1);
+    SPISW_LCD_cmd8_1(0xe1); /* negative gamma correction */
     SPISW_LCD_dat8_1(0x00);
     SPISW_LCD_dat8_1(0x0e);
     SPISW_LCD_dat8_1(0x14);
@@ -732,11 +758,132 @@ static void ILI9340_Initialize() {
     SPISW_LCD_dat8_1(0x36);
     SPISW_LCD_dat8_1(0x0f);
 
-    SPISW_LCD_cmd8_1(0x11);
+    SPISW_LCD_cmd8_1(0x11); /* sleep out */
+    delay_ms(120);
+
+    SPISW_LCD_cmd8_1(0x29); /* display on */
+}
+
+/* ********************************************************************* */
+/* LCD Controller: ILI9340                                               */
+/* LCD: xxxxxxxxxx                                                       */
+/* ********************************************************************* */
+
+static void ILI9340_Reset() {
+    delay_ms(100);
+    _gpio_write(_resetPin, LOW);
+    delay_ms(400);
+    _gpio_write(_resetPin, HIGH);
+    delay_ms(100);
+}
+
+static void ILI9340_Initialize() {
+    //SPI_Initialize();
+    ILI9340_Reset();
+
+    SPISW_LCD_cmd8_1(0xcb); /* power control a */
+    SPISW_LCD_dat8_1(0x39);
+    SPISW_LCD_dat8_1(0x2c);
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0x34);
+    SPISW_LCD_dat8_1(0x02);
+
+    SPISW_LCD_cmd8_1(0xcf); /* power control b */
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0xc1);
+    SPISW_LCD_dat8_1(0x30);
+
+    SPISW_LCD_cmd8_1(0xe8); /* driver timing control a */
+    SPISW_LCD_dat8_1(0x85);
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0x78);
+
+    SPISW_LCD_cmd8_1(0xea); /* driver timing control b */
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0x00);
+
+    SPISW_LCD_cmd8_1(0xed); /* power on sequence control */
+    SPISW_LCD_dat8_1(0x64);
+    SPISW_LCD_dat8_1(0x03);
+    SPISW_LCD_dat8_1(0x12);
+    SPISW_LCD_dat8_1(0x81);
+
+    SPISW_LCD_cmd8_1(0xf7); /* pump ratio control */
+    SPISW_LCD_dat8_1(0x20);
+
+    SPISW_LCD_cmd8_1(0xc0); /* power control 1 */
+    SPISW_LCD_dat8_1(0x23);
+
+    SPISW_LCD_cmd8_1(0xc1); /* power control 2 */
+    SPISW_LCD_dat8_1(0x10);
+
+    SPISW_LCD_cmd8_1(0xc5); /* vcom control 1 */
+    SPISW_LCD_dat8_1(0x3e);
+    SPISW_LCD_dat8_1(0x28);
+
+    SPISW_LCD_cmd8_1(0xc7); /* vcom control 2 */
+    SPISW_LCD_dat8_1(0x86);
+
+    SPISW_LCD_cmd8_1(0x36); /* madctl */
+    SPISW_LCD_dat8_1(0x48);
+
+    SPISW_LCD_cmd8_1(0x3a); /* pixel format */
+    SPISW_LCD_dat8_1(0x55);
+
+    SPISW_LCD_cmd8_1(0xb1); /* set frame control */
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0x18);
+
+    SPISW_LCD_cmd8_1(0xb6); /* display function control */
+    SPISW_LCD_dat8_1(0x08);
+    SPISW_LCD_dat8_1(0x82);
+    SPISW_LCD_dat8_1(0x27);
+
+    SPISW_LCD_cmd8_1(0xf2); /* enable 3g */
+    SPISW_LCD_dat8_1(0x00);
+
+    SPISW_LCD_cmd8_1(0x26); /* gamma set */
+    SPISW_LCD_dat8_1(0x01);
+
+    SPISW_LCD_cmd8_1(0xe0); /* positive gamma correction */
+    SPISW_LCD_dat8_1(0x0f);
+    SPISW_LCD_dat8_1(0x31);
+    SPISW_LCD_dat8_1(0x2b);
+    SPISW_LCD_dat8_1(0x0c);
+    SPISW_LCD_dat8_1(0x0e);
+    SPISW_LCD_dat8_1(0x08);
+    SPISW_LCD_dat8_1(0x4e);
+    SPISW_LCD_dat8_1(0xf1);
+    SPISW_LCD_dat8_1(0x37);
+    SPISW_LCD_dat8_1(0x07);
+    SPISW_LCD_dat8_1(0x10);
+    SPISW_LCD_dat8_1(0x03);
+    SPISW_LCD_dat8_1(0x0e);
+    SPISW_LCD_dat8_1(0x09);
+    SPISW_LCD_dat8_1(0x00);
+
+    SPISW_LCD_cmd8_1(0xe1); /* negative gamma correction */
+    SPISW_LCD_dat8_1(0x00);
+    SPISW_LCD_dat8_1(0x0e);
+    SPISW_LCD_dat8_1(0x14);
+    SPISW_LCD_dat8_1(0x03);
+    SPISW_LCD_dat8_1(0x11);
+    SPISW_LCD_dat8_1(0x07);
+    SPISW_LCD_dat8_1(0x31);
+    SPISW_LCD_dat8_1(0xc1);
+    SPISW_LCD_dat8_1(0x48);
+    SPISW_LCD_dat8_1(0x08);
+    SPISW_LCD_dat8_1(0x0f);
+    SPISW_LCD_dat8_1(0x0c);
+    SPISW_LCD_dat8_1(0x31);
+    SPISW_LCD_dat8_1(0x36);
+    SPISW_LCD_dat8_1(0x0f);
+
+    SPISW_LCD_cmd8_1(0x11); /* sleep out */
     delay_ms(120);
 
     //SPISW_LCD_cmd8_1(0x29);
-    SPISW_LCD_cmd8_1(0x2c);
+    SPISW_LCD_cmd8_1(0x2c); /* display on? */
 }
 
 /* ********************************************************************* */
@@ -1339,6 +1486,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     int _disp_wx = lcdspi->lcdspi_info->disp_wx;
     int _disp_wy = lcdspi->lcdspi_info->disp_wy;
     unsigned short *dispBuf = (unsigned short *)NULL;
+    int tx, ty;
 
     jpeg_init(&jpeg);
     jpeg_decode(&jpeg, (char *)filename, split);
@@ -1373,12 +1521,15 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     while (jpeg_read(&jpeg)) {
         img = jpeg.pImage;
+        if (!img) {
+            break;
+        }
         sx = jpeg.MCUx * MCUWidth;
         //sy = jpeg.MCUy * jpeg.MCUHeight() % (_disp_wx / dDiv);
         sy = jpeg.MCUy * MCUHeight;
         memset(dispBuf, 0, alloc_size);
-        for (int ty = 0; ty < MCUHeight; ty++) {
-            for (int tx = 0; tx < MCUWidth; tx++) {
+        for (ty = 0; ty < MCUHeight; ty++) {
+            for (tx = 0; tx < MCUWidth; tx++) {
                 cx = sx + tx;
                 cy = sy + ty;
                 if ((cx < width) && (cy < height)) {
@@ -1386,9 +1537,9 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
                         if ((cx < _disp_wx) && (cy < _disp_wy / dDiv)) {
                             if (split_disp) {
 #if defined(DEBUG_LCDSPI)
-                                debug_printf("ofs", ty * decoded_width + tx);
+                                debug_printf("ofs: %d\r\n", ty * MCUWidth + tx);
 #endif
-                                dispBuf[ty * decoded_width + tx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
+                                dispBuf[ty * MCUWidth + tx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
                             } else {
                                 dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
                             }
@@ -1396,7 +1547,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
                     } else {
                         //if ((cx < _disp_wx) && (cy < _disp_wy/dDiv)) {
                         if (split_disp) {
-                            //debug_printf("ofs", ty * decoded_width + tx);
+                            //debug_printf("ofs", ty * MCUWidth  + tx);
                             dispBuf[ty * MCUWidth + tx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
                         } else {
                             dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
@@ -1651,6 +1802,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_sd), MP_ROM_PTR(&pyb_lcdspi_disp_jpeg_sd_obj) },
     { MP_ROM_QSTR(MP_QSTR_C_PCF8833), MP_ROM_INT(PCF8833) },
     { MP_ROM_QSTR(MP_QSTR_C_S1D15G10), MP_ROM_INT(S1D15G10) },
+    { MP_ROM_QSTR(MP_QSTR_C_ILI9341), MP_ROM_INT(ILI9341) },
     { MP_ROM_QSTR(MP_QSTR_C_ILI9340), MP_ROM_INT(ILI9340) },
     { MP_ROM_QSTR(MP_QSTR_C_ST7735), MP_ROM_INT(ST7735) },
     { MP_ROM_QSTR(MP_QSTR_C_ST7789), MP_ROM_INT(ST7789) },
@@ -1659,6 +1811,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_M_T180), MP_ROM_INT(T180) },
     { MP_ROM_QSTR(MP_QSTR_M_M022C9340SPI), MP_ROM_INT(M022C9340SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_RASPI13LCDSPI), MP_ROM_INT(RASPI13LCDSPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_RASPI28LCDSPI), MP_ROM_INT(RASPI28LCDSPI) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(lcdspi_locals_dict, lcdspi_locals_dict_table);

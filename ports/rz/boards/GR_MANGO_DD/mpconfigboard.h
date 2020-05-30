@@ -81,6 +81,10 @@
 #define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
+#define MICROPY_PY_PYB_FONT         (1)
+#define MICROPY_PY_PYB_UNICODE_FONT (1)
+#define MICROPY_PY_PYB_LCDSPI       (1)
+
 #define PYB_SERVO_NUM       (1)
 #define BOARD_SERVO1_PIN    (pin_PH0)
 
