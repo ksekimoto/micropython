@@ -63,6 +63,7 @@ int32_t rz_adc_get_resolution(uint32_t pin) {
             return 10;
         }
     }
+    return res;
 }
 
 int32_t rz_adc_get_channel(uint32_t pin) {
@@ -73,6 +74,7 @@ int32_t rz_adc_get_channel(uint32_t pin) {
             return i;
         }
     }
+    return ch;
 }
 
 void rz_adc12_enable(uint32_t pin) {
@@ -109,7 +111,6 @@ bool rz_adc_disable(uint32_t pin) {
 }
 
 uint16_t rz_adc12_read(uint32_t pin) {
-    volatile uint16_t data;
     uint32_t ch = rz_adc_get_channel(pin);
 
     ADC.ADANSA0.WORD = (1 << ch);

@@ -237,11 +237,13 @@ void rz_rtc_get_time(rtc_t *time) {
     RTC1.RCR1.BIT.CIE = 0;
 }
 
+#if RZ_TODO
 static void wait(volatile int count) {
     while (count--) {
         __asm__ __volatile__ ("nop");
     }
 }
+#endif
 
 void rz_rtc_init(void) {
     volatile int i;

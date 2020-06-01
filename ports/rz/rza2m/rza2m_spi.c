@@ -228,6 +228,7 @@ void rz_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
             dst++;
         } else {
             dummy = (uint8_t)prspi->SPDR.BYTE.LL;
+            (void)dummy;    // to suppress gcc warning
         }
     }
 }
@@ -251,6 +252,7 @@ void rz_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src, uint32_t count
             dst++;
         } else {
             dummy = (uint16_t)prspi->SPDR.WORD.L;
+            (void)dummy;    // to suppress gcc warning
         }
     }
     rz_spi_set_bits(ch, 8);
@@ -276,6 +278,7 @@ void rz_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
             dst++;
         } else {
             dummy = (uint32_t)prspi->SPDR.LONG;
+            (void)dummy;    // to suppress gcc warning
         }
         rz_enable_irq();
     }

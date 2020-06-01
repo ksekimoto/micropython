@@ -168,7 +168,9 @@ int32_t _sd_set_port(st_sdhndl_t *p_hndl, int32_t port)
 {
     uint64_t reg;
     uint16_t arg;
+#if defined(SDIO_SUPPORT)
     uint8_t  io_buff;
+#endif
 
     if (SD_MEDIA_IO == p_hndl->media_type)    /* IO */
     {

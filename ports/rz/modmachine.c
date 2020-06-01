@@ -228,12 +228,12 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj, 0, 4, machine_freq);
 
 STATIC mp_obj_t machine_lightsleep(size_t n_args, const mp_obj_t *args) {
+#if RZ_TODO
     if (n_args != 0) {
         mp_obj_t args2[2] = {MP_OBJ_NULL, args[0]};
-#if RZ_TODO
         pyb_rtc_wakeup(2, args2);
-#endif
     }
+#endif
     // ToDo: implement
     //powerctrl_enter_stop_mode();
     return mp_const_none;
@@ -241,12 +241,12 @@ STATIC mp_obj_t machine_lightsleep(size_t n_args, const mp_obj_t *args) {
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_lightsleep_obj, 0, 1, machine_lightsleep);
 
 STATIC mp_obj_t machine_deepsleep(size_t n_args, const mp_obj_t *args) {
+#if RZ_TODO
     if (n_args != 0) {
         mp_obj_t args2[2] = {MP_OBJ_NULL, args[0]};
-#if RZ_TODO
         pyb_rtc_wakeup(2, args2);
-#endif
     }
+#endif
     // ToDo: implement
     //powerctrl_enter_standby_mode();
     return mp_const_none;

@@ -40,6 +40,7 @@ static inline void rx_ethernet_enable(uint32_t ch)
     }
     CPG.STBCR6.BIT.MSTP62 = 0;
     dummy = CPG.STBCR6.BYTE;
+    (void)dummy;    // to suppress gcc warning
 }
 
 static inline void rx_ethernet_disable(uint32_t ch)
@@ -54,6 +55,7 @@ static inline void rx_ethernet_disable(uint32_t ch)
     }
     CPG.STBCR6.BIT.MSTP62 = 1;
     dummy = CPG.STBCR6.BYTE;
+    (void)dummy;    // to suppress gcc warning
 }
 
 static inline void rx_ethernet_MII_mode(uint32_t ch)

@@ -902,7 +902,6 @@ static void ST7789_Reset() {
 }
 
 static void ST7789_Initialize() {
-    uint8_t data;
     ST7789_Reset();
 
 #if 1

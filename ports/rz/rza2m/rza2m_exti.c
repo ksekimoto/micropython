@@ -173,7 +173,7 @@ void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param) {
 
 void exti_irq_handler(uint32_t irq_no) {
     uint16_t irqrr;
-    uint32_t pin;
+//    uint32_t pin;
     irqrr = INTC.IRQRR.WORD;
     if (irqrr & (1 << irq_no)) {
         if (bounce_flag[irq_no]) {
@@ -181,7 +181,7 @@ void exti_irq_handler(uint32_t irq_no) {
                 bounce_flag[irq_no] = false;
             }
         } else {
-            pin = exit_irq_obj[irq_no].pin;
+ //           pin = exit_irq_obj[irq_no].pin;
             //GIC_DisableIRQ((IRQn_Type)(IRQ0_IRQn + irq_no));
             if (exti_func[irq_no]) {
                 if (!bounce_flag[irq_no]) {

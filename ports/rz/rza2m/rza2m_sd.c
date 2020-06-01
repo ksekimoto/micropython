@@ -36,6 +36,9 @@
 //#define DEBUG_SD
 #endif
 
+// sd_util.c
+int32_t sd_get_size(int32_t sd_port, uint32_t *user, uint32_t *protect);
+
 #ifndef SD_SECTOR_SIZE
 #define SD_SECTOR_SIZE 512
 #endif
@@ -106,7 +109,7 @@ uint64_t rza2m_sdcard_get_capacity_in_bytes(void) {
     return (uint64_t)(size * SD_SECTOR_SIZE);
 }
 
-static uint8_t nc_buf[512] __attribute__ ((section("NC_BSS"), aligned(32)));
+//static uint8_t nc_buf[512] __attribute__ ((section("NC_BSS"), aligned(32)));
 uint32_t rza2m_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
     DRESULT ret = sd_disk_read(pdrv, (BYTE *)dest, (DWORD)block_num, (UINT)num_blocks);
 #if defined(DEBUG_SD)

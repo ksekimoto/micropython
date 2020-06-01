@@ -28,7 +28,7 @@
 #ifndef PORTS_RZ_COMMON_H_
 #define PORTS_RZ_COMMON_H_
 
-#include "stdio.h"
+#include <stdio.h>
 
 #include "gpio_api.h"
 #include "pinmap.h"

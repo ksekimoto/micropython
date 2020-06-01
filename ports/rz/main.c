@@ -401,21 +401,19 @@ STATIC uint update_reset_mode(uint reset_mode) {
 #endif
 
 #if MICROPY_KBD_EXCEPTION
+#if RZ_TODO
 extern int mp_interrupt_char;
-
 static int chk_kbd_interrupt(int d)
 {
     if (d == mp_interrupt_char) {
-#if RZ_TODO
         pendsv_kbd_intr();
-#endif
         return 1;
     } else {
         return 0;
     }
 }
 #endif
-
+#endif
 
 void main(uint32_t reset_mode) {
     // Enable caches and prefetch buffers

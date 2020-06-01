@@ -40,9 +40,9 @@
 #define RZ_SERVO_CH2    11
 #define RZ_SERVO_INT_PRIORITY   7
 
-static rz_servo_cb_t rz_servo_cb = NULL;
-static float period = 3750.0f;
-static float unit_10u = 533.3f;
+//static rz_servo_cb_t rz_servo_cb = NULL;
+//static float period = 3750.0f;
+//static float unit_10u = 533.3f;
 
 // TPU5 TGI5B
 void  __attribute__ ((interrupt)) INT_Excep_TPU5_TGI5B(void) {

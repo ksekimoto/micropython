@@ -123,9 +123,11 @@ Exported global variables and functions (to be accessed by other files)
 Private global variables and functions
 ******************************************************************************/
 static uint8_t g_sdhi_priority_backup[2] = {0,0};
+#if RZ_TODO
 static int32_t sddev_init_voltage(int32_t sd_port);
 static void sddev_sd_int_handler_0(uint32_t int_sense);
 static void sddev_sd_int_handler_1(uint32_t int_sense);
+#endif
 
 #if defined(RENESAS_ASIS)
 
@@ -1360,6 +1362,7 @@ int32_t sddev_finalize(int32_t sd_port)
  ******************************************************************************/
 #endif
 
+#if RZ_TODO
 /******************************************************************************
 * Function Name: sddev_sd_int_handler_0
 * Description  : Setting Interrupt function for SDHI(INTC_ID_SDMMC_SDHI0_0)
@@ -1401,6 +1404,7 @@ static void sddev_sd_int_handler_1(uint32_t int_sense)
 /*******************************************************************************
  End of function sddev_sd_int_handler_1
  ******************************************************************************/
+#endif
 
 /******************************************************************************
 * Function Name: sddev_cd_layout

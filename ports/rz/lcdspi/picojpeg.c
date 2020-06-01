@@ -689,7 +689,9 @@ static uint8 readSOSMarker(void)
 {
    uint8 i;
    uint16 left = getBits1(16);
+#if RZ_TODO
    uint8 spectral_start, spectral_end, successive_high, successive_low;
+#endif
 
    gCompsInScan = (uint8)getBits1(8);
 
@@ -718,10 +720,12 @@ static uint8 readSOSMarker(void)
       gCompACTab[ci] = (c & 15);
    }
 
+#if RZ_TODO
    spectral_start  = (uint8)getBits1(8);
    spectral_end    = (uint8)getBits1(8);
    successive_high = (uint8)getBits1(4);
    successive_low  = (uint8)getBits1(4);
+#endif
 
    left -= 3;
 
@@ -1029,6 +1033,7 @@ static uint8 processRestart(void)
    
    return 0;
 }
+#if RZ_TODO
 //------------------------------------------------------------------------------
 // FIXME: findEOI() is not actually called at the end of the image 
 // (it's optional, and probably not needed on embedded devices)
@@ -1055,6 +1060,7 @@ static uint8 findEOI(void)
    
    return 0;
 }
+#endif
 //------------------------------------------------------------------------------
 static uint8 checkHuffTables(void)
 {

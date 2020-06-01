@@ -155,12 +155,16 @@ STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
     if (v < 50) { v = 50; }
     if (v > 250) { v = 250; }
     switch (p) {
+#if defined(BOARD_SERVO1_PIN)
         case 1: ;
             rz_servo_set_pulse(pyb_servo_obj[0].pin->pin, v);
             break;
+#endif
+#if defined(BOARD_SERVO2_PIN)
         case 2: ;
             rz_servo_set_pulse(pyb_servo_obj[1].pin->pin, v);
             break;
+#endif
     }
     return mp_const_none;
 }
@@ -171,8 +175,12 @@ STATIC mp_obj_t pyb_pwm_set(mp_obj_t period, mp_obj_t pulse) {
     //int pe = mp_obj_get_int(period);
     int pu = mp_obj_get_int(pulse);
     // Not used?
+#if defined(BOARD_SERVO1_PIN)
     rz_servo_set_pulse(pyb_servo_obj[0].pin->pin, pu);
+#endif
+#if defined(BOARD_SERVO2_PIN)
     rz_servo_set_pulse(pyb_servo_obj[1].pin->pin, pu);
+#endif
     return mp_const_none;
 }
 
@@ -268,7 +276,7 @@ STATIC mp_obj_t pyb_servo_angle(size_t n_args, const mp_obj_t *args) {
         return mp_obj_new_int((self->pulse_cur - self->pulse_centre) * 90 / self->pulse_angle_90);
     } else {
 #if MICROPY_PY_BUILTINS_FLOAT
-        self->pulse_dest = self->pulse_centre + self->pulse_angle_90 * mp_obj_get_float(args[1]) / 90.0;
+        self->pulse_dest = self->pulse_centre + (uint16_t)((float)self->pulse_angle_90 * mp_obj_get_float(args[1]) / 90.0);
 #else
         self->pulse_dest = self->pulse_centre + self->pulse_angle_90 * mp_obj_get_int(args[1]) / 90;
 #endif
@@ -299,7 +307,7 @@ STATIC mp_obj_t pyb_servo_speed(size_t n_args, const mp_obj_t *args) {
         return mp_obj_new_int((self->pulse_cur - self->pulse_centre) * 100 / self->pulse_speed_100);
     } else {
 #if MICROPY_PY_BUILTINS_FLOAT
-        self->pulse_dest = self->pulse_centre + self->pulse_speed_100 * mp_obj_get_float(args[1]) / 100.0;
+        self->pulse_dest = (uint16_t)self->pulse_centre + (uint16_t)((float)self->pulse_speed_100 * mp_obj_get_float(args[1]) / 100.0);
 #else
         self->pulse_dest = self->pulse_centre + self->pulse_speed_100 * mp_obj_get_int(args[1]) / 100;
 #endif

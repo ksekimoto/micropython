@@ -35,7 +35,8 @@ void internal_flash_init(void);
 void rza2m_software_reset(void) {
     volatile uint16_t data;
     WDT.WTCNT.WORD = 0x5A00;
-    data = WDT.WRCSR.WORD;
+    data = WDT.WRCSR.WORD;  // dummy read
+    (void)data;             // to suppress gcc warning
     WDT.WTCNT.WORD = 0x5A00;
     WDT.WRCSR.WORD = 0xA500;
     WDT.WTCSR.WORD = 0xA578;

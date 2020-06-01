@@ -113,7 +113,9 @@ int32_t sd_mount(int32_t sd_port, uint32_t mode, uint32_t voltage)
 {
     st_sdhndl_t *p_hndl;
     uint64_t    info1_back;
+#if defined(SDIO_SUPPORT)
     uint8_t     io_buff;
+#endif
     uint16_t    sd_spec;
     uint16_t    sd_spec3;
 
@@ -364,7 +366,9 @@ int32_t _sd_card_init(st_sdhndl_t *p_hndl)
 {
     int32_t  ret;
     int32_t  i;
+#if defined(SDIO_SUPPORT)
     int32_t  just_sdio_flag;
+#endif
     uint16_t if_cond_0;
     uint16_t if_cond_1;
 
@@ -702,7 +706,7 @@ static int32_t _sd_card_init_get_rca(st_sdhndl_t *p_hndl)
 int32_t _sd_io_mount(st_sdhndl_t *p_hndl)
 {
     int32_t  i;
-    uint8_t  io_buff;
+    uint8_t  io_buff = 0;
     uint16_t len;
 
     /* ==== data-transfer mode ==== */
@@ -976,8 +980,9 @@ int32_t _sd_set_io_speed(st_sdhndl_t *p_hndl)
 int32_t sd_unmount(int32_t sd_port)
 {
     st_sdhndl_t  *p_hndl;
+#if defined(SDIO_SUPPORT)
     uint8_t      io_buff;
-
+#endif
     if ( (0 != sd_port) && (1 != sd_port) )
     {
         return SD_ERR;
