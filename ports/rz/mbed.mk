@@ -1,6 +1,8 @@
 #######################################################################
 # MBED library build
 #######################################################################
+BUILD_MBED = $(BUILD)_mbed
+LIB_MBED_HAL = libs/libmbedhal.a
 LIB_MBED = libs/libmbed.a
 
 #######################################################################
@@ -8,32 +10,63 @@ LIB_MBED = libs/libmbed.a
 #######################################################################
 INC += -Imbed
 
+ifeq ($(TARGET), TARGET_RZ_A2XX)
+INC_MBED_HAL += -ITARGET_RENESAS
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/common
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/common/r_cache
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/common/r_cache/inc
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
+INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/hal
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/drivers
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/platform
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/cmsis/TARGET_CORTEX_A
+endif
+
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
-INC += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
 endif
 ifeq ($(MBED_GR_LIBS_GR-PEACH_video), 1)
-INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
 endif
 
 ifeq ($(MBED_SD_WRAPPER),1)
-INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver
-INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/inc
-INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc
-INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc/access
-INC += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/inc
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/src/sd/inc/access
+INC_MBED_HAL += -I$(TOP)/lib/mbed-gr-libs/SDBlockDevice_GRBoard/$(TARGET)/sdhi-driver/r_sdhi_simplified/userdef
 endif
 
 ifeq ($(MBED_OS_EMAC),1)
-INC += emac-drivers/TARGET_RZ_A2_EMAC
-INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/
-INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src
-INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/phy
-INC += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/targets/TARGET_GR_MANGO
+INC_MBED_HAL += emac-drivers/TARGET_RZ_A2_EMAC
+INC_MBED_HAL += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/
+INC_MBED_HAL += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src
+INC_MBED_HAL += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/phy
+INC_MBED_HAL += emac-drivers/TARGET_RZ_A2_EMAC/r_ether_rza2/src/targets/TARGET_GR_MANGO
 endif
+
+INC += $(INC_MBED_HAL)
 
 #######################################################################
 # MBED CFLAGS
 #######################################################################
+
+CFLAGS_MBED += $(C_CPP_COMMON)
+CFLAGS_MBED += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0
+CFLAGS_MBED += -std=gnu99 -nostdlib
+CFLAGS_MBED += -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 
+
+CPPFLAGS_MBED += $(C_CPP_COMMON)
+CPPFLAGS_MBED += -std=gnu++98 -fno-rtti -Wvla -c 
+CPPFLAGS_MBED += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0
+CPPFLAGS_MBED += -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 
 
 ifeq ($(MBED_SD_WRAPPER),1)
 MBED_GR_LIBS_SDBlockDevice_GRBoard = 1
@@ -53,7 +86,7 @@ CFLAGS_COMMON += -DLVGL_ENABLE=1
 CFLAGS_COMMON += -DLV_CONF_INCLUDE_SIMPLE
 endif
 
-CFLAGS_MBED_COMMON += $(INC_MBED) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
+CFLAGS_MBED_COMMON += $(INC_MBED_HAL) -DAPPLICATION_ADDR=0x50000000 -DAPPLICATION_SIZE=0x1000000 -DMBED_ROM_START=0x50000000 -DMBED_ROM_SIZE=0x1000000 -DMBED_RAM_START=0x400000 -DMBED_RAM_SIZE=0x2000000 -DARM_MATH_CA9 -D__FPU_PRESENT -DDEVICE_EMAC=1 -D__MBED__=1 -DDEVICE_USBDEVICE=1 -DTARGET_LIKE_MBED -DDEVICE_PORTINOUT=1 -DMBED_BUILD_TIMESTAMP=1582947353.33 -DCOMPONENT_FLASHIAP=1 -DCOMPONENT_PSA_SRV_EMUL=1 -DDEVICE_SERIAL_ASYNCH=1 -D__CMSIS_RTOS -D__EVAL -DDEVICE_SPISLAVE=1 -DTOOLCHAIN_GCC -DTARGET_CORTEX_A -DDEVICE_I2C_ASYNCH=1 -DTARGET_DEBUG -DDEVICE_RTC=1 -D__MBED_CMSIS_RTOS_CA9 -DCOMPONENT_PSA_SRV_IMPL=1 -DTARGET_LIKE_CORTEX_A9 -DDEVICE_PWMOUT=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DTARGET_CORTEX -DDEVICE_I2C=1 -DDEVICE_PORTOUT=1 -DDEVICE_I2CSLAVE=1 -DDEVICE_USTICKER=1 -DDEVICE_STDIO_MESSAGES=1 -DTARGET_MBRZA2M -DTARGET_RENESAS -DTARGET_RZA2M -DTARGET_NAME=GR_MANGO -DCOMPONENT_NSPE=1 -DDEVICE_SERIAL_FC=1 -DTARGET_A9 -DTARGET_RZ_A2XX -D__CORTEX_A9 -DDEVICE_PORTIN=1 -DDEVICE_SLEEP=1 -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DTARGET_GR_MANGO -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DDEVICE_FLASH=1 -DMBED_CONF_APP_MAIN_STACK_SIZE=8192 -DTARGET_RZ_A2_EMAC
 #CFLAGS_MBED_COMMON += -DMBEDTLS_NO_DEFAULT_ENTROPY_SOURCES -DMBEDTLS_USER_CONFIG_FILE="./mbedtls_entropy_config.h" -DMBEDTLS_TEST_NULL_ENTROPY 
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_CTHUNK_COUNT_MAX=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE=115200
@@ -86,50 +119,74 @@ CFLAGS_MBED_COMMON += -DMBED_GR_LIBS_EasyAttach_CameraAndLCD=1
 endif
 
 ifeq ($(MBED_OS_EMAC),1)
-CFLAGS += -DMBED_OS_EMAC
-CPPFLAGS += -DMBED_OS_EMAC
+CFLAGS_COMMON += -DMBED_OS_EMAC
 CFLAGS_MBED_COMMON += -DMBED_CONF_EVENTS_SHARED_EVENTSIZE=10
 endif
 
 ifeq ($(MBED_OS_EMAC),1)
 endif
 
-CFLAGS_COMMON += $(CFLAGS_MBED_COMMON)
+ifeq "$(IS_GCC_ABOVE_VERSION_9)" "1"
+# gcc version 9.x
+else 
+ifeq "$(IS_GCC_ABOVE_VERSION_6)" "1"
+# gcc version 6.x, 7.x or 8.x
+else
+# gcc version 4.x or 5.x
+# analogin_api.c
+#CFLAGS += -Wno-error=unused-variable
+# i2c_api.c
+#CFLAGS += -Wno-error=double-promotion
+# pwmout_api.c
+#CFLAGS += -Wno-error=float-conversion
+# serial_api.c
+#CFLAGS += -Wno-error=type-limits
+# spi_api.c
+#CFLAGS += -Wno-error=overflow
+#CFLAGS += -Wno-error=unused-but-set-variable
+# rtx_core_ca.h
+#CFLAGS += -Wno-error=attributes
+# r_mipi_api.c
+#CFLAGS += -Wno-error=unused-function
+# rz_a2m_evb_vdc.c
+#CFLAGS += -Wno-error=aggressive-loop-optimizations
+endif
+endif
 
 #######################################################################
 # TARGET_RENESAS
 #######################################################################
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
-SRC_MBED_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
+SRC_MBED_HAL_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/startup_RZA2M.S
+SRC_MBED_HAL_S += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/TOOLCHAIN_GCC_ARM/weak_handler.S
 
 ifeq ($(OVERRIDE_CONSOLE_USBSERIAL), 1)
 SRC_MBED_CPP += TARGET_RENESAS/$(TARGET)/common/target_override_console.cpp
 endif
 
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/analogin_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/flash_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/gpio_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/gpio_irq_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/i2c_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/pinmap.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/port_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/pwmout_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/rtc_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/serial_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/sleep.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/spi_api.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/us_ticker.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/common/rza_io_regrw.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/common/r_cache/src/lld/r_cache_lld_rza2m.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/PeripheralPins.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/cmsis_nvic.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mbed_sf_boot.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mmu_RZ_A2M.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/nvic_wrapper.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/octaram_init.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/os_tick_ostm.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/RZ_A2_Init.c
-SRC_MBED_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/system_RZ_A2M.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/analogin_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/flash_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/gpio_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/gpio_irq_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/i2c_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/pinmap.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/port_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/pwmout_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/rtc_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/serial_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/sleep.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/spi_api.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/us_ticker.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/common/rza_io_regrw.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/common/r_cache/src/lld/r_cache_lld_rza2m.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/PeripheralPins.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/cmsis_nvic.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mbed_sf_boot.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/mmu_RZ_A2M.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/nvic_wrapper.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/octaram_init.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/os_tick_ostm.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/RZ_A2_Init.c
+SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/system_RZ_A2M.c
 
 ifeq ($(MBED_OS), 1)
 #######################################################################
@@ -692,16 +749,49 @@ endif
 ifeq ($(MBED_HTTP), 1)
 endif
 
+#######################################################################
+# source files for mbed_wrapper
+#######################################################################
+
+SRC_MBED_HAL_CPP += mbed/mbed_flash.cpp
+SRC_MBED_HAL_CPP += mbed/mbed_timer.cpp
+
+ifeq ($(MBED_OS_EMAC),1)
+SRC_MBED_HAL_CPP += mbed/mbed_ether.cpp
+endif
+
+ifeq ($(MBED_UART_WRAPPER),1)
+SRC_MBED_HAL_CPP += mbed/mbed_uart.cpp
+endif
+
+ifeq ($(MBED_SPI_WRAPPER),1)
+SRC_MBED_HAL_CPP += mbed/mbed_spi.cpp
+endif
+
+ifeq ($(MBED_SD_WRAPPER),1)
+# Doesn't work
+SRC_MBED_HAL_CPP += mbed/mbed_sd.cpp
+endif
+
 ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
-EXTMOD_SRC_C += camera_lcd.c
-SRC_CPP += mbed/mbed_camera_lcd.cpp
+SRC_MBED_CPP += mbed/mbed_camera_lcd.cpp
 endif
 endif
 
-OBJ_MBED_C += $(addprefix $(BUILD)/, $(SRC_MBED_C:.c=.o))
-OBJ_MBED_S += $(addprefix $(BUILD)/, $(SRC_MBED_S:.S=.o))
-OBJ_MBED_CPP += $(addprefix $(BUILD)/, $(SRC_MBED_CPP:.cpp=.o))
+#######################################################################
+# object definition
+#######################################################################
+
+OBJ_MBED_HAL_C += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_HAL_C:.c=.o))
+OBJ_MBED_HAL_S += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_HAL_S:.S=.o))
+OBJ_MBED_HAL_CPP += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_HAL_CPP:.cpp=.o))
+OBJ_MBED_C += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_C:.c=.o))
+OBJ_MBED_S += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_S:.S=.o))
+OBJ_MBED_CPP += $(addprefix $(BUILD_MBED)/, $(SRC_MBED_CPP:.cpp=.o))
+OBJ_MBED_HAL += $(OBJ_MBED_HAL_C) 
+OBJ_MBED_HAL += $(OBJ_MBED_HAL_S) 
+OBJ_MBED_HAL += $(OBJ_MBED_HAL_CPP) 
 OBJ_MBED += $(OBJ_MBED_C) 
 OBJ_MBED += $(OBJ_MBED_S) 
 OBJ_MBED += $(OBJ_MBED_CPP) 
@@ -715,48 +805,79 @@ LDFLAGS += $(LDFLAGS_MBED)
 # build rules
 #######################################################################
 
-ifeq ($(EXEC), 1)
-
-vpath %.S $(SRC_MBED_S)
-$(BUILD)/%.o: %S
+vpath %.S . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
+$(BUILD_MBED)/%.o: %.S
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
-	dirname $@ | xargs mkdir -p
-	$(Q)$(CC) $(CFLAGS) $(CFLAGS_MBED_COMMON) -c -o $@ $<
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
-vpath %.c $(SRC_MBED_C)
-$(BUILD)/%.o: %c
-	$(ECHO) "CC $<"
-	dirname $@ | xargs mkdir -p
-	$(Q)$(CC) $(CFLAGS) $(CFLAGS_MBED_COMMON) -c -MD -o $@ $<
-	@# The following fixes the dependency file.
-	@# See http://make.paulandlesley.org/autodep.html for details.
-	@# Regex adjusted from the above to play better with Windows paths, etc.
-	@$(CP) $(@:.o=.d) $(@:.o=.P); \
-	$(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
+vpath %.s . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
+$(BUILD_MBED)/%.o: %.s
+	@dirname $@ | xargs mkdir -p
+	$(ECHO) "AS $<"
+	$(Q)$(AS) -o $@ $<
+
+define compile_mbed_c
+$(ECHO) "CC $<"
+@dirname $@ | xargs mkdir -p
+$(Q)$(CC) $(CFLAGS_MBED) $(CFLAGS_MBED_COMMON) $(CFLAGS_COMMON) -c -MD -o $@ $<
+@# The following fixes the dependency file.
+@# See http://make.paulandlesley.org/autodep.html for details.
+@# Regex adjusted from the above to play better with Windows paths, etc.
+@$(CP) $(@:.o=.d) $(@:.o=.P); \
+  $(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
       -e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.d) >> $(@:.o=.P); \
-	$(RM) -f $(@:.o=.d)
+  $(RM) -f $(@:.o=.d)
+endef
 
-vpath %.cpp $(SRC_MBED_CPP)
-$(BUILD)/%.o: %cpp
-	$(ECHO) "CC $<"
-	dirname $@ | xargs mkdir -p
-	$(Q)$(CXX) $(CPPFLAGS) $(CFLAGS_MBED_COMMON) -c -MD -o $@ $<
-	@# The following fixes the dependency file.
-	@# See http://make.paulandlesley.org/autodep.html for details.
-	@# Regex adjusted from the above to play better with Windows paths, etc.
-	@$(CP) $(@:.o=.d) $(@:.o=.P); \
-	$(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
+vpath %.c . $(OBJ_MBED_HAL_C) $(OBJ_MBED_C)
+$(BUILD_MBED)/%.o: %.c
+	$(call compile_mbed_c)
+
+vpath %.c . $(OBJ_MBED_HAL_C) $(OBJ_MBED_C)
+
+$(BUILD_MBED)/%.pp: %.c
+	$(ECHO) "PreProcess $<"
+	$(Q)$(CPP) $(CFLAGS_MBED) $(CFLAGS_MBED_COMMON) $(CFLAGS_COMMON) -Wp,-C,-dD,-dI -o $@ $<
+
+define compile_mbed_cpp
+$(ECHO) "CC $<"
+@dirname $@ | xargs mkdir -p
+$(Q)$(CXX) $(CPPFLAGS_MBED) $(CFLAGS_MBED_COMMON) $(CFLAGS_COMMON) -c -MD -o $@ $<
+@# The following fixes the dependency file.
+@# See http://make.paulandlesley.org/autodep.html for details.
+@# Regex adjusted from the above to play better with Windows paths, etc.
+@$(CP) $(@:.o=.d) $(@:.o=.P); \
+  $(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
       -e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.d) >> $(@:.o=.P); \
-	$(RM) -f $(@:.o=.d)
+  $(RM) -f $(@:.o=.d)
+endef
 
-$(OBJ_MBED): $(OBJ_MBED_S) $(OBJ_MBED_C) $(OBJ_MBED_CPP)
+vpath %.cpp . $(OBJ_MBED_CPP)
+$(BUILD_MBED)/%.o: %.cpp
+	$(call compile_mbed_cpp)
 
-endif
+QSTR_GEN_EXTRA_CPPFLAGS += -DNO_QSTR
+QSTR_GEN_EXTRA_CPPFLAGS += -I$(BUILD)/tmp
+
+vpath %.cpp . $(OBJ_MBED_CPP)
+
+$(BUILD_MBED)/%.pp: %.cpp
+	$(ECHO) "PreProcess $<"
+	$(Q)$(CXX) $(CPPFLAGS_MBED) $(CFLAGS_MBED_COMMON) $(CFLAGS_COMMON) -Wp,-C,-dD,-dI -o $@ $<
+
+#$(OBJ_MBED): $(OBJ_MBED_S) $(OBJ_MBED_C) $(OBJ_MBED_CPP)
+
+#$(OBJ_MBED_HAL): $(OBJ_MBED_HAL_S) $(OBJ_MBED_HAL_C) $(OBJ_MBED_HAL_CPP)
 
 AR_MBED_FLAGS = rcs
 
-$(LIB_MBED): $(OBJ_MBED)
+#$(LIB_MBED_HAL): $(OBJ_MBED_HAL)
+#	$(ECHO) "LIB $@"
+#	$(MKDIR) -p libs
+#	$(Q)$(AR) $(AR_MBED_FLAGS) $(LIB_MBED_HAL) $^
+
+$(LIB_MBED): $(OBJ_MBED) $(OBJ_MBED_HAL)
 	$(ECHO) "LIB $@"
 	$(MKDIR) -p libs
 	$(Q)$(AR) $(AR_MBED_FLAGS) $(LIB_MBED) $^
-	

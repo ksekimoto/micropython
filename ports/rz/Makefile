@@ -28,7 +28,7 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
@@ -60,7 +60,7 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
@@ -108,6 +108,13 @@ include $(TOP)/py/py.mk
 
 GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
 
+GCC_VERSION = "`$(CC) -dumpversion`"
+GCC_VERSION_9 = "9.0"
+GCC_VERSION_8 = "8.0"
+GCC_VERSION_7 = "7.0"
+GCC_VERSION_6 = "6.0"
+GCC_VERSION_5 = "5.0"
+
 #######################################################################
 # MCU configuration
 #######################################################################
@@ -118,6 +125,7 @@ MCU_SERIES_LOW = rza2m
 MCU_SERIES_CAP = RZA2M
 endif
 MCU_SERIES_UPPER = $(shell echo $(MCU_SERIES) | tr '[:lower:]' '[:upper:]')
+CMSIS_MCU_LOWER = $(shell echo $(CMSIS_MCU) | tr '[:upper:]' '[:lower:]')
 
 LD_DIR=boards
 
@@ -130,7 +138,9 @@ CROSS_COMPILE ?= arm-none-eabi-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -Iboards/$(BOARD)
+INC += -I$(BOARD_DIR)
+INC += -I$(MCU_SERIES_LOW)
+INC += -I$(TOP)/lib/oofatfs
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
 INC += -Ilwip_inc
@@ -142,58 +152,14 @@ endif
 ifeq ($(USE_LCDSPI), 1)
 INC += -Ilcdspi
 endif
-ifeq ($(LVGL_ENABLE) ,1)
-INC += -Ilvgl
-endif
 ifeq ($(USE_DBG_PRINT) ,1)
 INC += -Idebug
 endif
-
-#ifeq ($(MICROPY_SSL_MBEDTLS),1)
-#INC += -I$(TOP)/lib/mbedtls/include
-#endif
-#ifeq ($(MICROPY_SSL_AXTLS),1)
-#INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
-#endif
-
-INC += -I$(MCU_SERIES_LOW)
 ifneq ($(MBED_SD_WRAPPER),1)
 INC += -I$(MCU_SERIES_LOW)/sd
 endif
-ifeq ($(TARGET), TARGET_RZ_A2XX)
-INC_MBED += -ITARGET_RENESAS
-INC_MBED += -ITARGET_RENESAS/$(TARGET)
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/common
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/common/r_cache
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/common/r_cache/inc
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
-INC_MBED += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
-
-INC += -ITARGET_RENESAS
-INC += -ITARGET_RENESAS/$(TARGET)
-INC += -ITARGET_RENESAS/$(TARGET)/common
-INC += -ITARGET_RENESAS/$(TARGET)/common/r_cache
-INC += -ITARGET_RENESAS/$(TARGET)/common/r_cache/inc
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
-INC += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
-INC += -I$(TOP)/lib/mbed-os
-INC += -I$(TOP)/lib/mbed-os/hal
-INC += -I$(TOP)/lib/mbed-os/drivers
-INC += -I$(TOP)/lib/mbed-os/platform
-INC += -I$(TOP)/lib/mbed-os/cmsis/TARGET_CORTEX_A
-#INC += -I$(TOP)/lib/mbed-gr-libs/EasyAttach_CameraAndLCD
-#INC += -I$(TOP)/lib/mbed-gr-libs/GR-PEACH_video
-endif
-
 ifeq ($(LVGL_ENABLE),1)
+INC += -Ilvgl
 INC += -Ilib/lv_bindings/lvgl
 endif
 
@@ -209,8 +175,19 @@ endif
 #CFLAGS_MCU_l4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
 #CFLAGS_MCU_h7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
 #CFLAGS_MCU_wb = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
+CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
 
-CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+C_CPP_COMMON += $(CFLAGS_MCU_a9)
+C_CPP_COMMON += -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer
+C_CPP_COMMON += $(INC)
+
+CFLAGS += $(C_CPP_COMMON)
+CFLAGS += -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion
+CFLAGS += -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+
+IS_GCC_ABOVE_VERSION_9 := $(shell expr "$(GCC_VERSION)" ">=" "$(GCC_VERSION_9)")
+IS_GCC_ABOVE_VERSION_6 := $(shell expr "$(GCC_VERSION)" ">=" "$(GCC_VERSION_6)")
+ifeq "$(IS_GCC_ABOVE_VERSION_9)" "1"
 CFLAGS += -Wno-error=sign-compare
 CFLAGS += -Wno-error=override-init
 CFLAGS += -Wno-error=implicit-function-declaration
@@ -231,12 +208,29 @@ CFLAGS += -Wno-error=array-bounds
 CFLAGS += -Wno-error=aggressive-loop-optimizations
 CFLAGS += -Wno-error=sequence-point
 CFLAGS += -Wno-error=int-conversion
-#CFLAGS += -D$(CMSIS_MCU)
-#CFLAGS += $(CFLAGS_MCU_$(MCU_SERIES))
-CFLAGS += $(COPT)
-CFLAGS += -I$(BOARD_DIR)
-#CFLAGS += -DSTM32_HAL_H='<stm32$(MCU_SERIES)xx_hal.h>'
-#CFLAGS += -DMICROPY_HW_VTOR=$(TEXT0_ADDR)
+else 
+ifeq "$(IS_GCC_ABOVE_VERSION_6)" "1"
+# gcc version 6.x, 7.x or 8.x
+else
+# gcc version 4.x or 5.x
+# objexcept.c
+CFLAGS += -Wno-error=sign-compare
+# vm.c
+CFLAGS += -Wno-error=override-init
+# mpconfigport.h __WFI()
+CFLAGS += -Wno-error=implicit-function-declaration
+# camera_lcd.c
+CFLAGS += -Wno-error=incompatible-pointer-types
+# main.c
+CFLAGS += -Wno-error=main
+# sd/sd_write.c
+CFLAGS += -Wno-error=maybe-uninitialized
+CFLAGS += -Wno-error=missing-braces
+# font.c
+CFLAGS += -Wno-incompatible-pointer-types
+endif
+endif
+
 
 # Configure for nan-boxing object model if requested
 ifeq ($(NANBOX),1)
@@ -266,19 +260,19 @@ ifeq ($(LD),arm-none-eabi-ld)
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 # Remove uncalled code from the final image.
-CFLAGS += -fdata-sections -ffunction-sections
-#LDFLAGS += --gc-sections
+#CFLAGS += -fdata-sections -ffunction-sections
+LDFLAGS += --gc-sections
 
 else
 # Remove uncalled code from the final image.
-CFLAGS += -fdata-sections -ffunction-sections
+#CFLAGS += -fdata-sections -ffunction-sections
 LDFLAGS += -Wl,--gc-sections
 
 LDFLAGS += -T $(TARGET_LD) -Wl,-Map=$@.map
 #LDFLAGS += -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_calloc_r
 LDFLAGS += -Wl,--wrap,main -Wl,--wrap,_memalign_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n 
 LDFLAGS += -Wl,--start-group -Wl,--end-group 
-LDFLAGS += -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
+LDFLAGS += $(CFLAGS_MCU_a9)
 LDFLAGS += -g
 LDFLAGS += -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -specs=nosys.specs 
 endif
@@ -286,18 +280,16 @@ endif
 # Debugging/Optimization
 ifeq ($(DEBUG), 1)
 #CFLAGS += -g -DPENDSV_DEBUG
-CFLAGS += -ggdb
+CFLAGS += -g3
 COPT += -Os
+C_CPP_COMMON += -Os -g3
 else
 COPT += -Os -DNDEBUG
 endif
+CFLAGS += $(COPT)
 
 # Options for mpy-cross
 MPY_CROSS_FLAGS += -march=armv7m
-
-CFLAGS_COMMON += $(INC)
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
-CPPFLAGS += -std=gnu++98 -fno-rtti -Wvla -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access $(CFLAGS_COMMON)
 
 ifeq ($(BOARD),GR_MANGO)
 CFLAGS += -DGRMANGO
@@ -464,11 +456,61 @@ SRC_C = \
 include mbed.mk
 
 #######################################################################
-# micropython rz CPU
+# RZA2M HAL
 #######################################################################
+
+ifeq ($(TARGET), TARGET_RZ_A2XX)
+
 ifeq ($(BOOT_LOADER),1)
 SRC_C += boards/$(BOARD)/$(BOARD)_bl.c
 endif
+
+SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_adc.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_exti.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+ifneq ($(MBED_OS_EMAC),1)
+SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
+endif
+SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_mtu.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_servo.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
+SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
+ifneq ($(MBED_UART_WRAPPER),1)
+SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
+endif
+ifneq ($(MBED_SPI_WRAPPER),1)
+SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
+endif
+SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
+ifneq ($(MBED_SD_WRAPPER),1)
+SRC_C += $(MCU_SERIES_LOW)/rza2m_sd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_dev_low.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_device.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_cd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_cmd.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_int.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_init.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_mount.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_read.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_trns.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_util.c
+SRC_C += $(MCU_SERIES_LOW)/sd/sd_write.c
+endif
+
+ifeq ($(MBED_GR_LIBS), 1)
+ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
+EXTMOD_SRC_C += camera_lcd.c
+endif
+endif
+
+endif
+
+#######################################################################
+# micropython rz CPU
+#######################################################################
+
 SRC_C += adc.c
 SRC_C += bufhelper.c
 ifeq ($(LAN_NEW),1)
@@ -521,52 +563,6 @@ SRC_C += systick.c
 #SRC_C += timer.c
 SRC_C += uart.c
 SRC_C += usrsw.c
-SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_adc.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_exti.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
-ifeq ($(MBED_OS_EMAC),1)
-SRC_CPP += mbed/mbed_ether.cpp
-else
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
-endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_mtu.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_servo.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
-ifeq ($(MBED_UART_WRAPPER),1)
-SRC_CPP += mbed/mbed_uart.cpp
-else
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
-endif
-ifeq ($(MBED_SPI_WRAPPER),1)
-SRC_CPP += mbed/mbed_spi.cpp
-else
-SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
-endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
-SRC_CPP += mbed/mbed_flash.cpp
-SRC_CPP += mbed/mbed_timer.cpp
-SRC_CPP += mbed/mbed_uart.cpp
-
-ifeq ($(MBED_SD_WRAPPER),1)
-# Doesn't work
-SRC_CPP += mbed/mbed_sd.cpp
-else
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_dev_low.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_device.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cmd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_int.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_init.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_mount.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_read.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_trns.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_util.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_write.c
-endif
 
 ifeq ($(USE_DBG_PRINT) ,1)
 SRC_C += debug/debug_printf.c
