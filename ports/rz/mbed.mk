@@ -881,3 +881,9 @@ $(LIB_MBED): $(OBJ_MBED) $(OBJ_MBED_HAL)
 	$(ECHO) "LIB $@"
 	$(MKDIR) -p libs
 	$(Q)$(AR) $(AR_MBED_FLAGS) $(LIB_MBED) $^
+	
+
+clean-mbed:
+	$(RM) -rf $(BUILD_MBED)
+#	$(RM) -f $(LIB_MBED)
+	
