@@ -88,10 +88,6 @@
 #include "rza2m_ostm2.h"
 #endif
 
-#if MICROPY_KBD_EXCEPTION
-int mp_interrupt_channel;
-#endif
-
 #if MICROPY_PY_THREAD
 STATIC pyb_thread_t pyb_thread_main;
 #endif
@@ -401,7 +397,7 @@ STATIC uint update_reset_mode(uint reset_mode) {
 #endif
 
 #if MICROPY_KBD_EXCEPTION
-#if RZ_TODO
+#if 0
 extern int mp_interrupt_char;
 static int chk_kbd_interrupt(int d)
 {
@@ -618,8 +614,8 @@ soft_reset:
     #endif
     //usb_init();
 #if MICROPY_KBD_EXCEPTION
-#if RZ_TODO
-    usb_rx_set_callback((USB_CALLBACK)chk_kbd_interrupt);
+#if 0
+    usb_rz_set_callback((USB_CALLBACK)chk_kbd_interrupt);
 #endif
 #endif
 
