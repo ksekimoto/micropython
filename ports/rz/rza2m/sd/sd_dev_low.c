@@ -122,8 +122,8 @@ Exported global variables and functions (to be accessed by other files)
 /******************************************************************************
 Private global variables and functions
 ******************************************************************************/
-static uint8_t g_sdhi_priority_backup[2] = {0,0};
 #if RZ_TODO
+static uint8_t g_sdhi_priority_backup[2] = {0,0};
 static int32_t sddev_init_voltage(int32_t sd_port);
 static void sddev_sd_int_handler_0(uint32_t int_sense);
 static void sddev_sd_int_handler_1(uint32_t int_sense);
@@ -1210,6 +1210,7 @@ int32_t sddev_finalize_dma(int32_t sd_port)
 ******************************************************************************/
 int32_t sddev_loc_cpu(int32_t sd_port)
 {
+#if RZ_TODO
     if (sd_port < sizeof(g_sdhi_priority_backup))
     {
         uint32_t was_masked;
@@ -1232,6 +1233,7 @@ int32_t sddev_loc_cpu(int32_t sd_port)
             __enable_irq();
         }
     }
+#endif
     return SD_OK;
 }
 /*******************************************************************************
@@ -1247,6 +1249,7 @@ int32_t sddev_loc_cpu(int32_t sd_port)
 ******************************************************************************/
 int32_t sddev_unl_cpu(int32_t sd_port)
 {
+#if RZ_TODO
     if (sd_port < sizeof(g_sdhi_priority_backup))
     {
         uint32_t              was_masked;
@@ -1270,6 +1273,7 @@ int32_t sddev_unl_cpu(int32_t sd_port)
             __enable_irq();
         }
     }
+#endif
     return SD_OK;
 }
 /*******************************************************************************

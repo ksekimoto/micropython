@@ -25,7 +25,6 @@
  */
 
 #include <stdio.h>
-#include "common.h"
 #include "iodefine.h"
 #include "rza2m_gpio.h"
 #include "ff.h"
@@ -42,24 +41,6 @@ int32_t sd_get_size(int32_t sd_port, uint32_t *user, uint32_t *protect);
 #ifndef SD_SECTOR_SIZE
 #define SD_SECTOR_SIZE 512
 #endif
-
-static const sd_map_t map_sd_cd[] = {
-//   pin      ch     func
-    {P64,       1,  5},
-    {P54,       1,  3},
-    {PC6,       1,  4},
-    {P50,       1,  4},
-    {PIN_END,   NC, 0}
-};
-
-static const sd_map_t map_sd_wp[] = {
-//   pin      ch     func
-    {P97,       1,  5},
-    {PC7,       1,  4},
-    {P51,       1,  4},
-    {P55,       1,  3},
-    {PIN_END,   NC, 0}
-};
 
 DSTATUS sd_disk_initialize(BYTE pdrv);
 DSTATUS sd_disk_status(BYTE pdrv);

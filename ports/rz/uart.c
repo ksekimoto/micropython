@@ -235,7 +235,6 @@ void uart_deinit(pyb_uart_obj_t *self) {
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
-//#if RZ_TODO
 #if MICROPY_KBD_EXCEPTION
     if (attached) {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)chk_kbd_interrupt);
@@ -243,7 +242,6 @@ void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)0);
     }
 #endif
-//#endif
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
