@@ -42,9 +42,9 @@ static uint16_t video_pic_size = DATA_SIZE_PER_PIC;
 //static DisplayBase::video_input_channel_t channel;
 static DisplayBase *mbed_display;
 
-void mbed_ticker_thread(void *thread, uint32_t ms) {
+void mbed_ticker_thread(void *thread, uint32_t us) {
     static Ticker ticker;
-    ticker.attach_us((void (*)())thread, ms);
+    ticker.attach_us((void (*)())thread, us);
 }
 
 void mbed_set_pixel(int x, int y, uint16_t color) {
