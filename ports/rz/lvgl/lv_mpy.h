@@ -6,6 +6,10 @@
 #include "py/binary.h"
 #include "lib/lv_bindings/lvgl/lvgl.h"
 
+typedef struct _spi_device_handle_t {
+    uint32_t dummy;
+} spi_device_handle_t;
+
 //////////////////////////////////////////////////////////////////////////////
 // A read-only buffer that contains a C pointer
 // Used to communicate function pointers to lvgl Micropython bindings

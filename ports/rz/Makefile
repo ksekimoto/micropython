@@ -28,7 +28,7 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 0
+LVGL_ENABLE = 1
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
@@ -326,6 +326,10 @@ endif
 ifeq ($(MICROPY_SSL_AXTLS),1)
 CFLAGS += -DMICROPY_SSL_AXTLS
 CFLAGS += -DMICROPY_STREAMS_POSIX_API
+endif
+
+ifeq ($(LVGL_ENABLE),1)
+CFLAGS += -DLVGL_ENABLE
 endif
 
 #######################################################################
@@ -665,6 +669,11 @@ endif
 
 ifeq ($(LVGL_ENABLE) ,1)
 SRC_C += lvgl/modlvrz.c
+SRC_C += lvgl/driver/lvrz.c
+SRC_C += lvgl/driver/modILI9341.c
+SRC_C += lvgl/driver/modrtch.c
+SRC_C += lvgl/driver/modstmpe610.c
+SRC_C += lvgl/driver/modxpt2046.c
 endif
 
 #######################################################################

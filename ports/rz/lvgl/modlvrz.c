@@ -1,16 +1,19 @@
 #include "py/obj.h"
 #include "py/mpstate.h"
 #include "lv_mpy.h"
-#include "dcache-control.h"
+//#include "dcache-control.h"
 #include "mbed_camera_lcd.h"
 #include "pendsv.h"
 
 #if LVGL_ENABLE
 
+extern void dcache_clean(void * p_buf, uint32_t size);
+extern void dcache_invalid(void * p_buf, uint32_t size);
+
 /* Defines the LittlevGL tick rate in milliseconds. */
 /* Increasing this value might help with CPU usage at the cost of lower
  * responsiveness. */
-#define LV_TICK_RATE 50
+#define LV_TICK_RATE 5
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -84,8 +87,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_lv_task_handler_obj, mp_lv_task_handler);
 
 STATIC int tick_thread(void * data) {
     (void)data;
-    lv_tick_inc(1);
-    lv_task_handler();
+    lv_tick_inc(LV_TICK_RATE);
+    mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
+    //lv_task_handler();
 #if 0
     if (lvrz_active()) {
         lv_tick_inc(1); /*Tell LittelvGL that 1 milliseconds were elapsed*/
@@ -110,10 +114,12 @@ STATIC mp_obj_t mp_init_lvrz(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
     //monitor_init(args[ARG_w].u_int, args[ARG_h].u_int);
+#if defined(MBED_LCD)
     tft_fb_ptr= mbed_get_fb_ptr();
     tft_fb_size = mbed_get_fb_size();
     mbed_lcd_init();
-    mbed_ticker_thread((void *)tick_thread, 1000);
+#endif
+    mbed_ticker_thread((void *)tick_thread, 1000*LV_TICK_RATE);
     return mp_const_none;
 }
 

@@ -256,16 +256,18 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 extern const struct _mp_obj_module_t mp_module_lvgl;
 extern const struct _mp_obj_module_t mp_module_rtch;
 extern const struct _mp_obj_module_t mp_module_lodepng;
-// extern const struct _mp_obj_module_t mp_module_ILI9341;
-// extern const struct _mp_obj_module_t mp_module_xpt2046;
+extern const struct _mp_obj_module_t mp_module_ILI9341;
+extern const struct _mp_obj_module_t mp_module_xpt2046;
+extern const struct _mp_obj_module_t mp_module_stmpe610;
 extern const struct _mp_obj_module_t mp_module_lvrz;
 
 #if MICROPY_PY_LVGL
 #define MICROPY_PORT_LVGL_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR_lvgl), (mp_obj_t)&mp_module_lvgl }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_lvrz), (mp_obj_t)&mp_module_lvrz }, \
-//    { MP_OBJ_NEW_QSTR(MP_QSTR_ILI9341), (mp_obj_t)&mp_module_ILI9341 },
-//    { MP_OBJ_NEW_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&mp_module_xpt2046 },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_ILI9341), (mp_obj_t)&mp_module_ILI9341 }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_stmpe610), (mp_obj_t)&mp_module_stmpe610 }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&mp_module_xpt2046 },
 
 // lvesp needs to delete the timer task upon soft reset
 
@@ -468,9 +470,9 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
-//static inline void __WFI(void) {
-//    __asm__ __volatile__ ("wfi");
-//}
+static inline void __WFI() {
+    __asm__ __volatile__ ("wfi");
+}
 
 // We have inlined IRQ functions for efficiency (they are generally
 // 1 machine instruction).
@@ -481,13 +483,15 @@ typedef long mp_off_t;
 // to know the machine-specific values, see irq.h.
 
 static inline uint32_t get_int_status(void) {
-    uint32_t ipl;
-    __asm__ __volatile__ ("MSR r0,CPSR":"=r"(ipl):);
-    return ((ipl & 0x00000020) >> 6);
+    uint32_t state;
+    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
+                            "AND r0,r0,#0x80" : "=r" (state) : : );
+    return state;
 }
 
 #define ICCPMR_OFFSET 0x0104
 
+#if 0
 static inline uint32_t get_irq(void) {
     register uint32_t pri = 0;
 /*
@@ -514,14 +518,17 @@ static inline void set_irq(uint32_t pri) {
     );
 */
 }
+#endif
 
 static inline void enable_irq(mp_uint_t state) {
     __asm__ __volatile__ ("cpsie i" : : : "memory");
 }
 
 static inline mp_uint_t disable_irq(void) {
-    mp_uint_t state = (mp_uint_t)get_irq();
-    __asm__ __volatile__ ("cpsid i" : : : "memory");
+    uint32_t state;
+    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
+                            "AND r0,r0,#0x80\n\t"
+                            "cpsid i" : "=r" (state) : : );
     return state;
 }
 
