@@ -148,13 +148,13 @@ extern "C" {
 
 
 /** Calibration Constants **/
-#define STMPE610_X_MIN       0
-#define STMPE610_Y_MIN       0
-#define STMPE610_X_MAX       240
-#define STMPE610_Y_MAX       320
-#define STMPE610_XY_SWAP     0
-#define STMPE610_X_INV       0
-#define STMPE610_Y_INV       0
+#define STMPE610_X_MIN       160    // CONFIG_LVGL_TOUCH_X_MIN
+#define STMPE610_Y_MIN       230    // CONFIG_LVGL_TOUCH_Y_MIN
+#define STMPE610_X_MAX       3800   // CONFIG_LVGL_TOUCH_X_MAX
+#define STMPE610_Y_MAX       3800   // CONFIG_LVGL_TOUCH_Y_MAX
+#define STMPE610_XY_SWAP     1      // CONFIG_LVGL_TOUCH_XY_SWAP
+#define STMPE610_X_INV       0      // CONFIG_LVGL_TOUCH_INVERT_X
+#define STMPE610_Y_INV       1      // CONFIG_LVGL_TOUCH_INVERT_Y
 
 /**********************
  *      TYPEDEFS
