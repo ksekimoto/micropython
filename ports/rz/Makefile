@@ -669,7 +669,6 @@ endif
 
 ifeq ($(LVGL_ENABLE) ,1)
 SRC_C += lvgl/modlvrz.c
-SRC_C += lvgl/driver/lvrz.c
 SRC_C += lvgl/driver/modILI9341.c
 SRC_C += lvgl/driver/modrtch.c
 SRC_C += lvgl/driver/modstmpe610.c
