@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RX_ADC_H
-#define MICROPY_INCLUDED_RX_ADC_H
+#ifndef MICROPY_INCLUDED_RZ_ADC_H
+#define MICROPY_INCLUDED_RZ_ADC_H
 
 typedef struct {
     int dummy;
@@ -33,4 +33,4 @@ typedef struct {
 extern const mp_obj_type_t pyb_adc_type;
 extern const mp_obj_type_t pyb_adc_all_type;
 
-#endif // MICROPY_INCLUDED_RX_ADC_H
+#endif // MICROPY_INCLUDED_RZ_ADC_H
