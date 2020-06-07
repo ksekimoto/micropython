@@ -37,7 +37,7 @@
 #include "hal/us_ticker_api.h"
 #include "mbed_timer.h"
 
-static volatile uint32_t uwTick;
+//static volatile uint32_t uwTick;
 
 systick_dispatch_t systick_dispatch_table[SYSTICK_DISPATCH_NUM_SLOTS];
 
@@ -45,8 +45,8 @@ void SysTick_Handler(void) {
     // Instead of calling HAL_IncTick we do the increment here of the counter.
     // This is purely for efficiency, since SysTick is called 1000 times per
     // second at the highest interrupt priority.
-    uint32_t uw_tick =  mbed_timer_get_ticks() + 1;
-    uwTick = uw_tick;
+    uint32_t uw_tick =  mp_hal_ticks_ms() + 1;
+    //uwTick = uw_tick;
 
     // Read the systick control regster. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
@@ -59,7 +59,7 @@ void SysTick_Handler(void) {
         f(uw_tick);
     }
 
-    if (soft_timer_next == mbed_timer_get_ticks()) {
+    if (soft_timer_next == mp_hal_ticks_ms()) {
         pendsv_schedule_dispatch(PENDSV_DISPATCH_SOFT_TIMER, soft_timer_handler);
     }
 
@@ -77,16 +77,56 @@ void SysTick_Handler(void) {
 }
 
 void HAL_Delay(uint32_t Delay) {
-    wait_ms(Delay);
+    if (query_irq() == IRQ_STATE_ENABLED) {
+        // IRQs enabled, so can use systick counter to do the delay
+        uint32_t start = mp_hal_ticks_ms();
+        // Wraparound of tick is taken care of by 2's complement arithmetic.
+        while (mp_hal_ticks_ms() - start < Delay) {
+            // Enter sleep mode, waiting for (at least) the SysTick interrupt.
+            __WFI();
+        }
+    } else {
+        // IRQs disabled, use mp_hal_delay_ms routine.
+        mp_hal_delay_ms(Delay);
+    }
 }
 
 void mp_hal_delay_ms(mp_uint_t Delay) {
-    wait_ms(Delay);
+    if (query_irq() == IRQ_STATE_ENABLED) {
+        // IRQs enabled, so can use systick counter to do the delay
+        uint32_t start = mp_hal_ticks_ms();
+        // Wraparound of tick is taken care of by 2's complement arithmetic.
+        while (mp_hal_ticks_ms() - start < Delay) {
+            // This macro will execute the necessary idle behaviour.  It may
+            // raise an exception, switch threads or enter sleep mode (waiting for
+            // (at least) the SysTick interrupt).
+            MICROPY_EVENT_POLL_HOOK
+        }
+    } else {
+        // IRQs disabled, so need to use a busy loop for the delay.
+        // To prevent possible overflow of the counter we use a double loop.
+        const uint32_t count_1ms = 66000000 / 4000;
+        for (int i = 0; i < Delay; i++) {
+            for (uint32_t count = 0; ++count <= count_1ms;) {
+            }
+        }
+    }
 }
 
 // delay for given number of microseconds
 void mp_hal_delay_us(mp_uint_t usec) {
-    wait_us(usec);
+    if (query_irq() == IRQ_STATE_ENABLED) {
+        // IRQs enabled, so can use systick counter to do the delay
+        uint32_t start = mp_hal_ticks_us();
+        while (mp_hal_ticks_us() - start < usec) {
+        }
+    } else {
+        // IRQs disabled, so need to use a busy loop for the delay
+        // sys freq is always a multiple of 2MHz, so division here won't lose precision
+        const uint32_t ucount = 66000000 / 2000000 * usec / 2;
+        for (uint32_t count = 0; ++count <= ucount;) {
+        }
+    }
 }
 
 bool systick_has_passed(uint32_t start_tick, uint32_t delay_ms) {
@@ -101,12 +141,12 @@ bool systick_has_passed(uint32_t start_tick, uint32_t delay_ms) {
 // HAL_GetTick() some time before calling this function.
 void systick_wait_at_least(uint32_t start_tick, uint32_t delay_ms) {
     while (!systick_has_passed(start_tick, delay_ms)) {
-        //__WFI(); // enter sleep mode, waiting for interrupt
+        __WFI(); // enter sleep mode, waiting for interrupt
     }
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
-    return  mbed_timer_get_ticks();
+    return mbed_timer_get_ticks();
 }
 
 mp_uint_t mp_hal_ticks_us(void) {
@@ -116,9 +156,9 @@ mp_uint_t mp_hal_ticks_us(void) {
 }
 
 unsigned long mtick(void) {
-    return  mbed_timer_get_ticks();
+    return mbed_timer_get_ticks();
 }
 
 unsigned long utick(void) {
-    return  (unsigned long)mp_hal_ticks_us();
+    return (unsigned long)mp_hal_ticks_us();
 }
