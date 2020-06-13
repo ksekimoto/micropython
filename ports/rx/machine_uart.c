@@ -112,11 +112,6 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
     mp_arg_parse_all(n_args, pos_args, kw_args,
         MP_ARRAY_SIZE(allowed_args), allowed_args, (mp_arg_val_t*)&args);
 
-    // static UARTs are used for internal purposes and shouldn't be reconfigured
-    if (self->is_static) {
-        mp_raise_ValueError("UART is static and can't be init'd");
-    }
-
     // baudrate
     uint32_t baudrate = args.baudrate.u_int;
 
@@ -133,23 +128,33 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
 
     // number of bits
     if (!((bits == 7) | (bits == 8) | (bits ==9))) {
-        mp_raise_ValueError("unsupported combination of bits and parity");
+        mp_raise_ValueError(MP_ERROR_TEXT("unsupported combination of bits and parity"));
     }
 
     // stop bits
     uint32_t stop;
     switch (args.stop.u_int) {
-        case 1: stop = UART_STOPBITS_1; break;
-        default: stop = UART_STOPBITS_2; break;
+        case 1:
+            stop = UART_STOPBITS_1;
+            break;
+        default:
+            stop = UART_STOPBITS_2;
+            break;
     }
 
     // flow control
     uint32_t flow = args.flow.u_int;
 
+    // Save attach_to_repl setting because uart_init will disable it.
+    bool attach_to_repl = self->attached_to_repl;
+
     // init UART (if it fails, it's because the port doesn't exist)
     if (!uart_init(self, baudrate, bits, parity, stop, flow)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", self->uart_id));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%d) doesn't exist"), self->uart_id);
     }
+
+    // Restore attach_to_repl setting so UART still works if attached to dupterm.
+    uart_attach_to_repl(self, attach_to_repl);
 
     // set timeout
     self->timeout = args.timeout.u_int;
@@ -163,6 +168,13 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
         self->timeout_char = min_timeout_char;
     }
 
+    if (self->is_static) {
+        // Static UARTs have fixed memory for the rxbuf and can't be reconfigured.
+        if (args.rxbuf.u_int >= 0) {
+            mp_raise_ValueError(MP_ERROR_TEXT("UART is static and rxbuf can't be changed"));
+        }
+        uart_set_rxbuf(self, self->read_buf_len, self->read_buf);
+    } else {
     // setup the read buffer
     m_del(byte, self->read_buf, self->read_buf_len << self->char_width);
     if (args.rxbuf.u_int >= 0) {
@@ -178,6 +190,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
         uint8_t *buf = m_new(byte, len << self->char_width);
         uart_set_rxbuf(self, len, buf);
     }
+    }
 
 #if RX_TODO
     // compute actual baudrate that was configured
@@ -191,7 +204,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
         baudrate_diff = baudrate - actual_baudrate;
     }
     if (20 * baudrate_diff > actual_baudrate) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "set baudrate %d is not within 5%% of desired value", actual_baudrate));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("set baudrate %d is not within 5%% of desired value"), actual_baudrate);
     }
 #endif
 
@@ -238,13 +251,37 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
         } else if (strcmp(port, MICROPY_HW_UART4_NAME) == 0) {
             uart_id = PYB_UART_4;
         #endif
+        #ifdef MICROPY_HW_UART5_NAME
+        } else if (strcmp(port, MICROPY_HW_UART5_NAME) == 0) {
+            uart_id = PYB_UART_5;
+        #endif
+        #ifdef MICROPY_HW_UART6_NAME
+        } else if (strcmp(port, MICROPY_HW_UART6_NAME) == 0) {
+            uart_id = PYB_UART_6;
+        #endif
+        #ifdef MICROPY_HW_UART7_NAME
+        } else if (strcmp(port, MICROPY_HW_UART7_NAME) == 0) {
+            uart_id = PYB_UART_7;
+        #endif
+        #ifdef MICROPY_HW_UART8_NAME
+        } else if (strcmp(port, MICROPY_HW_UART8_NAME) == 0) {
+            uart_id = PYB_UART_8;
+        #endif
+        #ifdef MICROPY_HW_UART9_NAME
+        } else if (strcmp(port, MICROPY_HW_UART9_NAME) == 0) {
+            uart_id = PYB_UART_9;
+        #endif
+        #ifdef MICROPY_HW_UART10_NAME
+        } else if (strcmp(port, MICROPY_HW_UART10_NAME) == 0) {
+            uart_id = PYB_UART_10;
+        #endif
         } else {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%s) doesn't exist", port));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%s) doesn't exist"), port);
         }
     } else {
         uart_id = mp_obj_get_int(args[0]);
         if (!uart_exists(uart_id)) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "UART(%d) doesn't exist", uart_id));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%d) doesn't exist"), uart_id);
         }
     }
 

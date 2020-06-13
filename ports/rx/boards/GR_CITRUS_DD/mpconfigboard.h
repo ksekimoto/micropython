@@ -19,7 +19,6 @@
 #define MICROPY_HW_UART2_RX         (pin_P52)
 //#define MICROPY_HW_UART_REPL        PYB_UART_0
 #define MICROPY_HW_UART_REPL_BAUD   115200
-#define MICROPY_HW_ESP8266_UART_CH  6
 
 // I2C busses
 //#define MICROPY_HW_I2C0_SCL (pin_P13)
@@ -75,11 +74,14 @@
 #define MICROPY_HW_ENABLE_DAC   (1)
 
 #define MICROPY_HW_HAS_ESP8266      (0)
+#define MICROPY_HW_ESP8266_UART_CH      6
+#define MICROPY_HW_ESP8266_UART_BAUD    115200
+#define MICROPY_HW_ESP8266_EN           (pin_P50)
+
 #define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_FONT         (1)
-#define MICROPY_PY_PYB_LCDSPI       (1)
-#define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
+#define MICROPY_PY_PYB_LCDSPI       (1)
 
 #define PYB_SERVO_NUM   (6)
 #define BOARD_SERVO1_PIN    (pin_P13)

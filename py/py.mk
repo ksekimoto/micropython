@@ -21,6 +21,10 @@ QSTR_GLOBAL_REQUIREMENTS += $(HEADER_BUILD)/mpversion.h
 # some code is performance bottleneck and compiled with other optimization options
 CSUPEROPT = -O3
 
+ifeq ($(LVGL_ENABLE),1)
+include $(TOP)/py/lvgl.mk
+endif
+
 # this sets the config file for FatFs
 CFLAGS_MOD += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 

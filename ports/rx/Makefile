@@ -28,6 +28,10 @@ endif
 # Use ramdisk instead of CPU internal flash for testing the related codes
 #TEST_RAMDISK = 1
 
+ifeq ($(MICROPY_PY_PYB_LV), 1)
+LVGL_ENABLE = 1
+endif
+
 # To avoid flash operation during debugging
 #FLASH_SKIP = 1
 
@@ -45,17 +49,21 @@ LAN_NEW = 1
 
 # Include modules
 USE_FONT = 1
-USE_LCD = 1
+USE_LCDSPI = 1
 
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
 # Files that are generated and needed before the QSTR build.
+#QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h $(BUILD)/modstm_qstr.h
 QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
+
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
@@ -96,16 +104,17 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-
+INC += -I$(BOARD_DIR)
 INC += -I$(MCU_SERIES_LOW)
-INC += -Iboards/$(BOARD)
+INC += -I$(TOP)/lib/oofatfs
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
-INC += -Ilwip_inc -Ilwip_utils
+INC += -Ilwip_inc
+INC += -Ilwip_utils
 endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 INC += -I$(TOP)/lib/mbedtls/include
@@ -119,10 +128,17 @@ endif
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
-ifeq ($(USE_LCD), 1)
-INC += -Ilcd
+ifeq ($(USE_LCDSPI), 1)
+INC += -Ilcdspi
 endif
 INC += -Isd
+ifeq ($(USE_DBG_PRINT) ,1)
+INC += -Idebug
+endif
+ifeq ($(LVGL_ENABLE),1)
+INC += -Ilvgl
+INC += -Ilib/lv_bindings/lvgl
+endif
 
 #######################################################################
 # C flags.
@@ -133,6 +149,7 @@ CFLAGS += $(COPT)
 #CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
 CFLAGS += -Wno-error=pointer-arith
+#CFLAGS += -Wno-error=incompatible-pointer-types
 #CFLAGS += -Wno-error=tautological-compare
 #CFLAGS += -Wno-error=unused-const-variable
 #CFLAGS += -Wno-error=nonnull
@@ -239,6 +256,9 @@ CFLAGS += -DMICROPY_SSL_AXTLS
 CFLAGS += -DMICROPY_STREAMS_POSIX_API
 endif
 
+ifeq ($(LVGL_ENABLE),1)
+CFLAGS += -DLVGL_ENABLE
+endif
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -511,11 +531,12 @@ SRC_C += debug/division.c
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
-ifeq ($(USE_LCD), 1)
-SRC_C += lcd/lcdspi.c
-SRC_C += lcd/jpeg.c
-SRC_C += lcd/picojpeg.c
+ifeq ($(USE_LCDSPI), 1)
+SRC_C += lcdspi/lcdspi.c
+SRC_C += lcdspi/jpeg.c
+SRC_C += lcdspi/picojpeg.c
 endif
+
 SRC_C += sd/sd.c
 SRC_C += strftime.c
 SRC_C += time_utils.c
@@ -717,7 +738,7 @@ endif
 #	$(ECHO) "MISC freezing bytecode"
 #	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
-$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/firmware.elf: $(OBJ) $(LIB_LVGL)
 	$(ECHO) "LINK $@"
 	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin

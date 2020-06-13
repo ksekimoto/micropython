@@ -638,7 +638,7 @@ STATIC mp_obj_t pyb_i2c_is_ready(mp_obj_t self_in, mp_obj_t i2c_addr_o) {
     pyb_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (!in_master_mode(self)) {
-        mp_raise_TypeError("I2C must be a master");
+        mp_raise_TypeError(MP_ERROR_TEXT("I2C must be a master"));
     }
 
     mp_uint_t i2c_addr = mp_obj_get_int(i2c_addr_o) << 1;
@@ -662,7 +662,7 @@ STATIC mp_obj_t pyb_i2c_scan(mp_obj_t self_in) {
     pyb_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (!in_master_mode(self)) {
-        mp_raise_TypeError("I2C must be a master");
+        mp_raise_TypeError(MP_ERROR_TEXT("I2C must be a master"));
     }
 
     mp_obj_t list = mp_obj_new_list(0, NULL);
@@ -721,7 +721,7 @@ STATIC mp_obj_t pyb_i2c_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
             if (use_dma) {
                 dma_deinit(self->tx_dma_descr);
             }
-            mp_raise_TypeError("addr argument required");
+            mp_raise_TypeError(MP_ERROR_TEXT("addr argument required"));
         }
         mp_uint_t i2c_addr = args[1].u_int << 1;
         if (!use_dma) {
@@ -797,7 +797,7 @@ STATIC mp_obj_t pyb_i2c_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     HAL_StatusTypeDef status;
     if (in_master_mode(self)) {
         if (args[1].u_int == PYB_I2C_MASTER_ADDRESS) {
-            mp_raise_TypeError("addr argument required");
+            mp_raise_TypeError(MP_ERROR_TEXT("addr argument required"));
         }
         mp_uint_t i2c_addr = args[1].u_int << 1;
         if (!use_dma) {
@@ -866,7 +866,7 @@ STATIC mp_obj_t pyb_i2c_mem_read(size_t n_args, const mp_obj_t *pos_args, mp_map
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(pyb_i2c_mem_read_allowed_args), pyb_i2c_mem_read_allowed_args, args);
 
     if (!in_master_mode(self)) {
-        mp_raise_TypeError("I2C must be a master");
+        mp_raise_TypeError(MP_ERROR_TEXT("I2C must be a master"));
     }
 
     // get the buffer to read into

@@ -132,21 +132,46 @@
 #endif
 
 // extended modules
+#ifndef MICROPY_PY_UASYNCIO
+#define MICROPY_PY_UASYNCIO         (1)
+#endif
+#ifndef MICROPY_PY_UCTYPES
 #define MICROPY_PY_UCTYPES          (1)
+#endif
+#ifndef MICROPY_PY_UZLIB
 #define MICROPY_PY_UZLIB            (1)
+#endif
+#ifndef MICROPY_PY_UJSON
 #define MICROPY_PY_UJSON            (1)
+#endif
+#ifndef MICROPY_PY_URE
 #define MICROPY_PY_URE              (1)
+#endif
+#ifndef MICROPY_PY_URE_SUB
 #define MICROPY_PY_URE_SUB          (1)
+#endif
+#ifndef MICROPY_PY_UHEAPQ
 #define MICROPY_PY_UHEAPQ           (1)
+#endif
+#ifndef MICROPY_PY_UHASHLIB
 #define MICROPY_PY_UHASHLIB         (1)
+#endif
 #define MICROPY_PY_UHASHLIB_MD5     (MICROPY_PY_USSL)
 #define MICROPY_PY_UHASHLIB_SHA1    (MICROPY_PY_USSL)
 #define MICROPY_PY_UCRYPTOLIB       (MICROPY_PY_USSL)
+#ifndef MICROPY_PY_UBINASCII
 #define MICROPY_PY_UBINASCII        (1)
+#endif
+#ifndef MICROPY_PY_URANDOM
 #define MICROPY_PY_URANDOM          (1)
+#endif
+#ifndef MICROPY_PY_URANDOM_EXTRA_FUNCS
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
+#endif
 #define MICROPY_PY_USELECT          (1)
+#ifndef MICROPY_PY_UTIMEQ
 #define MICROPY_PY_UTIMEQ           (1)
+#endif
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_OS_DUPTERM       (3)
 #define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (1)
@@ -215,6 +240,42 @@ extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
 extern const struct _mp_obj_module_t mp_module_onewire;
+#if MICROPY_PY_LVGL
+extern const struct _mp_obj_module_t mp_module_lvgl;
+extern const struct _mp_obj_module_t mp_module_rtch;
+extern const struct _mp_obj_module_t mp_module_lodepng;
+extern const struct _mp_obj_module_t mp_module_ILI9341;
+extern const struct _mp_obj_module_t mp_module_xpt2046;
+extern const struct _mp_obj_module_t mp_module_stmpe610;
+extern const struct _mp_obj_module_t mp_module_lvrz;
+
+#define MICROPY_PORT_LVGL_DEF \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_lvgl), (mp_obj_t)&mp_module_lvgl }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_lvrz), (mp_obj_t)&mp_module_lvrz }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_ILI9341), (mp_obj_t)&mp_module_ILI9341 }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_stmpe610), (mp_obj_t)&mp_module_stmpe610 }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&mp_module_xpt2046 },
+
+// lvesp needs to delete the timer task upon soft reset
+
+extern void lv_deinit(void);
+#define MICROPY_PORT_DEINIT_FUNC lv_deinit()
+
+#else
+#define MICROPY_PORT_LVGL_DEF
+#endif
+
+#if MICROPY_PY_LODEPNG
+#define MICROPY_PORT_LODEPNG_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_lodepng), (mp_obj_t)&mp_module_lodepng },
+#else
+#define MICROPY_PORT_LODEPNG_DEF
+#endif
+
+#if MICROPY_PY_RTCH
+#define MICROPY_PORT_RTCH_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_rtch), (mp_obj_t)&mp_module_rtch },
+#else
+#define MICROPY_PORT_RTCH_DEF
+#endif
 
 #if MICROPY_PY_MYMODULE
 #define MYMODULE_BUILTIN_MODULE             { MP_ROM_QSTR(MP_QSTR_mymodule), MP_ROM_PTR(&mp_module_mymodule) },
@@ -276,6 +337,9 @@ extern const struct _mp_obj_module_t mp_module_onewire;
     WSOCKET_BUILTIN_MODULE \
     NETWORK_BUILTIN_MODULE \
     { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, \
+    MICROPY_PORT_LVGL_DEF \
+    MICROPY_PORT_LODEPNG_DEF \
+    MICROPY_PORT_RTCH_DEF
 
 /* by including extmod folder, the following modules can be used.
  *   binascii
@@ -331,6 +395,19 @@ struct _mp_bluetooth_nimble_root_pointers_t;
 #define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE
 #endif
 
+#if MICROPY_BLUETOOTH_BTSTACK
+struct _mp_bluetooth_btstack_root_pointers_t;
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK struct _mp_bluetooth_btstack_root_pointers_t *bluetooth_btstack_root_pointers;
+#else
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK
+#endif
+
+#if MICROPY_PY_LVGL
+#include "lib/lv_bindings/lvgl/src/lv_misc/lv_gc.h"
+#else
+#define LV_ROOTS
+#endif
+
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8]; \
     \
@@ -345,7 +422,7 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; \
     \
-    struct _soft_timer_entry_t *soft_timer_head; \
+    struct _soft_timer_entry_t *soft_timer_heap; \
     \
     /* pointers to all Timer objects (if they have been created) */ \
     struct _pyb_timer_obj_t *pyb_timer_obj_all[MICROPY_HW_MAX_TIMER]; \
@@ -364,6 +441,9 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     MICROPY_PORT_ROOT_POINTER_MBEDTLS \
     MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE \
+    MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK \
+    LV_ROOTS \
+    void *mp_lv_user_data; \
 
 // type definitions for the specific machine
 

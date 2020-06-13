@@ -120,7 +120,7 @@ const pin_obj_t *pin_find(mp_obj_t user_obj) {
         mp_obj_t o = mp_call_function_1(MP_STATE_PORT(pin_class_mapper), user_obj);
         if (o != mp_const_none) {
             if (!mp_obj_is_type(o, &pin_type)) {
-                mp_raise_ValueError("Pin.mapper didn't return a Pin object");
+                mp_raise_ValueError(MP_ERROR_TEXT("Pin.mapper didn't return a Pin object"));
             }
             if (pin_class_debug) {
                 printf("Pin.mapper maps ");

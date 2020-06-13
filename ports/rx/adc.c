@@ -79,7 +79,7 @@ STATIC uint32_t adc_config_and_read_channel(ADC_HandleTypeDef *adcHandle, uint32
 }
 
 /******************************************************************************/
-/* MicroPython bindings : ad object                                           */
+/* MicroPython bindings : adc object (single channel)                         */
 
 STATIC void adc_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pyb_obj_adc_t *self = MP_OBJ_TO_PTR(self_in);
@@ -104,7 +104,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         pin_idx = mp_obj_get_int(pin_obj);
         resolution = rx_adc_get_resolution((uint8_t)pin_idx);
         if (resolution < 0) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "pin(%d) does not have ADC capabilities", pin_idx));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("not a valid ADC pin index: %d"), pin_idx);
         }
         channel = rx_adc_get_channel((uint8_t)pin_idx);
     } else {
@@ -112,7 +112,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         pin_idx = (int)pin->pin;
         resolution = rx_adc_get_resolution((uint8_t)pin_idx);
         if (resolution < 0) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "pin(%q) does not have ADC capabilities", pin->name));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("pin %q does not have ADC capabilities"), pin->name);
         }
         channel = rx_adc_get_channel((uint8_t)pin_idx);
     }
@@ -191,10 +191,9 @@ float adc_read_core_vref(ADC_HandleTypeDef *adcHandle) {
 /* MicroPython bindings : adc_all object                                      */
 
 STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ADC_ALL is not implemented"));
-
     // check number of arguments
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
+
     // make ADCAll object
     pyb_adc_all_obj_t *o = m_new_obj(pyb_adc_all_obj_t);
     o->base.type = &pyb_adc_all_type;
@@ -204,6 +203,7 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
         en_mask =  mp_obj_get_int(args[1]);
     }
     adc_init_all(o, res, en_mask);
+
     return MP_OBJ_FROM_PTR(o);
 }
 

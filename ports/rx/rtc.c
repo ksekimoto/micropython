@@ -257,7 +257,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_datetime_obj, 1, 2, pyb_rtc_datetime
 // wakeup(wucksel, wut, callback)
 mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
     // ToDo: implement
-    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "Not implemented"));
+    mp_raise_ValueError(MP_ERROR_TEXT("Not implemented"));
     return mp_const_none;
 }
 //MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
@@ -269,7 +269,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 1, 4, pyb_rtc_wakeup);
 // and set the calibration value; otherwise return calibration value
 mp_obj_t pyb_rtc_calibration(size_t n_args, const mp_obj_t *args) {
     // ToDo: implement
-    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "Not implemented"));
+    mp_raise_ValueError(MP_ERROR_TEXT("Not implemented"));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_calibration_obj, 1, 2, pyb_rtc_calibration);

@@ -32,20 +32,24 @@
 
 #if MICROPY_PY_PYB_FONT
 
-#define MISAKIFONT4X8
-#define MISAKIFONT6X12
+#define MISAKIFONT4X8   1
+#define MISAKIFONT6X12  2
 #if MICROPY_PY_PYB_UNICODE_FONT
-#define MISAKIFONT8X8
-#define MISAKIFONT12X12
+#define MISAKIFONT8X8   3
+#define MISAKIFONT12X12 4
 #endif
 
 #include "font.h"
 
+#if defined(USE_DBG_PRINT)
+#define DEBUG_LCDSPI
+#endif
+
 //#define   DEBUG       // Define if you want to debug
 #ifdef DEBUG
-#  define DEBUG_PRINT(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
+#  define debug_printf(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
 #else
-#  define DEBUG_PRINT(m,v)    // do nothing
+#  define debug_printf(m,v)    // do nothing
 #endif
 
 #ifdef MISAKIFONT4X8
@@ -207,16 +211,16 @@ typedef struct _pyb_font_obj_t {
 
 STATIC const pyb_font_obj_t pyb_font_obj[] = {
 #ifdef MISAKIFONT4X8
-    {{&pyb_font_type}, 0, (const font_t *)&MisakiFont4x8},
+    {{&pyb_font_type}, MISAKIFONT4X8, (const font_t *)&MisakiFont4x8},
 #endif
 #ifdef MISAKIFONT8X8
-    {{&pyb_font_type}, 1, (const font_t *)&MisakiFont8x8},
+    {{&pyb_font_type}, MISAKIFONT8X8, (const font_t *)&MisakiFont8x8},
 #endif
 #ifdef MISAKIFONT6X12
-    {{&pyb_font_type}, 2, (const font_t *)&MisakiFont6x12},
+    {{&pyb_font_type}, MISAKIFONT6X12, (const font_t *)&MisakiFont6x12},
 #endif
 #ifdef MISAKIFONT12X12
-    {{&pyb_font_type}, 3, (const font_t *)&MisakiFont12x12},
+    {{&pyb_font_type}, MISAKIFONT12X12, (const font_t *)&MisakiFont12x12},
 #endif
 };
 #define NUM_FONTS   MP_ARRAY_SIZE(pyb_font_obj)
@@ -272,12 +276,16 @@ unsigned char *font_fontData(font_t *font, int idx) {
     unsigned char *p;
     if (idx < 0x100) {
         idx &= 0xff;
-        DEBUG_PRINT("font8 idx: ", idx);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("font8 idx: ", idx);
+#endif
         p = font->_font_tbl->ascii_font_tbl->ascii_font_data;
         p += (idx * font_fontBytes(font, idx));
         return p;
     } else {
-        DEBUG_PRINT("font16 idx: ", idx);
+#if defined(DEBUG_LCDSPI)
+        debug_printf("font16 idx: ", idx);
+#endif
         int i;
         int fidx;
         int tblH = idx / CUNIFONT_TBL_SIZE;
@@ -292,11 +300,16 @@ unsigned char *font_fontData(font_t *font, int idx) {
                 if (font_map[(tblH * CUNIFONT_TBL_SIZE) / 8 + (i / 8)] & mask) {
                     fidx++;
                 }
-            } DEBUG_PRINT("font16 fidx: ", fidx);
+            }
+#if defined(DEBUG_LCDSPI)
+            debug_printf("font16 fidx: ", fidx);
+#endif
             p = font->_font_tbl->unicode_font_tbl->unicode_font_data;
             p += (fidx * font_fontBytes(font, idx));
         } else {
-            DEBUG_PRINT("font16 fidx: ", -1);
+#if defined(DEBUG_LCDSPI)
+            debug_printf("font16 fidx: ", -1);
+#endif
             p = (unsigned char *) NULL;
         }
         return p;
@@ -343,7 +356,7 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
             src++;
             slen--;
         }
-        DEBUG_PRINT("unicode",u)
+        debug_printf("unicode",u)
         if ((0x10000 <= u) && (u <= 0x10FFFF)) {
             if (udst != NULL) {
                 udst[idst] = (unsigned short)(0xD800 | (((u & 0x1FFC00) >> 10) - 0x40));
@@ -357,7 +370,7 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
             idst++;
         }
     }
-    DEBUG_PRINT("len", idst)
+    debug_printf("len", idst)
     *dlen = idst;
 }
 #endif
@@ -443,7 +456,7 @@ STATIC mp_obj_t font_obj_make_new(const mp_obj_type_t *type, size_t n_args, size
     mp_int_t font_id = mp_obj_get_int(args[0]);
     // check font number
     if (!find_font_id(font_id)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "FONT(%d) doesn't exist", font_id));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("FONT(%d) doesn't exist"), font_id);
     }
     // return static font object
     return MP_OBJ_FROM_PTR(&pyb_font_obj[font_id]);
@@ -453,7 +466,12 @@ STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pyb_font_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_width), MP_ROM_PTR(&pyb_font_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&pyb_font_height_obj) },
-    { MP_ROM_QSTR(MP_QSTR_data), MP_ROM_PTR(&pyb_font_data_obj) },
+    { MP_ROM_QSTR(MP_QSTR_MISAKIA_8), MP_ROM_INT(MISAKIFONT4X8) },
+    { MP_ROM_QSTR(MP_QSTR_MISAKIA_12), MP_ROM_INT(MISAKIFONT6X12) },
+#if MICROPY_PY_PYB_UNICODE_FONT
+    { MP_ROM_QSTR(MP_QSTR_MISAKIU_8), MP_ROM_INT(MISAKIFONT8X8) },
+    { MP_ROM_QSTR(MP_QSTR_MISAKIU_12), MP_ROM_INT(MISAKIFONT12X12) },
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(font_locals_dict, font_locals_dict_table);
@@ -465,115 +483,5 @@ const mp_obj_type_t pyb_font_type = {
     .make_new = font_obj_make_new,
     .locals_dict = (mp_obj_dict_t*)&font_locals_dict,
 };
-
-
-#if 0
-//**************************************************
-// メモリの開放時に走る
-//**************************************************
-static void font_free(mrb_state *mrb, void *ptr) {
-	Font* font = static_cast<Font*>(ptr);
-	delete font;
-}
-
-//**************************************************
-// この構造体の意味はよくわかっていない
-//**************************************************
-static struct mrb_data_type font_type = { "Font", font_free };
-
-mrb_value mrb_font_initialize(mrb_state *mrb, mrb_value self)
-{
-	DATA_TYPE(self) = &font_type;
-	DATA_PTR(self) = NULL;
-	int font_idx;
-	mrb_get_args(mrb, "i", &font_idx);
-	if (font_idx < 0)
-		font_idx = 0;
-	Font *font = fontList[font_idx];
-	DEBUG_PRINT("mrb_font_initialize font_idx", font_idx);
-	DATA_PTR(self) = font;
-	return self;
-}
-
-mrb_value mrb_font_data(mrb_state *mrb, mrb_value self)
-{
-	Font* font = static_cast<Font*>(mrb_get_datatype(mrb, self, &font_type));
-	unsigned char *buf;
-	int idx;
-	mrb_get_args(mrb, "i", &idx);
-	buf = (unsigned char *)font->fontData(idx);
-	DEBUG_PRINT("mrb_font_data buf", (int)buf);
-	return mrb_str_new(mrb, (const char*)buf, font->fontBytes(idx));
-}
-
-#if 0
-mrb_value mrb_font_cnvUtf8ToUnicode(mrb_state *mrb, mrb_value self)
-{
-	mrb_value v;
-	mrb_value vsrc;
-	char *src;
-	int slen;
-	int size = 0;
-	mrb_get_args(mrb, "Si", &vsrc, &slen);
-	src = RSTRING_PTR(vsrc);
-	DEBUG_PRINT("mrb_font_cnvUtf8ToUnicode src len", slen);
-	cnv_u8_to_u16((unsigned char *)src, slen, (unsigned char *)NULL, 256, &size);
-	unsigned char *u16 = (unsigned char *)malloc(sizeof(unsigned short)*(size+2));
-	if (u16) {
-		cnv_u8_to_u16((unsigned char *)src, slen, u16, sizeof(unsigned short)*(size+2), &size);
-		v = mrb_str_new(mrb, (const char*)u16, size*2);
-		free(u16);
-	} else {
-		v = mrb_str_new(mrb, (const char*)"*", 1);
-	}
-	return v;
-}
-#else
-#define TMP_BUF_MAX	128
-static unsigned char tmp[TMP_BUF_MAX];
-mrb_value mrb_font_cnvUtf8ToUnicode(mrb_state *mrb, mrb_value self)
-{
-	mrb_value v;
-	mrb_value vsrc;
-	char *src;
-	int slen;
-	int size = 0;
-	mrb_get_args(mrb, "Si", &vsrc, &slen);
-	src = RSTRING_PTR(vsrc);
-	DEBUG_PRINT("mrb_font_cnvUtf8ToUnicode src len", slen);
-	cnv_u8_to_u16((unsigned char *)src, slen, (unsigned char *)tmp, TMP_BUF_MAX, &size);
-	v = mrb_str_new(mrb, (const char*)tmp, size*2);
-	return v;
-}
-#endif
-
-mrb_value mrb_font_getUnicodeAtIndex(mrb_state *mrb, mrb_value self)
-{
-	mrb_value vsrc;
-	unsigned char *src;
-	int index;
-	unsigned int u;
-	mrb_get_args(mrb, "Si", &vsrc, &index);
-	src = (unsigned char *)RSTRING_PTR(vsrc);
-	index *= 2;
-	u = ((unsigned int)src[index+1] << 8) + (unsigned int)src[index];
-	return mrb_fixnum_value(u);
-}
-
-void font_Init(mrb_state *mrb)
-{
-	//クラスを作成する前には、強制gcを入れる
-	mrb_full_gc(mrb);
-
-	struct RClass *fontModule = mrb_define_class(mrb, "Font", mrb->object_class);
-	MRB_SET_INSTANCE_TT(fontModule, MRB_TT_DATA);
-
-	mrb_define_method(mrb, fontModule, "initialize", mrb_font_initialize, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, fontModule, "data", mrb_font_data, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, fontModule, "cnvUtf8ToUnicode", mrb_font_cnvUtf8ToUnicode, MRB_ARGS_REQ(2));
-	mrb_define_method(mrb, fontModule, "getUnicodeAtIndex", mrb_font_getUnicodeAtIndex, MRB_ARGS_REQ(2));
-}
-
-#endif
 
 #endif

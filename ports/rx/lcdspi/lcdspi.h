@@ -1,22 +1,53 @@
 /*
- * sLcdSpi.h
+ * This file is part of the MicroPython project, http://micropython.org/
  *
- * Copyright (c) 2017 Kentaro Sekimoto
+ * The MIT License (MIT)
  *
- * This software is released under the MIT License.
+ * Copyright (c) 2020 Kentaro Sekimoto
  *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
-#ifndef SLCDSPI_H_
-#define SLCDSPI_H_
+
+#ifndef LCD_LCDSPI_H_
+#define LCD_LCDSPI_H_
 
 #include "font.h"
-//#include "S1D15G10.h"
-//#include "PCF8833.h"
-//#include "ST7735.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* LCD Controller */
+#define PCF8833     0
+#define S1D15G10    1
+#define ILI9341     2
+#define ILI9340     3
+#define ST7735      4
+#define ST7789      5
+
+/* LCD Model */
+#define NOKIA6100_0     0
+#define NOKIA6100_1     1
+#define T180            2
+#define M022C9340SPI    3
+#define RASPI13LCDSPI   4
+#define RASPI28LCDSPI   5
 
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb
@@ -92,6 +123,8 @@ typedef struct {
     uint32_t baud;
     uint16_t spcmd;
     uint8_t spbr;
+    uint8_t polarity;
+    uint8_t phase;
 } lcdspi_t;
 
 void SPISW_Initialize(void);
@@ -110,4 +143,4 @@ extern const mp_obj_type_t pyb_lcdspi_type;
 }
 #endif
 
-#endif /* SLCDSPI_H_ */
+#endif /* LCD_LCDSPI_H_ */

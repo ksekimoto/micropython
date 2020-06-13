@@ -55,7 +55,7 @@ void tinymalloc_init(void *memory, size_t size) {
 }
 
 void split(struct block *fitting_slot, size_t size) {
-    struct block *new = (void *)((void *)fitting_slot + size + sizeof(struct block));
+    struct block *new = (void *)((char *)fitting_slot + size + sizeof(struct block));
     new->size = (fitting_slot->size) - size - sizeof(struct block);
     new->free = 1;
     new->next = fitting_slot->next;
@@ -100,7 +100,7 @@ void merge() {
 }
 
 void tinyfree(void *ptr) {
-    if (((void *)memory_start <= ptr) && (ptr <= (void *)(memory_start + memory_size))) {
+    if (((char *)memory_start <= (char *)ptr) && ((char *)ptr <= ((char *)memory_start + memory_size))) {
         struct block *curr = ptr;
         --curr;
         curr->free = 1;

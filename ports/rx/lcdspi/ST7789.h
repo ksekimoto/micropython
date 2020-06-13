@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2020 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,46 +24,18 @@
  * THE SOFTWARE.
  */
 
-#ifndef SJPEG_H
-#define SJPEG_H
+#ifndef LCD_ST7789_H_
+#define LCD_ST7789_H_
 
-#include <stdio.h>
-#include "picojpeg.h"
+#define ST7789_CASET 0x2A      // column address set
+#define ST7789_PASET 0x2B      // page address set
+#define ST7789_RAMWR 0x2C      // memory write
 
-#ifndef max
-#define max(a,b)     (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a,b)     (((a) < (b)) ? (a) : (b))
-#endif
+#define ST7789_COLORMODE_65K    (0x50)
+#define ST7789_COLORMODE_262K   (0x60)
+#define ST7789_COLORMODE_12BIT  (0x03)
+#define ST7789_COLORMODE_16BIT  (0x05)
+#define ST7789_COLORMODE_18BIT  (0x06)
+#define ST7789_COLORMODE_16M    (0x07)
 
-typedef struct {
-    pjpeg_image_info_t image_info;
-    int is_available;
-    int mcu_x;
-    int mcu_y;
-    uint32_t row_pitch;
-    uint32_t row_blocks_per_mcu;
-    uint32_t col_blocks_per_mcu;
-    int m_split;
-    uint8_t *pImage;
-    int err;
-    int decoded_width;
-    int decoded_height;
-    int comps;
-    int MCUSPerRow;
-    int MCUSPerCol;
-    pjpeg_scan_type_t scanType;
-    int MCUx;
-    int MCUy;
-} jpeg_t;
-
-extern jpeg_t jpeg;
-
-void jpeg_init(jpeg_t *jpeg);
-void jpeg_deinit(jpeg_t *jpeg);
-int jpeg_decode(jpeg_t *jpeg, char *filename, int split);
-int jpeg_decode_mcu(jpeg_t *jpeg);
-int jpeg_read(jpeg_t *jpeg);
-
-#endif
+#endif /* LCD_ST7789_H_ */

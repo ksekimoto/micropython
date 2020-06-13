@@ -40,7 +40,8 @@
 #define IRQ_ENABLE_STATS (0)
 
 #if IRQ_ENABLE_STATS
-extern uint32_t irq_stats[FPU_IRQn + 1];
+#define IRQ_STATS_MAX   (128)
+extern uint32_t irq_stats[IRQ_STATS_MAX];
 #define IRQ_ENTER(irq) ++irq_stats[irq]
 #define IRQ_EXIT(irq)
 #else

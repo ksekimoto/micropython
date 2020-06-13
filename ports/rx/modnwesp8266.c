@@ -504,7 +504,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
             mp_hal_pin_config(pin_reset, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
             mp_hal_pin_low(pin_reset);
             mp_hal_delay_ms(100);
-            mp_hal_pin_high(MICROPY_HW_ESP8266_RE);
+            mp_hal_pin_high(pin_reset);
         }
         if (args[ARG_en].u_obj != MP_OBJ_NULL) {
             const pin_obj_t *pin_en = pin_find(args[ARG_en].u_obj);
@@ -520,13 +520,13 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
     char sdk_ver[SDK_MAX];
     esp8266_driver_init(ch, baud);
     if (!esp8266_driver_reset()) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "failed to init ESP8266 module\n"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP8266 module\n"));
     }
     if (esp8266_AT_GMR(at_ver, sizeof(at_ver), sdk_ver, sizeof(sdk_ver))) {
         printf("AT ver=%s\n", at_ver);
         printf("SDK ver=%s\n", sdk_ver);
     } else {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "can't get ESP vesions\n"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("can't get ESP vesions\n"));
     }
     esp8266_AT_CWQAP();
     esp8266_set_AT_CWMODE(3);
@@ -565,7 +565,7 @@ STATIC mp_obj_t esp8266_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_
     //    bssid = mp_obj_str_get_str(args[3].u_obj);
     //}
     if (!esp8266_set_AT_CWJAP(ssid, key)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not connect to ssid=%s, key=%s\n", ssid, key));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not connect to ssid=%s, key=%s\n"), ssid, key);
     }
     esp8266_set_AT_CIPMUX(1);
     //esp8266_AT_CWAUTOCONN_0();
@@ -622,15 +622,15 @@ STATIC mp_obj_t esp8266_ifconfig(size_t n_args, const mp_obj_t *args) {
         const char *mask_str = mp_obj_str_get_data(items[2], &mask_len);
         const char *dns_str = mp_obj_str_get_data(items[3], &dns_len);
         if ((ip_len <= 0) || (gw_len <= 0) || (mask_len <= 0) || (dns_len <= 0)) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "ip, gw, mask should be properly inputted.\n"));
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("ip, gw, mask should be properly inputted.\n"));
         }
         bool ret = esp8266_set_AT_CIPSTA(ip_str, gw_str, mask_str);
         if (!ret) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure ip=%s, gw=%s, mask=%s\n", ip_str, gw_str, mask_str));
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure ip=%s, gw=%s, mask=%s\n"), ip_str, gw_str, mask_str);
         }
         ret = esp8266_set_AT_CIPDNS_CUR(dns_str, true);
         if (!ret) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure dns=%s\n", dns_str));
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure dns=%s\n"), dns_str);
         }
     }
     return mp_const_none;

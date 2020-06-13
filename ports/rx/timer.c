@@ -163,7 +163,7 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
         freq_args[1] = args[ARG_freq].u_obj;
         pyb_timer_freq(2, (const mp_obj_t *)&freq_args);
     } else {
-        mp_raise_TypeError("must specify either freq, period, or prescaler and period");
+        mp_raise_TypeError(MP_ERROR_TEXT("must specify either freq, period, or prescaler and period"));
     }
     // Enable ARPE so that the auto-reload register is buffered.
     // This allows to smoothly change the frequency of the timer.
@@ -268,7 +268,7 @@ STATIC mp_obj_t pyb_timer_channel(size_t n_args, const mp_obj_t *pos_args, mp_ma
     mp_int_t channel = mp_obj_get_int(pos_args[1]);
 
     if (channel < 1 || channel > 4) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid channel (%d)", channel));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid channel (%d)"), channel);
     }
 
     pyb_timer_channel_obj_t *chan = self->channel;
@@ -297,6 +297,7 @@ STATIC mp_obj_t pyb_timer_channel(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (chan) {
         // Turn off any IRQ associated with the channel.
         pyb_timer_channel_callback(MP_OBJ_FROM_PTR(chan), mp_const_none);
+
         // Unlink the channel from the list.
         if (prev_chan) {
             prev_chan->next = chan->next;
@@ -427,7 +428,7 @@ STATIC mp_obj_t pyb_timer_callback(mp_obj_t self_in, mp_obj_t callback) {
         //HAL_TIM_Base_Start_IT(&self->tim); // This will re-enable the IRQ
         //HAL_NVIC_EnableIRQ(self->irqn);
     } else {
-        mp_raise_ValueError("callback must be None or a callable object");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("callback must be None or a callable object"));
     }
     return mp_const_none;
 }
@@ -561,9 +562,9 @@ STATIC void timer_handle_irq_channel(pyb_timer_obj_t *tim, uint8_t channel, mp_o
             tim->callback = mp_const_none;
             //__HAL_TIM_DISABLE_IT(&tim->tim, irq_mask);
             if (channel == 0) {
-                printf("uncaught exception in Timer(%u) interrupt handler\n", tim->tim_id);
+                        mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) interrupt handler\n", tim->tim_id);
             } else {
-                printf("uncaught exception in Timer(%u) channel %u interrupt handler\n", tim->tim_id, channel);
+                        mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) channel %u interrupt handler\n", tim->tim_id, channel);
             }
             mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));
         }

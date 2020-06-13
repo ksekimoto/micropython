@@ -105,6 +105,7 @@
 //#define MICROPY_SSL_MBEDTLS         (1)
 // Add MICROPY_PY_USSL=1 as a parameter of make command when adding USSL module
 //#define MICROPY_PY_USSL             (1)
+#define MICROPY_PY_PYB_LV           (1)
 
 #define BOARD_SERIAL1_CH    (0)
 #define BOARD_SERIAL2_CH    (2)

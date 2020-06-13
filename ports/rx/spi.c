@@ -88,22 +88,20 @@ STATIC int spi_find(mp_obj_t id) {
             return 3;
         #endif
         }
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "SPI(%s) doesn't exist", port));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("SPI(%s) doesn't exist"), port);
     } else {
         // given an integer id
         int spi_id = mp_obj_get_int(id);
         if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
             return spi_id;
         }
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "SPI(%d) doesn't exist", spi_id));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("SPI(%d) doesn't exist"), spi_id);
     }
 }
 
 // sets the parameters in the SPI_InitTypeDef struct
 // if an argument is -1 then the corresponding parameter is not changed
-STATIC void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baudrate,
+void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baudrate,
     int32_t polarity, int32_t phase, int32_t bits, int32_t firstbit) {
     rx_spi_set_spi_ch(spi_obj->ch, polarity, phase);
     rx_spi_set_clk(spi_obj->ch, baudrate);
@@ -180,11 +178,11 @@ void spi_deinit(const spi_t *spi_obj) {
 // and use that value for the baudrate in the formula, plus a small constant.
 #define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
-STATIC void spi_transfer(const spi_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
+void spi_transfer(const spi_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
     rx_spi_transfer(self->ch, self->bits, dest, (uint8_t *)src, (uint32_t)len, timeout);
 }
 
-STATIC void spi_print(const mp_print_t *print, const spi_t *spi_obj, bool legacy) {
+void spi_print(const mp_print_t *print, const spi_t *spi_obj, bool legacy) {
     uint spi_num = 1; // default to SPI1
     mp_printf(print, "SPI(%u", spi_num);
     mp_print_str(print, ")");
@@ -422,7 +420,7 @@ STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_ma
             // recv argument given
             mp_get_buffer_raise(args[1].u_obj, &bufinfo_recv, MP_BUFFER_WRITE);
             if (bufinfo_recv.len != bufinfo_send.len) {
-                mp_raise_ValueError("recv must be same length as send");
+                mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("recv must be same length as send"));
             }
             o_ret = args[1].u_obj;
         }
@@ -529,7 +527,7 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
     if (args[ARG_sck].u_obj != MP_OBJ_NULL
         || args[ARG_mosi].u_obj != MP_OBJ_NULL
         || args[ARG_miso].u_obj != MP_OBJ_NULL) {
-        mp_raise_ValueError("explicit choice of sck/mosi/miso is not implemented");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("explicit choice of sck/mosi/miso is not implemented"));
     }
 
     // set the SPI configuration values
@@ -601,6 +599,6 @@ const spi_t *spi_from_mp_obj(mp_obj_t o) {
         machine_hard_spi_obj_t *self = MP_OBJ_TO_PTR(o);
         return self->spi;
     } else {
-        mp_raise_TypeError("expecting an SPI object");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("expecting an SPI object"));
     }
 }

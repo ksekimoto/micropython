@@ -112,7 +112,7 @@ STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_
         pin_idx = pin->pin;
         uint8_t channel = rx_dac_get_channel(pin_idx);
         if (channel == 0xff) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "Pin(%q) doesn't have DAC capabilities", pin->name));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Pin(%q) doesn't have DAC capabilities"), pin->name);
         }
     //}
     pyb_dac_obj_t *dac = m_new_obj(pyb_dac_obj_t);

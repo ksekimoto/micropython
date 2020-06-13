@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,41 +23,55 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_RX_SYSTICK_H
-#define MICROPY_INCLUDED_RX_SYSTICK_H
 
-// Works for x between 0 and 16 inclusive
-#define POW2_CEIL(x) ((((x) - 1) | ((x) - 1) >> 1 | ((x) - 1) >> 2 | ((x) - 1) >> 3) + 1)
+#ifndef SJPEG_H
+#define SJPEG_H
 
-enum {
-    SYSTICK_DISPATCH_DMA = 0,
-    #if MICROPY_HW_ENABLE_STORAGE
-    SYSTICK_DISPATCH_STORAGE,
-    #endif
-    #if MICROPY_PY_NETWORK && MICROPY_PY_LWIP
-    SYSTICK_DISPATCH_LWIP,
-    #endif
-    #if MICROPY_PY_BLUETOOTH
-    SYSTICK_DISPATCH_BLUETOOTH_HCI,
-    #endif
-    SYSTICK_DISPATCH_MAX
-};
+#include <stdio.h>
+#include "picojpeg.h"
 
-#define SYSTICK_DISPATCH_NUM_SLOTS POW2_CEIL(SYSTICK_DISPATCH_MAX)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef void (*systick_dispatch_t)(uint32_t);
+#ifndef max
+#define max(a,b)     (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a,b)     (((a) < (b)) ? (a) : (b))
+#endif
 
-extern systick_dispatch_t systick_dispatch_table[SYSTICK_DISPATCH_NUM_SLOTS];
+typedef struct {
+    pjpeg_image_info_t image_info;
+    int is_available;
+    int mcu_x;
+    int mcu_y;
+    uint32_t row_pitch;
+    uint32_t row_blocks_per_mcu;
+    uint32_t col_blocks_per_mcu;
+    int m_split;
+    uint8_t *pImage;
+    int err;
+    int decoded_width;
+    int decoded_height;
+    int comps;
+    int MCUSPerRow;
+    int MCUSPerCol;
+    pjpeg_scan_type_t scanType;
+    int MCUx;
+    int MCUy;
+} jpeg_t;
 
-static inline void systick_enable_dispatch(size_t slot, systick_dispatch_t f) {
-    systick_dispatch_table[slot] = f;
+extern jpeg_t jpeg;
+
+void jpeg_init(jpeg_t *jpeg);
+void jpeg_deinit(jpeg_t *jpeg);
+int jpeg_decode(jpeg_t *jpeg, char *filename, int split);
+int jpeg_decode_mcu(jpeg_t *jpeg);
+int jpeg_read(jpeg_t *jpeg);
+
+#ifdef __cplusplus
 }
+#endif
 
-static inline void systick_disable_dispatch(size_t slot) {
-    systick_dispatch_table[slot] = NULL;
-}
-
-void systick_wait_at_least(uint32_t stc, uint32_t delay_ms);
-bool systick_has_passed(uint32_t stc, uint32_t delay_ms);
-
-#endif // MICROPY_INCLUDED_RX_SYSTICK_H
+#endif

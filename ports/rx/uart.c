@@ -105,7 +105,7 @@ void uart_deinit_all(void) {
     }
 }
 
-bool uart_exists(uint uart_id) {
+bool uart_exists(int uart_id) {
     if (uart_id > MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all))) {
         // safeguard against pyb_uart_obj_all array being configured too small
         return false;
