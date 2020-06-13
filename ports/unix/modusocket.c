@@ -211,7 +211,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(socket_listen_obj, socket_listen);
 STATIC mp_obj_t socket_accept(mp_obj_t self_in) {
     mp_obj_socket_t *self = MP_OBJ_TO_PTR(self_in);
     // sockaddr_storage isn't stack-friendly (129 bytes or so)
-    //struct sockaddr_storage addr;
+    // struct sockaddr_storage addr;
     byte addr[32];
     socklen_t addr_len = sizeof(addr);
     int fd;
@@ -378,9 +378,9 @@ STATIC mp_obj_t socket_settimeout(mp_obj_t self_in, mp_obj_t timeout_in) {
     if (timeout_in != mp_const_none) {
         #if MICROPY_PY_BUILTINS_FLOAT
         mp_float_t val = mp_obj_get_float(timeout_in);
-        double ipart;
-        tv.tv_usec = round(modf(val, &ipart) * 1000000);
-        tv.tv_sec = ipart;
+        mp_float_t ipart;
+        tv.tv_usec = (time_t)MICROPY_FLOAT_C_FUN(round)(MICROPY_FLOAT_C_FUN(modf)(val, &ipart) * MICROPY_FLOAT_CONST(1000000.));
+        tv.tv_sec = (suseconds_t)ipart;
         #else
         tv.tv_sec = mp_obj_get_int(timeout_in);
         #endif
@@ -547,7 +547,7 @@ STATIC mp_obj_t mod_socket_getaddrinfo(size_t n_args, const mp_obj_t *args) {
         #ifdef __UCLIBC_MAJOR__
         #if __UCLIBC_MAJOR__ == 0 && (__UCLIBC_MINOR__ < 9 || (__UCLIBC_MINOR__ == 9 && __UCLIBC_SUBLEVEL__ <= 32))
 // "warning" requires -Wno-cpp which is a relatively new gcc option, so we choose not to use it.
-//#warning Working around uClibc bug with numeric service name
+// #warning Working around uClibc bug with numeric service name
         // Older versions og uClibc have bugs when numeric ports in service
         // arg require also hints.ai_socktype (or hints.ai_protocol) != 0
         // This actually was fixed in 0.9.32.1, but uClibc doesn't allow to

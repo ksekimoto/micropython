@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2019, Michael Neuling, IBM Corporation.
+ * Copyright (c) 2020 Philipp Ebensberger
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,50 +24,33 @@
  * THE SOFTWARE.
  */
 
-#include <unistd.h>
-#include <stdbool.h>
+#ifndef MICROPY_INCLUDED_MIMXRT_LED_H
+#define MICROPY_INCLUDED_MIMXRT_LED_H
 
-#include "py/mpconfig.h"
-#include "uart_potato.h"
-#include "uart_lpc_serial.h"
+#include "pin.h"
 
-static int lpc_console;
-static int potato_console;
+#if defined(MICROPY_HW_LED1_PIN)
+#define NUM_LEDS (1)
+#else
+#define NUM_LEDS (0)
+#endif
 
-void uart_init_ppc(int lpc) {
-    lpc_console = lpc;
+typedef enum {
+    MACHINE_BOARD_LED = 1,
+} machine_led_t;
 
-    if (!lpc_console) {
-        potato_console = 1;
+typedef struct _machine_led_obj_t {
+    mp_obj_base_t base;
+    mp_uint_t led_id;
+    const pin_obj_t *led_pin;
+} machine_led_obj_t;
 
-        potato_uart_init();
-    } else {
-        lpc_uart_init();
-    }
-}
+void led_init(void);
+void led_state(machine_led_t led, int state);
+void led_toggle(machine_led_t led);
+void led_debug(int value, int delay);
 
-// Receive single character
-int mp_hal_stdin_rx_chr(void) {
-    unsigned char c = 0;
-    if (lpc_console) {
-        c = lpc_uart_read();
-    } else if (potato_console) {
-        c = potato_uart_read();
-    }
-    return c;
-}
+extern const mp_obj_type_t machine_led_type;
+extern const machine_led_obj_t machine_led_obj[NUM_LEDS];
 
-// Send string of given length
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    if (lpc_console) {
-        int i;
-        for (i = 0; i < len; i++) {
-            lpc_uart_write(str[i]);
-        }
-    } else if (potato_console) {
-        int i;
-        for (i = 0; i < len; i++) {
-            potato_uart_write(str[i]);
-        }
-    }
-}
+#endif // MICROPY_INCLUDED_MIMXRT_LED_H

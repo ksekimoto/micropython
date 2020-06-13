@@ -93,7 +93,6 @@ SRC_C = \
 	esppwm.c \
 	espneopixel.c \
 	espapa102.c \
-	intr.c \
 	modpyb.c \
 	modmachine.c \
 	machine_pin.c \
@@ -120,6 +119,7 @@ EXTMOD_SRC_C = $(addprefix extmod/,\
         )
 
 LIB_SRC_C = $(addprefix lib/,\
+	embed/__errno.c \
 	libc/string0.c \
 	libm/math.c \
 	libm/fmodf.c \
