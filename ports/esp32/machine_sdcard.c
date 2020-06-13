@@ -71,24 +71,6 @@ typedef struct _sdcard_obj_t {
 
 #define _SECTOR_SIZE(self) (self->card.csd.sector_size)
 
-STATIC esp_err_t check_esp_err(esp_err_t code) {
-    switch (code) {
-        case ESP_OK:
-            return ESP_OK;
-        case ESP_ERR_NO_MEM:
-            code = MP_ENOMEM;
-            break;
-        case ESP_ERR_TIMEOUT:
-            code = MP_ETIMEDOUT;
-            break;
-        case ESP_ERR_NOT_SUPPORTED:
-            code = MP_EOPNOTSUPP;
-            break;
-    }
-
-    mp_raise_OSError(code);
-}
-
 STATIC gpio_num_t pin_or_int(const mp_obj_t arg) {
     if (mp_obj_is_small_int(arg)) {
         return MP_OBJ_SMALL_INT_VALUE(arg);
@@ -144,6 +126,7 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         ARG_mosi,
         ARG_sck,
         ARG_cs,
+        ARG_freq,
     };
     STATIC const mp_arg_t allowed_args[] = {
         { MP_QSTR_slot,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
@@ -155,6 +138,8 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         { MP_QSTR_mosi,     MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_sck,      MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_cs,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        // freq is valid for both SPI and SDMMC interfaces
+        { MP_QSTR_freq,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 20000000} },
     };
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
     mp_map_t kw_args;
@@ -193,11 +178,14 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
     self->flags = 0;
     // Note that these defaults are macros that expand to structure
     // constants so we can't directly assign them to fields.
+    int freq = arg_vals[ARG_freq].u_int;
     if (is_spi) {
         sdmmc_host_t _temp_host = SDSPI_HOST_DEFAULT();
+        _temp_host.max_freq_khz = freq / 1000;
         self->host = _temp_host;
     } else {
         sdmmc_host_t _temp_host = SDMMC_HOST_DEFAULT();
+        _temp_host.max_freq_khz = freq / 1000;
         self->host = _temp_host;
     }
 

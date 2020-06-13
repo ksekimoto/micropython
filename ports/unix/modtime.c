@@ -84,7 +84,7 @@ STATIC mp_obj_t mod_time_clock(void) {
     // float cannot represent full range of int32 precisely, so we pre-divide
     // int to reduce resolution, and then actually do float division hoping
     // to preserve integer part resolution.
-    return mp_obj_new_float((mp_float_t)(clock() / 1000) / CLOCK_DIV);
+    return mp_obj_new_float((clock() / 1000) / CLOCK_DIV);
     #else
     return mp_obj_new_int((mp_int_t)clock());
     #endif
@@ -95,9 +95,9 @@ STATIC mp_obj_t mod_time_sleep(mp_obj_t arg) {
     #if MICROPY_PY_BUILTINS_FLOAT
     struct timeval tv;
     mp_float_t val = mp_obj_get_float(arg);
-    double ipart;
-    tv.tv_usec = round(modf(val, &ipart) * 1000000);
-    tv.tv_sec = ipart;
+    mp_float_t ipart;
+    tv.tv_usec = (time_t)MICROPY_FLOAT_C_FUN(round)(MICROPY_FLOAT_C_FUN(modf)(val, &ipart) * MICROPY_FLOAT_CONST(1000000.));
+    tv.tv_sec = (suseconds_t)ipart;
     int res;
     while (1) {
         MP_THREAD_GIL_EXIT();
@@ -110,7 +110,7 @@ STATIC mp_obj_t mod_time_sleep(mp_obj_t arg) {
             break;
         }
         mp_handle_pending(true);
-        //printf("select: EINTR: %ld:%ld\n", tv.tv_sec, tv.tv_usec);
+        // printf("select: EINTR: %ld:%ld\n", tv.tv_sec, tv.tv_usec);
         #else
         break;
         #endif

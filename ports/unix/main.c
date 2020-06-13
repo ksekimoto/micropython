@@ -657,7 +657,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
         inspect = true;
     }
     if (ret == NOTHING_EXECUTED || inspect) {
-        if (isatty(0)) {
+        if (isatty(0) || inspect) {
             prompt_read_history();
             ret = do_repl();
             prompt_write_history();
@@ -683,6 +683,11 @@ MP_NOINLINE int main_(int argc, char **argv) {
     }
     #endif
 
+    #if MICROPY_PY_BLUETOOTH
+    void mp_bluetooth_deinit(void);
+    mp_bluetooth_deinit();
+    #endif
+
     #if MICROPY_PY_THREAD
     mp_thread_deinit();
     #endif
@@ -699,7 +704,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     free(heap);
     #endif
 
-    //printf("total bytes = %d\n", m_get_total_bytes_allocated());
+    // printf("total bytes = %d\n", m_get_total_bytes_allocated());
     return ret & 0xff;
 }
 

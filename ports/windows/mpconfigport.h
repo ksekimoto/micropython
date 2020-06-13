@@ -31,7 +31,7 @@
 #define MICROPY_USE_READLINE        (1)
 #endif
 
-#define MICROPY_ALLOC_PATH_MAX      (260) //see minwindef.h for msvc or limits.h for mingw
+#define MICROPY_ALLOC_PATH_MAX      (260) // see minwindef.h for msvc or limits.h for mingw
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
 #define MICROPY_EMIT_X64            (0)
 #define MICROPY_EMIT_THUMB          (0)
@@ -160,6 +160,8 @@ typedef int mp_int_t; // must be pointer size
 typedef unsigned int mp_uint_t; // must be pointer size
 #endif
 
+typedef long suseconds_t;
+
 // Just assume Windows is little-endian - mingw32 gcc doesn't
 // define standard endianness macros.
 #define MP_ENDIANNESS_LITTLE (1)
@@ -218,13 +220,21 @@ extern const struct _mp_obj_module_t mp_module_time;
 #define MP_NOINLINE                 __declspec(noinline)
 #define MP_LIKELY(x)                (x)
 #define MP_UNLIKELY(x)              (x)
-#define MICROPY_PORT_CONSTANTS      { "dummy", 0 } //can't have zero-sized array
+#define MICROPY_PORT_CONSTANTS      { "dummy", 0 } // can't have zero-sized array
 #ifdef _WIN64
 #define MP_SSIZE_MAX                _I64_MAX
 #else
 #define MP_SSIZE_MAX                _I32_MAX
 #endif
 
+// VC++ 12.0 fixes
+#if (_MSC_VER <= 1800)
+#define MICROPY_PY_MATH_ATAN2_FIX_INFNAN (1)
+#define MICROPY_PY_MATH_FMOD_FIX_INFNAN (1)
+#ifdef _WIN64
+#define MICROPY_PY_MATH_MODF_FIX_NEGZERO (1)
+#endif
+#endif
 
 // CL specific definitions
 
@@ -257,7 +267,7 @@ typedef mp_off_t off_t;
 
 // System headers (needed e.g. for nlr.h)
 
-#include <stddef.h> //for NULL
-#include <assert.h> //for assert
+#include <stddef.h> // for NULL
+#include <assert.h> // for assert
 
 #endif

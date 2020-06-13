@@ -281,15 +281,15 @@ STATIC uint32_t compute_prescaler_period_from_freq(pyb_timer_obj_t *self, mp_obj
     if (0) {
     #if MICROPY_PY_BUILTINS_FLOAT
     } else if (mp_obj_is_type(freq_in, &mp_type_float)) {
-        float freq = mp_obj_get_float(freq_in);
+        float freq = mp_obj_get_float_to_f(freq_in);
         if (freq <= 0) {
             goto bad_freq;
         }
         while (freq < 1 && prescaler < 6553) {
             prescaler *= 10;
-            freq *= 10;
+            freq *= 10.0f;
         }
-        period = (float)source_freq / freq;
+        period = (uint32_t)((float)source_freq / freq);
     #endif
     } else {
         mp_int_t freq = mp_obj_get_int(freq_in);
@@ -382,7 +382,7 @@ STATIC uint32_t compute_pwm_value_from_percent(uint32_t period, mp_obj_t percent
         } else if (percent >= 100.0) {
             cmp = period;
         } else {
-            cmp = percent / 100.0 * ((mp_float_t)period);
+            cmp = (uint32_t)(percent / MICROPY_FLOAT_CONST(100.0) * ((mp_float_t)period));
         }
     #endif
     } else {
@@ -820,7 +820,11 @@ STATIC const uint32_t tim_instance_table[MICROPY_HW_MAX_TIMER] = {
     TIM_ENTRY(5, TIM5_IRQn),
     #endif
     #if defined(TIM6)
+    #if defined(STM32F412Zx)
+    TIM_ENTRY(6, TIM6_IRQn),
+    #else
     TIM_ENTRY(6, TIM6_DAC_IRQn),
+    #endif
     #endif
     #if defined(TIM7)
     TIM_ENTRY(7, TIM7_IRQn),
