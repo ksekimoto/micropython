@@ -49,7 +49,7 @@
 #define PID_BUF     1
 #define PID_STALL_1 2
 #define PID_STALL_2 3
-#define USBCDC_BUF_SIZE 512
+#define USBCDC_BUF_SIZE 2048
 
 static uint8_t rx_buf[USBCDC_BUF_SIZE];
 static uint8_t tx_buf[USBCDC_BUF_SIZE];

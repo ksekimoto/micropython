@@ -43,7 +43,7 @@
 #define SCI_BUF_SIZE 1024
 #else
 #define SCI_CH_NUM 4
-#define SCI_BUF_SIZE 512
+#define SCI_BUF_SIZE 1024
 #endif
 #define SCI_DEFAULT_PRIORITY PRI_SCI
 #define SCI_DEFAULT_BAUD    115200
