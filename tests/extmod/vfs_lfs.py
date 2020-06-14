@@ -63,7 +63,7 @@ def test(bdev, vfs_class):
     # mkdir, rmdir
     vfs.mkdir("testdir")
     print(list(vfs.ilistdir()))
-    print(list(vfs.ilistdir("testdir")))
+    print(sorted(list(vfs.ilistdir("testdir"))))
     vfs.rmdir("testdir")
     print(list(vfs.ilistdir()))
     vfs.mkdir("testdir")
@@ -91,19 +91,57 @@ def test(bdev, vfs_class):
 
     # rename
     vfs.rename("testbig", "testbig2")
-    print(list(vfs.ilistdir()))
+    print(sorted(list(vfs.ilistdir())))
+    vfs.chdir("testdir")
+    vfs.rename("/testbig2", "testbig2")
+    print(sorted(list(vfs.ilistdir())))
+    vfs.rename("testbig2", "/testbig2")
+    vfs.chdir("/")
+    print(sorted(list(vfs.ilistdir())))
 
     # remove
     vfs.remove("testbig2")
-    print(list(vfs.ilistdir()))
+    print(sorted(list(vfs.ilistdir())))
 
     # getcwd, chdir
+    vfs.mkdir("/testdir2")
+    vfs.mkdir("/testdir/subdir")
     print(vfs.getcwd())
     vfs.chdir("/testdir")
     print(vfs.getcwd())
+
+    # create file in directory to make sure paths are relative
+    vfs.open("test2", "w").close()
+    print(vfs.stat("test2"))
+    print(vfs.stat("/testdir/test2"))
+    vfs.remove("test2")
+
+    # chdir back to root and remove testdir
     vfs.chdir("/")
     print(vfs.getcwd())
+    vfs.chdir("testdir")
+    print(vfs.getcwd())
+    vfs.chdir("..")
+    print(vfs.getcwd())
+    vfs.chdir("testdir/subdir")
+    print(vfs.getcwd())
+    vfs.chdir("../..")
+    print(vfs.getcwd())
+    vfs.chdir("/./testdir2")
+    print(vfs.getcwd())
+    vfs.chdir("../testdir")
+    print(vfs.getcwd())
+    vfs.chdir("../..")
+    print(vfs.getcwd())
+    vfs.chdir(".//testdir")
+    print(vfs.getcwd())
+    vfs.chdir("subdir/./")
+    print(vfs.getcwd())
+    vfs.chdir("/")
+    print(vfs.getcwd())
+    vfs.rmdir("testdir/subdir")
     vfs.rmdir("testdir")
+    vfs.rmdir("testdir2")
 
 
 bdev = RAMBlockDevice(30)

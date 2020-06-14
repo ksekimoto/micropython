@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 Damien P. George
+ * Copyright (c) 2020 Philipp Ebensberger
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include "etshal.h"
-#include "ets_alt_task.h"
+// NOTE: pins.h shall only be included in in pin.h
+// hence no include guards are needed since they will be provided by pin.h
 
-#include "modmachine.h"
-
-// this is in a separate file so it can go in iRAM
-void pin_intr_handler_iram(void *arg) {
-    uint32_t status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
-    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, status);
-    pin_intr_handler(status);
-}
+extern pin_obj_t GPIO_AD_B0_05;
