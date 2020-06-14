@@ -62,6 +62,7 @@
 #define SPI_GET_CONF        rz_spi_get_conf
 #define SPI_START_XFER      rz_spi_start_xfer
 #define SPI_END_XFER        rz_spi_end_xfer
+#define SPI_TRANSFER        rz_spi_transfer
 #else
 #define GPIO_SET_OUTPUT     gpio_mode_output
 #define GPIO_SET_INPUT      gpio_mode_input
@@ -71,6 +72,7 @@
 #define SPI_GET_CONF        rx_spi_get_conf
 #define SPI_START_XFER      rx_spi_start_xfer
 #define SPI_END_XFER        rx_spi_end_xfer
+#define SPI_TRANSFER        rx_spi_transfer
 #endif
 
 //#define TEST_LCDSPI
