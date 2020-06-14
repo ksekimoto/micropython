@@ -38,6 +38,9 @@ enum {
     #if MICROPY_PY_BLUETOOTH
     PENDSV_DISPATCH_BLUETOOTH_HCI,
     #endif
+    #if MICROPY_PY_PYB_LV
+    PENDSV_DISPATCH_LV,
+    #endif
     PENDSV_DISPATCH_MAX
 };
 

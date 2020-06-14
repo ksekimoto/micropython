@@ -38,16 +38,19 @@ QSTR_GEN_CFLAGS += -I$(BUILD)/tmp
 
 vpath %.S . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.S
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
 	$(Q)$(AS) -o $@ $<
 
 define compile_c
 $(ECHO) "CC $<"
+@dirname $@ | xargs mkdir -p
 $(Q)$(CC) $(CFLAGS) -c -MD -o $@ $<
 @# The following fixes the dependency file.
 @# See http://make.paulandlesley.org/autodep.html for details.
@@ -67,6 +70,32 @@ vpath %.c . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.pp: %.c
 	$(ECHO) "PreProcess $<"
 	$(Q)$(CPP) $(CFLAGS) -Wp,-C,-dD,-dI -o $@ $<
+
+define compile_cpp
+$(ECHO) "CC $<"
+@dirname $@ | xargs mkdir -p
+$(Q)$(CXX) $(CPPFLAGS) -c -MD -o $@ $<
+@# The following fixes the dependency file.
+@# See http://make.paulandlesley.org/autodep.html for details.
+@# Regex adjusted from the above to play better with Windows paths, etc.
+@$(CP) $(@:.o=.d) $(@:.o=.P); \
+  $(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
+      -e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.d) >> $(@:.o=.P); \
+  $(RM) -f $(@:.o=.d)
+endef
+
+vpath %.cpp . $(TOP) $(USER_C_MODULES)
+$(BUILD)/%.o: %.cpp
+	$(call compile_cpp)
+
+QSTR_GEN_EXTRA_CPPFLAGS += -DNO_QSTR
+QSTR_GEN_EXTRA_CPPFLAGS += -I$(BUILD)/tmp
+
+vpath %.cpp . $(TOP) $(USER_C_MODULES)
+
+$(BUILD)/%.pp: %.cpp
+	$(ECHO) "PreProcess $<"
+	$(Q)$(CXX) $(CPPFLAGS) -Wp,-C,-dD,-dI -o $@ $<
 
 # The following rule uses | to create an order only prerequisite. Order only
 # prerequisites only get built if they don't exist. They don't cause timestamp

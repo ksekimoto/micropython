@@ -201,6 +201,16 @@
 #define MICROPY_PY_NETWORK          (1)
 #endif
 
+#if LVGL_ENABLE
+#define MICROPY_PY_LVGL                     (1)
+#define MICROPY_PY_LODEPNG                  (1)
+#define MICROPY_PY_RTCH                     (0)
+#else
+#define MICROPY_PY_LVGL                     (0)
+#define MICROPY_PY_LODEPNG                  (0)
+#define MICROPY_PY_RTCH                     (0)
+#endif
+
 // fatfs configuration used in ffconf.h
 #define MICROPY_FATFS_ENABLE_LFN       (1)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
@@ -247,11 +257,11 @@ extern const struct _mp_obj_module_t mp_module_lodepng;
 extern const struct _mp_obj_module_t mp_module_ILI9341;
 extern const struct _mp_obj_module_t mp_module_xpt2046;
 extern const struct _mp_obj_module_t mp_module_stmpe610;
-extern const struct _mp_obj_module_t mp_module_lvrz;
+extern const struct _mp_obj_module_t mp_module_lvrx;
 
 #define MICROPY_PORT_LVGL_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR_lvgl), (mp_obj_t)&mp_module_lvgl }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_lvrz), (mp_obj_t)&mp_module_lvrz }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_lvrx), (mp_obj_t)&mp_module_lvrx }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_ILI9341), (mp_obj_t)&mp_module_ILI9341 }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_stmpe610), (mp_obj_t)&mp_module_stmpe610 }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&mp_module_xpt2046 },

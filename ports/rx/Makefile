@@ -28,10 +28,6 @@ endif
 # Use ramdisk instead of CPU internal flash for testing the related codes
 #TEST_RAMDISK = 1
 
-ifeq ($(MICROPY_PY_PYB_LV), 1)
-LVGL_ENABLE = 1
-endif
-
 # To avoid flash operation during debugging
 #FLASH_SKIP = 1
 
@@ -67,6 +63,10 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
+
+ifeq ($(MICROPY_PY_PYB_LV), 1)
+LVGL_ENABLE = 1
+endif
 
 # include py core make definitions
 include $(TOP)/py/py.mk
@@ -688,6 +688,14 @@ SRC_MOD += $(addprefix lib/,\
 	mbedtls/library/x509write_crt.c \
 	mbedtls/library/x509write_csr.c \
 )
+endif
+
+ifeq ($(LVGL_ENABLE) ,1)
+SRC_C += lvgl/modlvrx.c
+SRC_C += lvgl/driver/modILI9341.c
+SRC_C += lvgl/driver/modrtch.c
+SRC_C += lvgl/driver/modstmpe610.c
+SRC_C += lvgl/driver/modxpt2046.c
 endif
 
 OBJ =
