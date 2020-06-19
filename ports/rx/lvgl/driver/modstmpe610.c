@@ -233,24 +233,24 @@ STATIC void write_8bit_reg(stmpe610_obj_t *self, uint8_t reg, uint8_t value) {
     uint8_t dst[2];
     src[0] = reg;
     src[1] = value;
-    //uint32_t state = disable_irq();
+    uint32_t state = disable_irq();
     SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)&dst, (uint8_t *)&src, 2, 1000);
     mp_hal_pin_write(self->cs, 1);
-    //enable_irq(state);
+    enable_irq(state);
 }
 
 STATIC uint8_t read_8bit_reg(stmpe610_obj_t *self, uint8_t reg) {
     uint8_t src[2];
     uint8_t dst[2];
     src[0] = 0x80 | reg;
-    //uint32_t state = disable_irq();
+    uint32_t state = disable_irq();
     SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)&dst, (uint8_t *)&src, 2, 1000);
     mp_hal_pin_write(self->cs, 1);
-    //enable_irq(state);
+    enable_irq(state);
     return dst[1];
 }
 
@@ -271,10 +271,8 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in)
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     mp_activate_stmpe610(self_in);
-    //uint32_t state = disable_irq();
-    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate , 8, self->mode);
+    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate, 8, self->mode);
     SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
-    //enable_irq(state);
 
     write_8bit_reg(self, STMPE_SYS_CTRL1, STMPE_SYS_CTRL1_RESET);
     mp_hal_delay_ms(100);
