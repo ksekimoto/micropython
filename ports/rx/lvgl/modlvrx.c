@@ -18,6 +18,7 @@
 #define MONITOR_HOR_RES     LCD_PIXEL_WIDTH
 #define MONITOR_VER_RES     LCD_PIXEL_HEIGHT
 
+int lvrx_enable = 0;
 
 /**
  * Flush a buffer to the display. Calls 'lv_flush_ready()' when finished
@@ -78,11 +79,13 @@ STATIC mp_obj_t mp_lv_task_handler(mp_obj_t arg) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_lv_task_handler_obj, mp_lv_task_handler);
 
 void tick_thread(void) {
-    if ((mtick() % LV_TICK_RATE) == 0) {
-        lv_tick_inc(LV_TICK_RATE);
-        mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
+    if (lvrx_enable) {
+        if ((mtick() % LV_TICK_RATE) == 0) {
+            lv_tick_inc(LV_TICK_RATE);
+            mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
+        }
+        pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
     }
-    pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
 }
 
 STATIC mp_obj_t mp_init_lvrx(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -94,6 +97,7 @@ STATIC mp_obj_t mp_init_lvrx(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     // parse args
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    lvrx_enable = 1;
 #if defined(RX65N)
     pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
 #endif
@@ -101,6 +105,7 @@ STATIC mp_obj_t mp_init_lvrx(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 }
 
 STATIC mp_obj_t mp_deinit_lvrx() {
+    lvrx_enable = 0;
     return mp_const_none;
 }
 
