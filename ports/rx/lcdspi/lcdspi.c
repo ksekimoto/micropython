@@ -107,8 +107,8 @@ static volatile int g_spi_id = 0;
 #if defined(GRCITRUS)
 static uint8_t _clkPin = PC5;
 static uint8_t _doutPin = PC6;
-static uint8_t _csPin = PC7;
 static uint8_t _dinPin = PC4;
+static uint8_t _csPin = PC7;
 static uint8_t _resetPin = P52;
 static uint8_t _rsPin = P50;
 
@@ -148,27 +148,27 @@ static lcdspi_pins_t lcdspi_pins_def = {
 };
 #endif
 #if defined(GRROSE)
-static uint8_t _clkPin = PC5;
-static uint8_t _doutPin = PC6;
-static uint8_t _csPin = PC7;
-static uint8_t _dinPin = PC4;
-static uint8_t _resetPin = P52;
-static uint8_t _rsPin = P50;
+static uint8_t _clkPin = PE5;
+static uint8_t _doutPin = PE6;
+static uint8_t _dinPin = PE7;
+static uint8_t _csPin = PE4;
+static uint8_t _resetPin = P26;
+static uint8_t _rsPin = P30;
 
 static lcdspi_pins_t lcdspi_pins_def = {
-    (pin_obj_t *)&pin_PC5_obj,   /* clk */
-    (pin_obj_t *)&pin_PC6_obj,   /* mosi */
-    (pin_obj_t *)&pin_PC7_obj,   /* miso */
-    (pin_obj_t *)&pin_PC4_obj,   /* cs */
-    (pin_obj_t *)&pin_P52_obj,   /* reset */
-    (pin_obj_t *)&pin_P50_obj,   /* rs */
+    (pin_obj_t *)&pin_PE5_obj,   /* clk */
+    (pin_obj_t *)&pin_PE6_obj,   /* mosi */
+    (pin_obj_t *)&pin_PE4_obj,   /* miso */
+    (pin_obj_t *)&pin_PE4_obj,   /* cs */
+    (pin_obj_t *)&pin_P26_obj,   /* reset */
+    (pin_obj_t *)&pin_P30_obj,   /* rs */
 };
 #endif
 #if defined(GRMANGO)
 static uint32_t _clkPin = P87;
 static uint32_t _doutPin = P86;
-static uint32_t _csPin = P84;
 static uint32_t _dinPin = P85;
+static uint32_t _csPin = P84;
 static uint32_t _resetPin = P45;
 static uint32_t _rsPin = PH6;
 
