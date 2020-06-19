@@ -243,33 +243,31 @@ STATIC void disp_spi_init(ILI9341_t *self)
 {
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
-    //uint32_t state = disable_irq();
+    uint32_t state = disable_irq();
     SPI_INIT((uint32_t)self->spihost, (uint32_t)self->cs->pin, self->baudrate, 8, self->mode);
     SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
-    //enable_irq(state);
+    enable_irq(state);
 }
 
 STATIC void disp_spi_send(ILI9341_t *self, const uint8_t *data, uint16_t length) {
     if (length == 0)
         return; //no need to send anything
-    //uint32_t state = disable_irq();
+    uint32_t state = disable_irq();
     SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
+    mp_hal_pin_write(self->cs, 0);
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)0, (uint8_t *)data, (uint32_t)length, 1000);
-    //enable_irq(state);
+    mp_hal_pin_write(self->cs, 1);
+    enable_irq(state);
 }
 
 STATIC void ili9441_send_cmd(ILI9341_t *self, uint8_t cmd) {
     mp_hal_pin_write(self->dc, 0); /*Command mode*/
-    mp_hal_pin_write(self->cs, 0);
     disp_spi_send(self, &cmd, 1);
-    mp_hal_pin_write(self->cs, 1);
 }
 
 STATIC void ili9341_send_data(ILI9341_t *self, const void *data, uint16_t length) {
     mp_hal_pin_write(self->dc, 1); /*Data */
-    mp_hal_pin_write(self->cs, 0);
     disp_spi_send(self, data, length);
-    mp_hal_pin_write(self->cs, 1);
 }
 
 /*The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct. */
@@ -280,34 +278,35 @@ typedef struct {
 } lcd_init_cmd_t;
 
 STATIC const lcd_init_cmd_t ili_init_cmds[]={
-        {0x01, {0}, 0x80},
-        {0x28, {0}, 0x80},
-		{0xCF, {0x00, 0x83, 0X30}, 3},
-		{0xED, {0x64, 0x03, 0X12, 0X81}, 4},
-		{0xE8, {0x85, 0x01, 0x79}, 3},
-		{0xCB, {0x39, 0x2C, 0x00, 0x34, 0x02}, 5},
-		{0xF7, {0x20}, 1},
-		{0xEA, {0x00, 0x00}, 2},
-		{0xC0, {0x26}, 1},			/*Power control*/
-		{0xC1, {0x11}, 1},			/*Power control */
-		{0xC5, {0x35, 0x3E}, 2},	/*VCOM control*/
-		{0xC7, {0xBE}, 1},			/*VCOM control*/
-		{0x36, {0x48}, 1},			/*Memory Access Control*/
-		{0x3A, {0x55}, 1},			/*Pixel Format Set*/
-		{0xB1, {0x00, 0x1B}, 2},
-		{0xF2, {0x08}, 1},
-		{0x26, {0x01}, 1},
-		{0xE0, {0x1F, 0x1A, 0x18, 0x0A, 0x0F, 0x06, 0x45, 0X87, 0x32, 0x0A, 0x07, 0x02, 0x07, 0x05, 0x00}, 15},
-		{0XE1, {0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3A, 0x78, 0x4D, 0x05, 0x18, 0x0D, 0x38, 0x3A, 0x1F}, 15},
-		{0x2A, {0x00, 0x00, 0x00, 0xEF}, 4},
-		{0x2B, {0x00, 0x00, 0x01, 0x3f}, 4},
-		{0x2C, {0}, 0},
-		{0xB7, {0x07}, 1},
-		{0xB6, {0x0A, 0x82, 0x27, 0x00}, 4},
-		{0x11, {0}, 0x80},
-		{0x29, {0}, 0x80},
-		{0, {0}, 0xff},
-	};
+        {0x01, {0}, 0x80},                          /* software reset */
+        {0x28, {0}, 0x0},                           /* display off */
+        {0xCB, {0x39, 0x2C, 0x00, 0x34, 0x02}, 5},  /* Power control a */
+        {0xCF, {0x00, 0xC1, 0X30}, 3},              /* Power control b 83->c1 */
+        {0xE8, {0x85, 0x00, 0x78}, 3},              /* driver timing control a 01->00 79->78 */
+        {0xEA, {0x00, 0x00}, 2},                    /* driver timing control b */
+        {0xED, {0x64, 0x03, 0X12, 0X81}, 4},        /* power on sequence control */
+//        {0xF7, {0x20}, 1},                        /* pump ratio control */
+        {0xC0, {0x23}, 1},                          /* Power control 1 26->23 */
+        {0xC1, {0x10}, 1},                          /* Power control 2 11->10 */
+        {0xC5, {0x3e, 0x28}, 2},                    /* VCOM control 1 33->3e,3e->28 */
+        {0xC7, {0x86}, 1},                          /* VCOM control 2 be->86 */
+        {0x36, {0x48}, 1},                          /* Memory Access Control */
+        {0x3A, {0x55}, 1},                          /* Pixel Format Set */
+        {0xB1, {0x00, 0x18}, 2},                    /* set frame control 1b->18 */
+        {0xB6, {0x08, 0x82, 0x27}, 3},              /* display function control */
+//        {0xB6, {0x0A, 0x82, 0x27, 0x00}, 4},        /* display function control */
+        {0xF2, {0x02}, 1},                          /* enable 3g 08->02 */
+        {0x26, {0x01}, 1},                          /* gamma set */
+        {0xE0, {0x1F, 0x1A, 0x18, 0x0A, 0x0F, 0x06, 0x45, 0X87, 0x32, 0x0A, 0x07, 0x02, 0x07, 0x05, 0x00}, 15},
+        {0XE1, {0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3A, 0x78, 0x4D, 0x05, 0x18, 0x0D, 0x38, 0x3A, 0x1F}, 15},
+        {0x2A, {0x00, 0x00, 0x00, 0xEF}, 4},
+        {0x2B, {0x00, 0x00, 0x01, 0x3f}, 4},
+        {0x2C, {0}, 0},
+//        {0xB7, {0x07}, 1},
+        {0x11, {0}, 0x80},                          /* sleep out */
+        {0x29, {0}, 0x80},                          /* display on */
+        {0, {0}, 0xff},
+};
 
 STATIC void ili9431_clear(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t col);
 
@@ -324,7 +323,9 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in) {
         mp_hal_pin_output(self->backlight);
 
     //Reset the display
-    if (!self->rst) {
+    if (self->rst) {
+        mp_hal_pin_write(self->rst, 1);
+        mp_hal_delay_ms(100);
         mp_hal_pin_write(self->rst, 0);
         mp_hal_delay_ms(400);
         mp_hal_pin_write(self->rst, 1);
@@ -337,7 +338,7 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in) {
         ili9441_send_cmd(self, ili_init_cmds[cmd].cmd);
         ili9341_send_data(self, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes & 0x1F);
         if (ili_init_cmds[cmd].databytes & 0x80) {
-            mp_hal_delay_ms(100);
+            mp_hal_delay_ms(120);
         }
         cmd++;
     }
