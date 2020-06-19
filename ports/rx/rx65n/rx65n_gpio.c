@@ -151,7 +151,6 @@ void gpio_toggle(uint8_t pin) {
 uint8_t gpio_read(uint8_t pin) {
     uint8_t port = GPIO_PORT(pin);
     uint8_t mask = GPIO_MASK(pin);
-    _PDR(port) &= ~mask;    /* input */
     return ((_PIDR(port) & mask) != 0) ? 1 : 0;
 }
 
