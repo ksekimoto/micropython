@@ -65,6 +65,7 @@ void mp_hal_delay_ms(mp_uint_t ms);
 // Defines
 //////////////////////////////////////////////////////////////////////////////
 
+#define XPT2046_BAUDRATE   1000000
 #define XPT2046_AVG 4
 #define CMD_X_READ  0b10010000
 #define CMD_Y_READ  0b11010000
@@ -77,8 +78,11 @@ typedef struct _xpt2046_obj_t
 {
     mp_obj_base_t base;
 
-    uint32_t mhz;
+    uint32_t baudrate;
     uint32_t spihost;
+    uint32_t mode;
+    uint16_t spcmd;
+    uint8_t spbr;
     pin_obj_t *cs;
     pin_obj_t *irq;
 
@@ -114,8 +118,9 @@ STATIC mp_obj_t xpt2046_make_new(const mp_obj_type_t *type,
                                const mp_obj_t *all_args)
 {
     enum{
-        ARG_mhz,
+        ARG_baudrate,
         ARG_spihost,
+        ARG_mode,
         ARG_cs,
         ARG_irq,
 
@@ -129,8 +134,9 @@ STATIC mp_obj_t xpt2046_make_new(const mp_obj_type_t *type,
     };
 
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_mhz, MP_ARG_INT, {.u_int = 20}},
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = XPT2046_BAUDRATE}},
         { MP_QSTR_spihost, MP_ARG_INT, {.u_int = 0}},
+        { MP_QSTR_mode, MP_ARG_INT, {.u_int = 0}},
         { MP_QSTR_cs, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
         { MP_QSTR_irq, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
 
@@ -148,8 +154,9 @@ STATIC mp_obj_t xpt2046_make_new(const mp_obj_type_t *type,
     xpt2046_obj_t *self = m_new_obj(xpt2046_obj_t);
     self->base.type = type;
 
-    self->mhz = args[ARG_mhz].u_int;
+    self->baudrate = args[ARG_baudrate].u_int;
     self->spihost = args[ARG_spihost].u_int;
+    self->mode = args[ARG_mode].u_int;
     if (args[ARG_cs].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("cs pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_cs].u_obj, &pin_type)) {
@@ -227,7 +234,8 @@ STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in)
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     mp_activate_xpt2046(self_in);
-    SPI_INIT((uint32_t)self->spihost, self->cs->pin, 20000000, 8, 1);
+    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate, 8, self->mode);
+    SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
     return mp_const_none;
 }
 
@@ -264,7 +272,10 @@ static bool xpt2046_read(lv_indev_data_t * data)
     uint8_t irq = (uint8_t)mp_hal_pin_read(self->irq);
 
     if(irq == 0) {
+        uint32_t state = disable_irq();
+        SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
         mp_hal_pin_write(self->cs, 0);
+
         tp_spi_xchg(self, CMD_X_READ);         /*Start x read*/
 
         buf = tp_spi_xchg(self, 0);           /*Read x MSB*/
@@ -278,6 +289,7 @@ static bool xpt2046_read(lv_indev_data_t * data)
         buf =  tp_spi_xchg(self, 0);   /*Read y LSB*/
         y += buf;
         mp_hal_pin_write(self->cs, 1);
+        enable_irq(state);
 
         /*Normalize Data*/
         x = x >> 3;
@@ -286,19 +298,15 @@ static bool xpt2046_read(lv_indev_data_t * data)
         xpt2046_avg(self, &x, &y);
         last_x = x;
         last_y = y;
-
-
     } else {
         x = last_x;
         y = last_y;
         self->avg_last = 0;
         valid = false;
     }
-
     data->point.x = x;
     data->point.y = y;
     data->state = valid == false ? LV_INDEV_STATE_REL : LV_INDEV_STATE_PR;
-
     return valid;
 }
 
@@ -309,9 +317,7 @@ static bool xpt2046_read(lv_indev_data_t * data)
 static uint8_t tp_spi_xchg(xpt2046_obj_t *self, uint8_t data_send)
 {
     uint8_t data_rec = 0;
-    //mp_hal_pin_write(self->cs, 0);
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)&data_rec, (uint8_t *)&data_send, 1, 1000);
-    //mp_hal_pin_write(self->cs, 1);
 	return data_rec;
 }
 
