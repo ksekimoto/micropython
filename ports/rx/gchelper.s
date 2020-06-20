@@ -2,10 +2,10 @@
     .text
 
     .align  4
-# uint gc_helper_collect_regs_and_stack(r1=uint regs[17])
-    .global _gc_helper_collect_regs_and_stack
-    .type   _gc_helper_collect_regs_and_stack, @function
-_gc_helper_collect_regs_and_stack:
+# uint gc_helper_get_regs_and_sp(r1=uint regs[20])
+    .global _gc_helper_get_regs_and_sp
+    .type   _gc_helper_get_regs_and_sp, @function
+_gc_helper_get_regs_and_sp:
     # store regs into given array
     push    r2
     mov.l   r0, 00[r1]
@@ -31,4 +31,4 @@ _gc_helper_collect_regs_and_stack:
     # return the sp
     rts
 
-    .size   _gc_helper_collect_regs_and_stack, .-_gc_helper_collect_regs_and_stack
+    .size   _gc_helper_get_regs_and_sp, .-_gc_helper_get_regs_and_sp
