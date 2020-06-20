@@ -133,7 +133,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     pin_idx = pin->pin;
     irq_no = (uint)exti_find_pin_irq((uint8_t)pin_idx);
     if (irq_no == 0xff) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ExtInt can't be assigned for %q", pin->name));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("ExtInt can't be assigned for %q"), pin->name);
     }
     if ((mode == GPIO_MODE_IT_RISING) || (mode == GPIO_MODE_EVT_RISING)) {
         cond = 2;
@@ -146,11 +146,11 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     }
     if (pull != GPIO_NOPULL &&
         pull != GPIO_PULLUP) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid ExtInt Pull: %d", pull));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid ExtInt Pull: %d"), pull);
     }
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
     //if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
-    //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ExtInt vector %d is already in use", irq_no));
+    //    mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("ExtInt vector %d is already in use"), irq_no);
     //}
     exti_disable(pin_idx);
     *cb = callback_obj;

@@ -143,10 +143,18 @@ STATIC int cc3k_socket_socket(mod_network_socket_obj_t *socket, int *_errno) {
 
     mp_uint_t type;
     switch (socket->u_param.type) {
-        case MOD_NETWORK_SOCK_STREAM: type = SOCK_STREAM; break;
-        case MOD_NETWORK_SOCK_DGRAM: type = SOCK_DGRAM; break;
-        case MOD_NETWORK_SOCK_RAW: type = SOCK_RAW; break;
-        default: *_errno = MP_EINVAL; return -1;
+        case MOD_NETWORK_SOCK_STREAM:
+            type = SOCK_STREAM;
+            break;
+        case MOD_NETWORK_SOCK_DGRAM:
+            type = SOCK_DGRAM;
+            break;
+        case MOD_NETWORK_SOCK_RAW:
+            type = SOCK_RAW;
+            break;
+        default:
+            *_errno = MP_EINVAL;
+            return -1;
     }
 
     // open socket
@@ -443,7 +451,7 @@ STATIC mp_obj_t cc3k_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
             ReadWlanInterruptPin, SpiResumeSpi, SpiPauseSpi, WriteWlanPin);
 
     if (wlan_start(0) != 0) {
-        mp_raise_msg(&mp_type_OSError, "failed to init CC3000 module");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init CC3000 module"));
     }
 
     // set connection policy. this should be called explicitly by the user
@@ -495,7 +503,7 @@ STATIC mp_obj_t cc3k_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 
     // connect to AP
     if (wlan_connect(sec, (char*)ssid, ssid_len, (uint8_t*)bssid, (uint8_t*)key, key_len) != 0) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not connect to ssid=%s, sec=%d, key=%s\n", ssid, sec, key));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not connect to ssid=%s, sec=%d, key=%s\n"), ssid, sec, key);
     }
 
     return mp_const_none;

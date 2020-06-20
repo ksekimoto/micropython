@@ -52,13 +52,13 @@ typedef struct _pyb_led_obj_t {
 } pyb_led_obj_t;
 
 STATIC const pyb_led_obj_t pyb_led_obj[] = {
-    {{&pyb_led_type}, 1, (const pin_obj_t *)MICROPY_HW_LED1},
+    {{&pyb_led_type}, 1, MICROPY_HW_LED1},
 #if defined(MICROPY_HW_LED2)
-    {{&pyb_led_type}, 2, (const pin_obj_t *)MICROPY_HW_LED2},
+    {{&pyb_led_type}, 2, MICROPY_HW_LED2},
 #if defined(MICROPY_HW_LED3)
-    {{&pyb_led_type}, 3, (const pin_obj_t *)MICROPY_HW_LED3},
+    {{&pyb_led_type}, 3, MICROPY_HW_LED3},
 #if defined(MICROPY_HW_LED4)
-    {{&pyb_led_type}, 4, (const pin_obj_t *)MICROPY_HW_LED4},
+    {{&pyb_led_type}, 4, MICROPY_HW_LED4},
 #endif
 #endif
 #endif

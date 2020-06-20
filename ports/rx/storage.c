@@ -45,7 +45,7 @@
 
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"
-#endif
+#endif \
 
 #define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
 #define STORAGE_IDLE_TICK(tick) (((tick) & ~(SYSTICK_DISPATCH_NUM_SLOTS - 1) & STORAGE_SYSTICK_MASK) == 0)
@@ -251,7 +251,7 @@ int storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_bl
 
     for (size_t i = 0; i < num_blocks; i++) {
         if (!storage_write_block(src + i * FLASH_BLOCK_SIZE, block_num + i)) {
-            return 1; // error
+            return -1; // error
         }
     }
     return 0; // success

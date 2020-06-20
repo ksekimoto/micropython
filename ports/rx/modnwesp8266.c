@@ -461,23 +461,72 @@ typedef struct _esp8266_obj_t {
 STATIC const esp8266_obj_t esp8266_obj = {{(mp_obj_type_t*)&mod_network_socket_nic_type_esp8266}};
 
 // \classmethod \constructor()
-STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // check arguments
-    mp_arg_check_num(n_args, n_kw, 0, 0, false);
-
+STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+    enum { ARG_ch, ARG_baudrate, ARG_en, ARG_reset };
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_en,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+    };
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);    // check arguments
+    uint32_t ch = 0;
+    uint32_t baud = 115200;
+#if defined(MICROPY_HW_ESP8266_UART_CH)
+    ch = MICROPY_HW_ESP8266_UART_CH;
+#endif
+#if defined(MICROPY_HW_ESP8266_UART_BAUD)
+    baud = MICROPY_HW_ESP8266_UART_BAUD;
+#endif
+    if (n_args == 0) {
+#if defined(MICROPY_HW_ESP8266_RE)
+        mp_hal_pin_config(MICROPY_HW_ESP8266_RE, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+        mp_hal_pin_low(MICROPY_HW_ESP8266_RE);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_high(MICROPY_HW_ESP8266_RE);
+#endif
+#if defined(MICROPY_HW_ESP8266_EN)
+        mp_hal_pin_config(MICROPY_HW_ESP8266_EN, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+        mp_hal_pin_low(MICROPY_HW_ESP8266_EN);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_high(MICROPY_HW_ESP8266_EN);
+#endif
+    } else if (n_args >= 1 || n_args <= 4) {
+        if (args[ARG_ch].u_int != -1) {
+            ch = args[ARG_ch].u_int;
+        }
+        if (args[ARG_baudrate].u_int != -1) {
+            baud = args[ARG_ch].u_int;
+        }
+        if (args[ARG_reset].u_obj != MP_OBJ_NULL) {
+            const pin_obj_t *pin_reset = pin_find(args[ARG_reset].u_obj);
+            mp_hal_pin_config(pin_reset, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+            mp_hal_pin_low(pin_reset);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_high(pin_reset);
+        }
+        if (args[ARG_en].u_obj != MP_OBJ_NULL) {
+            const pin_obj_t *pin_en = pin_find(args[ARG_en].u_obj);
+            mp_hal_pin_config(pin_en, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+            mp_hal_pin_low(pin_en);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_high(pin_en);
+        }
+    }
 #define AT_MAX 32
 #define SDK_MAX 32
     char at_ver[AT_MAX];
     char sdk_ver[SDK_MAX];
-    esp8266_driver_init();
-    //if (!esp8266_driver_reset()) {
-    //    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "failed to init ESP8266 module\n"));
-    //}
+    esp8266_driver_init(ch, baud);
+    if (!esp8266_driver_reset()) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP8266 module\n"));
+    }
     if (esp8266_AT_GMR(at_ver, sizeof(at_ver), sdk_ver, sizeof(sdk_ver))) {
         printf("AT ver=%s\n", at_ver);
         printf("SDK ver=%s\n", sdk_ver);
     } else {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "can't get ESP vesions\n"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("can't get ESP vesions\n"));
     }
     esp8266_AT_CWQAP();
     esp8266_set_AT_CWMODE(3);
@@ -516,10 +565,10 @@ STATIC mp_obj_t esp8266_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_
     //    bssid = mp_obj_str_get_str(args[3].u_obj);
     //}
     if (!esp8266_set_AT_CWJAP(ssid, key)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not connect to ssid=%s, key=%s\n", ssid, key));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not connect to ssid=%s, key=%s\n"), ssid, key);
     }
     esp8266_set_AT_CIPMUX(1);
-    esp8266_AT_CWAUTOCONN_0();
+    //esp8266_AT_CWAUTOCONN_0();
     esp8266_set_AT_CIPDINFO(1);
     return mp_const_none;
 }
@@ -573,15 +622,15 @@ STATIC mp_obj_t esp8266_ifconfig(size_t n_args, const mp_obj_t *args) {
         const char *mask_str = mp_obj_str_get_data(items[2], &mask_len);
         const char *dns_str = mp_obj_str_get_data(items[3], &dns_len);
         if ((ip_len <= 0) || (gw_len <= 0) || (mask_len <= 0) || (dns_len <= 0)) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "ip, gw, mask should be properly inputted.\n"));
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("ip, gw, mask should be properly inputted.\n"));
         }
         bool ret = esp8266_set_AT_CIPSTA(ip_str, gw_str, mask_str);
         if (!ret) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure ip=%s, gw=%s, mask=%s\n", ip_str, gw_str, mask_str));
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure ip=%s, gw=%s, mask=%s\n"), ip_str, gw_str, mask_str);
         }
         ret = esp8266_set_AT_CIPDNS_CUR(dns_str, true);
         if (!ret) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError, "could not configure dns=%s\n", dns_str));
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure dns=%s\n"), dns_str);
         }
     }
     return mp_const_none;

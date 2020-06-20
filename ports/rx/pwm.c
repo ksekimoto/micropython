@@ -165,8 +165,7 @@ STATIC mp_obj_t pyb_pwm_freq(size_t n_args, const mp_obj_t *args) {
     // set
     freq = mp_obj_get_int(args[1]);
     if ((freq < 1) | (freq > 1000000)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "Bad frequency %d", freq));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("Bad frequency %d"), freq);
     }
     rx_pwm_set_freq(self->pin, (float)freq);
     return mp_const_none;
@@ -185,8 +184,7 @@ STATIC mp_obj_t pyb_pwm_duty(size_t n_args, const mp_obj_t *args) {
     // set
     duty = mp_obj_get_int(args[1]);
     if ((duty < 0) | (duty > 100)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "Bad frequency %d", duty));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("Bad frequency %d"), duty);
     }
     rx_pwm_set_duty(self->pin, (float)duty / 100.0f);
     return mp_const_none;

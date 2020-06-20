@@ -1,6 +1,6 @@
 MEMORY
 {
-	RAM : ORIGIN = 0x0, LENGTH = 131072
+	RAM : ORIGIN = 0x00000000, LENGTH = 131072
 	ROM : ORIGIN = 0xFFF00000, LENGTH = 1048576
 }
 
@@ -13,7 +13,7 @@ SECTIONS
 	.text 0xFFF00000 : AT (0xFFF00000)
 	{
         _stext = . ;
-        *(i.EntryPoint)
+		KEEP(*(i.EntryPoint))
 		*(.text)
 		*(.text.*)
 		*(P)
@@ -23,27 +23,27 @@ SECTIONS
 	.rvectors : 
 	{
 		_rvectors_start = .;
-		*(.rvectors)
+		KEEP(*(.rvectors))
 		_rvectors_end = .;
 	} > ROM
 	.init : 
 	{
-		*(.init)
+		KEEP(*(.init))
 		__preinit_array_start = .;
-		*(.preinit_array)
+		KEEP(*(.preinit_array))
 		__preinit_array_end = .;
 		__init_array_start = (. + 3) & ~ 3;
-		*(.init_array)
-		*(SORT(.init_array.*))
+		KEEP(*(.init_array))
+		KEEP(*(SORT(.init_array.*)))
 		__init_array_end = .;
 		__fini_array_start = .;
-		*(.fini_array)
-		*(SORT(.fini_array.*))
+		KEEP(*(.fini_array))
+		KEEP(*(SORT(.fini_array.*)))
 		__fini_array_end = .;
 	} > ROM
 	.fini : 
 	{
-		*(.fini)
+		KEEP(*(.fini))
 	} > ROM
 	.got : 
 	{

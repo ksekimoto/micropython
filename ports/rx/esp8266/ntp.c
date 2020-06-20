@@ -56,30 +56,30 @@ uint32_t ntp(const char *ipaddr, int tf) {
     int num = 1;
     uint32_t time = 4;
 
-    ret = esp8266_udpopen(num, ipaddr, NTP_SEND_PORT, NTP_LOCAL_PORT);
+    ret = esp8266_at_udpopen(num, ipaddr, NTP_SEND_PORT, NTP_LOCAL_PORT);
     if (ret == 0) {
 #if defined(DEBUG_NTP)
-        debug_printf("esp8266_udpioen ERR\r\n");
+        debug_printf("esp8266_at_udpioen ERR\r\n");
 #endif
         return NTP_ERROR;
     }
-    ret = esp8266_send(num, (char *)ntp_send, 48);
+    ret = esp8266_at_send(num, (char *)ntp_send, 48);
     if (ret == 0) {
 #if defined(DEBUG_NTP)
-        DBG_PRINT1("esp8266_send ERR\r\n");
+        DBG_PRINT1("esp8266_at_send ERR\r\n");
 #endif
-        esp8266_cclose(num);
+        esp8266_at_cclose(num);
         return NTP_ERROR;
     }
-    ret = esp8266_recv(num, (char *)ntp_recv, &cnt);
+    ret = esp8266_at_recv(num, (char *)ntp_recv, &cnt);
     if (ret != 1) {
 #if defined(DEBUG_NTP)
-        DBG_PRINT1("esp8266_recv ERR\r\n");
+        DBG_PRINT1("esp8266_at_recv ERR\r\n");
 #endif
-        esp8266_cclose(num);
+        esp8266_at_cclose(num);
         return NTP_ERROR;
     }
-    esp8266_cclose(num);
+    esp8266_at_cclose(num);
     time = ((uint32_t)ntp_recv[40] << 24) +
         ((uint32_t)ntp_recv[41] << 16) +
         ((uint32_t)ntp_recv[42] << 8) +

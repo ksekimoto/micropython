@@ -217,7 +217,7 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
     } else {
-        mp_raise_NotImplementedError("machine.freq set not supported yet");
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("machine.freq set not supported yet"));
         return mp_const_none;
 
     //fail:;

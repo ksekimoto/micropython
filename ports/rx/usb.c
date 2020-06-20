@@ -215,7 +215,7 @@ static int USBD_HID_CanSendReport(void) {
 STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_mode, ARG_vid, ARG_pid, ARG_msc, ARG_hid, ARG_high_speed };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
+        { MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
         { MP_QSTR_vid, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = USBD_VID} },
         { MP_QSTR_pid, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_msc, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_empty_tuple_obj)} },
@@ -349,7 +349,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     return mp_const_none;
 
 bad_mode:
-    mp_raise_ValueError("bad USB mode");
+    mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("bad USB mode"));
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_mode_obj, 0, pyb_usb_mode);
 
@@ -423,7 +423,7 @@ STATIC mp_obj_t pyb_usb_hid_send(mp_obj_t self_in, mp_obj_t report_in) {
         mp_obj_t *items;
         mp_obj_get_array(report_in, &bufinfo.len, &items);
         if (bufinfo.len > sizeof(temp_buf)) {
-            mp_raise_ValueError("tuple/list too large for HID report; use bytearray instead");
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("tuple/list too large for HID report; use bytearray instead"));
         }
         for (int i = 0; i < bufinfo.len; i++) {
             temp_buf[i] = mp_obj_get_int(items[i]);

@@ -456,7 +456,7 @@ STATIC mp_obj_t font_obj_make_new(const mp_obj_type_t *type, size_t n_args, size
     mp_int_t font_id = mp_obj_get_int(args[0]);
     // check font number
     if (!find_font_id(font_id)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "FONT(%d) doesn't exist", font_id));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("FONT(%d) doesn't exist"), font_id);
     }
     // return static font object
     return MP_OBJ_FROM_PTR(&pyb_font_obj[font_id]);
