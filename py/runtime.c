@@ -82,11 +82,6 @@ void mp_init(void) {
     MP_STATE_VM(mp_kbd_exception).args = (mp_obj_tuple_t *)&mp_const_empty_tuple_obj;
     #endif
 
-    // call port specific initialization if any
-#ifdef MICROPY_PORT_INIT_FUNC
-    MICROPY_PORT_INIT_FUNC;
-#endif
-
     #if MICROPY_ENABLE_COMPILER
     // optimization disabled by default
     MP_STATE_VM(mp_optimise_value) = 0;
@@ -139,6 +134,11 @@ void mp_init(void) {
 
     #if MICROPY_PY_THREAD_GIL
     mp_thread_mutex_init(&MP_STATE_VM(gil_mutex));
+    #endif
+
+    // call port specific initialization if any
+    #ifdef MICROPY_PORT_INIT_FUNC
+    MICROPY_PORT_INIT_FUNC;
     #endif
 
     MP_THREAD_GIL_ENTER();
