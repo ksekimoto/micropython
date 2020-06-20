@@ -1,6 +1,6 @@
 MEMORY
 {
-	RAM : ORIGIN = 0x0, LENGTH = 262144
+	RAM : ORIGIN = 0x00000000, LENGTH = 262144
 	RAMHI : ORIGIN = 0x800000, LENGTH = 393216
 	ROM : ORIGIN = 0xFFE00000, LENGTH = 2097152
 }
@@ -14,8 +14,8 @@ SECTIONS
 	} > ROM
 	.text 0xFFE00000 : AT (0xFFE00000)
 	{
-        _stext = . ;
-        *(i.EntryPoint)
+		_stext = . ;
+		KEEP(*(i.EntryPoint))
 		*(.text)
 		*(.text.*)
 		*(P)
@@ -25,27 +25,27 @@ SECTIONS
 	.rvectors : 
 	{
 		_rvectors_start = .;
-		*(.rvectors)
+		KEEP(*(.rvectors))
 		_rvectors_end = .;
 	} > ROM
 	.init : 
 	{
-		*(.init)
+		KEEP(*(.init))
 		__preinit_array_start = .;
-		*(.preinit_array)
+		KEEP(*(.preinit_array))
 		__preinit_array_end = .;
 		__init_array_start = (. + 3) & ~ 3;
-		*(.init_array)
-		*(SORT(.init_array.*))
+		KEEP(*(.init_array))
+		KEEP(*(SORT(.init_array.*)))
 		__init_array_end = .;
 		__fini_array_start = .;
-		*(.fini_array)
-		*(SORT(.fini_array.*))
+		KEEP(*(.fini_array))
+		KEEP(*(SORT(.fini_array.*)))
 		__fini_array_end = .;
 	} > ROM
 	.fini : 
 	{
-		*(.fini)
+		KEEP(*(.fini))
 	} > ROM
 	.got : 
 	{
@@ -90,10 +90,10 @@ SECTIONS
 		_mdata = .;
 	} > ROM
 
-    . = ALIGN(4);
-    __end_of_text__ = .;
-    _sidata = __end_of_text__;
-    _sdataonrom = .; 
+	. = ALIGN(4);
+	__end_of_text__ = .;
+	_sidata = __end_of_text__;
+	_sdataonrom = .; 
 	
 	.istack 0x860000 : AT (0x860000)
 	{
@@ -110,9 +110,9 @@ SECTIONS
 
 	.data 0x1000 : AT (_mdata)
 	{
-        _sdata = .;
-  		_data = .;
-  		*(FLASH_OP)
+		_sdata = .;
+		_data = .;
+		*(FLASH_OP)
 		*(.data)
 		*(.data.*)
 		*(D)

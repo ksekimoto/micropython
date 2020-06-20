@@ -1,6 +1,6 @@
 MEMORY
 {
-	RAM : ORIGIN = 0x0, LENGTH = 262144
+	RAM : ORIGIN = 0x00000000, LENGTH = 262144
 	RAMHI : ORIGIN = 0x800000, LENGTH = 393216
 	ROM : ORIGIN = 0xFFE00000, LENGTH = 2097152
 }
@@ -9,8 +9,8 @@ SECTIONS
 {
 	.text 0xFFE00000 : AT (0xFFE00000)
 	{
-        _stext = . ;
-        *(i.EntryPoint)
+		_stext = . ;
+		KEEP(*(i.EntryPoint))
 		*(.text)
 		*(.text.*)
 		*(P)
@@ -20,27 +20,27 @@ SECTIONS
 	.rvectors : 
 	{
 		_rvectors_start = .;
-		*(.rvectors)
+		KEEP(*(.rvectors))
 		_rvectors_end = .;
 	} > ROM
 	.init : 
 	{
-		*(.init)
+		KEEP(*(.init))
 		__preinit_array_start = .;
-		*(.preinit_array)
+		KEEP(*(.preinit_array))
 		__preinit_array_end = .;
 		__init_array_start = (. + 3) & ~ 3;
-		*(.init_array)
-		*(SORT(.init_array.*))
+		KEEP(*(.init_array))
+		KEEP(*(SORT(.init_array.*)))
 		__init_array_end = .;
 		__fini_array_start = .;
-		*(.fini_array)
-		*(SORT(.fini_array.*))
+		KEEP(*(.fini_array))
+		KEEP(*(SORT(.fini_array.*)))
 		__fini_array_end = .;
 	} > ROM
 	.fini : 
 	{
-		*(.fini)
+		KEEP(*(.fini))
 	} > ROM
 	.got : 
 	{
@@ -93,29 +93,29 @@ SECTIONS
 		_mdata = .;
 	} > ROM
 
-    . = ALIGN(4);
-    __end_of_text__ = .;
-    _sidata = __end_of_text__;
-    _sdataonrom = .; 
+	. = ALIGN(4);
+	__end_of_text__ = .;
+	_sidata = __end_of_text__;
+	_sdataonrom = .; 
 	
-	.istack 0x40000 : AT (0x40000)
+	.istack 0x860000 : AT (0x860000)
 	{
 		_istack = .;
-	} > RAM
-	.ustack 0x3FF00 : AT (0x3FF00)
+	} > RAMHI
+	.ustack 0x85FC00 : AT (0x85FC00)
 	{
 		_ustack = .;
-	} > RAM
-	.heapmax 0xE0000 : AT (0xEF000)
+	} > RAMHI
+	.heapmax 0x85C000 : AT (0x85C000)
 	{
 		_heapmax = .;
 	} > RAMHI
 
 	.data 0x1000 : AT (_mdata)
 	{
-        _sdata = .;
-  		_data = .;
-  		*(FLASH_OP)
+		_sdata = .;
+		_data = .;
+		*(FLASH_OP)
 		*(.data)
 		*(.data.*)
 		*(D)
@@ -164,11 +164,11 @@ SECTIONS
 /* Define tho top end of the stack.  The stack is full descending so begins just
    above last byte of RAM.  Note that EABI requires the stack to be 8-byte
    aligned for a call. */
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+_estack = ORIGIN(RAMHI) + LENGTH(RAMHI);
 
 /* RAM extents for the garbage collector */
 _ram_start = ORIGIN(RAMHI);
 _ram_end = ORIGIN(RAMHI) + LENGTH(RAMHI);
-_heap_start = 0x0008000;	/* heap starts just after statically allocated memory */
-_heap_end = 0x000e0000;		/* tunable */
+_heap_start = _ebss;	/* heap starts just after statically allocated memory */
+_heap_end = 0x85A000;	/* tunable */
 
