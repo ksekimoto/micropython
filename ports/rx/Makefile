@@ -45,20 +45,28 @@ LAN_NEW = 1
 
 # Include modules
 USE_FONT = 1
-USE_LCD = 1
+USE_LCDSPI = 1
 
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
 # Files that are generated and needed before the QSTR build.
+#QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h $(BUILD)/modstm_qstr.h
 QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
 QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
 
+# MicroPython feature configurations
+MICROPY_ROM_TEXT_COMPRESSION ?= 1
+
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
+
+ifeq ($(MICROPY_PY_LVGL), 1)
+LVGL_ENABLE = 1
+endif
 
 # include py core make definitions
 include $(TOP)/py/py.mk
@@ -96,16 +104,17 @@ CROSS_COMPILE = rx-elf-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
-
+INC += -I$(BOARD_DIR)
 INC += -I$(MCU_SERIES_LOW)
-INC += -Iboards/$(BOARD)
+INC += -I$(TOP)/lib/oofatfs
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
 INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
-INC += -Ilwip_inc -Ilwip_utils
+INC += -Ilwip_inc
+INC += -Ilwip_utils
 endif
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 INC += -I$(TOP)/lib/mbedtls/include
@@ -119,27 +128,36 @@ endif
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
 endif
-ifeq ($(USE_LCD), 1)
-INC += -Ilcd
+ifeq ($(USE_LCDSPI), 1)
+INC += -Ilcdspi
 endif
 INC += -Isd
+ifeq ($(USE_DBG_PRINT) ,1)
+INC += -Idebug
+endif
+ifeq ($(LVGL_ENABLE),1)
+INC += -Ilvgl
+INC += -Ilib/lv_bindings/lvgl
+endif
 
 #######################################################################
 # C flags.
 #######################################################################
 CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=c99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
-#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
+CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
 #CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
-CFLAGS += -Wno-error=tautological-compare
-CFLAGS += -Wno-error=unused-const-variable
-CFLAGS += -Wno-error=nonnull
-CFLAGS += -Wno-error=nonnull-compare
-CFLAGS += -Wno-tautological-compare
-CFLAGS += -Wno-error=unused-function
-CFLAGS += -Wno-unused-function
-CFLAGS += -Wno-error=unused-variable
+CFLAGS += -Wno-error=pointer-arith
+#CFLAGS += -Wno-error=incompatible-pointer-types
+#CFLAGS += -Wno-error=tautological-compare
+#CFLAGS += -Wno-error=unused-const-variable
+#CFLAGS += -Wno-error=nonnull
+#CFLAGS += -Wno-error=nonnull-compare
+#CFLAGS += -Wno-tautological-compare
+#CFLAGS += -Wno-error=unused-function
+#CFLAGS += -Wno-unused-function
+#CFLAGS += -Wno-error=unused-variable
 
 CFLAGS += -I$(BOARD_DIR)
 
@@ -154,6 +172,12 @@ endif
 CFLAGS += -D$(MCU_SERIES_CAP)
 CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
 CFLAGS += -D__RX_LITTLE_ENDIAN__
+ifeq ($(MCU_SERIES),RX63N)
+CFLAGS += -mcpu=rx600 -mrelax
+endif
+ifeq ($(MCU_SERIES),RX65N)
+CFLAGS += -mcpu=rx64m -fpu -mrelax
+endif
 ifeq ($(BOARD),GR_CITRUS)
 CFLAGS += -DGRCITRUS
 endif
@@ -168,14 +192,17 @@ CFLAGS += -DGRSAKURA
 endif
 ifeq ($(BOARD),GR_ROSE)
 CFLAGS += -DGRROSE
-CFLAGS += -fpu
 endif
 ifeq ($(BOARD),GR_ROSE_DD)
 CFLAGS += -DGRROSE
-CFLAGS += -fpu
 endif
-#CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
-#CFLAGS += -DMICROPY_VFS_FAT=1
+ifeq ($(BOARD),GR_ROSE_LV)
+CFLAGS += -DGRROSE
+endif
+ifeq ($(BOARD),GR_ROSE_LV_DD)
+CFLAGS += -DGRROSE
+endif
+CFLAGS += -DFFCONF_H=\"lib/oofatfs/ffconf.h\"
 
 ifeq ($(USE_DBG_PRINT), 1)
 CFLAGS += -DUSE_DBG_PRINT
@@ -238,6 +265,9 @@ CFLAGS += -DMICROPY_SSL_AXTLS
 CFLAGS += -DMICROPY_STREAMS_POSIX_API
 endif
 
+ifeq ($(LVGL_ENABLE),1)
+CFLAGS += -DLVGL_ENABLE
+endif
 #######################################################################
 # Linker flags.
 #######################################################################
@@ -252,7 +282,7 @@ LDFLAGS += -T $(LD_FILES)
 #LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
 #LDFLAGS += --gc-sections
 LDFLAGS += -Wl,-Map=$@.map -Wl,--cref -Wl,--defsym=_estack_reserve=8 -Wl,-static
-#LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,--gc-sections
 
 LIBS =
 
@@ -264,6 +294,7 @@ SRC_LIB = $(addprefix lib/,\
 	netutils/trace.c \
 	netutils/dhcpserver.c \
 	timeutils/timeutils.c \
+	utils/gchelper_native.c \
 	utils/pyexec.c \
 	utils/interrupt_char.c \
 	utils/printf.c \
@@ -510,11 +541,12 @@ SRC_C += debug/division.c
 ifeq ($(USE_FONT), 1)
 SRC_C += font/font.c
 endif
-ifeq ($(USE_LCD), 1)
-SRC_C += lcd/lcdspi.c
-SRC_C += lcd/jpeg.c
-SRC_C += lcd/picojpeg.c
+ifeq ($(USE_LCDSPI), 1)
+SRC_C += lcdspi/lcdspi.c
+SRC_C += lcdspi/jpeg.c
+SRC_C += lcdspi/picojpeg.c
 endif
+
 SRC_C += sd/sd.c
 SRC_C += strftime.c
 SRC_C += time_utils.c
@@ -668,6 +700,14 @@ SRC_MOD += $(addprefix lib/,\
 )
 endif
 
+ifeq ($(LVGL_ENABLE) ,1)
+SRC_C += lvgl/modlvrx.c
+SRC_C += lvgl/driver/modILI9341.c
+SRC_C += lvgl/driver/modrtch.c
+SRC_C += lvgl/driver/modstmpe610.c
+SRC_C += lvgl/driver/modxpt2046.c
+endif
+
 OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
@@ -716,7 +756,7 @@ endif
 #	$(ECHO) "MISC freezing bytecode"
 #	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
-$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/firmware.elf: $(OBJ) $(LIB_LVGL)
 	$(ECHO) "LINK $@"
 	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin

@@ -34,8 +34,6 @@
 #include "gccollect.h"
 #include "systick.h"
 
-uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
-
 void gc_collect(void) {
     // get current time, in case we want to time the GC
     #if 0
@@ -45,16 +43,8 @@ void gc_collect(void) {
     // start the GC
     gc_collect_start();
 
-    // get the registers and the sp
-    uintptr_t regs[17]; /* r0,...,r15 and psw */
-    uintptr_t sp = gc_helper_get_regs_and_sp(regs);
-
-    // trace the stack, including the registers (since they live on the stack in this function)
-    #if MICROPY_PY_THREAD
-    gc_collect_root((void**)sp, ((uint32_t)MP_STATE_THREAD(stack_top) - sp) / sizeof(uint32_t));
-    #else
-    gc_collect_root((void**)sp, ((uint32_t)&ram_end - sp) / sizeof(uint32_t));
-    #endif
+    // trace the stack and registers
+    gc_helper_collect_regs_and_stack();
 
     // trace root pointers from any threads
     #if MICROPY_PY_THREAD

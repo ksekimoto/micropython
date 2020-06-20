@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include "picojpeg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef max
 #define max(a,b)     (((a) > (b)) ? (a) : (b))
 #endif
@@ -65,5 +69,9 @@ void jpeg_deinit(jpeg_t *jpeg);
 int jpeg_decode(jpeg_t *jpeg, char *filename, int split);
 int jpeg_decode_mcu(jpeg_t *jpeg);
 int jpeg_read(jpeg_t *jpeg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

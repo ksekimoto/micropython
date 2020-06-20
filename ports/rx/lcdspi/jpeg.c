@@ -31,7 +31,7 @@
 #include "common.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
-#include "lib/oofatfs/ff.h"
+#include "ff.h"
 
 #include "jpeg.h"
 #include "picojpeg.h"

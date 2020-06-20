@@ -36,9 +36,10 @@ extern "C" {
 /* LCD Controller */
 #define PCF8833     0
 #define S1D15G10    1
-#define ST7735      2
+#define ILI9341     2
 #define ILI9340     3
-#define ST7789      4
+#define ST7735      4
+#define ST7789      5
 
 /* LCD Model */
 #define NOKIA6100_0     0
@@ -46,6 +47,7 @@ extern "C" {
 #define T180            2
 #define M022C9340SPI    3
 #define RASPI13LCDSPI   4
+#define RASPI28LCDSPI   5
 
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb

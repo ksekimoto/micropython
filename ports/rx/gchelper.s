@@ -2,7 +2,7 @@
     .text
 
     .align  4
-# uint gc_helper_get_regs_and_sp(r1=uint regs[17])
+# uint gc_helper_get_regs_and_sp(r1=uint regs[20])
     .global _gc_helper_get_regs_and_sp
     .type   _gc_helper_get_regs_and_sp, @function
 _gc_helper_get_regs_and_sp:
