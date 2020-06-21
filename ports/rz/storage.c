@@ -251,7 +251,7 @@ int storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_bl
 
     for (size_t i = 0; i < num_blocks; i++) {
         if (!storage_write_block(src + i * FLASH_BLOCK_SIZE, block_num + i)) {
-            return 1; // error
+            return -1; // error
         }
     }
     return 0; // success
