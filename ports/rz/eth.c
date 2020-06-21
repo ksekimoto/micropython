@@ -159,7 +159,7 @@ err_t eth_netif_output(struct netif *netif, struct pbuf *p) {
     LINK_STATS_INC(link.xmit);
     eth_trace(netif->state, (size_t)-1, p, NETUTILS_TRACE_IS_TX | NETUTILS_TRACE_NEWLINE);
 
-    int tot_len = p->tot_len;
+    //int tot_len = p->tot_len;
     int len = 0;
     uint8_t *buf = le0.txcurrent->buf_p;
     int32_t flag = FP1;
@@ -189,6 +189,7 @@ err_t eth_netif_output(struct netif *netif, struct pbuf *p) {
     return ERR_OK;
 }
 
+#if 0
 STATIC err_t eth_netif_init(struct netif *netif) {
 #if defined(DEBUG_ETHERNETIF)
     debug_printf("eth_netif_init\r\n");
@@ -206,6 +207,7 @@ STATIC err_t eth_netif_init(struct netif *netif) {
         | NETIF_CHECKSUM_CHECK_ICMP6);
     return ERR_OK;
 }
+#endif
 
 static struct pbuf *low_level_input(struct netif *netif);
 
@@ -379,7 +381,7 @@ static struct pbuf *low_level_input(struct netif *netif) {
     if ((EDMAC0.EESR.LONG & 0x00040000) != 0) {
         EDMAC0.EESR.LONG |= 0x00040000;
     }
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     while (flag) {
         //recvd = rx_ether_fifo_read(le0.rxcurrent, (int8_t *)&rx_buf);
         readcount++;
@@ -448,7 +450,7 @@ static struct pbuf *low_level_input(struct netif *netif) {
             }
         }
     }
-    rz_enable_irq();
+    rz_enable_irq(state);
 #if defined(DEBUG_ETHERNETIF)
     if (recvdsize > 0) {
         debug_printf("ERX:%d\r\n", recvdsize);

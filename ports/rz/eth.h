@@ -26,7 +26,11 @@
 #ifndef MICROPY_INCLUDED_RZ_ETH_H
 #define MICROPY_INCLUDED_RZ_ETH_H
 
-typedef struct _eth_t eth_t;
+typedef struct _eth_t {
+    uint32_t trace_flags;
+    struct netif netif;
+    struct dhcp dhcp_struct;
+} eth_t;
 extern eth_t eth_instance;
 
 void eth_init(eth_t *self, int mac_idx);
