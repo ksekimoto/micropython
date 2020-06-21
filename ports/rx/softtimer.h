@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_SOFTTIMER_H
-#define MICROPY_INCLUDED_STM32_SOFTTIMER_H
+#ifndef MICROPY_INCLUDED_RX_SOFTTIMER_H
+#define MICROPY_INCLUDED_RX_SOFTTIMER_H
 
 #include "py/pairheap.h"
 
@@ -46,4 +46,4 @@ void soft_timer_handler(void);
 void soft_timer_insert(soft_timer_entry_t *entry);
 void soft_timer_remove(soft_timer_entry_t *entry);
 
-#endif // MICROPY_INCLUDED_STM32_SOFTTIMER_H
+#endif // MICROPY_INCLUDED_RX_SOFTTIMER_H
