@@ -110,16 +110,14 @@ STATIC int spi_find(mp_obj_t id) {
             return 3;
         #endif
         }
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "SPI(%s) doesn't exist", port));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("SPI(%s) doesn't exist"), port);
     } else {
         // given an integer id
         int spi_id = mp_obj_get_int(id);
         if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(spi_obj)) {
             return spi_id;
         }
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-            "SPI(%d) doesn't exist", spi_id));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("SPI(%d) doesn't exist"), spi_id);
     }
 }
 
@@ -444,7 +442,7 @@ STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_ma
             // recv argument given
             mp_get_buffer_raise(args[1].u_obj, &bufinfo_recv, MP_BUFFER_WRITE);
             if (bufinfo_recv.len != bufinfo_send.len) {
-                mp_raise_ValueError("recv must be same length as send");
+                mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("recv must be same length as send"));
             }
             o_ret = args[1].u_obj;
         }
@@ -551,7 +549,7 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
     if (args[ARG_sck].u_obj != MP_OBJ_NULL
         || args[ARG_mosi].u_obj != MP_OBJ_NULL
         || args[ARG_miso].u_obj != MP_OBJ_NULL) {
-        mp_raise_ValueError("explicit choice of sck/mosi/miso is not implemented");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("explicit choice of sck/mosi/miso is not implemented"));
     }
 
     // init the SPI bus
@@ -624,6 +622,6 @@ const mspi_t *spi_from_mp_obj(mp_obj_t o) {
         machine_hard_spi_obj_t *self = MP_OBJ_TO_PTR(o);
         return self->spi;
     } else {
-        mp_raise_TypeError("expecting an SPI object");
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("expecting an SPI object"));
     }
 }

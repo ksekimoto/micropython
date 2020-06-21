@@ -104,7 +104,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         pin_idx = mp_obj_get_int(pin_obj);
         resolution = rz_adc_get_resolution(pin_idx);
         if (resolution < 0) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "pin(%d) does not have ADC capabilities", pin_idx));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("not a valid ADC pin index: %d"), pin_idx);
         }
         channel = rz_adc_get_channel(pin_idx);
     } else {
@@ -112,7 +112,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         pin_idx = (int)pin->pin;
         resolution = rz_adc_get_resolution(pin_idx);
         if (resolution < 0) {
-            nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "pin(%q) does not have ADC capabilities", pin->name));
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("pin %q does not have ADC capabilities"), pin->name);
         }
         channel = rz_adc_get_channel(pin_idx);
     }
@@ -191,10 +191,9 @@ float adc_read_core_vref(ADC_HandleTypeDef *adcHandle) {
 /* MicroPython bindings : adc_all object                                      */
 
 STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ADC_ALL is not implemented"));
-
     // check number of arguments
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
+
     // make ADCAll object
     pyb_adc_all_obj_t *o = m_new_obj(pyb_adc_all_obj_t);
     o->base.type = &pyb_adc_all_type;
