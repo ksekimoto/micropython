@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_PYBTHREAD_H
-#define MICROPY_INCLUDED_STM32_PYBTHREAD_H
+#ifndef MICROPY_INCLUDED_RZ_PYBTHREAD_H
+#define MICROPY_INCLUDED_RZ_PYBTHREAD_H
 
 typedef struct _pyb_thread_t {
     void *sp;
@@ -63,17 +63,15 @@ static inline void *pyb_thread_get_local(void) {
 }
 
 static inline void pyb_thread_yield(void) {
-#if RZ_TODO
     if (pyb_thread_cur->run_next == pyb_thread_cur) {
         __WFI();
     } else {
-        SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+        //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
     }
-#endif
 }
 
 void pyb_mutex_init(pyb_mutex_t *m);
 int pyb_mutex_lock(pyb_mutex_t *m, int wait);
 void pyb_mutex_unlock(pyb_mutex_t *m);
 
-#endif // MICROPY_INCLUDED_STM32_PYBTHREAD_H
+#endif // MICROPY_INCLUDED_RZ_PYBTHREAD_H
