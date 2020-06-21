@@ -29,9 +29,7 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
-#if RZ_TODO
 #include "timer.h"
-#endif
 #include "led.h"
 #include "pin.h"
 
@@ -54,13 +52,13 @@ typedef struct _pyb_led_obj_t {
 } pyb_led_obj_t;
 
 STATIC const pyb_led_obj_t pyb_led_obj[] = {
-    {{&pyb_led_type}, 1, (const pin_obj_t *)MICROPY_HW_LED1},
+    {{&pyb_led_type}, 1, MICROPY_HW_LED1},
 #if defined(MICROPY_HW_LED2)
-    {{&pyb_led_type}, 2, (const pin_obj_t *)MICROPY_HW_LED2},
+    {{&pyb_led_type}, 2, MICROPY_HW_LED2},
 #if defined(MICROPY_HW_LED3)
-    {{&pyb_led_type}, 3, (const pin_obj_t *)MICROPY_HW_LED3},
+    {{&pyb_led_type}, 3, MICROPY_HW_LED3},
 #if defined(MICROPY_HW_LED4)
-    {{&pyb_led_type}, 4, (const pin_obj_t *)MICROPY_HW_LED4},
+    {{&pyb_led_type}, 4, MICROPY_HW_LED4},
 #endif
 #endif
 #endif
@@ -128,7 +126,7 @@ STATIC mp_obj_t led_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
     // check led number
     if (!(1 <= led_id && led_id <= NUM_LEDS)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "LED(%d) doesn't exist", led_id));
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("LED(%d) doesn't exist"), led_id);
     }
 
     // return static led object
