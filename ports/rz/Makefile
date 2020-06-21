@@ -24,6 +24,7 @@ endif
 
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
+MCU_SERIES = RZA2M
 TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
@@ -56,6 +57,7 @@ endif
 ifeq ($(BOARD),GR_MANGO_DD)
 CROSS = 1
 BOOT_LOADER = 1
+MCU_SERIES = RZA2M
 TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
@@ -103,6 +105,10 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
 
+ifeq ($(MICROPY_PY_LVGL), 1)
+LVGL_ENABLE = 1
+endif
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 
@@ -145,6 +151,15 @@ ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
 INC += -Ilwip_inc
 INC += -Ilwip_utils
+endif
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+INC += -I$(TOP)/lib/mbedtls/include
+endif
+ifeq ($(MICROPY_SSL_AXTLS),1)
+INC += -I$(TOP)/lib/axtls/ssl -I$(TOP)/lib/axtls/crypto -I$(TOP)/extmod/axtls-include
+endif
+ifeq ($(MICROPY_PY_ESP8266),1)
+INC += -I$(TOP)/drivers/esp8266/inc
 endif
 ifeq ($(USE_FONT), 1)
 INC += -Ifont
@@ -231,6 +246,9 @@ CFLAGS += -Wno-incompatible-pointer-types
 endif
 endif
 
+ifeq ($(MCU_SERIES),RZA2M)
+CFLAGS += -DRZA2M
+endif
 
 # Configure for nan-boxing object model if requested
 ifeq ($(NANBOX),1)
@@ -343,6 +361,7 @@ LIB_SRC_C = $(addprefix lib/,\
 	netutils/trace.c \
 	netutils/dhcpserver.c \
 	timeutils/timeutils.c \
+	utils/gchelper_native.c \
 	utils/pyexec.c \
 	utils/interrupt_char.c \
 	utils/printf.c \
@@ -533,8 +552,8 @@ SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += led.c
-SRC_C += machine_uart.c
 SRC_C += machine_timer.c
+SRC_C += machine_uart.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
 SRC_C += modnwrxeth.c
@@ -636,10 +655,107 @@ SRC_MOD += $(addprefix $(CC3000_DIR)/src/,\
 	)
 endif
 
-ifeq ($(MICROPY_SSL_MBEDTLS),1)
-CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
-SRC_MOD += mbedtls/mbedtls_port.c
+# for ESP8266 module
+ifeq ($(MICROPY_PY_ESP8266),1)
+ESP8266_DIR=drivers/esp8266
+INC += -I$(TOP)/$(ESP8266_DIR)/inc
+CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
+#SRC_MOD += modnwesp8266.c
+SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
+	esp8266_driver.c \
+	vector.c \
+	tinymalloc.c \
+	)
 endif
+
+#ifeq ($(MICROPY_PY_LWIP),1)
+#SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
+#SRC_MOD += lwip_utils/sntp_client.c
+#endif
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+SRC_MOD += mbedtls/mbedtls_port.c
+SRC_MOD += $(addprefix lib/,\
+	mbedtls/library/aes.c \
+	mbedtls/library/aesni.c \
+	mbedtls/library/arc4.c \
+	mbedtls/library/aria.c \
+	mbedtls/library/asn1parse.c \
+	mbedtls/library/asn1write.c \
+	mbedtls/library/base64.c \
+	mbedtls/library/bignum.c \
+	mbedtls/library/blowfish.c \
+	mbedtls/library/camellia.c \
+	mbedtls/library/ccm.c \
+	mbedtls/library/certs.c \
+	mbedtls/library/chacha20.c \
+	mbedtls/library/chachapoly.c \
+	mbedtls/library/cipher_wrap.c \
+	mbedtls/library/cipher.c \
+	mbedtls/library/cmac.c \
+	mbedtls/library/ctr_drbg.c \
+	mbedtls/library/debug.c \
+	mbedtls/library/des.c \
+	mbedtls/library/dhm.c \
+	mbedtls/library/ecdh.c \
+	mbedtls/library/ecdsa.c \
+	mbedtls/library/ecjpake.c \
+	mbedtls/library/ecp.c \
+	mbedtls/library/ecp_curves.c \
+	mbedtls/library/entropy.c \
+	mbedtls/library/entropy_poll.c \
+	mbedtls/library/error.c \
+	mbedtls/library/gcm.c \
+	mbedtls/library/havege.c \
+	mbedtls/library/hmac_drbg.c \
+	mbedtls/library/md.c \
+	mbedtls/library/md_wrap.c \
+	mbedtls/library/md2.c \
+	mbedtls/library/md4.c \
+	mbedtls/library/md5.c \
+	mbedtls/library/memory_buffer_alloc.c \
+	mbedtls/library/oid.c \
+	mbedtls/library/padlock.c \
+	mbedtls/library/pem.c \
+	mbedtls/library/pk.c \
+	mbedtls/library/pk_wrap.c \
+	mbedtls/library/pkcs11.c \
+	mbedtls/library/pkcs12.c \
+	mbedtls/library/pkcs5.c \
+	mbedtls/library/pkparse.c \
+	mbedtls/library/pkwrite.c \
+	mbedtls/library/platform.c \
+	mbedtls/library/platform_util.c \
+	mbedtls/library/poly1305.c \
+	mbedtls/library/ripemd160.c \
+	mbedtls/library/rsa.c \
+	mbedtls/library/rsa_internal.c \
+	mbedtls/library/sha1.c \
+	mbedtls/library/sha256.c \
+	mbedtls/library/sha512.c \
+	mbedtls/library/ssl_cache.c \
+	mbedtls/library/ssl_ciphersuites.c \
+	mbedtls/library/ssl_cli.c \
+	mbedtls/library/ssl_cookie.c \
+	mbedtls/library/ssl_srv.c \
+	mbedtls/library/ssl_ticket.c \
+	mbedtls/library/ssl_tls.c \
+	mbedtls/library/threading.c \
+	mbedtls/library/timing.c \
+	mbedtls/library/version.c \
+	mbedtls/library/version_features.c \
+	mbedtls/library/x509.c \
+	mbedtls/library/x509_create.c \
+	mbedtls/library/x509_crl.c \
+	mbedtls/library/x509_crt.c \
+	mbedtls/library/x509_csr.c \
+	mbedtls/library/x509write_crt.c \
+	mbedtls/library/x509write_csr.c \
+)
+endif
+
 
 ifeq ($(MICROPY_PY_BLUETOOTH),1)
 
@@ -739,11 +855,11 @@ $(BUILD)/firmware.elf: $(OBJ) $(LIB_MBED) $(LIB_LVGL)
 ifeq ($(BOOT_LOADER),1)
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary -j .boot -j .isr_vector -j .text -j .ARM.extab -j .ARM.exidx -j .copy.table -j .zero.table -j .ram_code -j .data -j .nc_data -j .octa_data $^ $(BUILD)/firmware.bin
-	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
+#	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
 else
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .ARM.extab -j .ARM.exidx -j .copy.table -j .zero.table -j .ram_code -j .data -j .nc_data -j .octa_data $^ $(BUILD)/firmware.bin
-	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
+#	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s	
 endif
 
 MAKE_PINS = boards/make-pins.py

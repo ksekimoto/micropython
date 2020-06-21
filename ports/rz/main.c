@@ -88,6 +88,10 @@
 #include "rza2m_ostm2.h"
 #endif
 
+#if LVGL_ENABLE
+extern int lvrx_enable;
+#endif
+
 #if MICROPY_PY_THREAD
 STATIC pyb_thread_t pyb_thread_main;
 #endif
@@ -696,6 +700,10 @@ soft_reset_exit:
 
     #if MICROPY_PY_THREAD
     pyb_thread_deinit();
+    #endif
+
+    #if LVGL_ENABLE
+    lvrx_enable = 0;
     #endif
 
     gc_sweep_all();

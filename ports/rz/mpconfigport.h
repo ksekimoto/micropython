@@ -250,9 +250,8 @@ extern const struct _mp_obj_module_t mp_module_uos;
 extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
-#if RZ_TODO
 extern const struct _mp_obj_module_t mp_module_onewire;
-#endif
+#if MICROPY_PY_LVGL
 extern const struct _mp_obj_module_t mp_module_lvgl;
 extern const struct _mp_obj_module_t mp_module_rtch;
 extern const struct _mp_obj_module_t mp_module_lodepng;
@@ -261,7 +260,6 @@ extern const struct _mp_obj_module_t mp_module_xpt2046;
 extern const struct _mp_obj_module_t mp_module_stmpe610;
 extern const struct _mp_obj_module_t mp_module_lvrz;
 
-#if MICROPY_PY_LVGL
 #define MICROPY_PORT_LVGL_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR_lvgl), (mp_obj_t)&mp_module_lvgl }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_lvrz), (mp_obj_t)&mp_module_lvrz }, \
@@ -349,9 +347,9 @@ extern void lv_deinit(void);
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
     SOCKET_BUILTIN_MODULE \
-    /* WSOCKET_BUILTIN_MODULE */ \
+    WSOCKET_BUILTIN_MODULE \
     NETWORK_BUILTIN_MODULE \
-    /* { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, */ \
+    { MP_ROM_QSTR(MP_QSTR__onewire), MP_ROM_PTR(&mp_module_onewire) }, \
     MICROPY_PORT_LVGL_DEF \
     MICROPY_PORT_LODEPNG_DEF \
     MICROPY_PORT_RTCH_DEF
@@ -382,7 +380,7 @@ extern void lv_deinit(void);
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
     { MP_ROM_QSTR(MP_QSTR_select), MP_ROM_PTR(&mp_module_uselect) }, \
     SOCKET_BUILTIN_MODULE_WEAK_LINKS \
-    /* WSOCKET_BUILTIN_MODULE_WEAK_LINKS */ \
+    WSOCKET_BUILTIN_MODULE_WEAK_LINKS \
     { MP_ROM_QSTR(MP_QSTR_struct), MP_ROM_PTR(&mp_module_ustruct) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_errno), MP_ROM_PTR(&mp_module_uerrno) }, \
@@ -410,6 +408,13 @@ struct _mp_bluetooth_nimble_root_pointers_t;
 #define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE
 #endif
 
+#if MICROPY_BLUETOOTH_BTSTACK
+struct _mp_bluetooth_btstack_root_pointers_t;
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK struct _mp_bluetooth_btstack_root_pointers_t *bluetooth_btstack_root_pointers;
+#else
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK
+#endif
+
 #if MICROPY_PY_LVGL
 #include "lib/lv_bindings/lvgl/src/lv_misc/lv_gc.h"
 #else
@@ -430,7 +435,7 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     \
     mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; \
     \
-    struct _soft_timer_entry_t *soft_timer_head; \
+    struct _soft_timer_entry_t *soft_timer_heap; \
     \
     /* pointers to all Timer objects (if they have been created) */ \
     struct _pyb_timer_obj_t *pyb_timer_obj_all[MICROPY_HW_MAX_TIMER]; \
@@ -448,7 +453,8 @@ struct _mp_bluetooth_nimble_root_pointers_t;
     mp_obj_list_t mod_network_nic_list; \
     \
     MICROPY_PORT_ROOT_POINTER_MBEDTLS \
-    /* MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE */ \
+    MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE \
+    MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK \
     LV_ROOTS \
     void *mp_lv_user_data; \
 

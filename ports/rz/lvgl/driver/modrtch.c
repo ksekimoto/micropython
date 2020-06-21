@@ -36,6 +36,7 @@
 #include "freertos/semphr.h"
 #include "esp_task.h"
 #endif
+#include <stdlib.h>
 #include "lv_mpy.h"
 #include "lvgl/src/lv_hal/lv_hal_indev.h"
 #include "lvgl/src/lv_core/lv_disp.h"  
@@ -157,7 +158,7 @@ STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
 
 STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in);
 STATIC mp_obj_t mp_rtch_deinit(mp_obj_t self_in);
-STATIC mp_obj_t calibrate(mp_uint_t n_args, const mp_obj_t *args);
+STATIC mp_obj_t calibrate(size_t n_args, const mp_obj_t *args);
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_rtch_obj, mp_rtch_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_deinit_rtch_obj, mp_rtch_deinit);
@@ -270,7 +271,7 @@ STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t calibrate(mp_uint_t n_args, const mp_obj_t *args)
+STATIC mp_obj_t calibrate(size_t n_args, const mp_obj_t *args)
 {
     (void)n_args; // unused, we know it's 5
     rtch_t *self = MP_OBJ_TO_PTR(args[0]);

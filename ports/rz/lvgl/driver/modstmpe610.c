@@ -31,8 +31,36 @@
 #include "py/runtime.h"
 #include "mphalport.h"
 #include "pin.h"
+#if defined(RZA2M)
 #include "rza2m_spi.h"
+#endif
 #include "stmpe610.h"
+
+#if defined(RZA2M)
+#define GPIO_SET_OUTPUT     _gpio_mode_output
+#define GPIO_SET_INPUT      _gpio_mode_input
+#define GPIO_WRITE          _gpio_write
+#define SPI_WRITE_BYTE      rz_spi_write_byte
+#define SPI_INIT            rz_spi_init
+#define SPI_DEINIT          rz_spi_deinit
+#define SPI_GET_CONF        rz_spi_get_conf
+#define SPI_START_XFER      rz_spi_start_xfer
+#define SPI_END_XFER        rz_spi_end_xfer
+#define SPI_TRANSFER        rz_spi_transfer
+#else
+#define GPIO_SET_OUTPUT     gpio_mode_output
+#define GPIO_SET_INPUT      gpio_mode_input
+#define GPIO_WRITE          gpio_write
+#define SPI_WRITE_BYTE      rx_spi_write_byte
+#define SPI_INIT            rx_spi_init
+#define SPI_DEINIT          rx_spi_deinit
+#define SPI_GET_CONF        rx_spi_get_conf
+#define SPI_START_XFER      rx_spi_start_xfer
+#define SPI_END_XFER        rx_spi_end_xfer
+#define SPI_TRANSFER        rx_spi_transfer
+#endif
+
+void mp_hal_delay_ms(mp_uint_t ms);
 
 //////////////////////////////////////////////////////////////////////////////
 // Defines
@@ -135,16 +163,16 @@ STATIC mp_obj_t stmpe610_make_new(const mp_obj_type_t *type,
     self->spihost = args[ARG_spihost].u_int;
     self->mode = args[ARG_mode].u_int;
     if (args[ARG_cs].u_obj == MP_OBJ_NULL) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "cs pin not specified"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("cs pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_cs].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->cs = MP_OBJ_TO_PTR(args[ARG_cs].u_obj);
     }
     if (args[ARG_irq].u_obj == MP_OBJ_NULL) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "irq pin not specified"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("irq pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_irq].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->irq = MP_OBJ_TO_PTR(args[ARG_irq].u_obj);
     }
@@ -206,9 +234,9 @@ STATIC void write_8bit_reg(stmpe610_obj_t *self, uint8_t reg, uint8_t value) {
     src[0] = reg;
     src[1] = value;
     //uint32_t state = disable_irq();
-    rz_spi_start_xfer(self->spihost, self->spcmd, self->spbr);
+    SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
-    rz_spi_transfer(self->spihost, 8, &dst, &src, 2, 1000);
+    SPI_TRANSFER(self->spihost, 8, (uint8_t *)&dst, (uint8_t *)&src, 2, 1000);
     mp_hal_pin_write(self->cs, 1);
     //enable_irq(state);
 }
@@ -218,9 +246,9 @@ STATIC uint8_t read_8bit_reg(stmpe610_obj_t *self, uint8_t reg) {
     uint8_t dst[2];
     src[0] = 0x80 | reg;
     //uint32_t state = disable_irq();
-    rz_spi_start_xfer(self->spihost, self->spcmd, self->spbr);
+    SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
-    rz_spi_transfer(self->spihost, 8, &dst, &src, 2, 1000);
+    SPI_TRANSFER(self->spihost, 8, (uint8_t *)&dst, (uint8_t *)&src, 2, 1000);
     mp_hal_pin_write(self->cs, 1);
     //enable_irq(state);
     return dst[1];
@@ -243,10 +271,8 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in)
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     mp_activate_stmpe610(self_in);
-    //uint32_t state = disable_irq();
-    rz_spi_init((uint32_t)self->spihost, self->cs->pin, self->baudrate , 8, self->mode);
-    rz_spi_get_conf((uint32_t)self->spihost, &self->spcmd, &self->spbr);
-    //enable_irq(state);
+    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate, 8, self->mode);
+    SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
 
     write_8bit_reg(self, STMPE_SYS_CTRL1, STMPE_SYS_CTRL1_RESET);
     mp_hal_delay_ms(100);
@@ -287,7 +313,7 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in)
 
 STATIC mp_obj_t mp_stmpe610_deinit(mp_obj_t self_in) {
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    rz_spi_deinit((uint32_t)self->spihost, self->cs->pin);
+    SPI_DEINIT((uint32_t)self->spihost, self->cs->pin);
     return mp_const_none;
 }
 
@@ -341,7 +367,7 @@ static void adjust_data(int16_t *x, int16_t *y) {
 static bool stmpe610_read(lv_indev_data_t *data) {
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(g_stmpe610);
     if (!self)
-        nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "stmpe610 instance needs to be created before callback is called!"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("stmpe610 instance needs to be created before callback is called!"));
     static int16_t last_x = 0;
     static int16_t last_y = 0;
     bool valid = true;

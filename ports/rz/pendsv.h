@@ -36,8 +36,11 @@ enum {
     PENDSV_DISPATCH_CYW43,
     #endif
     #endif
-    #if MICROPY_PY_BLUETOOTH && MICROPY_BLUETOOTH_NIMBLE
-    PENDSV_DISPATCH_NIMBLE,
+    #if MICROPY_PY_BLUETOOTH
+    PENDSV_DISPATCH_BLUETOOTH_HCI,
+    #endif
+    #if MICROPY_PY_LVGL
+    PENDSV_DISPATCH_LV,
     #endif
     PENDSV_DISPATCH_MAX
 };
@@ -53,5 +56,9 @@ typedef void (*pendsv_dispatch_t)(void);
 void pendsv_init(void);
 void pendsv_kbd_intr(void);
 void pendsv_schedule_dispatch(size_t slot, pendsv_dispatch_t f);
+
+// since we play tricks with the stack, the compiler must not generate a
+// prelude for this function
+//void pendsv_isr_handler(void) __attribute__((naked));
 
 #endif // MICROPY_INCLUDED_RZ_PENDSV_H

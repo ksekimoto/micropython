@@ -10,6 +10,8 @@
 extern void dcache_clean(void * p_buf, uint32_t size);
 extern void dcache_invalid(void * p_buf, uint32_t size);
 
+//#define USE_PENDSV
+
 /* Defines the LittlevGL tick rate in milliseconds. */
 /* Increasing this value might help with CPU usage at the cost of lower
  * responsiveness. */
@@ -19,6 +21,8 @@ extern void dcache_invalid(void * p_buf, uint32_t size);
 
 #define MONITOR_HOR_RES     LCD_PIXEL_WIDTH
 #define MONITOR_VER_RES     LCD_PIXEL_HEIGHT
+
+int lvrx_enable = 0;
 
 static uint8_t *tft_fb_ptr = 0;
 static uint32_t tft_fb_size = 0;
@@ -85,22 +89,21 @@ STATIC mp_obj_t mp_lv_task_handler(mp_obj_t arg) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_lv_task_handler_obj, mp_lv_task_handler);
 
-STATIC int tick_thread(void * data) {
-    (void)data;
-    lv_tick_inc(LV_TICK_RATE);
-    mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
-    //lv_task_handler();
-#if 0
-    if (lvrz_active()) {
-        lv_tick_inc(1); /*Tell LittelvGL that 1 milliseconds were elapsed*/
-        mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
-        if (MP_STATE_VM(sched_state) == MP_SCHED_IDLE) {
-            MP_STATE_VM(sched_state) = MP_SCHED_PENDING;
+void tick_thread(void) {
+#if defined(USE_PENDSV)
+    if (lvrx_enable) {
+        if ((mtick() % LV_TICK_RATE) == 0) {
+            lv_tick_inc(LV_TICK_RATE);
+            mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
         }
-        pendsv_schedule_dispatch(PENDSV_DISPATCH_LVRZ, tick_thread);
+        pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
+    }
+#else
+    if (lvrx_enable) {
+        lv_tick_inc(LV_TICK_RATE);
+        mp_sched_schedule((mp_obj_t)&mp_lv_task_handler_obj, mp_const_none);
     }
 #endif
-    return 0;
 }
 
 STATIC mp_obj_t mp_init_lvrz(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -109,21 +112,26 @@ STATIC mp_obj_t mp_init_lvrz(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
         { MP_QSTR_w, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = LV_HOR_RES_MAX} },
         { MP_QSTR_h, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = LV_VER_RES_MAX} },
     };
-
     // parse args
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    lvrx_enable = 1;
     //monitor_init(args[ARG_w].u_int, args[ARG_h].u_int);
 #if defined(MBED_LCD)
     tft_fb_ptr= mbed_get_fb_ptr();
     tft_fb_size = mbed_get_fb_size();
     mbed_lcd_init();
 #endif
+#if defined(USE_PENDSV)
+    pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
+#else
     mbed_ticker_thread((void *)tick_thread, 1000*LV_TICK_RATE);
+#endif
     return mp_const_none;
 }
 
 STATIC mp_obj_t mp_deinit_lvrz() {
+    lvrx_enable = 0;
     return mp_const_none;
 }
 
