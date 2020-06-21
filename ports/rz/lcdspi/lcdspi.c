@@ -40,12 +40,40 @@
 #include "ST7735.h"
 #include "ST7789.h"
 #include "font.h"
+#if defined(RX65N)
+#include "rx65n_gpio.h"
+#include "rx65n_spi.h"
+#endif
+#if defined(RZA2M)
 #include "rza2m_gpio.h"
 #include "rza2m_spi.h"
+#endif
 #include "jpeg.h"
 #include "lcdspi.h"
 
 #if MICROPY_PY_PYB_LCDSPI
+
+#if defined(RZA2M)
+#define GPIO_SET_OUTPUT     _gpio_mode_output
+#define GPIO_SET_INPUT      _gpio_mode_input
+#define GPIO_WRITE          _gpio_write
+#define SPI_WRITE_BYTE      rz_spi_write_byte
+#define SPI_INIT            rz_spi_init
+#define SPI_GET_CONF        rz_spi_get_conf
+#define SPI_START_XFER      rz_spi_start_xfer
+#define SPI_END_XFER        rz_spi_end_xfer
+#define SPI_TRANSFER        rz_spi_transfer
+#else
+#define GPIO_SET_OUTPUT     gpio_mode_output
+#define GPIO_SET_INPUT      gpio_mode_input
+#define GPIO_WRITE          gpio_write
+#define SPI_WRITE_BYTE      rx_spi_write_byte
+#define SPI_INIT            rx_spi_init
+#define SPI_GET_CONF        rx_spi_get_conf
+#define SPI_START_XFER      rx_spi_start_xfer
+#define SPI_END_XFER        rx_spi_end_xfer
+#define SPI_TRANSFER        rx_spi_transfer
+#endif
 
 //#define TEST_LCDSPI
 #ifdef TEST_LCDSPI
@@ -76,11 +104,71 @@ static void ST7789_Initialize();
 
 static volatile int g_spi_id = 0;
 
+#if defined(GRCITRUS)
+static uint8_t _clkPin = PC5;
+static uint8_t _doutPin = PC6;
+static uint8_t _dinPin = PC4;
+static uint8_t _csPin = PC7;
+static uint8_t _resetPin = P52;
+static uint8_t _rsPin = P50;
+
+static lcdspi_pins_t lcdspi_pins_def = {
+    (pin_obj_t *)&pin_PC5_obj,   /* clk */
+    (pin_obj_t *)&pin_PC6_obj,   /* mosi */
+    (pin_obj_t *)&pin_PC7_obj,   /* miso */
+    (pin_obj_t *)&pin_PC4_obj,   /* cs */
+    (pin_obj_t *)&pin_P52_obj,   /* reset */
+    (pin_obj_t *)&pin_P50_obj,   /* rs */
+};
+#endif
+#if defined(GRSAKURA)
+/* Aitendo M0_1114_basic_shield */
+static uint8_t _clkPin = P33;
+static uint8_t _doutPin = P32;
+static uint8_t _dinPin = P22;
+static uint8_t _csPin = P24;
+static uint8_t _resetPin = P25;
+static uint8_t _rsPin = P23;
+
+/*
+ *  pin_obj_t *clkPin;
+ *  pin_obj_t *doutPin;
+ *  pin_obj_t *dinPin;
+ *  pin_obj_t *csPin;
+ *  pin_obj_t *resetPin;
+ *  pin_obj_t *rsPin;
+ */
+static lcdspi_pins_t lcdspi_pins_def = {
+    (pin_obj_t *)&pin_P33_obj,   /* clk */
+    (pin_obj_t *)&pin_P32_obj,   /* mosi */
+    (pin_obj_t *)&pin_P22_obj,   /* miso */
+    (pin_obj_t *)&pin_P24_obj,   /* cs */
+    (pin_obj_t *)&pin_P25_obj,   /* reset */
+    (pin_obj_t *)&pin_P23_obj,   /* rs */
+};
+#endif
+#if defined(GRROSE)
+static uint8_t _clkPin = PE5;
+static uint8_t _doutPin = PE6;
+static uint8_t _dinPin = PE7;
+static uint8_t _csPin = PE4;
+static uint8_t _resetPin = P26;
+static uint8_t _rsPin = P30;
+
+static lcdspi_pins_t lcdspi_pins_def = {
+    (pin_obj_t *)&pin_PE5_obj,   /* clk */
+    (pin_obj_t *)&pin_PE6_obj,   /* mosi */
+    (pin_obj_t *)&pin_PE4_obj,   /* miso */
+    (pin_obj_t *)&pin_PE4_obj,   /* cs */
+    (pin_obj_t *)&pin_P26_obj,   /* reset */
+    (pin_obj_t *)&pin_P30_obj,   /* rs */
+};
+#endif
 #if defined(GRMANGO)
 static uint32_t _clkPin = P87;
 static uint32_t _doutPin = P86;
-static uint32_t _csPin = P84;
 static uint32_t _dinPin = P85;
+static uint32_t _csPin = P84;
 static uint32_t _resetPin = P45;
 static uint32_t _rsPin = PH6;
 
@@ -295,13 +383,13 @@ static void SPISW_SetPinMode(void) {
 }
 
 void SPISW_Initialize() {
-    _gpio_mode_output(_csPin);
-    _gpio_mode_output(_resetPin);
-    _gpio_mode_output(_rsPin);
-    _gpio_mode_output(_clkPin);
-    _gpio_mode_output(_doutPin);
-    _gpio_mode_input(_dinPin);
-    _gpio_write(_csPin, LOW);
+    GPIO_SET_OUTPUT(_csPin);
+    GPIO_SET_OUTPUT(_resetPin);
+    GPIO_SET_OUTPUT(_rsPin);
+    GPIO_SET_OUTPUT(_clkPin);
+    GPIO_SET_OUTPUT(_doutPin);
+    GPIO_SET_INPUT(_dinPin);
+    GPIO_WRITE(_csPin, LOW);
 }
 
 #if defined(LCDSPI_OPTIMIZE)
@@ -311,7 +399,7 @@ void SPISW_Write(uint8_t dat) {
     uint32_t bit_clk = GPIO_BIT(_clkPin);
     uint32_t port_dout = GPIO_PORT(_doutPin);
     uint32_t bit_dout = GPIO_BIT(_doutPin);
-    rz_disable_irq();
+    uint32_t irq_state = disable_irq();
     while (i-- > 0) {
 #if defined(LCDSPI_OPTIMIZE)
         if (dat & 0x80) {
@@ -324,27 +412,27 @@ void SPISW_Write(uint8_t dat) {
         dat <<= 1;
 #else
         uint8_t value = (dat & 0x80) ? 1 : 0;
-        _gpio_write(_doutPin, value);
-        _gpio_write(_clkPin, LOW);
-        _gpio_write(_clkPin, HIGH);
+        GPIO_WRITE(_doutPin, value);
+        GPIO_WRITE(_clkPin, LOW);
+        GPIO_WRITE(_clkPin, HIGH);
         dat <<= 1;
 #endif
     }
-    rz_enable_irq();
+    enable_irq(irq_state);
 }
 #else
 void SPISW_Write(uint8_t dat) {
     uint8_t i = 8;
     uint8_t value;
-    rz_disable_irq();
+    uint32_t irq_state = disable_irq();
     while (i-- > 0) {
         value = (dat & 0x80) ? 1 : 0;
-        _gpio_write(_doutPin, value);
-        _gpio_write(_clkPin, LOW);
-        _gpio_write(_clkPin, HIGH);
+        GPIO_WRITE(_doutPin, value);
+        GPIO_WRITE(_clkPin, LOW);
+        GPIO_WRITE(_clkPin, HIGH);
         dat <<= 1;
     }
-    rz_enable_irq();
+    enable_irq(irq_state);
 }
 #endif
 
@@ -354,7 +442,7 @@ void SPI_Write(uint8_t dat) {
         SPIHW_SetPinMode(void)
 #endif
         // ToDo
-        rz_spi_write_byte((uint32_t)g_spi_id, dat);
+        SPI_WRITE_BYTE((uint32_t)g_spi_id, dat);
 #if 0
         SPISW_SetPinMode(void)
 #endif
@@ -365,49 +453,49 @@ void SPI_Write(uint8_t dat) {
 
 void SPISW_LCD_cmd8_0(uint8_t dat) {
     // Enter command mode: SDATA=LOW at rising edge of 1st SCLK
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_doutPin, LOW);
-    _gpio_write(_clkPin, LOW);
-    _gpio_write(_clkPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_doutPin, LOW);
+    GPIO_WRITE(_clkPin, LOW);
+    GPIO_WRITE(_clkPin, HIGH);
     SPI_Write(dat);
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 void SPISW_LCD_dat8_0(uint8_t dat) {
     // Enter data mode: SDATA=HIGH at rising edge of 1st SCLK
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_doutPin, HIGH);
-    _gpio_write(_clkPin, LOW);
-    _gpio_write(_clkPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_doutPin, HIGH);
+    GPIO_WRITE(_clkPin, LOW);
+    GPIO_WRITE(_clkPin, HIGH);
     SPI_Write(dat);
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 void SPISW_LCD_cmd8_1(uint8_t dat) {
     // Enter command mode: RS=LOW at rising edge of 1st SCLK
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_rsPin, LOW);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_rsPin, LOW);
     SPI_Write(dat);
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 void SPISW_LCD_dat8_1(uint8_t dat) {
     // Enter data mode: RS=HIGH at rising edge of 1st SCLK
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_rsPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_rsPin, HIGH);
     SPI_Write(dat);
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 void SPI_cmd_data_1(uint8_t cmd, uint8_t *data, uint32_t data_size) {
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_rsPin, LOW);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_rsPin, LOW);
     SPI_Write(cmd);
-    _gpio_write(_rsPin, HIGH);
+    GPIO_WRITE(_rsPin, HIGH);
     while (data_size-- > 0) {
         SPI_Write(*data++);
     }
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 /* ********************************************************************* */
@@ -418,12 +506,12 @@ void SPI_cmd_data_1(uint8_t cmd, uint8_t *data, uint32_t data_size) {
 void lcdspi_spi_init(int spi_id, lcdspi_t *lcdspi) {
     if (spi_id >= 0) {
         SPIHW_SetPinMode();
-        _gpio_mode_output(_csPin);
-        _gpio_mode_output(_resetPin);
-        _gpio_mode_output(_rsPin);
+        GPIO_SET_OUTPUT(_csPin);
+        GPIO_SET_OUTPUT(_resetPin);
+        GPIO_SET_OUTPUT(_rsPin);
         // ToDo
-        rz_spi_init(spi_id, lcdspi->lcdspi_pins->csPin->pin, lcdspi->baud, 8, (lcdspi->phase << 1 | lcdspi->polarity) & 0x3);
-        rz_spi_get_conf(spi_id, &lcdspi->spcmd, &lcdspi->spbr);
+        SPI_INIT(spi_id, lcdspi->lcdspi_pins->csPin->pin, lcdspi->baud, 8, (lcdspi->phase << 1 | lcdspi->polarity) & 0x3);
+        SPI_GET_CONF(spi_id, &lcdspi->spcmd, &lcdspi->spbr);
     } else {
         SPISW_SetPinMode();
         SPISW_Initialize();
@@ -434,7 +522,7 @@ static void lcdspi_spi_start_xfer(int spi_id, lcdspi_t *lcdspi) {
     if (spi_id >= 0) {
         uint16_t spcmd = lcdspi->spcmd;
         uint8_t spbr = lcdspi->spbr;
-        rz_spi_start_xfer(spi_id, spcmd, spbr);
+        SPI_START_XFER(spi_id, spcmd, spbr);
     } else {
         SPISW_SetPinMode();
     }
@@ -442,7 +530,7 @@ static void lcdspi_spi_start_xfer(int spi_id, lcdspi_t *lcdspi) {
 
 static void lcdspi_spi_end_xfer(int spi_id, lcdspi_t *lcdspi) {
     if (spi_id >= 0) {
-        rz_spi_end_xfer(spi_id);
+        SPI_END_XFER(spi_id);
     } else {
         SPIHW_SetPinMode();
     }
@@ -455,18 +543,18 @@ static void lcdspi_spi_end_xfer(int spi_id, lcdspi_t *lcdspi) {
 
 static void PCF8833_Reset() {
     delay_ms(100);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(1000);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
 }
 
 static void PCF8833_Initialize() {
     //SPI_Initialize();
     PCF8833_Reset();
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_doutPin, LOW);
-    _gpio_write(_clkPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_doutPin, LOW);
+    GPIO_WRITE(_clkPin, HIGH);
 
     SPISW_LCD_cmd8_0(PCF8833_SLEEPOUT);
     SPISW_LCD_cmd8_0(PCF8833_BSTRON);
@@ -488,18 +576,18 @@ static void PCF8833_Initialize() {
 
 static void S1D15G10_Reset() {
     delay_ms(100);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(1000);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
 }
 
 static void S1D15G10_Initialize() {
     //SPI_Initialize();
     S1D15G10_Reset();
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_doutPin, LOW);
-    _gpio_write(_clkPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_doutPin, LOW);
+    GPIO_WRITE(_clkPin, HIGH);
 
     delay_ms(200);
     SPISW_LCD_cmd8_0(S1D15G10_DISCTL);	// Display Control
@@ -534,20 +622,20 @@ static void S1D15G10_Initialize() {
 /* ********************************************************************* */
 
 static void ST7735_Reset() {
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(400);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
 }
 
 static void ST7735_Initialize() {
     //SPI_Initialize();
     ST7735_Reset();
-    _gpio_write(_doutPin, LOW);
-    _gpio_write(_csPin, HIGH);
-    _gpio_write(_clkPin, HIGH);
+    GPIO_WRITE(_doutPin, LOW);
+    GPIO_WRITE(_csPin, HIGH);
+    GPIO_WRITE(_clkPin, HIGH);
 
     SPISW_LCD_cmd8_1(0x11);
     delay_ms(50);
@@ -646,9 +734,9 @@ static void ST7735_Initialize() {
 
 static void ILI9341_Reset() {
     delay_ms(100);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(400);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
 }
 
@@ -771,9 +859,9 @@ static void ILI9341_Initialize() {
 
 static void ILI9340_Reset() {
     delay_ms(100);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(400);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(100);
 }
 
@@ -891,14 +979,14 @@ static void ILI9340_Initialize() {
 /* ********************************************************************* */
 
 static void ST7789_Reset() {
-    _gpio_write(_csPin, LOW);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_csPin, LOW);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(50);
-    _gpio_write(_resetPin, LOW);
+    GPIO_WRITE(_resetPin, LOW);
     delay_ms(50);
-    _gpio_write(_resetPin, HIGH);
+    GPIO_WRITE(_resetPin, HIGH);
     delay_ms(150);
-    _gpio_write(_csPin, HIGH);
+    GPIO_WRITE(_csPin, HIGH);
 }
 
 static void ST7789_Initialize() {
@@ -1619,13 +1707,13 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     /* set font */
     int font_id = vals[ARG_font_id].u_int;
     if (!find_font_id(font_id)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "FONT(%d) doesn't exist", font_id));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("FONT(%d) doesn't exist"), font_id);
     }
     self->lcdspi_screen.font = get_font_by_id(font_id);
     /* set spi hw channel should be minus 1 */
     self->lcdspi->spi_id = vals[ARG_spi_id].u_int - 1;
     if (self->lcdspi->spi_id > 2) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "SPI_ID <= 2"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("SPI_ID <= 2"));
     }
     /* set spi default pins */
     self->lcdspi_pins = lcdspi_pins_def;
@@ -1638,7 +1726,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_cs].u_obj == MP_OBJ_NULL) {
         _csPin = self->lcdspi_pins.csPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_cs].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.csPin = MP_OBJ_TO_PTR(vals[ARG_cs].u_obj);
         _csPin = self->lcdspi_pins.csPin->pin;
@@ -1647,7 +1735,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_clk].u_obj == MP_OBJ_NULL) {
         _clkPin = self->lcdspi_pins.clkPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_clk].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.clkPin = MP_OBJ_TO_PTR(vals[ARG_clk].u_obj);
         _clkPin = self->lcdspi_pins.clkPin->pin;
@@ -1656,7 +1744,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_dout].u_obj == MP_OBJ_NULL) {
         _doutPin = self->lcdspi_pins.doutPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_dout].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.doutPin = MP_OBJ_TO_PTR(vals[ARG_dout].u_obj);
         _doutPin = self->lcdspi_pins.doutPin->pin;
@@ -1665,7 +1753,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_reset].u_obj == MP_OBJ_NULL) {
         _resetPin = self->lcdspi_pins.resetPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_reset].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.resetPin = MP_OBJ_TO_PTR(vals[ARG_reset].u_obj);
         _resetPin = self->lcdspi_pins.resetPin->pin;
@@ -1674,7 +1762,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_rs].u_obj == MP_OBJ_NULL) {
         _rsPin = self->lcdspi_pins.rsPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_rs].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.rsPin = MP_OBJ_TO_PTR(vals[ARG_rs].u_obj);
         _rsPin = self->lcdspi_pins.rsPin->pin;
@@ -1683,7 +1771,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     if (vals[ARG_din].u_obj == MP_OBJ_NULL) {
         _dinPin = self->lcdspi_pins.dinPin->pin;
     } else if (!mp_obj_is_type(vals[ARG_din].u_obj, &pin_type)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "This is not Pin obj"));
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->lcdspi_pins.dinPin = MP_OBJ_TO_PTR(vals[ARG_din].u_obj);
         _dinPin = self->lcdspi_pins.dinPin->pin;
