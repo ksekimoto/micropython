@@ -29,12 +29,16 @@
 
 #include <stdint.h>
 
-static inline void rz_enable_irq(void) {
+static inline void rz_enable_irq(uint32_t state) {
     __asm__ __volatile__ ("cpsie i" : : : "memory");
 }
 
-static inline void rz_disable_irq(void) {
-    __asm__ __volatile__ ("cpsid i" : : : "memory");
+static inline uint32_t rz_disable_irq(void) {
+    uint32_t state;
+    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
+                            "AND r0,r0,#0x80\n\t"
+                            "cpsid i" : "=r" (state) : : );
+    return state;
 }
 
 

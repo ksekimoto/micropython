@@ -263,7 +263,7 @@ void rz_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
     rspip prspi = RSPIP[ch];
     rz_spi_set_bits(ch, 32);
     while (count--) {
-        rz_disable_irq();
+        uint32_t state = rz_disable_irq();
         if (src != 0) {
             prspi->SPDR.LONG = (uint32_t)(*src);
             src++;
@@ -280,7 +280,7 @@ void rz_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
             dummy = (uint32_t)prspi->SPDR.LONG;
             (void)dummy;    // to suppress gcc warning
         }
-        rz_enable_irq();
+        rz_enable_irq(state);
     }
     rz_spi_set_bits(ch, 8);
 }

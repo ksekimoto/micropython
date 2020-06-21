@@ -323,24 +323,24 @@ static void rz_phy_reg_write(uint32_t ch, uint16_t data) {
 
 static uint16_t rz_phy_read(uint32_t ch, uint16_t phy_addr, uint16_t reg_addr) {
     uint16_t data;
-//    rz_disable_irq();
+//    uint32_t state = rz_disable_irq();
     rz_phy_preamble(ch);
     rz_phy_reg_set(ch, phy_addr, reg_addr, PHY_READ);
     rz_phy_ta_z0(ch);
     rz_phy_reg_read(ch, &data);
     rz_phy_ta_z0(ch);
-//    rz_enable_irq();
+//    rz_enable_irq(state);
     return (data);
 }
 
 static void rz_phy_write(uint32_t ch, uint16_t phy_addr, uint16_t reg_addr, uint16_t data) {
-//    rz_disable_irq();
+//    uint32_t state = rz_disable_irq();
     rz_phy_preamble(ch);
     rz_phy_reg_set(ch, phy_addr, reg_addr, PHY_WRITE);
     rz_phy_ta_10(ch);
     rz_phy_reg_write(ch, data);
     rz_phy_ta_z0(ch);
-//    rz_enable_irq();
+//    rz_enable_irq(state);
 }
 
 ////////////////////////////////////////////////////////////////////////////

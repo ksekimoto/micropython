@@ -195,7 +195,7 @@ void sci_isr_er(int ch) {
 static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_scifa *sci = SCI[ch];
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     if (!tx_fifo[ch].busy) {
         sci->SCR.WORD &= ~0x00a0;
         goto sci_isr_tx_exit;
@@ -216,7 +216,7 @@ static void sci_isr_tx(int ch) {
         }
     }
 sci_isr_tx_exit:
-    rz_enable_irq();
+    rz_enable_irq(state);
 #if 0
     if (tx_fifo[ch].len != 0) {
         i = tx_fifo[ch].tail;
@@ -231,7 +231,7 @@ sci_isr_tx_exit:
 
 void sci_isr_te(int ch) {
     volatile struct st_scifa *sci = SCI[ch];
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     //if (!tx_fifo[ch].busy)
     //    goto sci_isr_te_exit;
     sci->SCR.WORD &= ~0xa4; /* TIE, TE and TEI reset */
@@ -241,7 +241,7 @@ void sci_isr_te(int ch) {
         sci->SCR.WORD |= 0xa0;  /* TIE and TE set */
     }
 //sci_isr_te_exit:
-    rz_enable_irq();
+    rz_enable_irq(state);
 }
 #endif
 
@@ -250,14 +250,12 @@ uint8_t sci_rx_ch(int ch) {
     int i;
 #if defined(RZA2M_SCI_INT_ENABLE)
     if (rx_fifo[ch].len) {
-        //GIC_DisableIRQ(sci_irqn[ch][0]);
-        rz_disable_irq();
+        uint32_t state = rz_disable_irq();
         i = rx_fifo[ch].tail;
         c = rx_fifo[ch].buff[i++];
         rx_fifo[ch].tail = i % SCI_BUF_SIZE;
         rx_fifo[ch].len--;
-        rz_enable_irq();
-        //GIC_EnableIRQ(sci_irqn[ch][0]);
+        rz_enable_irq(state);
     } else {
         c = 0;
     }
@@ -300,15 +298,15 @@ void sci_tx_ch(int ch, uint8_t c) {
 #if defined(RZA2M_SCI_INT_ENABLE)
 #if 0
     while (tx_fifo[ch].len == SCI_BUF_SIZE) {
-        rz_disable_irq();
+        uint32_t state = rz_disable_irq();
         i = tx_fifo[ch].tail;
         sci->FTDR.BYTE = tx_fifo[ch].buff[i++];
         tx_fifo[ch].len--;
         tx_fifo[ch].tail = i % SCI_BUF_SIZE;
-        rz_enable_irq();
+        rz_enable_irq(state);
     }
 #endif
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     if (!tx_fifo[ch].busy) {
         tx_fifo[ch].busy = 1;
         sci->SCR.WORD |= 0x00a0;    /* TIE and TE set */
@@ -317,7 +315,7 @@ void sci_tx_ch(int ch, uint8_t c) {
     tx_fifo[ch].buff[i++] = c;
     tx_fifo[ch].head = i % SCI_BUF_SIZE;
     tx_fifo[ch].len++;
-    rz_enable_irq();
+    rz_enable_irq(state);
 #else
     while (sci->FSR.BIT.TDFE == 0) {
         /* Wait */
@@ -469,7 +467,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
         sci_callback[ch] = 0;
 #endif
     }
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     sci_module_start(ch);
     _gpio_mode_input(rx_pin);
     switch (ch) {
@@ -540,7 +538,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     GIC_EnableIRQ(sci_irqn[ch][2]);
     //GIC_EnableIRQ(sci_irqn[ch][3]);
 #endif
-    rz_enable_irq();
+    rz_enable_irq(state);
     if (!sci_init_flag[ch]) {
         sci_init_flag[ch] = true;
     }
@@ -559,7 +557,7 @@ void sci_init_default(int ch, int baud) {
 }
 
 void sci_deinit(int ch) {
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     sci_init_flag[ch] = false;
     sci_module_stop(ch);
 #if defined(RZA2M_SCI_INT_ENABLE)
@@ -569,7 +567,7 @@ void sci_deinit(int ch) {
     //GIC_DisableIRQ(sci_irqn[ch][3]);
 #endif
     sci_callback[ch] = 0;
-    rz_enable_irq();
+    rz_enable_irq(state);
 }
 
 #if defined(RZA2M_SCI_INT_ENABLE)

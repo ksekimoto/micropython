@@ -283,7 +283,6 @@ low_level_input(struct netif *netif)
       rz_ether_rx_req(eth_ch);
     }
   }
-  rz_enable_irq();
 #endif
 #if defined(DEBUG_ETHERNETIF)
   if (recvdsize > 0) {
