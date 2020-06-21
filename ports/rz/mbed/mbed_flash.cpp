@@ -119,9 +119,9 @@ bool mbed_internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *
     //debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
     debug_printf("FLW:%x,%x,", addr, NumBytes);
 #endif
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     ret = flash_program_page(&MBED_FLASH, (uint32_t)addr, (const uint8_t *)pSectorBuff, NumBytes);
-    rz_enable_irq();
+    rz_enable_irq(state);
     ret = lmemcmp((const void *)pSectorBuff, (const void *)addr, (size_t)NumBytes);
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     //debug_printf("EraseBlock() error_code=%x\r\n", error_code);
@@ -148,9 +148,9 @@ bool mbed_internal_flash_eraseblock(unsigned char *addr) {
     debug_printf("FLE:%x,", addr);
 #endif
     int32_t ret;
-    rz_disable_irq();
+    uint32_t state = rz_disable_irq();
     ret = flash_erase_sector(&MBED_FLASH, (uint32_t )addr);
-    rz_enable_irq();
+    rz_enable_irq(state);
 #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_EraseBlock)
     //debug_printf("EraseBlock() error_code=%x\r\n", error_code);
     debug_printf("%x\r\n", ret);

@@ -252,12 +252,12 @@ STATIC void disp_spi_init(ILI9341_t *self)
 STATIC void disp_spi_send(ILI9341_t *self, const uint8_t *data, uint16_t length) {
     if (length == 0)
         return; //no need to send anything
-    //uint32_t state = disable_irq();
+    uint32_t state = disable_irq();
     SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)0, (uint8_t *)data, (uint32_t)length, 1000);
     mp_hal_pin_write(self->cs, 1);
-    //enable_irq(state);
+    enable_irq(state);
 }
 
 STATIC void ili9441_send_cmd(ILI9341_t *self, uint8_t cmd) {

@@ -490,41 +490,12 @@ static inline void __WFI() {
 
 static inline uint32_t get_int_status(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
-                            "AND r0,r0,#0x80" : "=r" (state) : : );
+    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
+                            "AND %0,%0,#0x80" : "=r" (state) : : );
     return state;
 }
 
 #define ICCPMR_OFFSET 0x0104
-
-#if 0
-static inline uint32_t get_irq(void) {
-    register uint32_t pri = 0;
-/*
-    __asm__ volatile (
-        "MRC    p15,4,r1,c15,c0,0\n\t"
-        "LDR    r0,[r1,#ICCPMR_OFFSET]\n\t"
-        "MOV    r0,r0,LSR #3\n\t"
-        "BX     lr\n\t"
-        : [r0] "=r" (pri) :
-    );
-*/
-    return pri;
-}
-
-static inline void set_irq(uint32_t pri) {
-/*
-    __asm__ volatile (
-        "MRC    p15,4,r1,c15,c0,0\n\t"
-        "AND    r0,r0,#0x1F\n\t"
-        "MOV    r0,r0,LSL #3\n\t"
-        "STR    r0,[r1,#ICCPMR_OFFSET]\n\t"
-        "BX     lr\n\t"
-        : : [r0] "r" (pri)
-    );
-*/
-}
-#endif
 
 static inline void enable_irq(mp_uint_t state) {
     __asm__ __volatile__ ("cpsie i" : : : "memory");
@@ -532,8 +503,8 @@ static inline void enable_irq(mp_uint_t state) {
 
 static inline mp_uint_t disable_irq(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
-                            "AND r0,r0,#0x80\n\t"
+    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
+                            "AND %0,%0,#0x80\n\t"
                             "cpsid i" : "=r" (state) : : );
     return state;
 }

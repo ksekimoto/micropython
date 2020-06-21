@@ -35,8 +35,8 @@ static inline void rz_enable_irq(uint32_t state) {
 
 static inline uint32_t rz_disable_irq(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
-                            "AND r0,r0,#0x80\n\t"
+    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
+                            "AND %0,%0,#0x80\n\t"
                             "cpsid i" : "=r" (state) : : );
     return state;
 }

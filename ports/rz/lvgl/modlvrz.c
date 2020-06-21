@@ -3,6 +3,7 @@
 #include "lv_mpy.h"
 //#include "dcache-control.h"
 #include "mbed_camera_lcd.h"
+#include "irq.h"
 #include "pendsv.h"
 
 #if LVGL_ENABLE

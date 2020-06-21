@@ -37,8 +37,8 @@ void __enable_irq(uint32_t state) {
 
 uint32_t __disable_irq(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS r0,APSR\n\t"
-                            "AND r0,r0,#0x80\n\t"
+    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
+                            "AND %0,%0,#0x80\n\t"
                             "cpsid i" : "=r" (state) : : );
     return state;
 }

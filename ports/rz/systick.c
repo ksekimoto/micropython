@@ -91,12 +91,13 @@ void HAL_Delay(uint32_t Delay) {
     }
 }
 
-void mp_hal_delay_ms(mp_uint_t Delay) {
+void mp_hal_delay_ms(mp_uint_t ms) {
+    uint32_t delay = ms;
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = mp_hal_ticks_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (mp_hal_ticks_ms() - start < Delay) {
+        while (mp_hal_ticks_ms() - start < delay) {
             // This macro will execute the necessary idle behaviour.  It may
             // raise an exception, switch threads or enter sleep mode (waiting for
             // (at least) the SysTick interrupt).
@@ -106,25 +107,28 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
         const uint32_t count_1ms = 66000000 / 4000;
-        for (int i = 0; i < Delay; i++) {
+        for (int i = 0; i < delay; i++) {
             for (uint32_t count = 0; ++count <= count_1ms;) {
+                __asm__ __volatile__ ("nop");
             }
         }
     }
 }
 
 // delay for given number of microseconds
-void mp_hal_delay_us(mp_uint_t usec) {
+void mp_hal_delay_us(mp_uint_t us) {
+    uint32_t delay = us;
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = mp_hal_ticks_us();
-        while (mp_hal_ticks_us() - start < usec) {
+        while (mp_hal_ticks_us() - start < delay) {
         }
     } else {
         // IRQs disabled, so need to use a busy loop for the delay
         // sys freq is always a multiple of 2MHz, so division here won't lose precision
-        const uint32_t ucount = 66000000 / 2000000 * usec / 2;
+        const uint32_t ucount = 66000000 / 2000000 * delay / 2;
         for (uint32_t count = 0; ++count <= ucount;) {
+            __asm__ __volatile__ ("nop");
         }
     }
 }

@@ -30,12 +30,25 @@
 #include <stdbool.h>
 #include "RZ_A2M.h"
 #include "iodefine.h"
+#include "irq_ctrl.h"
 #include "rza2m_ostm2.h"
+
+static inline uint32_t raise_irq_pri(uint32_t pri) {
+    uint32_t cur_pri = IRQ_GetPriorityMask();
+    IRQ_SetPriorityMask(pri);
+    return cur_pri;
+}
+
+// "state" should be the value returned from raise_irq_pri
+static inline void restore_irq_pri(uint32_t state) {
+    IRQ_SetPriorityMask(state);
+}
 
 #define OSTM2_1MS       ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 1000)
 #define OSTM2_100US     ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 10000)
-#define OSTM2_DEF_PER   ((CM0_RENESAS_RZ_A2_P0_CLK * 2) / 1000)
+#define OSTM2_DEF_PER   OSTM2_1MS
 #define OSTM2_INT_PRI   15  /* lowest */
+//#define OSTM2_EXE_PRI   15  /* lowest */
 #define OSTM2_INT_CNT
 
 static bool rza2m_ostm2_irq_active = false;
@@ -73,7 +86,9 @@ void rza2m_ostm2_irq_handler(void) {
     if (!rza2m_ostm2_irq_active) {
         rza2m_ostm2_irq_active = true;
         if (rza2m_ostm2_irq_handler_func) {
+            //uint32_t irq_state = raise_irq_pri(OSTM2_EXE_PRI);
             (*(void (*)())rza2m_ostm2_irq_handler_func)();
+            //restore_irq_pri(irq_state);
         }
         rza2m_ostm2_irq_active = false;
     }
