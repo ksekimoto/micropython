@@ -73,6 +73,12 @@ include $(TOP)/py/py.mk
 
 GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
 
+GCC_VERSION = "`$(CC) -dumpversion`"
+GCC_VERSION_9 = "9.0"
+GCC_VERSION_8 = "8.0"
+GCC_VERSION_7 = "7.0"
+GCC_VERSION_6 = "6.0"
+GCC_VERSION_5 = "5.0"
 
 #######################################################################
 # MCU configuration
@@ -94,8 +100,9 @@ endif
 #######################################################################
 # Compiler configuration
 #######################################################################
-GCCDIR = /d/cross/GNURX-ELF-4.8.4.201701/rx-elf/rx-elf
-GCCVER = 4.8.4.201701-GNURX
+#GCCDIR = /d/cross/GNURX-ELF-4.8.4.201701/rx-elf/rx-elf
+#GCCVER = 4.8.4.201701-GNURX
+IS_RENESAS_GCC := $(shell if [ "`rx-elf-gcc --version | grep GNURX`" ]; then echo "GNURX"; fi)
 CROSS_COMPILE = rx-elf-
 
 #######################################################################
@@ -110,7 +117,7 @@ INC += -I$(TOP)/lib/oofatfs
 INC += -Idebug
 INC += -Iramdisk
 INC += -Iusb
-INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
+#INC += -I$(GCCDIR)/include -I$(GCCDIR)/rx-elf/include
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
 INC += -Ilwip_inc
@@ -159,6 +166,48 @@ CFLAGS += -Wno-error=pointer-arith
 #CFLAGS += -Wno-unused-function
 #CFLAGS += -Wno-error=unused-variable
 
+IS_GCC_ABOVE_VERSION_9 := $(shell expr "$(GCC_VERSION)" ">=" "$(GCC_VERSION_9)")
+IS_GCC_ABOVE_VERSION_6 := $(shell expr "$(GCC_VERSION)" ">=" "$(GCC_VERSION_6)")
+ifeq "$(IS_GCC_ABOVE_VERSION_9)" "1"
+CFLAGS += -Wno-error=unused-const-variable
+CFLAGS += -Wno-error=nonnull-compare
+CFLAGS += -Wno-error=sign-compare
+CFLAGS += -Wno-error=override-init
+CFLAGS += -Wno-error=implicit-function-declaration
+CFLAGS += -Wno-error=incompatible-pointer-types
+CFLAGS += -Wno-error=unused-variable
+CFLAGS += -Wno-error=unused-function
+CFLAGS += -Wno-error=main
+CFLAGS += -Wno-error=float-conversion
+CFLAGS += -Wno-error=unused-but-set-variable
+CFLAGS += -Wno-error=return-type
+CFLAGS += -Wno-error=maybe-uninitialized
+CFLAGS += -Wno-error=missing-braces
+CFLAGS += -Wno-error=double-promotion
+CFLAGS += -Wno-error=type-limits
+CFLAGS += -Wno-error=overflow
+CFLAGS += -Wno-error=attributes
+CFLAGS += -Wno-error=array-bounds
+CFLAGS += -Wno-error=aggressive-loop-optimizations
+CFLAGS += -Wno-error=sequence-point
+CFLAGS += -Wno-error=int-conversion
+else 
+ifeq "$(IS_GCC_ABOVE_VERSION_6)" "1"
+# gcc version 6.x, 7.x or 8.x
+# timer.c:85
+CFLAGS += -Wno-error=unused-const-variable
+CFLAGS += -Wno-error=nonnull
+CFLAGS += -Wno-error=nonnull-compare
+else
+# gcc version 4.x or 5.x
+# objexcept.c
+CFLAGS += -Wno-error=sign-compare
+# vm.c
+CFLAGS += -Wno-error=override-init
+CFLAGS += -Wno-error=main
+endif
+endif
+
 CFLAGS += -I$(BOARD_DIR)
 
 ifeq ($(DEBUG), 1)
@@ -176,7 +225,11 @@ ifeq ($(MCU_SERIES),RX63N)
 CFLAGS += -mcpu=rx600 -mrelax
 endif
 ifeq ($(MCU_SERIES),RX65N)
+ifeq ($(IS_RENESAS_GCC),GNURX)
 CFLAGS += -mcpu=rx64m -fpu -mrelax
+else
+CFLAGS += -mcpu=rx600 -Wa,-mcpu=rxv2 -mrelax
+endif
 endif
 ifeq ($(BOARD),GR_CITRUS)
 CFLAGS += -DGRCITRUS
@@ -283,6 +336,13 @@ LDFLAGS += -T $(LD_FILES)
 #LDFLAGS += --gc-sections
 LDFLAGS += -Wl,-Map=$@.map -Wl,--cref -Wl,--defsym=_estack_reserve=8 -Wl,-static
 LDFLAGS += -Wl,--gc-sections
+# print removed sections
+#LDFLAGS += -Wl,--print-gc-sections
+#LDFLAGS += -Wl,--no-undefined
+ifeq ($(IS_RENESAS_GCC),GNURX)
+else
+LDFLAGS += -Wl,--no-ignore-lma
+endif
 
 LIBS =
 
@@ -760,8 +820,9 @@ $(BUILD)/firmware.elf: $(OBJ) $(LIB_LVGL)
 	$(ECHO) "LINK $@"
 	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin
-	$(Q)$(OBJCOPY) -O srec -I elf32-rx-be-ns $(BUILD)/firmware.elf  $(BUILD)/firmware.mot	
+	$(Q)$(OBJCOPY) -O srec -I elf32-rx-be-ns $(BUILD)/firmware.elf  $(BUILD)/firmware.mot
 	$(Q)$(SIZE) $@
+#	$(Q)$(OBJDUMP) -S -D $(BUILD)/firmware.elf > $(BUILD)/firmware.s
 
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = $(BOARD_DIR)/pins.csv
