@@ -31,6 +31,12 @@
 #include "extint.h"
 #include "rtc.h"
 #include "irq.h"
+#if defined(RX63N)
+#include "rx63n_rtc.h"
+#endif
+#if defined(RX65N)
+#include "rx65n_rtc.h"
+#endif
 
 #define RTC_INIT_YEAR   2019
 #define RTC_INIT_MONTH  1
@@ -76,6 +82,28 @@ STATIC HAL_StatusTypeDef PYB_RTC_MspInit_Finalise(void);
 STATIC void RTC_CalendarConfig(void);
 STATIC uint32_t rtc_startup_tick;
 STATIC bool rtc_need_init_finalise = false;
+
+void rtc_get_time(RTC_TimeTypeDef *time) {
+    rtc_t dt;
+    rx_rtc_get_time(&dt);
+    time->DayLightSaving = 0;
+    time->Hours = dt.hour;
+    time->Minutes = dt.minute;
+    time->SecondFraction = 0;
+    time->Seconds = dt.second;
+    //time->StoreOperation;
+    time->SubSeconds = 0;
+    time->TimeFormat = 0;
+}
+
+void rtc_get_date(RTC_DateTypeDef *date) {
+    rtc_t dt;
+    rx_rtc_get_time(&dt);
+    date->Date = dt.date;
+    date->Month = dt.month;
+    date->WeekDay = dt.weekday;
+    date->Year = (uint8_t)(dt.year - 2000);
+}
 
 void rtc_init_start(bool force_init) {
 	/* ToDo */
