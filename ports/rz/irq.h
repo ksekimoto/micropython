@@ -33,7 +33,7 @@
 #define IRQn_NONNEG(pri) ((pri) & 0x7f)
 
 // these states correspond to values from query_irq, enable_irq and disable_irq
-#define IRQ_STATE_DISABLED (0x00000080)
+#define IRQ_STATE_DISABLED (0x00000001)
 #define IRQ_STATE_ENABLED  (0x00000000)
 
 // Enable this to get a count for the number of times each irq handler is called,
