@@ -456,7 +456,7 @@ STATIC mp_obj_t font_obj_make_new(const mp_obj_type_t *type, size_t n_args, size
     mp_int_t font_id = mp_obj_get_int(args[0]);
     // check font number
     if (!find_font_id(font_id)) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "FONT(%d) doesn't exist", font_id));
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("FONT(%d) doesn't exist"), font_id);
     }
     // return static font object
     return MP_OBJ_FROM_PTR(&pyb_font_obj[font_id]);
@@ -468,8 +468,10 @@ STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&pyb_font_height_obj) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_8), MP_ROM_INT(MISAKIFONT4X8) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_12), MP_ROM_INT(MISAKIFONT6X12) },
+#if MICROPY_PY_PYB_UNICODE_FONT
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_8), MP_ROM_INT(MISAKIFONT8X8) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_12), MP_ROM_INT(MISAKIFONT12X12) },
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(font_locals_dict, font_locals_dict_table);
