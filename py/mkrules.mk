@@ -46,7 +46,7 @@ vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
 	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
-	$(Q)$(AS) -o $@ $<
+	$(Q)$(AS) -g -o $@ $<
 
 define compile_c
 $(ECHO) "CC $<"
