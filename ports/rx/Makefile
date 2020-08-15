@@ -205,6 +205,7 @@ CFLAGS += -Wno-error=sign-compare
 # vm.c
 CFLAGS += -Wno-error=override-init
 CFLAGS += -Wno-error=main
+CFLAGS += -Wno-error=format=
 endif
 endif
 
