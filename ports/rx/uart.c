@@ -305,6 +305,7 @@ void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
 }
 void uart_deinit(pyb_uart_obj_t *self) {
     self->is_enabled = false;
+    sci_deinit(self->uart_id);
 
     // ToDo: implement
 }
