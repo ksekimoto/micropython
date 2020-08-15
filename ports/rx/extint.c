@@ -94,7 +94,7 @@ typedef struct {
 STATIC mp_obj_t pyb_extint_callback_arg[EXTI_NUM_VECTORS];
 static uint irq_param[EXTI_NUM_VECTORS];
 
-void exit_callback(void *param) {
+void exti_callback(void *param) {
     uint irq_no = *((uint *)param);
     exti_irq_clear(irq_no);
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
@@ -155,7 +155,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     exti_disable(pin_idx);
     *cb = callback_obj;
     irq_param[irq_no] = (uint)irq_no;
-    exti_set_callback(irq_no, (EXTI_FUNC)exit_callback, (void *)&irq_param[irq_no]);
+    exti_set_callback(irq_no, (EXTI_FUNC)exti_callback, (void *)&irq_param[irq_no]);
     if (*cb != mp_const_none) {
         pyb_extint_callback_arg[irq_no] = MP_OBJ_FROM_PTR(pin);
         exti_register((uint32_t)pin_idx, (uint32_t)cond, (uint32_t)pull);
