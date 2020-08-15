@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2020 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,10 +65,11 @@ void SysTick_Handler(void) {
     }
 
     #if MICROPY_PY_THREAD
+    // ToDo: need to implement
     if (pyb_thread_enabled) {
         if (pyb_thread_cur->timeslice == 0) {
             if (pyb_thread_cur->run_next != pyb_thread_cur) {
-                SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+                //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
             }
         } else {
             --pyb_thread_cur->timeslice;
@@ -91,13 +93,12 @@ void HAL_Delay(uint32_t Delay) {
     }
 }
 
-void mp_hal_delay_ms(mp_uint_t ms) {
-    uint32_t delay = ms;
+void mp_hal_delay_ms(mp_uint_t Delay) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = mp_hal_ticks_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (mp_hal_ticks_ms() - start < delay) {
+        while (mp_hal_ticks_ms() - start < Delay) {
             // This macro will execute the necessary idle behaviour.  It may
             // raise an exception, switch threads or enter sleep mode (waiting for
             // (at least) the SysTick interrupt).
@@ -106,9 +107,10 @@ void mp_hal_delay_ms(mp_uint_t ms) {
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
-        const uint32_t count_1ms = 66000000 / 4000;
-        for (int i = 0; i < delay; i++) {
-            for (uint32_t count = 0; ++count <= count_1ms;) {
+        volatile uint32_t count_1ms;
+        while (Delay-- > 0) {
+            count_1ms = 66000000 / 4000;
+            while (count_1ms-- > 0) {
                 __asm__ __volatile__ ("nop");
             }
         }
@@ -116,18 +118,16 @@ void mp_hal_delay_ms(mp_uint_t ms) {
 }
 
 // delay for given number of microseconds
-void mp_hal_delay_us(mp_uint_t us) {
-    uint32_t delay = us;
+void mp_hal_delay_us(mp_uint_t usec) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = mp_hal_ticks_us();
-        while (mp_hal_ticks_us() - start < delay) {
+        while (mp_hal_ticks_us() - start < usec) {
         }
     } else {
         // IRQs disabled, so need to use a busy loop for the delay
-        // sys freq is always a multiple of 2MHz, so division here won't lose precision
-        const uint32_t ucount = 66000000 / 2000000 * delay / 2;
-        for (uint32_t count = 0; ++count <= ucount;) {
+        volatile uint32_t ucount = 66000000 / 2000000 * usec / 2;
+        while (ucount-- > 0) {
             __asm__ __volatile__ ("nop");
         }
     }
