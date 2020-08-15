@@ -33,13 +33,14 @@ extern "C" {
 #endif
 
 /* LCD Parameter */
-#define LCD_INPUT_CLOCK     (66.67)  /* not use */
-#define LCD_PIXEL_WIDTH     (800)
-#define LCD_PIXEL_HEIGHT    (480)
-
-#define VIDEO_PIXEL_HW      (800)
+//#define LCD_PIXEL_WIDTH     (800)
+//#define LCD_PIXEL_HEIGHT    (480)
+//#define VIDEO_PIXEL_HW      (800)
+//#define VIDEO_PIXEL_VW      (480)
+//#define LCD_PIXEL_WIDTH     (480)
+//#define LCD_PIXEL_HEIGHT    (272)
+#define VIDEO_PIXEL_HW      (640)
 #define VIDEO_PIXEL_VW      (480)
-
 #define DATA_SIZE_PER_PIC      (2u)
 
 void mbed_ticker_thread(void *thread, uint32_t ms);

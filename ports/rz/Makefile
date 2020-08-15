@@ -22,6 +22,18 @@ ifeq ($(wildcard $(BOARD_DIR)/.),)
 $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
+#define MBED_CONF_APP_LCD_TYPE    GR_PEACH_4_3INCH_SHIELD
+#define MBED_CONF_APP_LCD_TYPE    GR_PEACH_7_1INCH_SHIELD
+#define MBED_CONF_APP_LCD_TYPE    GR_PEACH_DISPLAY_SHIELD
+#define MBED_CONF_APP_LCD_TYPE    GR_PEACH_RSK_SHIELD
+#define MBED_CONF_APP_LCD_TYPE    TF043HV001A0
+#define MBED_CONF_APP_LCD_TYPE    ATM0430D25
+#define MBED_CONF_APP_LCD_TYPE    FG040346DSSWBG03
+#define MBED_CONF_APP_LCD_TYPE    DVI_STICK
+#define MBED_CONF_APP_LCD_TYPE    RGB_TO_HDMI
+#define MBED_CONF_APP_LCD_TYPE    LVDS_TO_HDMI
+#define MBED_CONF_APP_LCD_TYPE    RSK_TFT
+
 ifeq ($(BOARD),GR_MANGO)
 CROSS = 1
 MCU_SERIES = RZA2M
@@ -34,6 +46,8 @@ MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
 MBED_GR_LIBS = 1
+#MBED_GR_LIBS_LCD_TYPE = RGB_TO_HDMI
+MBED_GR_LIBS_LCD_TYPE = ATM0430D25
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
@@ -67,6 +81,8 @@ MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
 MBED_GR_LIBS = 1
+#MBED_GR_LIBS_LCD_TYPE = RGB_TO_HDMI
+MBED_GR_LIBS_LCD_TYPE = 40PIN
 MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
@@ -348,6 +364,14 @@ endif
 
 ifeq ($(LVGL_ENABLE),1)
 CFLAGS += -DLVGL_ENABLE
+endif
+
+ifeq ($(MBED_GR_LIBS),1)
+CFLAGS += -DMBED_GR_LIBS
+endif
+
+ifeq ($(MBED_GR_LIBS_components_LCD),1)
+CFLAGS += -DMBED_GR_LIBS_components_LCD
 endif
 
 #######################################################################
@@ -788,6 +812,7 @@ SRC_C += lvgl/modlvrz.c
 SRC_C += lvgl/driver/modILI9341.c
 SRC_C += lvgl/driver/modrtch.c
 SRC_C += lvgl/driver/modstmpe610.c
+SRC_C += lvgl/driver/modrzlcd.c
 SRC_C += lvgl/driver/modxpt2046.c
 endif
 
