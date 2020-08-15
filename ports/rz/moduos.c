@@ -38,8 +38,8 @@
 #include "extmod/vfs_fat.h"
 #include "extmod/vfs_lfs.h"
 #include "genhdr/mpversion.h"
-//#include "rng.h"
-//#include "usb.h"
+#include "rng.h"
+#include "usb.h"
 #include "uart.h"
 #include "portmodules.h"
 
