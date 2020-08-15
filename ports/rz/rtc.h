@@ -57,6 +57,8 @@ typedef struct
 #define DUMMY_DATE {0, 11, 4, 18}
 #define DUMMY_TIME {12, 0, 0, 0, 0, 0, 0, 0}
 
+void rtc_get_time(RTC_TimeTypeDef *time);
+void rtc_get_date(RTC_DateTypeDef *date);
 void rtc_init_start(bool force_init);
 void rtc_init_finalise(void);
 

@@ -37,9 +37,6 @@
 #include "portmodules.h"
 #include "rtc.h"
 
-RTC_DateTypeDef dummy_date = DUMMY_DATE;
-RTC_TimeTypeDef dummy_time = DUMMY_TIME;
-
 /// \module time - time related functions
 ///
 /// The `time` module provides functions for getting the current time and date,
@@ -66,9 +63,8 @@ STATIC mp_obj_t time_localtime(size_t n_args, const mp_obj_t *args) {
         RTC_TimeTypeDef time;
         //HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
         //HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
-        // ToDo
-        time = dummy_time;
-        date = dummy_date;
+        rtc_get_time(&time);
+        rtc_get_date(&date);
         mp_obj_t tuple[8] = {
             mp_obj_new_int(2000 + date.Year),
             mp_obj_new_int(date.Month),
@@ -113,7 +109,7 @@ STATIC mp_obj_t time_mktime(mp_obj_t tuple) {
 
     // localtime generates a tuple of len 8. CPython uses 9, so we accept both.
     if (len < 8 || len > 9) {
-        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_TypeError, "mktime needs a tuple of length 8 or 9 (%d given)", len));
+        mp_raise_msg_varg(&mp_type_TypeError, MP_ERROR_TEXT("mktime needs a tuple of length 8 or 9 (%d given)"), len);
     }
 
     return mp_obj_new_int_from_uint(timeutils_mktime(mp_obj_get_int(elem[0]),
@@ -132,9 +128,8 @@ STATIC mp_obj_t time_time(void) {
     RTC_TimeTypeDef time;
     //HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
     //HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
-    // ToDo
-    time = dummy_time;
-    date = dummy_date;
+    rtc_get_time(&time);
+    rtc_get_date(&date);
     return mp_obj_new_int(timeutils_seconds_since_2000(2000 + date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds));
 }
 MP_DEFINE_CONST_FUN_OBJ_0(time_time_obj, time_time);
