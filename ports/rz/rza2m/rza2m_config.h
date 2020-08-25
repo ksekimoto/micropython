@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#define SCI_CH  0
+#define SCI_CH  4
 #define SCI_BAUD 115200
 #define UART_CH SCI_CH
 #define UART_TxStr sci_tx_str
