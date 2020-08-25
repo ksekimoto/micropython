@@ -42,11 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "vsnprintf.h"
-
 #include "py/runtime.h"
 #include "common.h"
-
 #include "tinymalloc.h"
 #include "vector.h"
 #include "esp8266_driver.h"
@@ -77,7 +74,7 @@ void esp8266_socket_handler(bool connect, int id);
 #define WIFI_SERIAL         MICROPY_HW_ESP8266_UART_CH
 #define WIFI_BAUDRATE       115200
 #define WIFI_WAIT_MSEC      5000
-#define WIFI_TIMEOUT        5000
+#define WIFI_TIMEOUT        10000
 #define WIFI_ATE0_TIMEOUT   10000
 #define WIFI_LOGIN_TIMEOUT  10000
 
@@ -1034,8 +1031,9 @@ bool esp8266_set_AT_CWDHCP(uint8_t mode, bool enabled) {
  * Connects to an AP
  */
 bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
+#define IP_BUF_SIZE 20
     char *buf;
-    char ip_buf[20];
+    char ip_buf[IP_BUF_SIZE];
     if (ip == NULL) {
         return false;
     }
@@ -1054,11 +1052,14 @@ bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
     if (start == NULL) {
         return false;
     }
-    char *end = strstr((const char *)buf, "\r");
+    char *end = strstr((const char *)start, "\r");
     if (end == NULL) {
         return false;
     }
     int len = end - start - 1;
+    if (len >= IP_BUF_SIZE) {
+        return false;
+    }
     strncpy(ip_buf, (const char *)(start + 1), len);
     ip_buf[len] = 0;
 #if defined(DEBUG_ESP8266_DRIVER)
@@ -1265,7 +1266,7 @@ uint32_t esp8266_read(uint32_t timeout) {
     char *start;
     char *end;
     int i;
-    char ip_buf[20];
+    char ip_buf[IP_BUF_SIZE];
 
 #if defined(DEBUG_ESP8266_DRIVER)
     //debug_printf("esp8266_read(timeout=%d)\r\n", timeout);
@@ -1375,7 +1376,10 @@ uint32_t esp8266_read(uint32_t timeout) {
         }
         int slen = end - start;
         strncpy(ip_buf, (const char *)start, slen);
-        ip_buf[len] = 0;
+        if (slen >= IP_BUF_SIZE) {
+            goto esp8266_read_exit;
+        }
+        ip_buf[slen] = 0;
         start = end + 1;
         end = parse_int(start, ",:", &port);
         if (end == NULL) {

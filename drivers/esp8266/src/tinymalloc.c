@@ -90,7 +90,7 @@ void *tinymalloc(size_t noOfBytes) {
 void merge() {
     struct block *curr;
     curr = freeList;
-    while ((curr->next) != NULL) {
+    while ((curr != NULL) && (curr->next) != NULL) {
         if ((curr->free) && (curr->next->free)) {
             curr->size += (curr->next->size) + sizeof(struct block);
             curr->next = curr->next->next;
