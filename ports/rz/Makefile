@@ -5,7 +5,7 @@ BOARD ?= GR_MANGO
 CROSS ?= 1
 
 # enable debug_printf
-USE_DBG_PRINT = 1
+USE_DBG_PRINT = 0
 
 # LAN debug
 LAN_NEW = 0
@@ -53,6 +53,7 @@ MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
+MBED_GR_LIBS_GraphicsFramework = 1
 MBED_GR_LIBS_GR-PEACH_video = 1
 MBED_GR_LIBS_utility = 1
 MBED_HTTP = 0
@@ -88,6 +89,7 @@ MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
 MBED_GR_LIBS_EasyAttach_CameraAndLCD = 1
+MBED_GR_LIBS_GraphicsFramework = 1
 MBED_GR_LIBS_GR-PEACH_video = 1
 MBED_GR_LIBS_utility = 1
 MBED_HTTP = 0
@@ -581,6 +583,10 @@ SRC_C += machine_uart.c
 SRC_C += modmachine.c
 SRC_C += modnetwork.c
 SRC_C += modnwrxeth.c
+ifeq ($(MICROPY_PY_ESP8266),1)
+CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function
+SRC_C += modnwesp8266.c
+endif
 SRC_C += modpyb.c
 SRC_C += moduos.c
 SRC_C += modusocket.c
