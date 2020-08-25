@@ -147,8 +147,8 @@ STATIC mp_obj_t mp_init_rzlcd(mp_obj_t self_in) {
     //rzlcd_t *self = MP_OBJ_TO_PTR(self_in);
     mp_activate_rzlcd(self_in);
 
-    tft_fb_ptr= mbed_get_fb_ptr();
-    tft_fb_size = mbed_get_fb_size();
+    tft_fb_ptr= mbed_get_lcd_fb_ptr();
+    tft_fb_size = mbed_get_lcd_fb_size();
     //rzlcd_clear(0, 0, 239, 319, 0);
     mbed_lcd_init();
 

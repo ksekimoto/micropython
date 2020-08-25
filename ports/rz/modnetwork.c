@@ -127,7 +127,7 @@ mp_obj_t mod_network_find_nic(const uint8_t *ip) {
         return nic;
     }
 
-    mp_raise_msg(&mp_type_OSError, "no available NIC");
+    mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("no available NIC"));
 }
 
 STATIC mp_obj_t network_route(void) {
@@ -201,11 +201,11 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
         uint32_t start = mp_hal_ticks_ms();
         while (!dhcp_supplied_address(netif)) {
             if (mp_hal_ticks_ms() - start > 10000) {
-                mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
+                mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("timeout waiting for DHCP to get IP address"));
             }
             mp_hal_delay_ms(100);
         }
-#else
+#endif
         dhcp_start(netif);
 
         uint32_t start = mp_hal_ticks_ms();
@@ -213,9 +213,9 @@ mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_o
             sys_check_timeouts();
         }
         if (netif->ip_addr.addr == 0) {
-            mp_raise_msg(&mp_type_OSError, "timeout waiting for DHCP to get IP address");
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("timeout waiting for DHCP to get IP address"));
         }
-#endif
+
         return mp_const_none;
     } else {
         // Release and stop any existing DHCP

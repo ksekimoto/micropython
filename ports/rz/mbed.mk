@@ -686,8 +686,8 @@ SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_debug.c
 SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_memory.c
 SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_RTX.c
 SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/r_ospl_unrecoverable.c
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/TOOLCHAIN_GCC/r_ospl_os_less_asm.s
-SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/src/r_ospl.c
+SRC_MBED_S += lib/mbed-gr-libs/GraphicsFramework/ospl/porting/TOOLCHAIN_GCC/r_ospl_os_less_asm.S
+SRC_MBED_C += lib/mbed-gr-libs/GraphicsFramework/ospl/src/r_ospl.c
 endif
 ifeq ($(MBED_GR_LIBS_R_BSP), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/R_BSP/common/R_BSP_Aio.cpp
@@ -811,17 +811,17 @@ LDFLAGS += $(LDFLAGS_MBED)
 # build rules
 #######################################################################
 
-vpath %.S . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
-$(BUILD_MBED)/%.o: %.S
-	@dirname $@ | xargs mkdir -p
-	$(ECHO) "CC $<"
-	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
-
 vpath %.s . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
 $(BUILD_MBED)/%.o: %.s
 	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
-	$(Q)$(AS) -o $@ $<
+	$(Q)$(AS) -s -o $@ $<
+
+vpath %.S . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
+$(BUILD_MBED)/%.o: %.S
+	@dirname $@ | xargs mkdir -p
+	$(ECHO) "CC $<"
+	$(Q)$(CC) $(CFLAGS) -g -c -o $@ $<
 
 define compile_mbed_c
 $(ECHO) "CC $<"
