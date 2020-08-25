@@ -106,6 +106,7 @@ def run_tests(tests):
     """ executes all tests """
     results = []
     for test in tests:
+
         with open(TESTPATH + test.name, "rb") as f:
             input_cpy = f.read()
         input_upy = uimports(input_cpy)
@@ -213,13 +214,8 @@ def gen_rst(results):
                 section[i] = CLASSMAP[section[i]]
             if i >= len(class_) or section[i] != class_[i]:
                 if i == 0:
-<<<<<<< HEAD
-                    filename = section[i].replace(' ', '_').lower()
-                    rst = open(DOCPATH + filename + '.rst', 'w', encoding='UTF-8')
-=======
                     filename = section[i].replace(" ", "_").lower()
-                    rst = open(DOCPATH + filename + ".rst", "w")
->>>>>>> upstream_master
+                    rst = open(DOCPATH + filename + ".rst", "w", encoding="UTF-8")
                     rst.write(HEADER)
                     rst.write(section[i] + "\n")
                     rst.write(RSTCHARS[0] * len(section[i]))
