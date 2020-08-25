@@ -137,6 +137,12 @@ STATIC void pyb_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
 ///       measures ticks of `source_freq` divided by `div` clock ticks.
 ///       `deadtime` is only available on timers 1 and 8.
 ///
+///   - `brk` - specifies if the break mode is used to kill the output of
+///       the PWM when the BRK_IN input is asserted. The polarity set how the
+///       BRK_IN input is triggered. It can be set to `BRK_OFF`, `BRK_LOW`
+///       and `BRK_HIGH`.
+///
+///
 ///  You must either specify freq or both of period and prescaler.
 STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     //enum { ARG_freq, ARG_prescaler, ARG_period, ARG_tick_hz, ARG_mode, ARG_div, ARG_callback, ARG_deadtime };
@@ -428,13 +434,14 @@ STATIC mp_obj_t pyb_timer_callback(mp_obj_t self_in, mp_obj_t callback) {
         //HAL_TIM_Base_Start_IT(&self->tim); // This will re-enable the IRQ
         //HAL_NVIC_EnableIRQ(self->irqn);
     } else {
-        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("callback must be None or a callable object"));
+        mp_raise_ValueError(MP_ERROR_TEXT("callback must be None or a callable object"));
     }
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_timer_callback_obj, pyb_timer_callback);
 
 STATIC const mp_rom_map_elem_t pyb_timer_locals_dict_table[] = {
+    // instance methods
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_timer_init_obj) },
     { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&pyb_timer_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_counter), MP_ROM_PTR(&pyb_timer_counter_obj) },
@@ -522,12 +529,11 @@ STATIC mp_obj_t pyb_timer_channel_callback(mp_obj_t self_in, mp_obj_t callback) 
         }
         // start timer, so that it interrupts on overflow
     } else {
-        mp_raise_ValueError("callback must be None or a callable object");
+        mp_raise_ValueError(MP_ERROR_TEXT("callback must be None or a callable object"));
     }
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_timer_channel_callback_obj, pyb_timer_channel_callback);
-
 
 STATIC const mp_rom_map_elem_t pyb_timer_channel_locals_dict_table[] = {
     // instance methods
@@ -602,4 +608,3 @@ void timer_irq_handler(void *param) {
         //}
     }
 }
-
