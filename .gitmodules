@@ -1,3 +1,7 @@
+[submodule "lib/axtls"]
+	path = lib/axtls
+	url = https://github.com/ksekimoto/axtls
+	branch = micropython
 [submodule "lib/libffi"]
 	path = lib/libffi
 	url = https://github.com/atgreen/libffi
@@ -14,12 +18,6 @@
 [submodule "lib/nrfx"]
 	path = lib/nrfx
 	url = https://github.com/NordicSemiconductor/nrfx.git
-[submodule "lib/axtls"]
-	path = lib/axtls
-	url = https://github.com/ksekimoto/axtls.git
-[submodule "lib/mbedtls"]
-	path = lib/mbedtls
-	url = https://github.com/ARMmbed/mbedtls.git
 [submodule "lib/asf4"]
 	path = lib/asf4
 	url = https://github.com/adafruit/asf4
@@ -29,6 +27,9 @@
 [submodule "lib/mynewt-nimble"]
 	path = lib/mynewt-nimble
 	url = https://github.com/apache/mynewt-nimble.git
+[submodule "lib/mbedtls"]
+	path = lib/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
 [submodule "lib/btstack"]
 	path = lib/btstack
 	url = https://github.com/bluekitchen/btstack.git
@@ -38,3 +39,6 @@
 [submodule "lib/lv_bindings"]
 	path = lib/lv_bindings
 	url = https://github.com/littlevgl/lv_bindings.git
+[submodule "lib/mbed-gr-libs"]
+	path = lib/mbed-gr-libs
+	url = https://github.com/d-kato/mbed-gr-libs

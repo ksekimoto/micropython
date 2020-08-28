@@ -14,3 +14,4 @@ MicroPython documentation and references
     wipy/quickref.rst
     rxboard/quickref.rst
     unix/quickref.rst
+    rxboard/quickref.rst
