@@ -815,7 +815,7 @@ vpath %.s . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
 $(BUILD_MBED)/%.o: %.s
 	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
-	$(Q)$(AS) -s -o $@ $<
+	$(Q)$(AS) -g -o $@ $<
 
 vpath %.S . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
 $(BUILD_MBED)/%.o: %.S
