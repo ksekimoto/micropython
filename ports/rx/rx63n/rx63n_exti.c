@@ -180,7 +180,7 @@ void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param) {
     exti_param[irq_no] = param;
 }
 
-void exti_callback(uint32_t irq_no) {
+static void exti_callback(uint32_t irq_no) {
     if (irq_no >= IRQ_NUM)
         return;
     if (bounce_flag[irq_no]) {
