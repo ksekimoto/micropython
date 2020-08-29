@@ -30,6 +30,8 @@
 #include "rza2m_exti.h"
 #include "rza2m_gpio.h"
 
+unsigned long mtick(void);
+
 static void exti_irq0(void);
 static void exti_irq1(void);
 static void exti_irq2(void);
@@ -177,7 +179,7 @@ void exti_irq_handler(uint32_t irq_no) {
     irqrr = INTC.IRQRR.WORD;
     if (irqrr & (1 << irq_no)) {
         if (bounce_flag[irq_no]) {
-            if ((mtick() - bounce_start[irq_no]) > bounce_period[irq_no]) {
+            if (((uint32_t)mtick() - bounce_start[irq_no]) > bounce_period[irq_no]) {
                 bounce_flag[irq_no] = false;
             }
         } else {

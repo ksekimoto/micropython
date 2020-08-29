@@ -42,8 +42,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "py/mphal.h"
 #include "py/runtime.h"
 #include "common.h"
+#include "systick.h"
 #include "tinymalloc.h"
 #include "vector.h"
 #include "esp8266_driver.h"
@@ -63,7 +65,6 @@
 //#define DEBUG_ESP8266_SOCKET_SEND
 #endif
 
-void mp_hal_delay_ms(uint32_t);
 char *itoa(int num, char *str, int base);
 uint32_t esp8266_read(uint32_t timeout);
 void esp8266_socket_handler(bool connect, int id);
@@ -457,8 +458,8 @@ static char *esp8266_serial_read_handler(const char *s1, const char *s2, uint32_
     uint8_t *buf = (uint8_t *)&wifi_data;
     uint8_t c;
     int i = 0;
-    uint32_t start = mtick();
-    while ((i < (WIFI_DATA_MAX - 1)) && (mtick() - start < timeout)) {
+    uint32_t start = (uint32_t)mtick();
+    while ((i < (WIFI_DATA_MAX - 1)) && ((uint32_t)mtick() - start < timeout)) {
         while (esp8266_serial_available() > 0) {
             c = (uint8_t)esp8266_serial_read();
 #if defined(DEBUG_ESP8266_RAW_DATA)
@@ -625,8 +626,8 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
 #if defined(DEBUG_ESP8266_PACKET)
     debug_printf("packet_read()");
 #endif
-    s = mtick();
-    while (mtick() - s < timeout) {
+    s = (uint32_t)mtick();
+    while ((uint32_t)mtick() - s < timeout) {
         while (esp8266_serial_available() > 0) {
             c = esp8266_serial_read();
 #if defined(DEBUG_ESP8266_RAW_DATA) || defined(DEBUG_ESP8266_DRIVER_PACKET_READ)
@@ -650,7 +651,7 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
 packet_read_exit:
     debug_read_on();
 #if defined(DEBUG_ESP8266_PACKET)
-    debug_printf("\r\npacket_read() time=%d, req=%d, act=%d\r\n", mtick()-s, amount, i);
+    debug_printf("\r\npacket_read() time=%d, req=%d, act=%d\r\n", (uint32_t)mtick()-s, amount, i);
 #endif
     return i;
 }
@@ -1273,8 +1274,8 @@ uint32_t esp8266_read(uint32_t timeout) {
 #endif
     memset((void *)data, 0, sizeof(recv_buf));
     i = 0;
-    s = mtick();
-    while (mtick() - s < timeout) {
+    s = (uint32_t)mtick();
+    while ((uint32_t)mtick() - s < timeout) {
         if (esp8266_serial_available() > 0) {
             uint8_t c = (uint8_t)esp8266_serial_read();
 #if defined(DEBUG_ESP8266_DRIVER)
@@ -1395,7 +1396,7 @@ uint32_t esp8266_read(uint32_t timeout) {
 esp8266_read_exit:
 #if defined(DEBUG_ESP8266_DRIVER)
     if (recvd != 0)
-        debug_printf("\r\nesp8266_read() time=%d, recvd=%d, addr=%s, port=%d\r\n", mtick() - s, recvd, ip_buf, port);
+        debug_printf("\r\nesp8266_read() time=%d, recvd=%d, addr=%s, port=%d\r\n", (uint32_t)mtick() - s, recvd, ip_buf, port);
 #endif
     return recvd;
 }
@@ -2119,10 +2120,10 @@ int esp8266_socket_send(void *handle, const void *data, unsigned size) {
     if (!socket) {
         err = -1;
     } else {
-        uint32_t start = mtick();
+        uint32_t start = (uint32_t)mtick();
         do {
             err = (int)esp8266_send(socket->id, data, size);
-        } while ((start - mtick() < 50) && (err != 0));
+        } while ((start - (uint32_t)mtick() < 50) && (err != 0));
     }
 #if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_SEND)
     debug_printf("esp8266_socket_send() ret=%d\r\n", status);

@@ -32,6 +32,7 @@
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "ff.h"
+#include "systick.h"
 
 #include "PCF8833.h"
 #include "S1D15G10.h"
@@ -350,7 +351,7 @@ typedef struct _pyb_lcdspi_obj_t {
 
 static void delay_ms(volatile uint32_t n) {
 #if defined(GRMANGO)
-    wait_ms(n);
+    mp_hal_delay_ms(n);
 #else
     mdelay(n);
 #endif

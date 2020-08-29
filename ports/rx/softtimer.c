@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include "py/runtime.h"
 #include "irq.h"
+#include "systick.h"
 #include "softtimer.h"
 
 #define TICKS_PERIOD 0x80000000

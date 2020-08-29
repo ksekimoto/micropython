@@ -123,7 +123,7 @@ MP_WEAK int factory_reset_create_filesystem(void) {
 
     // Keep LED on for at least 200ms
     //systick_wait_at_least(start_tick, 200);
-    wait_ms(200);
+    mp_hal_delay_ms(200);
     led_state(PYB_LED_GREEN, 0);
 
     return 0; // success

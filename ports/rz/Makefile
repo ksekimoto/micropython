@@ -244,6 +244,10 @@ CFLAGS += -Wno-error=int-conversion
 else 
 ifeq "$(IS_GCC_ABOVE_VERSION_6)" "1"
 # gcc version 6.x, 7.x or 8.x
+CFLAGS += -Wno-error=main
+# sd/sd_write.c
+CFLAGS += -Wno-error=maybe-uninitialized
+CFLAGS += -Wno-error=missing-braces
 else
 # gcc version 4.x or 5.x
 # objexcept.c

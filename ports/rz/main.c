@@ -81,6 +81,7 @@
 #include "modnetwork.h"
 //#include "usb_entry.h"
 #include "mbed_timer.h"
+#include "rza2m_init.h"
 
 #define RZA2M_OSTM2_ENABLE
 
@@ -415,7 +416,7 @@ static int chk_kbd_interrupt(int d)
 #endif
 #endif
 
-void main(uint32_t reset_mode) {
+void main(int reset_mode) {
     // Enable caches and prefetch buffers
     rza2m_init();
     #if defined(MICROPY_BOARD_EARLY_INIT)

@@ -30,6 +30,7 @@
 #if MICROPY_HW_ENABLE_RTC
 #include "rtc.h"
 #endif
+#include "rza2m_rtc.h"
 
 MP_WEAK DWORD get_fattime(void) {
     #if MICROPY_HW_ENABLE_RTC

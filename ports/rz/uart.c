@@ -36,6 +36,7 @@
 #include "uart.h"
 #include "irq.h"
 #include "pendsv.h"
+#include "systick.h"
 #include "common.h"
 
 //#define MBED_UART_WRAPPER
@@ -254,12 +255,12 @@ mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
 // Returns true if something available, false if not.
 bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
-    uint32_t start = mtick();
+    uint32_t start = (uint32_t)mtick();
     for (;;) {
         if (MBED_UART_RX_ANY(ch)) {
             return true;
         }
-        if (mtick() - start >= timeout) {
+        if ((uint32_t)mtick() - start >= timeout) {
             return false; // timeout
         }
         MICROPY_EVENT_POLL_HOOK
@@ -276,12 +277,12 @@ int uart_rx_char(pyb_uart_obj_t *self) {
 // Returns true if can write, false if can't.
 bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
-    uint32_t start = mtick();
+    uint32_t start = (uint32_t)mtick();
     for (;;) {
         if (MBED_UART_TX_WAIT(ch)) {
             return true;
         }
-        if (mtick() - start >= timeout) {
+        if ((uint32_t)mtick() - start >= timeout) {
             return false; // timeout
         }
         MICROPY_EVENT_POLL_HOOK
@@ -296,7 +297,7 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
     // Note: we don't use WFI to idle in this loop because UART tx doesn't generate
     // an interrupt and the flag can be set quickly if the baudrate is large.
     int ch = (int)self->uart_id;
-    uint32_t start = mtick();
+    uint32_t start = (uint32_t)mtick();
     for (;;) {
         if (MBED_UART_TX_WAIT(ch)) {
             return true;

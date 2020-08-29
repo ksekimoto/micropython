@@ -25,6 +25,7 @@
  */
 
 #include "rng.h"
+#include "systick.h"
 #include "common.h"
 
 #if MICROPY_HW_ENABLE_RNG
