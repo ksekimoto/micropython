@@ -11,6 +11,7 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_ETH_RX           (1)
+#define MICROPY_HW_ENABLE_RNG       (1)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
