@@ -107,9 +107,9 @@ bool rx_adc_chk_ad121(uint8_t pin) {
 }
 
 int32_t rx_adc_get_resolution(uint8_t pin) {
-    int i;
     int res = -1;
 #if defined(RX_ADC10)
+    int i;
     for (i = 0; i < ADC10_SIZE; i++) {
         if (adc10_pin[i] == pin) {
             return 10;
