@@ -503,7 +503,7 @@ SRC_C += modnetwork.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 ifeq ($(MICROPY_PY_ESP8266),1)
-CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function
+CFLAGS += -DMICROPY_PY_ESP8266=1
 SRC_C += modnwesp8266.c
 endif
 SRC_C += modpyb.c
@@ -664,7 +664,7 @@ endif
 ifeq ($(MICROPY_PY_ESP8266),1)
 ESP8266_DIR=drivers/esp8266
 INC += -I$(TOP)/$(ESP8266_DIR)/inc
-CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
+CFLAGS += -DMICROPY_PY_ESP8266=1
 #SRC_MOD += modnwesp8266.c
 SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	esp8266_driver.c \

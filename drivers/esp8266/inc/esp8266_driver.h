@@ -131,6 +131,7 @@ bool esp8266_set_AT_CWDHCP(uint8_t mode, bool enabled);
 bool esp8266_get_AT_CIPSTAMAC_CUR(uint8_t *mac);
 bool esp8266_get_AT_CIPSTA(uint8_t *ip, uint8_t *gw, uint8_t *mask);
 bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask);
+bool esp8266_get_AT_CIPDNS_CUR(uint8_t *dns);
 bool esp8266_set_AT_CIPDNS_CUR(const char *dns, bool flag);
 bool esp8266_set_AT_CIPSERVER(int port);
 bool esp8266_reset_AT_CIPSERVER(void);

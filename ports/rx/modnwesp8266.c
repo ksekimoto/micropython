@@ -86,13 +86,13 @@ STATIC int esp8266_get_fd_closed_state(int fd) {
 }
 #pragma GCC diagnostic pop
 
-STATIC void esp8266_set_fd_closed_state(int fd) {
-    fd_closed_state |= 1 << fd;
-}
+//STATIC void esp8266_set_fd_closed_state(int fd) {
+//    fd_closed_state |= 1 << fd;
+//}
 
-STATIC void esp8266_reset_fd_closed_state(int fd) {
-    fd_closed_state &= ~(1 << fd);
-}
+//STATIC void esp8266_reset_fd_closed_state(int fd) {
+//    fd_closed_state &= ~(1 << fd);
+//}
 
 STATIC int mod_esp8266_gethostbyname(mp_obj_t nic, const char *name, mp_uint_t len, uint8_t *out_ip) {
 #if defined(DEBUG_MODNWESP8266)
@@ -129,6 +129,9 @@ STATIC int mod_esp8266_socket_socket(mod_network_socket_obj_t *socket, int *_err
     // open socket
     void *handle;
     int errno = esp8266_socket_open(&handle, ESP8266_TCP);
+    if (errno < 0) {
+        return -1;
+    }
     //int fd = ESP8266_EXPORT(socket_open)(AF_INET, type, 0);
     //if (fd < 0) {
     //    *_errno = ESP8266_EXPORT(errno);
@@ -591,24 +594,26 @@ STATIC mp_obj_t esp8266_isconnected(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp8266_isconnected_obj, esp8266_isconnected);
 
 STATIC mp_obj_t esp8266_ifconfig(size_t n_args, const mp_obj_t *args) {
+    const char *dns_str = "8.8.8.8";
     uint8_t ip[4];
     uint8_t gw[4];
     uint8_t mask[4];
     uint8_t dns[4] = { 0, 0, 0, 0 };
-    mp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     if (n_args == 1) {
-        uint8_t dhcp[4] = { 0, 0, 0, 0 };
-        uint8_t mac[6] = { 0, 0, 0, 0, 0, 0 };
         esp8266_get_AT_CIPSTA(ip, gw, mask);
-        //esp8266_get_AT_CIPSTAMAC_CUR((uint8_t *)mac);
-        // render MAC address
-        //VSTR_FIXED(mac_vstr, 18);
-        //vstr_printf(&mac_vstr, "%02x:%02x:%02x:%02x:%02x:%02x", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
-        //esp8266_get_AT_CWJAP_CUR(ssid, NULL, NULL, NULL);
-        mp_obj_t tuple[3] = {
+        esp8266_get_AT_CIPDNS_CUR(dns);
+        uint32_t *dnsp = (uint32_t *)&dns;
+        if (*dnsp == 0) {
+            bool ret = esp8266_set_AT_CIPDNS_CUR(dns_str, true);
+            if (!ret) {
+                mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure dns=%s\n"), dns_str);
+            }
+        }
+        mp_obj_t tuple[4] = {
             netutils_format_ipv4_addr(ip, NETUTILS_BIG),
             netutils_format_ipv4_addr(gw, NETUTILS_BIG),
-            netutils_format_ipv4_addr(mask, NETUTILS_BIG), };
+            netutils_format_ipv4_addr(mask, NETUTILS_BIG),
+            netutils_format_ipv4_addr(dns, NETUTILS_BIG), };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
     } else if (n_args == 2) {
         mp_obj_t *items;

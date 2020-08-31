@@ -76,6 +76,7 @@ void esp8266_socket_handler(bool connect, int id);
 #define WIFI_BAUDRATE       115200
 #define WIFI_WAIT_MSEC      5000
 #define WIFI_TIMEOUT        10000
+#define WIFI_DOMAIN_TIMEOUT 15000
 #define WIFI_ATE0_TIMEOUT   10000
 #define WIFI_LOGIN_TIMEOUT  10000
 
@@ -394,14 +395,6 @@ static void esp8266_serial_write_byte(uint8_t c) {
 #endif
 }
 
-static int esp8266_serial_write(uint8_t *d, int size) {
-    for (int i = 0; i < size; i++) {
-        esp8266_serial_write_byte(*d);
-        d++;
-    }
-    return size;
-}
-
 static void esp8266_serial_print(const char *s) {
     sci_tx_str(esp8266_ch, (uint8_t *)s);
 #if defined(DEBUG_ESP8266_RAW_DATA)
@@ -438,7 +431,8 @@ static void esp8266_serial_printiln(int i) {
 #endif
 }
 
-#if 0
+#if esp8266_serial_printf
+#include "vsnprintf.h"
 static int esp8266_serial_printf(const void* format, ...) {
 #define ESP8266_PRINTF_BUF_SIZE 1024
     char buf[ESP8266_PRINTF_BUF_SIZE];
@@ -1048,7 +1042,7 @@ bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
     esp8266_serial_print("AT+CIPDOMAIN=\"");
     esp8266_serial_print(domain);
     esp8266_serial_println("\"");
-    buf = esp8266_serial_read_handler("OK\r\n", "ERROR\r\n", WIFI_TIMEOUT);
+    buf = esp8266_serial_read_handler("OK\r\n", "ERROR\r\n", WIFI_DOMAIN_TIMEOUT);
     char *start = strstr((const char *)buf, ":");
     if (start == NULL) {
         return false;
@@ -1162,6 +1156,30 @@ bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask) {
     }
 #endif
     return ret;
+}
+
+/*
+ * AT+CIPDNS_CUR
+ * Query Command:
+ */
+bool esp8266_get_AT_CIPDNS_CUR(uint8_t *dns) {
+    char str_config[CONFIG_STR_MAX];
+    bool ret;
+    if (!dns) {
+        return false;
+    }
+    esp8266_serial_prepare_AT();
+    esp8266_serial_println("AT+CIPDNS_CUR?");
+    ret = esp8266_serial_recv_find_filter("OK", "+CIPDNS_CUR:", "\r\n\r\nOK", str_config, CONFIG_STR_MAX);
+    if (ret) {
+        ip_str_to_array(str_config, dns);
+        return true;
+    } else {
+#if defined(DEBUG_ESP8266_AT_ERR)
+        debug_printf("AT+CIPDNS_CUR?: err\r\n");
+#endif
+        return false;
+    }
 }
 
 /*
@@ -1356,12 +1374,12 @@ uint32_t esp8266_read(uint32_t timeout) {
     start += 5;
     int count = count_ch((const char *)start, ',');
     if (count == 0 || count == 2  ) {
-        char *end = parse_int(start, ",:", &len);
+        end = parse_int(start, ",:", &len);
         if (end == NULL) {
             goto esp8266_read_exit;
         }
     } else if (count == 1 || count == 3 || count == 4) {
-        char *end = parse_int(start, ",:", &id);
+        end = parse_int(start, ",:", &id);
         if (end == NULL) {
             goto esp8266_read_exit;
         }
@@ -1485,7 +1503,6 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
 #if defined(DEBUG_ESP8266_DRIVER)
     debug_printf("esp8266_recv(id=%d, amount=%d)\r\n", id, amount);
 #endif
-    uint32_t ret;
     int len = 0;
     if (data == NULL || data_len == NULL) {
         return 0;
@@ -1629,7 +1646,6 @@ bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
 #if defined(DEBUG_ESP8266_DRIVER)
     debug_printf("esp8266_open_tcp(id=%d, keepalive=%d)\r\n", id, keepalive);
 #endif
-    static const char *type = "TCP";
     char ip_str[16];
     bool done = false;
     if (id >= ESP8266_SOCKET_COUNT || driver_info[id].open) {
@@ -1643,7 +1659,6 @@ bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
     esp8266_serial_prepare_AT();
     for (int i = 0; i < 1; i++) {
         if (keepalive) {
-            //esp8266_serial_printf("AT+CIPSTART=%d,\"%s\",\"%s\",%d,%d", id, type, ip_str, port, keepalive);
             esp8266_serial_print("AT+CIPSTART=");
             esp8266_serial_printi(id);
             esp8266_serial_print(",\"TCP\",\"");
@@ -1653,7 +1668,6 @@ bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
             esp8266_serial_print(",");
             esp8266_serial_printiln(keepalive);
         } else {
-            //esp8266_serial_printf("AT+CIPSTART=%d,\"%s\",\"%s\",%d", id, type, ip_str, port);
             esp8266_serial_print("AT+CIPSTART=");
             esp8266_serial_printi(id);
             esp8266_serial_print(",\"TCP\",\"");
@@ -1696,7 +1710,6 @@ bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
 #if defined(DEBUG_ESP8266_DRIVER)
     debug_printf("esp8266_open_udp(%d)\r\n", id);
 #endif
-    static const char *type = "UDP";
     char ip_str[16];
     bool done = false;
     if (id >= ESP8266_SOCKET_COUNT || driver_info[id].open) {
@@ -1707,7 +1720,6 @@ bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
     esp8266_serial_prepare_AT();
     for (int i = 0; i < 2; i++) {
         if (local_port) {
-            //esp8266_serial_printf("AT+CIPSTART=%d,\"%s\",\"%s\",%d,%d", id, type, ip_str, port, local_port);
             esp8266_serial_print("AT+CIPSTART=");
             esp8266_serial_printi(id);
             esp8266_serial_print(",\"TCP\",\"");
@@ -1717,7 +1729,6 @@ bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
             esp8266_serial_print(",");
             esp8266_serial_printiln(local_port);
         } else {
-            //esp8266_serial_printf("AT+CIPSTART=%d,\"%s\",\"%s\",%d", id, type, ip_str, port);
             esp8266_serial_print("AT+CIPSTART=");
             esp8266_serial_printi(id);
             esp8266_serial_print(",\"TCP\",\"");
