@@ -233,7 +233,7 @@ void __attribute__((noreturn)) abort(void) {
     }
 }
 
-char *strncpy(char *dst, const char *src, size_t len) {
+__attribute__ ((weak)) char *strncpy(char *dst, const char *src, size_t len) {
     char *q = (char *)dst;
     const char *p = (const char *)src;
     char ch;

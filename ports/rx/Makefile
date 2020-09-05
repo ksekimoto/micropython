@@ -348,7 +348,7 @@ endif
 LIBS =
 
 
-SRC_LIB = $(addprefix lib/,\
+LIB_SRC_C = $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
@@ -363,23 +363,23 @@ SRC_LIB = $(addprefix lib/,\
 	utils/mpirq.c \
 	)
 
-#SRC_LIB += $(addprefix lib/, libc/string0.c)
-#SRC_LIB += $(addprefix lib/, mp-readline/readline.c)
-#SRC_LIB += $(addprefix lib/, netutils/netutils.c)
-#SRC_LIB += $(addprefix lib/, oofatfs/ff.c)
-#SRC_LIB += $(addprefix lib/, oofatfs/option/unicode.c)
-#SRC_LIB += $(addprefix lib/, timeutils/timeutils.c)
-#SRC_LIB += $(addprefix lib/, utils/interrupt_char.c)
-#SRC_LIB += $(addprefix lib/, utils/printf.c)
-#SRC_LIB += $(addprefix lib/, utils/pyexec.c)
-#SRC_LIB += $(addprefix lib/, utils/sys_stdio_mphal.c)
+#LIB_SRC_C += $(addprefix lib/, libc/string0.c)
+#LIB_SRC_C += $(addprefix lib/, mp-readline/readline.c)
+#LIB_SRC_C += $(addprefix lib/, netutils/netutils.c)
+#LIB_SRC_C += $(addprefix lib/, oofatfs/ff.c)
+#LIB_SRC_C += $(addprefix lib/, oofatfs/option/unicode.c)
+#LIB_SRC_C += $(addprefix lib/, timeutils/timeutils.c)
+#LIB_SRC_C += $(addprefix lib/, utils/interrupt_char.c)
+#LIB_SRC_C += $(addprefix lib/, utils/printf.c)
+#LIB_SRC_C += $(addprefix lib/, utils/pyexec.c)
+#LIB_SRC_C += $(addprefix lib/, utils/sys_stdio_mphal.c)
 
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	virtpin.c \
         )
 
 ifeq ($(MICROPY_FLOAT_IMPL),double)
-SRC_LIBM = $(addprefix lib/libm_dbl/,\
+LIBM_SRC_C = $(addprefix lib/libm_dbl/,\
 	__cos.c \
 	__expo2.c \
 	__fpclassify.c \
@@ -414,6 +414,7 @@ SRC_LIBM = $(addprefix lib/libm_dbl/,\
 	nearbyint.c \
 	pow.c \
 	rint.c \
+	round.c \
 	scalbn.c \
 	sin.c \
 	sinh.c \
@@ -424,12 +425,12 @@ SRC_LIBM = $(addprefix lib/libm_dbl/,\
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
 # ToDo
-SRC_LIBM += lib/libm_dbl/thumb_vfp_sqrt.c
+LIBM_SRC_C += lib/libm_dbl/thumb_vfp_sqrt.c
 else
-SRC_LIBM += lib/libm_dbl/sqrt.c
+LIBM_SRC_C += lib/libm_dbl/sqrt.c
 endif
 else
-SRC_LIBM = $(addprefix lib/libm/,\
+LIBM_SRC_C = $(addprefix lib/libm/,\
 	math.c \
 	acoshf.c \
 	asinfacosf.c \
@@ -458,10 +459,17 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_tgamma.c \
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_SINGLE),1)
-SRC_LIBM += lib/libm/thumb_vfp_sqrtf.c
+LIBM_SRC_C += lib/libm/thumb_vfp_sqrtf.c
 else
-SRC_LIBM += lib/libm/ef_sqrt.c
+LIBM_SRC_C += lib/libm/ef_sqrt.c
 endif
+endif
+
+LIBM_O = $(addprefix $(BUILD)/, $(LIBM_SRC_C:.c=.o))
+
+# Too many warnings in libm_dbl, disable for now.
+ifeq ($(MICROPY_FLOAT_IMPL),double)
+$(LIBM_O): CFLAGS := $(filter-out -Wdouble-promotion -Wfloat-conversion, $(CFLAGS))
 endif
 
 EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -679,87 +687,94 @@ endif
 #endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
-#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/rx_config.h"'
-CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
 SRC_MOD += mbedtls/mbedtls_port.c
-SRC_MOD += $(addprefix lib/,\
-	mbedtls/library/aes.c \
-	mbedtls/library/aesni.c \
-	mbedtls/library/arc4.c \
-	mbedtls/library/aria.c \
-	mbedtls/library/asn1parse.c \
-	mbedtls/library/asn1write.c \
-	mbedtls/library/base64.c \
-	mbedtls/library/bignum.c \
-	mbedtls/library/blowfish.c \
-	mbedtls/library/camellia.c \
-	mbedtls/library/ccm.c \
-	mbedtls/library/certs.c \
-	mbedtls/library/chacha20.c \
-	mbedtls/library/chachapoly.c \
-	mbedtls/library/cipher_wrap.c \
-	mbedtls/library/cipher.c \
-	mbedtls/library/cmac.c \
-	mbedtls/library/ctr_drbg.c \
-	mbedtls/library/debug.c \
-	mbedtls/library/des.c \
-	mbedtls/library/dhm.c \
-	mbedtls/library/ecdh.c \
-	mbedtls/library/ecdsa.c \
-	mbedtls/library/ecjpake.c \
-	mbedtls/library/ecp.c \
-	mbedtls/library/ecp_curves.c \
-	mbedtls/library/entropy.c \
-	mbedtls/library/entropy_poll.c \
-	mbedtls/library/error.c \
-	mbedtls/library/gcm.c \
-	mbedtls/library/havege.c \
-	mbedtls/library/hmac_drbg.c \
-	mbedtls/library/md.c \
-	mbedtls/library/md_wrap.c \
-	mbedtls/library/md2.c \
-	mbedtls/library/md4.c \
-	mbedtls/library/md5.c \
-	mbedtls/library/memory_buffer_alloc.c \
-	mbedtls/library/oid.c \
-	mbedtls/library/padlock.c \
-	mbedtls/library/pem.c \
-	mbedtls/library/pk.c \
-	mbedtls/library/pk_wrap.c \
-	mbedtls/library/pkcs11.c \
-	mbedtls/library/pkcs12.c \
-	mbedtls/library/pkcs5.c \
-	mbedtls/library/pkparse.c \
-	mbedtls/library/pkwrite.c \
-	mbedtls/library/platform.c \
-	mbedtls/library/platform_util.c \
-	mbedtls/library/poly1305.c \
-	mbedtls/library/ripemd160.c \
-	mbedtls/library/rsa.c \
-	mbedtls/library/rsa_internal.c \
-	mbedtls/library/sha1.c \
-	mbedtls/library/sha256.c \
-	mbedtls/library/sha512.c \
-	mbedtls/library/ssl_cache.c \
-	mbedtls/library/ssl_ciphersuites.c \
-	mbedtls/library/ssl_cli.c \
-	mbedtls/library/ssl_cookie.c \
-	mbedtls/library/ssl_srv.c \
-	mbedtls/library/ssl_ticket.c \
-	mbedtls/library/ssl_tls.c \
-	mbedtls/library/threading.c \
-	mbedtls/library/timing.c \
-	mbedtls/library/version.c \
-	mbedtls/library/version_features.c \
-	mbedtls/library/x509.c \
-	mbedtls/library/x509_create.c \
-	mbedtls/library/x509_crl.c \
-	mbedtls/library/x509_crt.c \
-	mbedtls/library/x509_csr.c \
-	mbedtls/library/x509write_crt.c \
-	mbedtls/library/x509write_csr.c \
-)
+# replace mbedtls' error.c by ours
+SRC_MOD := $(filter-out %/mbedtls/library/error.c, $(SRC_MOD))
+LIB_SRC_C += lib/mbedtls_errors/mp_mbedtls_errors.c
 endif
+
+#ifeq ($(MICROPY_SSL_MBEDTLS),1)
+#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+#SRC_MOD += mbedtls/mbedtls_port.c
+#SRC_MOD += $(addprefix lib/,\
+#	mbedtls/library/aes.c \
+#	mbedtls/library/aesni.c \
+#	mbedtls/library/arc4.c \
+#	mbedtls/library/aria.c \
+#	mbedtls/library/asn1parse.c \
+#	mbedtls/library/asn1write.c \
+#	mbedtls/library/base64.c \
+#	mbedtls/library/bignum.c \
+#	mbedtls/library/blowfish.c \
+#	mbedtls/library/camellia.c \
+#	mbedtls/library/ccm.c \
+#	mbedtls/library/certs.c \
+#	mbedtls/library/chacha20.c \
+#	mbedtls/library/chachapoly.c \
+#	mbedtls/library/cipher_wrap.c \
+#	mbedtls/library/cipher.c \
+#	mbedtls/library/cmac.c \
+#	mbedtls/library/ctr_drbg.c \
+#	mbedtls/library/debug.c \
+#	mbedtls/library/des.c \
+#	mbedtls/library/dhm.c \
+#	mbedtls/library/ecdh.c \
+#	mbedtls/library/ecdsa.c \
+#	mbedtls/library/ecjpake.c \
+#	mbedtls/library/ecp.c \
+#	mbedtls/library/ecp_curves.c \
+#	mbedtls/library/entropy.c \
+#	mbedtls/library/entropy_poll.c \
+#	mbedtls/library/error.c \
+#	mbedtls/library/gcm.c \
+#	mbedtls/library/havege.c \
+#	mbedtls/library/hmac_drbg.c \
+#	mbedtls/library/md.c \
+#	mbedtls/library/md_wrap.c \
+#	mbedtls/library/md2.c \
+#	mbedtls/library/md4.c \
+#	mbedtls/library/md5.c \
+#	mbedtls/library/memory_buffer_alloc.c \
+#	mbedtls/library/oid.c \
+#	mbedtls/library/padlock.c \
+#	mbedtls/library/pem.c \
+#	mbedtls/library/pk.c \
+#	mbedtls/library/pk_wrap.c \
+#	mbedtls/library/pkcs11.c \
+#	mbedtls/library/pkcs12.c \
+#	mbedtls/library/pkcs5.c \
+#	mbedtls/library/pkparse.c \
+#	mbedtls/library/pkwrite.c \
+#	mbedtls/library/platform.c \
+#	mbedtls/library/platform_util.c \
+#	mbedtls/library/poly1305.c \
+#	mbedtls/library/ripemd160.c \
+#	mbedtls/library/rsa.c \
+#	mbedtls/library/rsa_internal.c \
+#	mbedtls/library/sha1.c \
+#	mbedtls/library/sha256.c \
+#	mbedtls/library/sha512.c \
+#	mbedtls/library/ssl_cache.c \
+#	mbedtls/library/ssl_ciphersuites.c \
+#	mbedtls/library/ssl_cli.c \
+#	mbedtls/library/ssl_cookie.c \
+#	mbedtls/library/ssl_srv.c \
+#	mbedtls/library/ssl_ticket.c \
+#	mbedtls/library/ssl_tls.c \
+#	mbedtls/library/threading.c \
+#	mbedtls/library/timing.c \
+#	mbedtls/library/version.c \
+#	mbedtls/library/version_features.c \
+#	mbedtls/library/x509.c \
+#	mbedtls/library/x509_create.c \
+#	mbedtls/library/x509_crl.c \
+#	mbedtls/library/x509_crt.c \
+#	mbedtls/library/x509_csr.c \
+#	mbedtls/library/x509write_crt.c \
+#	mbedtls/library/x509write_csr.c \
+#)
+#endif
 
 ifeq ($(LVGL_ENABLE) ,1)
 SRC_C += lvgl/modlvrx.c
@@ -771,12 +786,12 @@ endif
 
 OBJ =
 OBJ += $(PY_O)
-OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_LIB:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(LIBM_O)
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
@@ -846,7 +861,7 @@ GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
 GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_MOD) $(SRC_LIB) $(EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_MOD) $(LIB_SRC_C) $(EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)
