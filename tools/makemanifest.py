@@ -164,17 +164,10 @@ def get_timestamp_newest(path):
     return ts_newest
 
 
-def mkdir(path):
-    cur_path = ""
-    for p in path.split("/")[:-1]:
-        cur_path += p + "/"
-        try:
-            os.mkdir(cur_path)
-        except OSError as er:
-            if er.args[0] == 17:  # file exists
-                pass
-            else:
-                raise er
+def mkdir(filename):
+    path = os.path.dirname(filename)
+    if not os.path.isdir(path):
+        os.makedirs(path)
 
 
 def freeze_internal(kind, path, script, opt):
@@ -287,7 +280,8 @@ def main():
                     + ["-o", outfile, "-s", script, "-O{}".format(opt), infile]
                 )
                 if res != 0:
-                    print("error compiling {}: {}".format(infile, out))
+                    print("error compiling {}:".format(infile))
+                    sys.stdout.buffer.write(out)
                     raise SystemExit(1)
                 ts_outfile = get_timestamp(outfile)
             mpy_files.append(outfile)
