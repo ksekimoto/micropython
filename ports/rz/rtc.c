@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 #include "py/runtime.h"
+#include "lib/timeutils/timeutils.h"
 #include "extint.h"
 #include "rtc.h"
 #include "irq.h"
@@ -172,6 +173,23 @@ STATIC void RTC_CalendarConfig(void) {
     tm.minute = RTC_INIT_MINUTE;
     tm.second = RTC_INIT_SECOND;
     rz_rtc_set_time(&tm);
+}
+
+uint64_t mp_hal_time_ns(void) {
+    uint64_t ns = 0;
+    #if MICROPY_HW_ENABLE_RTC
+    // Get current according to the RTC.
+    rtc_init_finalise();
+    RTC_TimeTypeDef time;
+    RTC_DateTypeDef date;
+    rtc_get_time(&time);
+    rtc_get_date(&date);
+    ns = timeutils_nanoseconds_since_1970(
+        2000 + date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
+    uint32_t usec = ((RTC_SYNCH_PREDIV - time.SubSeconds) * (1000000 / 64)) / ((RTC_SYNCH_PREDIV + 1) / 64);
+    ns += usec * 1000;
+    #endif
+    return ns;
 }
 
 /******************************************************************************/
