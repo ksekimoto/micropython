@@ -1,11 +1,9 @@
 # test importing of invalid .mpy files
 
-import sys, uio
-
 try:
-    uio.IOBase
-    import uos
+    import usys, uio, uos
 
+    uio.IOBase
     uos.mount
 except (ImportError, AttributeError):
     print("SKIP")
@@ -14,18 +12,13 @@ except (ImportError, AttributeError):
 
 class UserFile(uio.IOBase):
     def __init__(self, data):
-        self.data = data
+        self.data = memoryview(data)
         self.pos = 0
 
-    def read(self):
-        return self.data
-
     def readinto(self, buf):
-        n = 0
-        while n < len(buf) and self.pos < len(self.data):
-            buf[n] = self.data[self.pos]
-            n += 1
-            self.pos += 1
+        n = min(len(buf), len(self.data) - self.pos)
+        buf[:n] = self.data[self.pos : self.pos + n]
+        self.pos += n
         return n
 
     def ioctl(self, req, arg):
@@ -61,7 +54,7 @@ user_files = {
 
 # create and mount a user filesystem
 uos.mount(UserFS(user_files), "/userfs")
-sys.path.append("/userfs")
+usys.path.append("/userfs")
 
 # import .mpy files from the user filesystem
 for i in range(len(user_files)):
@@ -73,4 +66,4 @@ for i in range(len(user_files)):
 
 # unmount and undo path addition
 uos.umount("/userfs")
-sys.path.pop()
+usys.path.pop()
