@@ -6,7 +6,10 @@ lvrz.init()
 
 from pyb import Pin
 import ILI9341 as ili
-disp = ili.display(spihost=0, cs=Pin.cpu.P84, dc=Pin.cpu.PH6, rst=Pin.cpu.P45)
+# GR-MANGO Beta version
+#disp = ili.display(spihost=0, cs=Pin.cpu.P84, dc=Pin.cpu.PH6, rst=Pin.cpu.P45)
+# GR-MANGO production version
+disp = ili.display(spihost=1, cs=Pin.cpu.PG7, dc=Pin.cpu.PE0, rst=Pin.cpu.P44)
 disp.init()
 
 disp_buf1 = lv.disp_buf_t()

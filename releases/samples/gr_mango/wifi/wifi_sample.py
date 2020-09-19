@@ -3,7 +3,8 @@
 #SDK ver=2.1.0(116b762)
 
 import network
-esp = network.ESP8266()
+from pyb import Pin
+esp = network.ESP8266(reset=Pin.cpu.P40)
 esp.connect("xxxxxx", "xxxxxx")
 esp.ifconfig()
 
