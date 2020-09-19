@@ -46,21 +46,21 @@ static rspip RSPIP[SPI_CH_NUM] = {
 };
 
 static const uint32_t MOSI_PINS[SPI_CH_NUM] = {
-    0x86,   /* ch 0 P86 */
-    0xf1,   /* ch 1 PF1 */
-    0xc1,   /* ch 2 PC1 */
+    0x0086,   /* ch 0 P86 */
+    0x0105,   /* ch 1 PF1 -> PG5 */
+    0x00c1,   /* ch 2 PC1 */
 };
 
 static const uint32_t MISO_PINS[SPI_CH_NUM] = {
-    0x85,   /* ch 0 P85 */
-    0xf2,   /* ch 1 PF2 */
-    0xc2,   /* ch 2 PC2 */
+    0x0085,   /* ch 0 P85 */
+    0x0106,   /* ch 1 PF2 -> PG6 */
+    0x00c2,   /* ch 2 PC2 */
 };
 
 static const uint32_t CLK_PINS[SPI_CH_NUM] = {
-    0x87,   /* ch 0 P87 */
-    0xf0,   /* ch 1 PF0 */
-    0xc0,   /* ch 2 PC0 */
+    0x0087,   /* ch 0 P87 */
+    0x0104,   /* ch 1 PF0 -> PG4 */
+    0x00c0,   /* ch 2 PC0 */
 };
 
 void rz_spi_get_pins(uint32_t ch, uint32_t *mosi, uint32_t *miso, uint32_t *clk) {
@@ -148,9 +148,9 @@ void rz_spi_select_spi_pin(uint32_t ch) {
             _gpio_mode_af(miso_pin, 4);
             break;
         case 1:
-            _gpio_mode_af(clk_pin, 5);
-            _gpio_mode_af(mosi_pin, 5);
-            _gpio_mode_af(miso_pin, 5);
+            _gpio_mode_af(clk_pin, 3);
+            _gpio_mode_af(mosi_pin, 3);
+            _gpio_mode_af(miso_pin, 3);
             break;
         case 2:
             _gpio_mode_af(clk_pin, 4);

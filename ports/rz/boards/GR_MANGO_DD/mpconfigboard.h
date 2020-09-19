@@ -37,9 +37,9 @@
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
-#define MICROPY_HW_SPI1_SCK  (pin_P87)
-#define MICROPY_HW_SPI1_MISO (pin_P85)
-#define MICROPY_HW_SPI1_MOSI (pin_P86)
+#define MICROPY_HW_SPI1_SCK  (pin_PG4)
+#define MICROPY_HW_SPI1_MISO (pin_PG6)
+#define MICROPY_HW_SPI1_MOSI (pin_PG5)
 
 // USRSW is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW_PIN        (pin_PD7)
@@ -85,14 +85,22 @@
 #define MICROPY_HW_HAS_ESP8266          (1)
 #define MICROPY_HW_ESP8266_UART_CH      0
 #define MICROPY_HW_ESP8266_UART_BAUD    115200
-#define MICROPY_HW_ESP8266_RE           (pin_P44)
+//#define MICROPY_HW_ESP8266_RE           (pin_P44)
+#define MICROPY_HW_ESP8266_RE           (pin_P40)
 
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 #define MICROPY_PY_PYB_LCDSPI       (1)
 
-#define PYB_SERVO_NUM       (1)
-#define BOARD_SERVO1_PIN    (pin_PH0)
+#define MICROPY_HW_LCDSPI_CLK   (pin_PG4)   // GPIO11 Header23
+#define MICROPY_HW_LCDSPI_MOSI  (pin_PG5)   // GPIO10 Header19
+#define MICROPY_HW_LCDSPI_MISO  (pin_PG6)   // GPIO9  Header21
+#define MICROPY_HW_LCDSPI_CS    (pin_PG7)   // GPIO8  Header24
+#define MICROPY_HW_LCDSPI_RESET (pin_P44)   // GPIO27 Header13
+#define MICROPY_HW_LCDSPI_RS    (pin_PE0)   // GPIO25 Header22
+
+//#define PYB_SERVO_NUM       (1)
+//#define BOARD_SERVO1_PIN    (pin_PH0)
 
 #define MICROPY_PY_PYB_CAMERA_LCD   (1)
 
