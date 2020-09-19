@@ -103,6 +103,13 @@
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 
+#define MICROPY_HW_LCDSPI_CLK   (pin_PE5)
+#define MICROPY_HW_LCDSPI_MOSI  (pin_PE6)
+#define MICROPY_HW_LCDSPI_MISO  (pin_PE7)
+#define MICROPY_HW_LCDSPI_CS    (pin_PE4)
+#define MICROPY_HW_LCDSPI_RESET (pin_P26)
+#define MICROPY_HW_LCDSPI_RS    (pin_P30)
+
 #define BOARD_SERIAL1_CH    (0)
 #define BOARD_SERIAL2_CH    (2)
 #define BOARD_SERIAL3_CH    (5)

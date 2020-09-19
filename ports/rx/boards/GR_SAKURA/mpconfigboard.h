@@ -101,6 +101,13 @@
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (0)
 
+#define MICROPY_HW_LCDSPI_CLK   (pin_P33)
+#define MICROPY_HW_LCDSPI_MOSI  (pin_P32)
+#define MICROPY_HW_LCDSPI_MISO  (pin_P22)
+#define MICROPY_HW_LCDSPI_CS    (pin_P24)
+#define MICROPY_HW_LCDSPI_RESET (pin_P25)
+#define MICROPY_HW_LCDSPI_RS    (pin_P23)
+
 #define PYB_SERVO_NUM   (6)
 #define BOARD_SERVO1_PIN    (pin_P13)
 #define BOARD_SERVO2_PIN    (pin_PC4)

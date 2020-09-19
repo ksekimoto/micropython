@@ -32,6 +32,9 @@
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "ff.h"
+#if defined(RZA2M)
+#include "systick.h"
+#endif
 
 #include "PCF8833.h"
 #include "S1D15G10.h"
@@ -104,83 +107,36 @@ static void ST7789_Initialize();
 
 static volatile int g_spi_id = 0;
 
-#if defined(GRCITRUS)
-static uint8_t _clkPin = PC5;
-static uint8_t _doutPin = PC6;
-static uint8_t _dinPin = PC4;
-static uint8_t _csPin = PC7;
-static uint8_t _resetPin = P52;
-static uint8_t _rsPin = P50;
+#ifdef PIN_NONE
+#undef PIN_NONE
+#endif
+
+#if defined(GRCITRUS) || defined(GRSAKURA) || defined(GRROSE)
+#define PIN_NONE    0xff
+static uint8_t _clkPin     = PIN_NONE;
+static uint8_t _doutPin    = PIN_NONE;
+static uint8_t _dinPin     = PIN_NONE;
+static uint8_t _csPin      = PIN_NONE;
+static uint8_t _resetPin   = PIN_NONE;
+static uint8_t _rsPin      = PIN_NONE;
+#else
+#define PIN_NONE    0xffff
+static uint32_t _clkPin     = PIN_NONE;
+static uint32_t _doutPin    = PIN_NONE;
+static uint32_t _dinPin     = PIN_NONE;
+static uint32_t _csPin      = PIN_NONE;
+static uint32_t _resetPin   = PIN_NONE;
+static uint32_t _rsPin      = PIN_NONE;
+#endif
 
 static lcdspi_pins_t lcdspi_pins_def = {
-    (pin_obj_t *)&pin_PC5_obj,   /* clk */
-    (pin_obj_t *)&pin_PC6_obj,   /* mosi */
-    (pin_obj_t *)&pin_PC7_obj,   /* miso */
-    (pin_obj_t *)&pin_PC4_obj,   /* cs */
-    (pin_obj_t *)&pin_P52_obj,   /* reset */
-    (pin_obj_t *)&pin_P50_obj,   /* rs */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_CLK,    /* clk */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_MOSI,   /* mosi */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_MISO,   /* miso */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_CS,     /* cs */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_RESET,  /* reset */
+    (pin_obj_t *)MICROPY_HW_LCDSPI_RS,     /* rs */
 };
-#endif
-#if defined(GRSAKURA)
-/* Aitendo M0_1114_basic_shield */
-static uint8_t _clkPin = P33;
-static uint8_t _doutPin = P32;
-static uint8_t _dinPin = P22;
-static uint8_t _csPin = P24;
-static uint8_t _resetPin = P25;
-static uint8_t _rsPin = P23;
-
-/*
- *  pin_obj_t *clkPin;
- *  pin_obj_t *doutPin;
- *  pin_obj_t *dinPin;
- *  pin_obj_t *csPin;
- *  pin_obj_t *resetPin;
- *  pin_obj_t *rsPin;
- */
-static lcdspi_pins_t lcdspi_pins_def = {
-    (pin_obj_t *)&pin_P33_obj,   /* clk */
-    (pin_obj_t *)&pin_P32_obj,   /* mosi */
-    (pin_obj_t *)&pin_P22_obj,   /* miso */
-    (pin_obj_t *)&pin_P24_obj,   /* cs */
-    (pin_obj_t *)&pin_P25_obj,   /* reset */
-    (pin_obj_t *)&pin_P23_obj,   /* rs */
-};
-#endif
-#if defined(GRROSE)
-static uint8_t _clkPin = PE5;
-static uint8_t _doutPin = PE6;
-static uint8_t _dinPin = PE7;
-static uint8_t _csPin = PE4;
-static uint8_t _resetPin = P26;
-static uint8_t _rsPin = P30;
-
-static lcdspi_pins_t lcdspi_pins_def = {
-    (pin_obj_t *)&pin_PE5_obj,   /* clk */
-    (pin_obj_t *)&pin_PE6_obj,   /* mosi */
-    (pin_obj_t *)&pin_PE4_obj,   /* miso */
-    (pin_obj_t *)&pin_PE4_obj,   /* cs */
-    (pin_obj_t *)&pin_P26_obj,   /* reset */
-    (pin_obj_t *)&pin_P30_obj,   /* rs */
-};
-#endif
-#if defined(GRMANGO)
-static uint32_t _clkPin = P87;
-static uint32_t _doutPin = P86;
-static uint32_t _dinPin = P85;
-static uint32_t _csPin = P84;
-static uint32_t _resetPin = P45;
-static uint32_t _rsPin = PH6;
-
-static lcdspi_pins_t lcdspi_pins_def = {
-    (pin_obj_t *)&pin_P87_obj,   /* clk */
-    (pin_obj_t *)&pin_P86_obj,   /* mosi */
-    (pin_obj_t *)&pin_P85_obj,   /* miso */
-    (pin_obj_t *)&pin_P84_obj,   /* cs */
-    (pin_obj_t *)&pin_P45_obj,   /* reset */
-    (pin_obj_t *)&pin_PH6_obj,   /* rs */
-};
-#endif
 
 /*
  * const uint8_t id;
@@ -350,7 +306,7 @@ typedef struct _pyb_lcdspi_obj_t {
 
 static void delay_ms(volatile uint32_t n) {
 #if defined(GRMANGO)
-    wait_ms(n);
+    mp_hal_delay_ms(n);
 #else
     mdelay(n);
 #endif
@@ -383,13 +339,49 @@ static void SPISW_SetPinMode(void) {
 }
 
 void SPISW_Initialize() {
+    _clkPin     = PIN_NONE;
+    _doutPin    = PIN_NONE;
+    _dinPin     = PIN_NONE;
+    _csPin      = PIN_NONE;
+    _resetPin   = PIN_NONE;
+    _rsPin      = PIN_NONE;
+#if defined(MICROPY_HW_LCDSPI_CLK)
+    _clkPin = (MICROPY_HW_LCDSPI_CLK)->pin;
+#endif
+#if defined(MICROPY_HW_LCDSPI_MOSI)
+    _doutPin = (MICROPY_HW_LCDSPI_MOSI)->pin;
+#endif
+#if defined(MICROPY_HW_LCDSPI_MISO)
+    _dinPin = (MICROPY_HW_LCDSPI_MISO)->pin;
+#endif
+#if defined(MICROPY_HW_LCDSPI_CS)
+    _csPin = (MICROPY_HW_LCDSPI_CS)->pin;
+#endif
+#if defined(MICROPY_HW_LCDSPI_RESET)
+    _resetPin = (MICROPY_HW_LCDSPI_RESET)->pin;
+#endif
+#if defined(MICROPY_HW_LCDSPI_RS)
+    _rsPin = (MICROPY_HW_LCDSPI_RS)->pin;
+#endif
+    if (_csPin != PIN_NONE) {
     GPIO_SET_OUTPUT(_csPin);
+        GPIO_WRITE(_csPin, LOW);
+    }
+    if (_resetPin != PIN_NONE) {
     GPIO_SET_OUTPUT(_resetPin);
+    }
+    if (_rsPin != PIN_NONE) {
     GPIO_SET_OUTPUT(_rsPin);
+    }
+    if (_clkPin != PIN_NONE) {
     GPIO_SET_OUTPUT(_clkPin);
+    }
+    if (_doutPin != PIN_NONE) {
     GPIO_SET_OUTPUT(_doutPin);
+    }
+    if (_dinPin != PIN_NONE) {
     GPIO_SET_INPUT(_dinPin);
-    GPIO_WRITE(_csPin, LOW);
+    }
 }
 
 #if defined(LCDSPI_OPTIMIZE)
