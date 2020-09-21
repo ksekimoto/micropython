@@ -117,7 +117,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     {
         size_t n_pool, n_qstr, n_str_data_bytes, n_total_bytes;
         qstr_pool_info(&n_pool, &n_qstr, &n_str_data_bytes, &n_total_bytes);
-        printf("qstr:\n  n_pool=%u\n  n_qstr=%u\n  n_str_data_bytes=%u\n  n_total_bytes=%u\n", n_pool, n_qstr, n_str_data_bytes, n_total_bytes);
+        printf("qstr:\n  n_pool=%zu\n  n_qstr=%zu\n  n_str_data_bytes=%zu\n  n_total_bytes=%zu\n", n_pool, n_qstr, n_str_data_bytes, n_total_bytes);
     }
 
     // GC info
@@ -125,9 +125,9 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
         gc_info_t info;
         gc_info(&info);
         printf("GC:\n");
-        printf("  %u total\n", info.total);
-        printf("  %u : %u\n", info.used, info.free);
-        printf("  1=%u 2=%u m=%u\n", info.num_1block, info.num_2block, info.max_block);
+        printf("  %zu total\n", info.total);
+        printf("  %zu : %zu\n", info.used, info.free);
+        printf("  1=%zu 2=%zu m=%zu\n", info.num_1block, info.num_2block, info.max_block);
     }
 
     // free space on flash

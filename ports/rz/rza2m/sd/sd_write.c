@@ -603,7 +603,7 @@ static int32_t _sd_single_write(st_sdhndl_t *p_hndl, uint8_t *buff, uint32_t psn
 {
     int32_t  ret;
     int32_t  trans_ret;
-    uint64_t info1_back;
+    uint64_t info1_back = 0;
 
     /* ---- enable RespEnd and ILA ---- */
     _sd_set_int_mask(p_hndl, SD_INFO1_MASK_RESP, SD_INFO2_MASK_ILA);
