@@ -35,10 +35,8 @@ extern "C" {
 void mbed_ticker_thread(void *thread, uint32_t ms);
 void mbed_camera_init(void);
 void mbed_camera_deinit(void);
-void mbed_start_video_camera_ycbcr(uint8_t *buf);
-void mbed_start_video_camera_raw8(uint8_t *buf);
-void mbed_start_lcd_ycbcr_display(uint8_t *buf);
-void mbed_start_lcd_rgb_display(uint8_t *buf);
+void mbed_start_video_camera(uint8_t *buf, uint32_t vformat);
+void mbed_start_lcd_display(uint8_t *buf, uint32_t gformat);
 void mbed_lcd_init(void);
 void mbed_lcd_deinit(void);
 uint8_t *mbed_get_camera_fb_ptr(void);
@@ -51,7 +49,8 @@ int mbed_get_lcd_vw(void);
 int mbed_get_lcd_pic_size(void);
 int mbed_get_camera_hw(void);
 int mbed_get_camera_vw(void);
-int mbed_jpeg_encode(const char *camera, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size);
+int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size);
+int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size);
 
 #ifdef __cplusplus
 };

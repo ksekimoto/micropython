@@ -36,8 +36,6 @@
 #include "mbed_camera.h"
 #include "camera.h"
 
-const mp_obj_type_t pyb_camera_type;
-
 typedef struct _pyb_camera_obj_t {
     mp_obj_base_t base;
     mp_uint_t camera_id;
@@ -59,7 +57,7 @@ STATIC const pyb_camera_obj_t camera_mipi_obj = {
 };
 #endif
 
-int pyb_jpeg_save_xy(const char *filename, const char* buf, uint32_t wx, uint32_t wy) {
+int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy) {
     FIL fp;
     FRESULT res;
     fs_user_mount_t *vfs_fat;
@@ -94,6 +92,45 @@ int pyb_jpeg_save_xy(const char *filename, const char* buf, uint32_t wx, uint32_
     return err;
 }
 
+int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy) {
+    FIL fp;
+    FRESULT res;
+    fs_user_mount_t *vfs_fat;
+    const char *p_out;
+    uint32_t size = wx * wy * 2;
+    uint32_t reads;
+    char *jpeg_buf;
+    int err=0;
+
+    mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
+    if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
+        vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
+    } else {
+#if defined(DEBUG_LCDSPI)
+        debug_printf("Cannot find user mount for %s\n", filename);
+#endif
+        return -1;
+    }
+    res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
+    if (res != FR_OK) {
+#if defined(DEBUG_LCDSPI)
+        debug_printf("File can't be opened", filename);
+#endif
+        return -1;
+    }
+    reads = (uint32_t)f_size(&fp);
+    jpeg_buf = (char *)malloc(reads);
+    if (jpeg_buf) {
+        if (reads > 0) {
+            f_read(&fp, (void *)jpeg_buf, (UINT)reads, (UINT *)&reads);
+        }
+        err = mbed_jpeg_decode(buf, wx, wy, (char *)jpeg_buf, reads);
+        free(jpeg_buf);
+    }
+    f_close(&fp);
+    return err;
+}
+
 STATIC mp_obj_t pyb_jpeg_save(mp_obj_t self_in, mp_obj_t fn) {
     char *filename = (char *)mp_obj_str_get_str(fn);
     uint8_t *buf = mbed_get_camera_fb_ptr();
@@ -103,6 +140,16 @@ STATIC mp_obj_t pyb_jpeg_save(mp_obj_t self_in, mp_obj_t fn) {
     return MP_OBJ_NEW_SMALL_INT(ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_jpeg_save_obj, pyb_jpeg_save);
+
+STATIC mp_obj_t pyb_jpeg_load(mp_obj_t self_in, mp_obj_t fn) {
+    char *filename = (char *)mp_obj_str_get_str(fn);
+    uint8_t *buf = mbed_get_camera_fb_ptr();
+    uint32_t wx = (uint32_t)mbed_get_camera_hw();
+    uint32_t wy = (uint32_t)mbed_get_camera_vw();
+    int ret = pyb_jpeg_load_xy((const char *)filename, (const char *)buf, wx, wy);
+    return MP_OBJ_NEW_SMALL_INT(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_jpeg_load_obj, pyb_jpeg_load);
 
 STATIC mp_obj_t pyb_get_frame_buffer(mp_obj_t self_in) {
     uint8_t *buf = mbed_get_lcd_fb_ptr();
@@ -114,33 +161,21 @@ STATIC mp_obj_t pyb_get_frame_buffer(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_get_frame_buffer_obj, pyb_get_frame_buffer);
 
-STATIC mp_obj_t pyb_start_camera_ycbcr(mp_obj_t self_in) {
+STATIC mp_obj_t pyb_start_camera(mp_obj_t self_in, mp_obj_t format) {
     uint8_t *buf = mbed_get_camera_fb_ptr();
-    mbed_start_video_camera_ycbcr(buf);
+    uint32_t vformat = mp_obj_get_int(format);
+    mbed_start_video_camera(buf, vformat);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_start_camera_ycbcr_obj, pyb_start_camera_ycbcr);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_start_camera_obj, pyb_start_camera);
 
-STATIC mp_obj_t pyb_start_camera_raw8(mp_obj_t self_in) {
+STATIC mp_obj_t pyb_start_lcd_display(mp_obj_t self_in, mp_obj_t format) {
     uint8_t *buf = mbed_get_camera_fb_ptr();
-    mbed_start_video_camera_raw8(buf);
+    uint32_t gformat = mp_obj_get_int(format);
+    mbed_start_lcd_display(buf, gformat);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_start_camera_raw8_obj, pyb_start_camera_raw8);
-
-STATIC mp_obj_t pyb_start_lcd_ycbcr(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_camera_fb_ptr();
-    mbed_start_lcd_ycbcr_display(buf);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_start_lcd_ycbcr_obj, pyb_start_lcd_ycbcr);
-
-STATIC mp_obj_t pyb_start_lcd_rgb(mp_obj_t self_in) {
-    uint8_t *buf = mbed_get_lcd_fb_ptr();
-    mbed_start_lcd_rgb_display(buf);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_start_lcd_rgb_obj, pyb_start_lcd_rgb);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_start_lcd_display_obj, pyb_start_lcd_display);
 
 STATIC void camera_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pyb_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -168,15 +203,25 @@ STATIC mp_obj_t camera_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
 
 STATIC const mp_rom_map_elem_t camera_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_GetFrameBuf), MP_ROM_PTR(&pyb_get_frame_buffer_obj) },
-    { MP_ROM_QSTR(MP_QSTR_StartLcdRgb), MP_ROM_PTR(&pyb_start_lcd_rgb_obj) },
-    { MP_ROM_QSTR(MP_QSTR_StartLcdYcbcr), MP_ROM_PTR(&pyb_start_lcd_ycbcr_obj) },
-    { MP_ROM_QSTR(MP_QSTR_StartCameraYcbcr), MP_ROM_PTR(&pyb_start_camera_ycbcr_obj) },
-    { MP_ROM_QSTR(MP_QSTR_StartCameraRaw8), MP_ROM_PTR(&pyb_start_camera_raw8_obj) },
+    { MP_ROM_QSTR(MP_QSTR_StartLcdDisplay), MP_ROM_PTR(&pyb_start_lcd_display_obj) },
+    { MP_ROM_QSTR(MP_QSTR_StartCamera), MP_ROM_PTR(&pyb_start_camera_obj) },
     { MP_ROM_QSTR(MP_QSTR_JpegSave), MP_ROM_PTR(&pyb_jpeg_save_obj) },
+    { MP_ROM_QSTR(MP_QSTR_JpegLoad), MP_ROM_PTR(&pyb_jpeg_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_DV), MP_ROM_INT(CAMERA_DV) },
     { MP_ROM_QSTR(MP_QSTR_MIPI), MP_ROM_INT(CAMERA_MIPI) },
+    { MP_ROM_QSTR(MP_QSTR_G_YCBCR422), MP_ROM_INT(GFORMAT_YCBCR422) },
+    { MP_ROM_QSTR(MP_QSTR_G_RGB565), MP_ROM_INT(GFORMAT_RGB565) },
+    { MP_ROM_QSTR(MP_QSTR_G_RGB888), MP_ROM_INT(GFORMAT_RGB888) },
+    { MP_ROM_QSTR(MP_QSTR_G_ARGB8888), MP_ROM_INT(GFORMAT_ARGB8888) },
+    { MP_ROM_QSTR(MP_QSTR_G_ARGB4444), MP_ROM_INT(GFORMAT_ARGB4444) },
+    { MP_ROM_QSTR(MP_QSTR_G_CLUT8), MP_ROM_INT(GFORMAT_CLUT8) },
+    { MP_ROM_QSTR(MP_QSTR_G_CLUT4), MP_ROM_INT(GFORMAT_CLUT4) },
+    { MP_ROM_QSTR(MP_QSTR_G_CLUT1), MP_ROM_INT(GFORMAT_CLUT1) },
+    { MP_ROM_QSTR(MP_QSTR_V_YCBCR422), MP_ROM_INT(VFORMAT_YCBCR422) },
+    { MP_ROM_QSTR(MP_QSTR_V_RGB565), MP_ROM_INT(VFORMAT_RGB565) },
+    { MP_ROM_QSTR(MP_QSTR_V_RGB888), MP_ROM_INT(VFORMAT_RGB888) },
+    { MP_ROM_QSTR(MP_QSTR_V_ARGB8888), MP_ROM_INT(VFORMAT_RAW8) },
 };
-
 STATIC MP_DEFINE_CONST_DICT(camera_locals_dict, camera_locals_dict_table);
 
 const mp_obj_type_t pyb_camera_type = {

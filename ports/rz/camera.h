@@ -28,9 +28,25 @@
 #ifndef PORTS_RZ_CAMERA_LCD_H_
 #define PORTS_RZ_CAMERA_LCD_H_
 
+#ifndef __cplusplus
 extern const mp_obj_type_t pyb_camera_type;
+#endif
 
 #define CAMERA_DV   0
 #define CAMERA_MIPI 1
+
+#define GFORMAT_YCBCR422 0
+#define GFORMAT_RGB565   1
+#define GFORMAT_RGB888   2
+#define GFORMAT_ARGB8888 3
+#define GFORMAT_ARGB4444 4
+#define GFORMAT_CLUT8    5
+#define GFORMAT_CLUT4    6
+#define GFORMAT_CLUT1    7
+
+#define VFORMAT_YCBCR422 0
+#define VFORMAT_RGB565   1
+#define VFORMAT_RGB888   2
+#define VFORMAT_RAW8     3
 
 #endif /* PORTS_RZ_CAMERA_LCD_H_ */

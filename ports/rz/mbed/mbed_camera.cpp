@@ -28,9 +28,10 @@
 #include "dcache-control.h"
 #include "EasyAttach_CameraAndLCD.h"
 #include "mbed_camera.h"
-#include  "r_jcu_api.h"
-#include  "JPEG_Converter.h"
-#include  "converter_wrapper.h"
+#include "r_jcu_api.h"
+#include "JPEG_Converter.h"
+#include "converter_wrapper.h"
+#include "camera.h"
 
 /* Video Parameter */
 #define VIDEO_PIXEL_HW      (640)
@@ -57,14 +58,14 @@ static uint16_t video_pic_size = DATA_SIZE_PER_PIC;
 
 static DisplayBase *mbed_display;
 
-int mbed_jpeg_encode(const char *camera, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size) {
+int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size) {
     JPEG_Converter mbed_jpeg;
     JPEG_Converter::bitmap_buff_info_t buff_info;
     JPEG_Converter::encode_options_t   encode_options;
-    JPEG_Converter::jpeg_conv_error_t err;
+    JPEG_Converter::jpeg_conv_error_t err = JPEG_Converter::JPEG_CONV_JCU_ERR;
     *encode_size =(uint32_t)sizeof(JpegBuffer);
 
-    buff_info.buffer_address            = (void *)camera;
+    buff_info.buffer_address            = (void *)vbuf;
     buff_info.height                    = (int32_t)wy;
     buff_info.width                     = (int32_t)wx;
     buff_info.format                    = JPEG_Converter::WR_RD_YCbCr422;
@@ -76,6 +77,27 @@ int mbed_jpeg_encode(const char *camera, uint32_t wx, uint32_t wy, char **jpeg_b
     err = mbed_jpeg.encode(&buff_info, (void*)&JpegBuffer, (size_t*)encode_size, &encode_options);
     if (err == JPEG_Converter::JPEG_CONV_OK) {
         *jpeg_buf = (char *)&JpegBuffer;
+    }
+    return (int)err;
+}
+
+int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size) {
+    JPEG_Converter mbed_jpeg;
+    JPEG_Converter::bitmap_buff_info_t buff_info;
+    JPEG_Converter::decode_options_t   decode_options;
+    JPEG_Converter::jpeg_conv_error_t err = JPEG_Converter::JPEG_CONV_JCU_ERR;
+
+    buff_info.buffer_address            = (void *)vbuf;
+    buff_info.height                    = (int32_t)wy;
+    buff_info.width                     = (int32_t)wx;
+    buff_info.format                    = JPEG_Converter::WR_RD_YCbCr422;
+    decode_options.output_cb_cr_offset  = JPEG_Converter::CBCR_OFFSET_128;
+    decode_options.output_swapsetting   = JPEG_Converter::WR_RD_WRSWA_32_16_8BIT;
+
+    if (decode_size <= sizeof(JpegBuffer)) {
+        memcpy((void *)&JpegBuffer, (const void *)jpeg_buf, (size_t)decode_size);
+        dcache_clean((void *)&JpegBuffer, sizeof(JpegBuffer));
+        err = mbed_jpeg.decode((void *)&JpegBuffer, &buff_info, &decode_options);
     }
     return (int)err;
 }
@@ -127,7 +149,27 @@ int mbed_get_lcd_pic_size(void) {
     return video_pic_size;
 }
 
-void mbed_start_video_camera_ycbcr(uint8_t *buf) {
+void mbed_start_video_camera(uint8_t *buf, uint32_t vformat) {
+    DisplayBase::video_format_t _vformat;
+    DisplayBase::wr_rd_swa_t _swa;
+    switch (vformat) {
+        case VFORMAT_YCBCR422:
+            _vformat =  DisplayBase::VIDEO_FORMAT_YCBCR422;
+            _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
+            break;
+        case VFORMAT_RGB565:
+            _vformat =  DisplayBase::VIDEO_FORMAT_RGB565;
+            _swa = DisplayBase::WR_RD_WRSWA_NON;
+            break;
+        case VFORMAT_RGB888:
+            _vformat =  DisplayBase::VIDEO_FORMAT_RGB888;
+            _swa = DisplayBase::WR_RD_WRSWA_NON;
+            break;
+        case VFORMAT_RAW8:
+            _vformat =  DisplayBase::VIDEO_FORMAT_RAW8;
+            _swa = DisplayBase::WR_RD_WRSWA_NON;
+            break;
+    }
     for (uint32_t i = 0; i < sizeof(camera_frame_buf); i += 2) {
         camera_frame_buf[i + 0] = 0x10;
         camera_frame_buf[i + 1] = 0x80;
@@ -138,8 +180,8 @@ void mbed_start_video_camera_ycbcr(uint8_t *buf) {
         DisplayBase::COL_SYS_NTSC_358,
         (void *)buf,
         CAMERA_BUFFER_STRIDE,
-        DisplayBase::VIDEO_FORMAT_YCBCR422,
-        DisplayBase::WR_RD_WRSWA_32_16BIT,
+        _vformat,
+        _swa,
         camera_vw,
         camera_hw
     );
@@ -148,30 +190,28 @@ void mbed_start_video_camera_ycbcr(uint8_t *buf) {
     EasyAttach_CameraStart(*mbed_display, DisplayBase::VIDEO_INPUT_CHANNEL_0);
 }
 
-void mbed_start_video_camera_raw8(uint8_t *buf) {
-   for (uint32_t i = 0; i < sizeof(camera_frame_buf); i += 2) {
-       camera_frame_buf[i + 0] = 0x00;
-       camera_frame_buf[i + 1] = 0x00;
-   }
-   dcache_clean(camera_frame_buf, sizeof(camera_frame_buf));
-   mbed_display->Video_Write_Setting(
-       DisplayBase::VIDEO_INPUT_CHANNEL_0,
-       DisplayBase::COL_SYS_NTSC_358,
-       (void *)buf,
-       CAMERA_BUFFER_STRIDE,
-       DisplayBase::VIDEO_FORMAT_RAW8,
-       DisplayBase::WR_RD_WRSWA_NON,
-       camera_vw,
-       camera_vw
-   );
-   mbed_display->Graphics_Start(DisplayBase::GRAPHICS_LAYER_0);
-   //ThisThread::sleep_for(50);
-   wait_ms(50);
-   EasyAttach_CameraStart(*mbed_display, DisplayBase::VIDEO_INPUT_CHANNEL_0);
-}
-
-void mbed_start_lcd_ycbcr_display(uint8_t *buf) {
+void mbed_start_lcd_display(uint8_t *buf, uint32_t gformat) {
    DisplayBase::rect_t rect;
+   DisplayBase::graphics_format_t _gformat;
+   DisplayBase::wr_rd_swa_t _swa;
+   switch (gformat) {
+       case GFORMAT_YCBCR422:
+           _gformat =  DisplayBase::GRAPHICS_FORMAT_YCBCR422;
+           _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
+           break;
+       case VFORMAT_RGB565:
+           _gformat =  DisplayBase::GRAPHICS_FORMAT_RGB565;
+           _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
+           break;
+       case VFORMAT_RGB888:
+           _gformat =  DisplayBase::GRAPHICS_FORMAT_RGB888;
+           _swa = DisplayBase::WR_RD_WRSWA_NON;
+           break;
+       default:
+           _gformat =  DisplayBase::GRAPHICS_FORMAT_YCBCR422;
+           _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
+           break;
+   }
    for (uint32_t i = 0; i < sizeof(camera_frame_buf); i += 2) {
        camera_frame_buf[i + 0] = 0x00;
        camera_frame_buf[i + 1] = 0x00;
@@ -185,37 +225,12 @@ void mbed_start_lcd_ycbcr_display(uint8_t *buf) {
        DisplayBase::GRAPHICS_LAYER_0,
        (void *)buf,
        CAMERA_BUFFER_STRIDE,
-       DisplayBase::GRAPHICS_FORMAT_YCBCR422,
-       DisplayBase::WR_RD_WRSWA_32_16BIT,
+       _gformat,
+       _swa,
        &rect
    );
    mbed_display->Graphics_Start(DisplayBase::GRAPHICS_LAYER_0);
    //ThisThread::sleep_for(50);
-   wait_ms(50);
-   EasyAttach_LcdBacklight(true);
-}
-
-void mbed_start_lcd_rgb_display(uint8_t *buf) {
-   DisplayBase::rect_t rect;
-
-   for (uint32_t i = 0; i < sizeof(lcd_frame_buf); i += 2) {
-       lcd_frame_buf[i + 0] = 0x00;
-       lcd_frame_buf[i + 1] = 0x00;
-   }
-   dcache_clean(lcd_frame_buf, sizeof(lcd_frame_buf));
-   rect.vs = 0;
-   rect.vw = lcd_vw;
-   rect.hs = 0;
-   rect.hw = lcd_hw;
-   mbed_display->Graphics_Read_Setting(
-       DisplayBase::GRAPHICS_LAYER_0,
-       (void *)buf,
-       LCD_BUFFER_STRIDE,
-       DisplayBase::GRAPHICS_FORMAT_RGB565,
-       DisplayBase::WR_RD_WRSWA_32_16BIT,
-       &rect
-   );
-   mbed_display->Graphics_Start(DisplayBase::GRAPHICS_LAYER_0);
    wait_ms(50);
    EasyAttach_LcdBacklight(true);
 }
@@ -223,7 +238,7 @@ void mbed_start_lcd_rgb_display(uint8_t *buf) {
 void mbed_lcd_init(void) {
     mbed_display = new DisplayBase();
     EasyAttach_Init(*mbed_display);
-    mbed_start_lcd_rgb_display((uint8_t *)lcd_frame_buf);
+    mbed_start_lcd_display((uint8_t *)lcd_frame_buf, GFORMAT_RGB565);
 }
 
 void mbed_lcd_deinit(void) {
