@@ -49,4 +49,8 @@ extern const mp_obj_type_t pyb_camera_type;
 #define VFORMAT_RGB888   2
 #define VFORMAT_RAW8     3
 
+#define JFORMAT_YCBCR422 0
+#define JFORMAT_ARGB8888 1
+#define JFORMAT_RGB565   2
+
 #endif /* PORTS_RZ_CAMERA_LCD_H_ */

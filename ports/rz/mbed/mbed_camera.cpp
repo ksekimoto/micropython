@@ -58,20 +58,33 @@ static uint16_t video_pic_size = DATA_SIZE_PER_PIC;
 
 static DisplayBase *mbed_display;
 
-int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size) {
+int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size, uint32_t format) {
     JPEG_Converter mbed_jpeg;
     JPEG_Converter::bitmap_buff_info_t buff_info;
     JPEG_Converter::encode_options_t   encode_options;
     JPEG_Converter::jpeg_conv_error_t err = JPEG_Converter::JPEG_CONV_JCU_ERR;
     *encode_size =(uint32_t)sizeof(JpegBuffer);
 
+    switch (format) {
+        case JFORMAT_ARGB8888:
+            buff_info.format = JPEG_Converter::WR_RD_ARGB8888;
+            encode_options.input_swapsetting = JPEG_Converter::WR_RD_WRSWA_NON;
+            break;
+        case JFORMAT_RGB565:
+            buff_info.format = JPEG_Converter::WR_RD_RGB565;
+            encode_options.input_swapsetting = JPEG_Converter::WR_RD_WRSWA_NON;
+            break;
+        case JFORMAT_YCBCR422:
+        default:
+            buff_info.format = JPEG_Converter::WR_RD_YCbCr422;
+            encode_options.input_swapsetting = JPEG_Converter::WR_RD_WRSWA_32_16_8BIT;
+            break;
+    }
     buff_info.buffer_address            = (void *)vbuf;
     buff_info.height                    = (int32_t)wy;
     buff_info.width                     = (int32_t)wx;
-    buff_info.format                    = JPEG_Converter::WR_RD_YCbCr422;
     encode_options.encode_buff_size     = sizeof(JpegBuffer);
     encode_options.p_EncodeCallBackFunc = NULL;
-    encode_options.input_swapsetting    = JPEG_Converter::WR_RD_WRSWA_32_16_8BIT;
 
     dcache_invalid((void *)&JpegBuffer, (uint32_t)sizeof(JpegBuffer));
     err = mbed_jpeg.encode(&buff_info, (void*)&JpegBuffer, (size_t*)encode_size, &encode_options);
@@ -81,18 +94,31 @@ int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf
     return (int)err;
 }
 
-int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size) {
+int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size, uint32_t format) {
     JPEG_Converter mbed_jpeg;
     JPEG_Converter::bitmap_buff_info_t buff_info;
     JPEG_Converter::decode_options_t   decode_options;
     JPEG_Converter::jpeg_conv_error_t err = JPEG_Converter::JPEG_CONV_JCU_ERR;
 
+    switch (format) {
+        case JFORMAT_ARGB8888:
+            buff_info.format = JPEG_Converter::WR_RD_ARGB8888;
+            decode_options.output_swapsetting = JPEG_Converter::WR_RD_WRSWA_NON;
+            break;
+        case JFORMAT_RGB565:
+            buff_info.format = JPEG_Converter::WR_RD_RGB565;
+            decode_options.output_swapsetting = JPEG_Converter::WR_RD_WRSWA_NON;
+            break;
+        case JFORMAT_YCBCR422:
+        default:
+            buff_info.format = JPEG_Converter::WR_RD_YCbCr422;
+            decode_options.output_swapsetting = JPEG_Converter::WR_RD_WRSWA_32_16_8BIT;
+            break;
+    }
     buff_info.buffer_address            = (void *)vbuf;
     buff_info.height                    = (int32_t)wy;
     buff_info.width                     = (int32_t)wx;
-    buff_info.format                    = JPEG_Converter::WR_RD_YCbCr422;
     decode_options.output_cb_cr_offset  = JPEG_Converter::CBCR_OFFSET_128;
-    decode_options.output_swapsetting   = JPEG_Converter::WR_RD_WRSWA_32_16_8BIT;
 
     if (decode_size <= sizeof(JpegBuffer)) {
         memcpy((void *)&JpegBuffer, (const void *)jpeg_buf, (size_t)decode_size);
@@ -153,10 +179,6 @@ void mbed_start_video_camera(uint8_t *buf, uint32_t vformat) {
     DisplayBase::video_format_t _vformat;
     DisplayBase::wr_rd_swa_t _swa;
     switch (vformat) {
-        case VFORMAT_YCBCR422:
-            _vformat =  DisplayBase::VIDEO_FORMAT_YCBCR422;
-            _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
-            break;
         case VFORMAT_RGB565:
             _vformat =  DisplayBase::VIDEO_FORMAT_RGB565;
             _swa = DisplayBase::WR_RD_WRSWA_NON;
@@ -168,6 +190,11 @@ void mbed_start_video_camera(uint8_t *buf, uint32_t vformat) {
         case VFORMAT_RAW8:
             _vformat =  DisplayBase::VIDEO_FORMAT_RAW8;
             _swa = DisplayBase::WR_RD_WRSWA_NON;
+            break;
+        case VFORMAT_YCBCR422:
+        default:
+            _vformat =  DisplayBase::VIDEO_FORMAT_YCBCR422;
+            _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
             break;
     }
     for (uint32_t i = 0; i < sizeof(camera_frame_buf); i += 2) {
@@ -195,18 +222,15 @@ void mbed_start_lcd_display(uint8_t *buf, uint32_t gformat) {
    DisplayBase::graphics_format_t _gformat;
    DisplayBase::wr_rd_swa_t _swa;
    switch (gformat) {
-       case GFORMAT_YCBCR422:
-           _gformat =  DisplayBase::GRAPHICS_FORMAT_YCBCR422;
-           _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
-           break;
-       case VFORMAT_RGB565:
+       case GFORMAT_RGB565:
            _gformat =  DisplayBase::GRAPHICS_FORMAT_RGB565;
            _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
            break;
-       case VFORMAT_RGB888:
+       case GFORMAT_RGB888:
            _gformat =  DisplayBase::GRAPHICS_FORMAT_RGB888;
            _swa = DisplayBase::WR_RD_WRSWA_NON;
            break;
+       case GFORMAT_YCBCR422:
        default:
            _gformat =  DisplayBase::GRAPHICS_FORMAT_YCBCR422;
            _swa = DisplayBase::WR_RD_WRSWA_32_16BIT;
