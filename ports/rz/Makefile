@@ -175,7 +175,8 @@ endif
 #CFLAGS_MCU_l4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
 #CFLAGS_MCU_h7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
 #CFLAGS_MCU_wb = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
-CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
+#CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
+CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
 
 C_CPP_COMMON += $(CFLAGS_MCU_a9)
 C_CPP_COMMON += -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer
@@ -223,7 +224,7 @@ CFLAGS += -Wno-error=sign-compare
 CFLAGS += -Wno-error=override-init
 # mpconfigport.h __WFI()
 CFLAGS += -Wno-error=implicit-function-declaration
-# camera_lcd.c
+# camera.c
 CFLAGS += -Wno-error=incompatible-pointer-types
 # main.c
 CFLAGS += -Wno-error=main
@@ -518,7 +519,7 @@ endif
 
 ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
-EXTMOD_SRC_C += camera_lcd.c
+EXTMOD_SRC_C += camera.c
 endif
 endif
 

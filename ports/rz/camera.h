@@ -25,35 +25,12 @@
  * THE SOFTWARE.
  */
 
-#ifndef PORTS_RZ_MBED_MBED_CAMERA_LCD_H_
-#define PORTS_RZ_MBED_MBED_CAMERA_LCD_H_
+#ifndef PORTS_RZ_CAMERA_LCD_H_
+#define PORTS_RZ_CAMERA_LCD_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern const mp_obj_type_t pyb_camera_type;
 
-void mbed_ticker_thread(void *thread, uint32_t ms);
-void mbed_camera_lcd_init(void);
-void mbed_camera_lcd_deinit(void);
-void mbed_start_video_camera(uint8_t *buf);
-void mbed_start_lcd_ycbcr_display(uint8_t *buf);
-void mbed_start_lcd_rgb_display(uint8_t *buf);
-void mbed_lcd_init(void);
-void mbed_lcd_deinit(void);
-uint8_t *mbed_get_camera_fb_ptr(void);
-uint32_t mbed_get_camera_fb_size(void);
-uint8_t *mbed_get_lcd_fb_ptr(void);
-uint32_t mbed_get_lcd_fb_size(void);
-void mbed_set_pixel(int x, int y, uint16_t color);
-int mbed_get_lcd_hw(void);
-int mbed_get_lcd_vw(void);
-int mbed_get_lcd_pic_size(void);
-int mbed_get_camera_hw(void);
-int mbed_get_camera_vw(void);
-void mbed_jpeg_encode(const char *camera, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t *encode_size);
+#define CAMERA_DV   0
+#define CAMERA_MIPI 1
 
-#ifdef __cplusplus
-};
-#endif
-
-#endif /* PORTS_RZ_MBED_MBED_CAMERA_LCD_H_ */
+#endif /* PORTS_RZ_CAMERA_LCD_H_ */

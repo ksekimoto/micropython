@@ -102,5 +102,6 @@
 //#define PYB_SERVO_NUM       (1)
 //#define BOARD_SERVO1_PIN    (pin_PH0)
 
-#define MICROPY_PY_PYB_CAMERA_LCD   (1)
+#define MICROPY_PY_PYB_CAMERA_DV    (1)
+#define MICROPY_PY_PYB_CAMERA_MIPI  (1)
 

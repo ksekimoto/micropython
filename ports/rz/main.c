@@ -417,6 +417,7 @@ static int chk_kbd_interrupt(int d)
 #endif
 
 void main(int reset_mode) {
+    volatile int stack_dummy;
     // Enable caches and prefetch buffers
     rza2m_init();
     #if defined(MICROPY_BOARD_EARLY_INIT)
@@ -505,8 +506,10 @@ soft_reset:
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
-    mp_stack_set_top(&_estack);
-    mp_stack_set_limit((char*)&_estack - (char*)&_sstack - 1024);
+    //mp_stack_set_top(&_estack);
+    //mp_stack_set_limit((char*)&_estack - (char*)&_sstack - 1024);
+    mp_stack_set_top((void *)&stack_dummy);
+    mp_stack_set_limit((char*)&stack_dummy - (char*)&_sstack - 1024);
 
     // GC init
     //gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);

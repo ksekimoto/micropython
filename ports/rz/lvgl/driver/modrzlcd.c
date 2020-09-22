@@ -29,7 +29,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 //#include "dcache-control.h"
-#include "mbed_camera_lcd.h"
+#include "mbed_camera.h"
 
 extern void dcache_clean(void * p_buf, uint32_t size);
 extern void dcache_invalid(void * p_buf, uint32_t size);
