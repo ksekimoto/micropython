@@ -45,7 +45,7 @@
 
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"
-#endif \
+#endif
 
 #define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
 #define STORAGE_IDLE_TICK(tick) (((tick) & ~(SYSTICK_DISPATCH_NUM_SLOTS - 1) & STORAGE_SYSTICK_MASK) == 0)
@@ -224,7 +224,7 @@ int storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) 
 
     for (size_t i = 0; i < num_blocks; i++) {
         if (!storage_read_block(dest + i * FLASH_BLOCK_SIZE, block_num + i)) {
-            return 1; // error
+            return -MP_EIO; // error
         }
     }
     return 0; // success
@@ -251,7 +251,7 @@ int storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_bl
 
     for (size_t i = 0; i < num_blocks; i++) {
         if (!storage_write_block(src + i * FLASH_BLOCK_SIZE, block_num + i)) {
-            return -1; // error
+            return -MP_EIO; // error
         }
     }
     return 0; // success
@@ -439,7 +439,7 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
         }
 
         case MP_BLOCKDEV_IOCTL_BLOCK_SIZE: {
-            mp_int_t n = storage_get_block_size();
+            mp_int_t n = FLASH_BLOCK_SIZE;
             #if defined(SPIFLASH)
             if (self->use_native_block_size) {
                 n = PYB_FLASH_NATIVE_BLOCK_SIZE;
@@ -485,7 +485,9 @@ void pyb_flash_init_vfs(fs_user_mount_t *vfs) {
     vfs->base.type = &mp_fat_vfs_type;
     vfs->blockdev.flags |= MP_BLOCKDEV_FLAG_NATIVE | MP_BLOCKDEV_FLAG_HAVE_IOCTL;
     vfs->fatfs.drv = vfs;
+    #if MICROPY_FATFS_MULTI_PARTITION
     vfs->fatfs.part = 1; // flash filesystem lives on first partition
+    #endif
     vfs->blockdev.readblocks[0] = MP_OBJ_FROM_PTR(&pyb_flash_readblocks_obj);
     vfs->blockdev.readblocks[1] = MP_OBJ_FROM_PTR(&pyb_flash_obj);
     vfs->blockdev.readblocks[2] = MP_OBJ_FROM_PTR(storage_read_blocks); // native version

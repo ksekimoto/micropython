@@ -188,8 +188,8 @@ uint64_t mp_hal_time_ns(void) {
     RTC_DateTypeDef date;
     rtc_get_time(&time);
     rtc_get_date(&date);
-    ns = timeutils_nanoseconds_since_1970(
-        2000 + date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
+    ns = timeutils_seconds_since_epoch(2000 + date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
+    ns *= 1000000000ULL;
     uint32_t usec = ((RTC_SYNCH_PREDIV - time.SubSeconds) * (1000000 / 64)) / ((RTC_SYNCH_PREDIV + 1) / 64);
     ns += usec * 1000;
     #endif

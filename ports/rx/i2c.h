@@ -28,6 +28,7 @@
 
 //#include "dma.h"
 
+#define MICROPY_HW_MAX_I2C 4
 // use this for OwnAddress1 to configure I2C in master mode
 #define PYB_I2C_MASTER_ADDRESS (0xfe)
 

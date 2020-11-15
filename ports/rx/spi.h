@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2020 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,21 +26,43 @@
 #ifndef MICROPY_INCLUDED_RX_SPI_H
 #define MICROPY_INCLUDED_RX_SPI_H
 
-#define SPI_NUM_CH  3
+#include "drivers/bus/spi.h"
 
-#define SPI_DIRECTION_2LINES 0
-#define SPI_NSS_SOFT    1
-#define SPI_MODE_MASTER    0x00000000
-#define SPI_MODE_SLAVE     0x00000004
+//#define SPI_NUM_CH  3
 
 typedef struct _spi_t {
     uint32_t    ch;
     uint32_t    bits;
 } spi_t;
 
-//extern spi_t spi_obj[SPI_NUM_CH];
+typedef struct _spi_proto_cfg_t {
+    const spi_t *spi;
+    uint32_t baudrate;
+    uint8_t polarity;
+    uint8_t phase;
+    uint8_t bits;
+    uint8_t firstbit;
+} spi_proto_cfg_t;
+
+typedef struct _pyb_spi_obj_t {
+    mp_obj_base_t base;
+    spi_t *spi;
+} pyb_spi_obj_t;
+
+typedef struct _machine_hard_spi_obj_t {
+    mp_obj_base_t base;
+    spi_t *spi;
+} machine_hard_spi_obj_t;
+
+#define SPI_DIRECTION_2LINES 0
+#define SPI_NSS_SOFT    1
+#define SPI_MODE_MASTER    0x00000000
+#define SPI_MODE_SLAVE     0x00000004
+
+extern spi_t spi_obj[];
+
+extern const mp_spi_proto_t spi_proto;
 extern const mp_obj_type_t pyb_spi_type;
-extern const mp_obj_type_t machine_soft_spi_type;
 extern const mp_obj_type_t machine_hard_spi_type;
 
 // A transfer of "len" bytes should take len*8*1000/baudrate milliseconds.
