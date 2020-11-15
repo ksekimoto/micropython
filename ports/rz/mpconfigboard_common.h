@@ -174,7 +174,7 @@
     || defined(MICROPY_HW_I2C3_SCL) || defined(MICROPY_HW_I2C4_SCL)
 #define MICROPY_HW_ENABLE_HW_I2C (1)
 #else
-#define MICROPY_HW_ENABLE_HW_I2C (1)
+#define MICROPY_HW_ENABLE_HW_I2C (0)
 #endif
 
 // Enable CAN if there are any peripherals defined
