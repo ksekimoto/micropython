@@ -77,6 +77,7 @@
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
 #endif
 #define MICROPY_STREAMS_NON_BLOCK   (1)
+#define MICROPY_MODULE_BUILTIN_INIT (1)
 #define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CAN_OVERRIDE_BUILTINS (1)
 #define MICROPY_USE_INTERNAL_ERRNO  (1)
@@ -104,7 +105,9 @@
 #define MICROPY_PY_BUILTINS_INPUT   (1)
 #define MICROPY_PY_BUILTINS_POW3    (1)
 #define MICROPY_PY_BUILTINS_HELP    (1)
+#ifndef MICROPY_PY_BUILTINS_HELP_TEXT
 #define MICROPY_PY_BUILTINS_HELP_TEXT rz_help_text
+#endif
 #define MICROPY_PY_BUILTINS_HELP_MODULES (1)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
 #define MICROPY_PY_ARRAY_SLICE_ASSIGN (1)
@@ -116,7 +119,7 @@
 #define MICROPY_PY_CMATH            (1)
 #define MICROPY_PY_IO               (1)
 #define MICROPY_PY_IO_IOBASE        (1)
-#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT) // because mp_type_fileio/textio point to fatfs impl
+#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT || MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2)
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_EXIT         (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
@@ -163,6 +166,7 @@
 #endif
 #ifndef MICROPY_PY_URANDOM
 #define MICROPY_PY_URANDOM          (1)
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC (rng_get())
 #endif
 #ifndef MICROPY_PY_URANDOM_EXTRA_FUNCS
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
@@ -179,13 +183,9 @@
 #define MICROPY_PY_MACHINE_PULSE    (1)
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW mp_pin_make_new
 #define MICROPY_PY_MACHINE_I2C      (1)
-#if MICROPY_HW_ENABLE_HW_I2C
-#define MICROPY_PY_MACHINE_I2C_MAKE_NEW machine_hard_i2c_make_new
-#endif
 #define MICROPY_PY_MACHINE_SPI      (1)
 #define MICROPY_PY_MACHINE_SPI_MSB  (SPI_FIRSTBIT_MSB)
 #define MICROPY_PY_MACHINE_SPI_LSB  (SPI_FIRSTBIT_LSB)
-#define MICROPY_PY_MACHINE_SPI_MAKE_NEW machine_hard_spi_make_new
 #define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
 #define MICROPY_PY_UWEBSOCKET       (MICROPY_PY_LWIP)
@@ -217,9 +217,17 @@
 #define MICROPY_FATFS_RPATH            (2)
 #define MICROPY_FATFS_MULTI_PARTITION  (1)
 
-// TODO these should be generic, not bound to fatfs
+// TODO these should be generic, not bound to a particular FS implementation
+#if MICROPY_VFS_FAT
 #define mp_type_fileio mp_type_vfs_fat_fileio
 #define mp_type_textio mp_type_vfs_fat_textio
+#elif MICROPY_VFS_LFS1
+#define mp_type_fileio mp_type_vfs_lfs1_fileio
+#define mp_type_textio mp_type_vfs_lfs1_textio
+#elif MICROPY_VFS_LFS2
+#define mp_type_fileio mp_type_vfs_lfs2_fileio
+#define mp_type_textio mp_type_vfs_lfs2_textio
+#endif
 
 // use vfs's functions for import stat and builtin open
 #define mp_import_stat mp_vfs_import_stat
@@ -405,7 +413,8 @@ extern void lv_deinit(void);
 
 #if MICROPY_BLUETOOTH_NIMBLE
 struct _mp_bluetooth_nimble_root_pointers_t;
-#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE void **bluetooth_nimble_memory; struct _mp_bluetooth_nimble_root_pointers_t *bluetooth_nimble_root_pointers;
+struct _mp_bluetooth_nimble_malloc_t;
+#define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE struct _mp_bluetooth_nimble_malloc_t *bluetooth_nimble_memory; struct _mp_bluetooth_nimble_root_pointers_t *bluetooth_nimble_root_pointers;
 #else
 #define MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE
 #endif
@@ -572,3 +581,6 @@ static inline mp_uint_t disable_irq(void) {
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
+
+// Needed for MICROPY_PY_URANDOM_SEED_INIT_FUNC.
+uint32_t rng_get(void);

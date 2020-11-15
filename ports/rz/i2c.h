@@ -28,6 +28,7 @@
 
 //#include "dma.h"
 
+#define MICROPY_HW_MAX_I2C 4
 // use this for OwnAddress1 to configure I2C in master mode
 #define PYB_I2C_MASTER_ADDRESS (0xfe)
 
@@ -69,10 +70,10 @@ void i2c_er_irq_handler(mp_uint_t i2c_id);
 
 typedef I2C_TypeDef i2c_t;
 
-int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout);
+int _i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout);
 int i2c_start_addr(i2c_t *i2c, int rd_wrn, uint16_t addr, size_t len, bool stop);
-int i2c_read(i2c_t *i2c, uint8_t *dest, size_t len, size_t next_len);
-int i2c_write(i2c_t *i2c, const uint8_t *src, size_t len, size_t next_len);
+int _i2c_read(i2c_t *i2c, uint8_t *dest, size_t len, size_t next_len);
+int _i2c_write(i2c_t *i2c, const uint8_t *src, size_t len, size_t next_len);
 int i2c_readfrom(i2c_t *i2c, uint16_t addr, uint8_t *dest, size_t len, bool stop);
 int i2c_writeto(i2c_t *i2c, uint16_t addr, const uint8_t *src, size_t len, bool stop);
 

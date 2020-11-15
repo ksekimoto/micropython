@@ -32,8 +32,10 @@
 
 STATIC uint16_t i2c_timeout_ms[MICROPY_HW_MAX_I2C];
 
-int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout_ms) {
+int _i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout_ms) {
 
+    // ToDo implement
+    uint32_t i2c_id = 0;
     // Init pins
     //if (!mp_hal_pin_config_alt(scl, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
     //    return -MP_EPERM;
@@ -49,26 +51,31 @@ int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t fr
 }
 
 STATIC int i2c_wait_sr1_set(i2c_t *i2c, uint32_t mask) {
+    // ToDo implement
     return 0;
 }
 
 STATIC int i2c_wait_stop(i2c_t *i2c) {
+    // ToDo implement
     return 0;
 }
 
 // For write: len = 0, 1 or N
 // For read: len = 1, 2 or N; stop = true
 int i2c_start_addr(i2c_t *i2c, int rd_wrn, uint16_t addr, size_t next_len, bool stop) {
+    // ToDo implement
     return 0;
 }
 
 // next_len = 0 or N (>=2)
-int i2c_read(i2c_t *i2c, uint8_t *dest, size_t len, size_t next_len) {
+int _i2c_read(i2c_t *i2c, uint8_t *dest, size_t len, size_t next_len) {
+    // ToDo implement
     return 0;
 }
 
 // next_len = 0 or N
-int i2c_write(i2c_t *i2c, const uint8_t *src, size_t len, size_t next_len) {
+int _i2c_write(i2c_t *i2c, const uint8_t *src, size_t len, size_t next_len) {
+    // ToDo implement
     // Write out the data
     int num_acks = 0;
     return num_acks;
@@ -80,7 +87,7 @@ int i2c_readfrom(i2c_t *i2c, uint16_t addr, uint8_t *dest, size_t len, bool stop
     if ((ret = i2c_start_addr(i2c, 1, addr, len, stop))) {
         return ret;
     }
-    return i2c_read(i2c, dest, len, 0);
+    return _i2c_read(i2c, dest, len, 0);
 }
 
 int i2c_writeto(i2c_t *i2c, uint16_t addr, const uint8_t *src, size_t len, bool stop) {
@@ -88,7 +95,7 @@ int i2c_writeto(i2c_t *i2c, uint16_t addr, const uint8_t *src, size_t len, bool 
     if ((ret = i2c_start_addr(i2c, 0, addr, len, stop))) {
         return ret;
     }
-    return i2c_write(i2c, src, len, 0);
+    return _i2c_write(i2c, src, len, 0);
 }
 
 #endif // MICROPY_HW_ENABLE_HW_I2C

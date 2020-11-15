@@ -111,6 +111,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
         printf("_edata=%p\n", &_edata);
         printf("_sbss=%p\n", &_sbss);
         printf("_ebss=%p\n", &_ebss);
+        printf("_sstack=%p\n", &_sstack);
         printf("_estack=%p\n", &_estack);
         printf("_ram_start=%p\n", &_ram_start);
         printf("_heap_start=%p\n", &_heap_start);
@@ -300,9 +301,15 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
     { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&pyb_adc_type) },
 #if MICROPY_PY_MACHINE_I2C
-    { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
+    #if MICROPY_HW_ENABLE_HW_I2C
+    { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_hard_i2c_type) },
+    #else
+    { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&mp_machine_soft_i2c_type) },
+    #endif
+    { MP_ROM_QSTR(MP_QSTR_SoftI2C),             MP_ROM_PTR(&mp_machine_soft_i2c_type) },
 #endif
     { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
+    { MP_ROM_QSTR(MP_QSTR_SoftSPI),             MP_ROM_PTR(&mp_machine_soft_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
 #if RZ_TODO
     { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },

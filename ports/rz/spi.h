@@ -26,24 +26,58 @@
 #ifndef MICROPY_INCLUDED_RZ_SPI_H
 #define MICROPY_INCLUDED_RZ_SPI_H
 
-#define SPI_NUM_CH  3
+#include "drivers/bus/spi.h"
 
-#define SPI_DIRECTION_2LINES 0
-#define SPI_NSS_SOFT    1
-#define SPI_MODE_MASTER    0x00000000
-#define SPI_MODE_SLAVE     0x00000004
+//#define SPI_NUM_CH  3
 
 typedef struct _mspi_t {
     uint32_t    ch;
     uint32_t    bits;
 } mspi_t;
 
+typedef struct _spi_proto_cfg_t {
+    const mspi_t *spi;
+    uint32_t baudrate;
+    uint8_t polarity;
+    uint8_t phase;
+    uint8_t bits;
+    uint8_t firstbit;
+} spi_proto_cfg_t;
+
+typedef struct _pyb_spi_obj_t {
+    mp_obj_base_t base;
+    mspi_t *spi;
+} pyb_spi_obj_t;
+
+typedef struct _machine_hard_spi_obj_t {
+    mp_obj_base_t base;
+    mspi_t *spi;
+} machine_hard_spi_obj_t;
+
+#define SPI_DIRECTION_2LINES 0
+#define SPI_NSS_SOFT    1
+#define SPI_MODE_MASTER    0x00000000
+#define SPI_MODE_SLAVE     0x00000004
+
+extern mspi_t spi_obj[];
+
+extern const mp_spi_proto_t spi_proto;
 extern const mp_obj_type_t pyb_spi_type;
-extern const mp_obj_type_t machine_soft_spi_type;
 extern const mp_obj_type_t machine_hard_spi_type;
+
+// A transfer of "len" bytes should take len*8*1000/baudrate milliseconds.
+// To simplify the calculation we assume the baudrate is never less than 8kHz
+// and use that value for the baudrate in the formula, plus a small constant.
+#define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
 void _spi_init0(void);
 void _spi_init(const mspi_t *spi, bool enable_nss_pin);
+void spi_deinit(const mspi_t *spi_obj);
+int spi_find_index(mp_obj_t id);
+void spi_set_params(const mspi_t *spi_obj, uint32_t prescale, int32_t baudrate,
+    int32_t polarity, int32_t phase, int32_t bits, int32_t firstbit);
+void spi_transfer(const mspi_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout);
+void spi_print(const mp_print_t *print, const mspi_t *spi_obj, bool legacy);
 const mspi_t *spi_from_mp_obj(mp_obj_t o);
 
 #endif // MICROPY_INCLUDED_RZ_SPI_H
