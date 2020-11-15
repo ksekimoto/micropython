@@ -57,7 +57,7 @@ STATIC const pyb_camera_obj_t camera_mipi_obj = {
 };
 #endif
 
-int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy) {
+int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy, uint32_t format) {
     FIL fp;
     FRESULT res;
     fs_user_mount_t *vfs_fat;
@@ -71,20 +71,20 @@ int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_LCDSPI)
+#if defined(DEBUG_CAMERA)
         debug_printf("Cannot find user mount for %s\n", filename);
 #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &fp, filename, FA_WRITE | FA_CREATE_ALWAYS);
     if (res != FR_OK) {
-#if defined(DEBUG_LCDSPI)
+#if defined(DEBUG_CAMERA)
         debug_printf("File can't be opened", filename);
 #endif
         return -1;
     }
     writed = size;
-    err = mbed_jpeg_encode(buf, wx, wy, (char **)&jpeg_buf, &writed);
+    err = mbed_jpeg_encode(buf, wx, wy, (char **)&jpeg_buf, &writed, format);
     if ((err == 0) && (writed >= 0) && (writed < size)) {
         f_write(&fp, (void *)jpeg_buf, (UINT)writed, (UINT *)&writed);
     }
@@ -92,7 +92,7 @@ int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_
     return err;
 }
 
-int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy) {
+int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_t wy, uint32_t format) {
     FIL fp;
     FRESULT res;
     fs_user_mount_t *vfs_fat;
@@ -106,14 +106,14 @@ int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_LCDSPI)
+#if defined(DEBUG_CAMERA)
         debug_printf("Cannot find user mount for %s\n", filename);
 #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
     if (res != FR_OK) {
-#if defined(DEBUG_LCDSPI)
+#if defined(DEBUG_CAMERA)
         debug_printf("File can't be opened", filename);
 #endif
         return -1;
@@ -124,32 +124,34 @@ int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_
         if (reads > 0) {
             f_read(&fp, (void *)jpeg_buf, (UINT)reads, (UINT *)&reads);
         }
-        err = mbed_jpeg_decode(buf, wx, wy, (char *)jpeg_buf, reads);
+        err = mbed_jpeg_decode(buf, wx, wy, (char *)jpeg_buf, reads, format);
         free(jpeg_buf);
     }
     f_close(&fp);
     return err;
 }
 
-STATIC mp_obj_t pyb_jpeg_save(mp_obj_t self_in, mp_obj_t fn) {
+STATIC mp_obj_t pyb_jpeg_save(mp_obj_t self_in, mp_obj_t fn, mp_obj_t format) {
     char *filename = (char *)mp_obj_str_get_str(fn);
+    uint32_t jformat = mp_obj_get_int(format);
     uint8_t *buf = mbed_get_camera_fb_ptr();
     uint32_t wx = (uint32_t)mbed_get_camera_hw();
     uint32_t wy = (uint32_t)mbed_get_camera_vw();
-    int ret = pyb_jpeg_save_xy((const char *)filename, (const char *)buf, wx, wy);
+    int ret = pyb_jpeg_save_xy((const char *)filename, (const char *)buf, wx, wy, jformat);
     return MP_OBJ_NEW_SMALL_INT(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_jpeg_save_obj, pyb_jpeg_save);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_jpeg_save_obj, pyb_jpeg_save);
 
-STATIC mp_obj_t pyb_jpeg_load(mp_obj_t self_in, mp_obj_t fn) {
+STATIC mp_obj_t pyb_jpeg_load(mp_obj_t self_in, mp_obj_t fn, mp_obj_t format) {
     char *filename = (char *)mp_obj_str_get_str(fn);
+    uint32_t jformat = mp_obj_get_int(format);
     uint8_t *buf = mbed_get_camera_fb_ptr();
     uint32_t wx = (uint32_t)mbed_get_camera_hw();
     uint32_t wy = (uint32_t)mbed_get_camera_vw();
-    int ret = pyb_jpeg_load_xy((const char *)filename, (const char *)buf, wx, wy);
+    int ret = pyb_jpeg_load_xy((const char *)filename, (const char *)buf, wx, wy, jformat);
     return MP_OBJ_NEW_SMALL_INT(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_jpeg_load_obj, pyb_jpeg_load);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_jpeg_load_obj, pyb_jpeg_load);
 
 STATIC mp_obj_t pyb_get_frame_buffer(mp_obj_t self_in) {
     uint8_t *buf = mbed_get_lcd_fb_ptr();
@@ -220,7 +222,10 @@ STATIC const mp_rom_map_elem_t camera_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_V_YCBCR422), MP_ROM_INT(VFORMAT_YCBCR422) },
     { MP_ROM_QSTR(MP_QSTR_V_RGB565), MP_ROM_INT(VFORMAT_RGB565) },
     { MP_ROM_QSTR(MP_QSTR_V_RGB888), MP_ROM_INT(VFORMAT_RGB888) },
-    { MP_ROM_QSTR(MP_QSTR_V_ARGB8888), MP_ROM_INT(VFORMAT_RAW8) },
+    { MP_ROM_QSTR(MP_QSTR_V_RAW8), MP_ROM_INT(VFORMAT_RAW8) },
+    { MP_ROM_QSTR(MP_QSTR_J_YCBCR422), MP_ROM_INT(JFORMAT_YCBCR422) },
+    { MP_ROM_QSTR(MP_QSTR_J_ARGB8888), MP_ROM_INT(JFORMAT_ARGB8888) },
+    { MP_ROM_QSTR(MP_QSTR_J_RGB565), MP_ROM_INT(JFORMAT_RGB565) },
 };
 STATIC MP_DEFINE_CONST_DICT(camera_locals_dict, camera_locals_dict_table);
 

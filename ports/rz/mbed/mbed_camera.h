@@ -49,8 +49,8 @@ int mbed_get_lcd_vw(void);
 int mbed_get_lcd_pic_size(void);
 int mbed_get_camera_hw(void);
 int mbed_get_camera_vw(void);
-int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size);
-int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size);
+int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size, uint32_t format);
+int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size, uint32_t format);
 
 #ifdef __cplusplus
 };
