@@ -324,7 +324,7 @@ STATIC mp_obj_t pyb_flash_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     if (args[ARG_start].u_int == -1 && args[ARG_len].u_int == -1) {
         // Default singleton object that accesses entire flash, including virtual partition table
-    return MP_OBJ_FROM_PTR(&pyb_flash_obj);
+        return MP_OBJ_FROM_PTR(&pyb_flash_obj);
     }
 
     pyb_flash_obj_t *self = m_new_obj(pyb_flash_obj_t);
@@ -421,11 +421,9 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
             }
             return MP_OBJ_NEW_SMALL_INT(ret);
         }
-
         case MP_BLOCKDEV_IOCTL_DEINIT:
             storage_flush();
             return MP_OBJ_NEW_SMALL_INT(0);                                             // TODO properly
-
         case MP_BLOCKDEV_IOCTL_SYNC:
             storage_flush();
             return MP_OBJ_NEW_SMALL_INT(0);
@@ -485,7 +483,7 @@ const mp_obj_type_t pyb_flash_type = {
     .name = MP_QSTR_Flash,
     .print = pyb_flash_print,
     .make_new = pyb_flash_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_flash_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_flash_locals_dict,
 };
 
 void pyb_flash_init_vfs(fs_user_mount_t *vfs) {

@@ -486,6 +486,7 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 	)
 
 SRC_C = main.c
+SRC_C += boardctrl.c
 SRC_C += template/mymodule.c
 SRC_C += accel.c
 SRC_C += adc.c

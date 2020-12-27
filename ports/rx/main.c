@@ -50,9 +50,11 @@
 #include "drivers/cyw43/cyw43.h"
 #endif
 
-#if MICROPY_BLUETOOTH_NIMBLE
+#if MICROPY_PY_BLUETOOTH
 #include "extmod/modbluetooth.h"
 #endif
+
+#include "boardctrl.h"
 #include "systick.h"
 #include "pendsv.h"
 #include "pybthread.h"
@@ -109,18 +111,6 @@ STATIC pyb_uart_obj_t pyb_uart_repl_obj;
 STATIC uint8_t pyb_uart_repl_rxbuf[MICROPY_HW_UART_REPL_RXBUF];
 #endif
 
-void flash_error(int n) {
-    for (int i = 0; i < n; i++) {
-        led_state(PYB_LED_RED, 1);
-        led_state(PYB_LED_GREEN, 0);
-        mp_hal_delay_ms(250);
-        led_state(PYB_LED_RED, 0);
-        led_state(PYB_LED_GREEN, 1);
-        mp_hal_delay_ms(250);
-    }
-    led_state(PYB_LED_GREEN, 0);
-}
-
 void NORETURN __fatal_error(const char *msg) {
     for (volatile uint delay = 0; delay < 10000000; delay++) {
     }
@@ -130,7 +120,7 @@ void NORETURN __fatal_error(const char *msg) {
     led_state(4, 1);
     mp_hal_stdout_tx_strn("\nFATAL ERROR:\n", 14);
     mp_hal_stdout_tx_strn(msg, strlen(msg));
-    for (uint i = 0; ;) {
+    for (uint i = 0;;) {
         led_toggle(((i++) & 3) + 1);
         for (volatile uint delay = 0; delay < 1000000; delay++) {
         }
@@ -145,6 +135,10 @@ void nlr_jump_fail(void *val) {
     printf("FATAL: uncaught exception %p\n", val);
     mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(val));
     __fatal_error("");
+}
+
+void abort(void) {
+    __fatal_error("abort");
 }
 
 #ifndef NDEBUG
@@ -185,17 +179,18 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     // Default block device to entire flash storage
     mp_obj_t bdev = MP_OBJ_FROM_PTR(&pyb_flash_obj);
 
+    int ret;
+
     #if MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2
 
     // Try to detect the block device used for the main filesystem, based on the first block
 
-    uint8_t buf[FLASH_BLOCK_SIZE];
-    storage_read_blocks(buf, FLASH_PART1_START_BLOCK, 1);
-
+    uint8_t buf[64];
+    ret = storage_readblocks_ext(buf, 0, 0, sizeof(buf));
     mp_int_t len = -1;
 
     #if MICROPY_VFS_LFS1
-    if (memcmp(&buf[40], "littlefs", 8) == 0) {
+    if (ret == 0 && memcmp(&buf[40], "littlefs", 8) == 0) {
         // LFS1
         lfs1_superblock_t *superblock = (void *)&buf[12];
         uint32_t block_size = lfs1_fromle32(superblock->d.block_size);
@@ -205,7 +200,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     #endif
 
     #if MICROPY_VFS_LFS2
-    if (memcmp(&buf[8], "littlefs", 8) == 0) {
+    if (ret == 0 && memcmp(&buf[8], "littlefs", 8) == 0) {
         // LFS2
         lfs2_superblock_t *superblock = (void *)&buf[20];
         uint32_t block_size = lfs2_fromle32(superblock->block_size);
@@ -224,7 +219,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
 
     // Try to mount the flash on "/flash" and chdir to it for the boot-up directory.
     mp_obj_t mount_point = MP_OBJ_NEW_QSTR(MP_QSTR__slash_flash);
-    int ret = mp_vfs_mount_and_chdir_protected(bdev, mount_point);
+    ret = mp_vfs_mount_and_chdir_protected(bdev, mount_point);
 
     if (ret == -MP_ENODEV && bdev == MP_OBJ_FROM_PTR(&pyb_flash_obj) && reset_mode != 3) {
         // No filesystem, bdev is still the default (so didn't detect a possibly corrupt littlefs),
@@ -320,83 +315,6 @@ STATIC bool init_sdcard_fs(void) {
 }
 #endif
 
-#if !MICROPY_HW_USES_BOOTLOADER
-STATIC uint update_reset_mode(uint reset_mode) {
-    #if MICROPY_HW_HAS_SWITCH
-    if (switch_get()) {
-
-        // The original method used on the pyboard is appropriate if you have 2
-        // or more LEDs.
-        #if defined(MICROPY_HW_LED2)
-        for (uint i = 0; i < 3000; i++) {
-            if (!switch_get()) {
-                break;
-            }
-            mp_hal_delay_ms(20);
-            if (i % 30 == 29) {
-                if (++reset_mode > 3) {
-                    reset_mode = 1;
-                }
-                led_state(2, reset_mode & 1);
-                led_state(3, reset_mode & 2);
-                led_state(4, reset_mode & 4);
-            }
-        }
-        // flash the selected reset mode
-        for (uint i = 0; i < 6; i++) {
-            led_state(2, 0);
-            led_state(3, 0);
-            led_state(4, 0);
-            mp_hal_delay_ms(50);
-            led_state(2, reset_mode & 1);
-            led_state(3, reset_mode & 2);
-            led_state(4, reset_mode & 4);
-            mp_hal_delay_ms(50);
-        }
-        mp_hal_delay_ms(400);
-
-        #elif defined(MICROPY_HW_LED1)
-
-        // For boards with only a single LED, we'll flash that LED the
-        // appropriate number of times, with a pause between each one
-        for (uint i = 0; i < 10; i++) {
-            led_state(1, 0);
-            for (uint j = 0; j < reset_mode; j++) {
-                if (!switch_get()) {
-                    break;
-                }
-                led_state(1, 1);
-                mp_hal_delay_ms(100);
-                led_state(1, 0);
-                mp_hal_delay_ms(200);
-            }
-            mp_hal_delay_ms(400);
-            if (!switch_get()) {
-                break;
-            }
-            if (++reset_mode > 3) {
-                reset_mode = 1;
-            }
-        }
-        // Flash the selected reset mode
-        for (uint i = 0; i < 2; i++) {
-            for (uint j = 0; j < reset_mode; j++) {
-                led_state(1, 1);
-                mp_hal_delay_ms(100);
-                led_state(1, 0);
-                mp_hal_delay_ms(200);
-            }
-            mp_hal_delay_ms(400);
-        }
-        #else
-        #error Need a reset mode update method
-        #endif
-    }
-    #endif
-    return reset_mode;
-}
-#endif
-
 #if MICROPY_KBD_EXCEPTION
 extern int mp_interrupt_char;
 
@@ -428,8 +346,10 @@ void rx_main(uint32_t reset_mode) {
     // basic sub-system init
     #if MICROPY_HW_SDRAM_SIZE
     sdram_init();
+    bool sdram_valid = true;
+    UNUSED(sdram_valid);
     #if MICROPY_HW_SDRAM_STARTUP_TEST
-    sdram_test(true);
+    sdram_valid = sdram_test(true);
     #endif
     #endif
     #if MICROPY_PY_THREAD
@@ -465,6 +385,21 @@ void rx_main(uint32_t reset_mode) {
     #endif
     systick_enable_dispatch(SYSTICK_DISPATCH_LWIP, mod_network_lwip_poll_wrapper);
     #endif
+    #if MICROPY_PY_BLUETOOTH
+    extern void mp_bluetooth_hci_systick(uint32_t ticks_ms);
+    systick_enable_dispatch(SYSTICK_DISPATCH_BLUETOOTH_HCI, mp_bluetooth_hci_systick);
+    #endif
+
+    #if MICROPY_PY_NETWORK_CYW43
+    {
+        cyw43_init(&cyw43_state);
+        uint8_t buf[8];
+        memcpy(&buf[0], "PYBD", 4);
+        mp_hal_get_mac_ascii(MP_HAL_MAC_WLAN0, 8, 4, (char *)&buf[4]);
+        cyw43_wifi_ap_set_ssid(&cyw43_state, 8, buf);
+        cyw43_wifi_ap_set_password(&cyw43_state, 8, (const uint8_t *)"pybd0123");
+    }
+    #endif
 
     #if defined(MICROPY_HW_UART_REPL)
     // Set up a UART REPL using a statically allocated object
@@ -479,22 +414,17 @@ void rx_main(uint32_t reset_mode) {
     MP_STATE_PORT(pyb_uart_obj_all)[MICROPY_HW_UART_REPL] = &pyb_uart_repl_obj;
     #endif
 
+    boardctrl_state_t state;
+    state.reset_mode = reset_mode;
+    state.run_boot_py = false;
+    state.run_main_py = false;
+    state.last_ret = 0;
+
+    MICROPY_BOARD_BEFORE_SOFT_RESET_LOOP(&state);
+
 soft_reset:
 
-    #if defined(MICROPY_HW_LED2)
-    led_state(1, 0);
-    led_state(2, 1);
-    #else
-    led_state(1, 1);
-    led_state(2, 0);
-    #endif
-    led_state(3, 0);
-    led_state(4, 0);
-
-    #if !MICROPY_HW_USES_BOOTLOADER
-    // check if user switch held to select the reset mode
-    reset_mode = update_reset_mode(1);
-    #endif
+    MICROPY_BOARD_TOP_SOFT_RESET_LOOP(&state);
 
     // Python threading init
     #if MICROPY_PY_THREAD
@@ -562,7 +492,7 @@ soft_reset:
             mounted_sdcard = init_sdcard_fs();
         }
     }
-#endif
+    #endif
 
     // if the SD card isn't used as the USB MSC medium then use the internal flash
     if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
@@ -581,29 +511,19 @@ soft_reset:
     // reset config variables; they should be set by boot.py
     MP_STATE_PORT(pyb_config_main) = MP_OBJ_NULL;
 
+    MICROPY_BOARD_BEFORE_BOOT_PY(&state);
+
     // run boot.py, if it exists
     // TODO perhaps have pyb.reboot([bootpy]) function to soft-reboot and execute custom boot.py
-    if (reset_mode == 1 || reset_mode == 3) {
+    if (state.run_boot_py) {
         const char *boot_py = "boot.py";
-        int ret = pyexec_file_if_exists(boot_py);
-        if (ret & PYEXEC_FORCED_EXIT) {
+        state.last_ret = pyexec_file_if_exists(boot_py);
+        if (state.last_ret & PYEXEC_FORCED_EXIT) {
             goto soft_reset_exit;
-        }
-        if (!ret) {
-            flash_error(4);
         }
     }
 
-    // turn boot-up LEDs off
-    #if !defined(MICROPY_HW_LED2)
-    // If there is only one LED on the board then it's used to signal boot-up
-    // and so we turn it off here.  Otherwise LED(1) is used to indicate dirty
-    // flash cache and so we shouldn't change its state.
-    led_state(1, 0);
-    #endif
-    led_state(2, 0);
-    led_state(3, 0);
-    led_state(4, 0);
+    MICROPY_BOARD_AFTER_BOOT_PY(&state);
 
     // Now we initialise sub-systems that need configuration from boot.py,
     // or whose initialisation can be safely deferred until after running
@@ -635,22 +555,23 @@ soft_reset:
 
     // At this point everything is fully configured and initialised.
 
+    MICROPY_BOARD_BEFORE_MAIN_PY(&state);
+
     // Run the main script from the current directory.
-    if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
+    if (state.run_main_py) {
         const char *main_py;
         if (MP_STATE_PORT(pyb_config_main) == MP_OBJ_NULL) {
             main_py = "main.py";
         } else {
             main_py = mp_obj_str_get_str(MP_STATE_PORT(pyb_config_main));
         }
-        int ret = pyexec_file_if_exists(main_py);
-        if (ret & PYEXEC_FORCED_EXIT) {
+        state.last_ret = pyexec_file_if_exists(main_py);
+        if (state.last_ret & PYEXEC_FORCED_EXIT) {
             goto soft_reset_exit;
         }
-        if (!ret) {
-            flash_error(3);
-        }
     }
+
+    MICROPY_BOARD_AFTER_MAIN_PY(&state);
 
     #if MICROPY_ENABLE_COMPILER
     // Main script is finished, so now go into REPL mode.
@@ -675,14 +596,24 @@ soft_reset_exit:
 
     // soft reset
 
-    //#if MICROPY_HW_ENABLE_STORAGE
-    //printf("MPY: sync filesystems\n");
-    //storage_flush();
-    //#endif
+    MICROPY_BOARD_START_SOFT_RESET(&state);
 
-    printf("MPY: soft reboot\n");
+    #if MICROPY_HW_ENABLE_STORAGE
+    if (state.log_soft_reset) {
+        mp_printf(&mp_plat_print, "MPY: sync filesystems\n");
+    }
+    storage_flush();
+    #endif
+
+    if (state.log_soft_reset) {
+        mp_printf(&mp_plat_print, "MPY: soft reboot\n");
+    }
+
     #if MICROPY_HW_ENABLE_SERVO
     servo_deinit();
+    #endif
+    #if MICROPY_PY_BLUETOOTH
+    mp_bluetooth_deinit();
     #endif
     #if MICROPY_PY_NETWORK
     mod_network_deinit();
@@ -698,6 +629,8 @@ soft_reset_exit:
     #if MICROPY_PY_THREAD
     pyb_thread_deinit();
     #endif
+
+    MICROPY_BOARD_END_SOFT_RESET(&state);
 
     #if LVGL_ENABLE
     lvrx_enable = 0;

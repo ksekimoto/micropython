@@ -226,12 +226,12 @@ int rand_r(int seed) {
     return (int)rng_get();
 }
 
-void __attribute__((noreturn)) abort(void) {
-    __asm__ __volatile__ ("nop");
-    while (1) {
-        ;
-    }
-}
+//void __attribute__((noreturn)) abort(void) {
+//    __asm__ __volatile__ ("nop");
+//    while (1) {
+//        ;
+//    }
+//}
 
 __attribute__ ((weak)) char *strncpy(char *dst, const char *src, size_t len) {
     char *q = (char *)dst;
