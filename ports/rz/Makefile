@@ -400,6 +400,7 @@ LIBM_SRC_C = $(addprefix lib/libm_dbl/,\
 	nearbyint.c \
 	pow.c \
 	rint.c \
+	round.c \
 	scalbn.c \
 	sin.c \
 	sinh.c \
@@ -468,7 +469,8 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 	dht/dht.c \
 	)
 
-SRC_C = \
+SRC_C += \
+	boardctrl.c \
 	main.c \
 
 include mbed.mk

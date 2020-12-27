@@ -280,6 +280,13 @@ int storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_bl
 #define PYB_FLASH_NATIVE_BLOCK_SIZE (FLASH_BLOCK_SIZE)
 #endif
 
+#if defined(MICROPY_HW_BDEV_READBLOCKS_EXT)
+// Size of blocks is PYB_FLASH_NATIVE_BLOCK_SIZE
+int storage_readblocks_ext(uint8_t *dest, uint32_t block, uint32_t offset, uint32_t len) {
+    return MICROPY_HW_BDEV_READBLOCKS_EXT(dest, block, offset, len);
+}
+#endif
+
 typedef struct _pyb_flash_obj_t {
     mp_obj_base_t base;
     uint32_t start; // in bytes
@@ -317,8 +324,8 @@ STATIC mp_obj_t pyb_flash_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     if (args[ARG_start].u_int == -1 && args[ARG_len].u_int == -1) {
         // Default singleton object that accesses entire flash, including virtual partition table
-    return MP_OBJ_FROM_PTR(&pyb_flash_obj);
-}
+        return MP_OBJ_FROM_PTR(&pyb_flash_obj);
+    }
 
     pyb_flash_obj_t *self = m_new_obj(pyb_flash_obj_t);
     self->base.type = &pyb_flash_type;
@@ -414,11 +421,9 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
             }
             return MP_OBJ_NEW_SMALL_INT(ret);
         }
-
         case MP_BLOCKDEV_IOCTL_DEINIT:
             storage_flush();
             return MP_OBJ_NEW_SMALL_INT(0);                                             // TODO properly
-
         case MP_BLOCKDEV_IOCTL_SYNC:
             storage_flush();
             return MP_OBJ_NEW_SMALL_INT(0);
