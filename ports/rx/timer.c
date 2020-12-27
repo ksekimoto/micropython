@@ -189,6 +189,7 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
 STATIC mp_obj_t pyb_timer_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
+
     // get the timer id
     mp_int_t tim_id = mp_obj_get_int(args[0]);
 
