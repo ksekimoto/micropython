@@ -15,7 +15,7 @@ CFLAGS += -DMICROPY_ROM_TEXT_COMPRESSION=1
 endif
 
 # QSTR generation uses the same CFLAGS, with these modifications.
-QSTR_GEN_FLAGS = -DNO_QSTR -I$(BUILD)/tmp
+QSTR_GEN_FLAGS = -DNO_QSTR
 # Note: := to force evalulation immediately.
 QSTR_GEN_CFLAGS := $(CFLAGS)
 QSTR_GEN_CFLAGS += $(QSTR_GEN_FLAGS)
@@ -78,8 +78,6 @@ endef
 vpath %.c . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.c
 	$(call compile_c)
-
-vpath %.c . $(TOP) $(USER_C_MODULES)
 
 vpath %.cpp . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.cpp
@@ -244,7 +242,7 @@ LIBMICROPYTHON = libmicropython.a
 # tracking. Then LIBMICROPYTHON_EXTRA_CMD can e.g. touch some
 # other file to cause needed effect, e.g. relinking with new lib.
 lib $(LIBMICROPYTHON): $(OBJ)
-	$(AR) rcs $(LIBMICROPYTHON) $^
+	$(Q)$(AR) rcs $(LIBMICROPYTHON) $^
 	$(LIBMICROPYTHON_EXTRA_CMD)
 
 clean:
