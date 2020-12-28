@@ -475,12 +475,6 @@ function ci_zephyr_build {
 # ports/rx
 
 function ci_gcc_rx_setup {
-    sudo apt-get update -qq || true
-    sudo apt-get install -y bzip2
-    sudo apt-get install -y wget
-    sudo apt-get install -y build-essential        
-    sudo apt-get install -y python3
-    sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
     wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz"
     tar xvf rx-elf-gcc-4.9.4.tar.gz
     sudo mv ./rx-elf-gcc-4.9.4 /opt
