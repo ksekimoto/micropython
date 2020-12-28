@@ -470,3 +470,36 @@ function ci_zephyr_build {
     docker exec zephyr-ci bash -c "make clean; make ${MAKEOPTS} BOARD=mimxrt1050_evk"
     docker exec zephyr-ci bash -c "make clean; make ${MAKEOPTS} BOARD=reel_board"
 }
+
+########################################################################################
+# ports/rx
+
+function ci_gcc_rx_setup {
+    sudo apt-get update -qq || true
+    sudo apt-get install -y bzip2
+    sudo apt-get install -y wget
+    sudo apt-get install -y build-essential        
+    sudo apt-get install -y python3
+    sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+    wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz"
+    tar xvf rx-elf-gcc-4.9.4.tar.gz
+    sudo mv ./rx-elf-gcc-4.9.4 /opt
+    sudo chmod 777 /opt/rx-elf-gcc-4.9.4
+    export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    rx-elf-gcc --version
+}
+
+function ci_rx_setup {
+    ci_gcc_rx_setup
+}
+
+function ci_rx_mpy_cross_build {
+    make ${MAKEOPTS} -C mpy-cross
+}
+
+function ci_rx_gr_rose_build {
+    git submodule update --init --recursive
+    export BOARD="GR_ROSE"
+    make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} clean
+    make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+}
