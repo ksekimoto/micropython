@@ -844,7 +844,7 @@ vpath %.S . $(OBJ_MBED_HAL_S) $(OBJ_MBED_S)
 $(BUILD_MBED)/%.o: %.S
 	@dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
-	$(Q)$(CC) $(CFLAGS) -g -c -o $@ $<
+	$(Q)$(CC) $(CFLAGS_MBED) -g -c -o $@ $<
 
 define compile_mbed_c
 $(ECHO) "CC $<"
