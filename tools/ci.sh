@@ -488,11 +488,12 @@ function ci_rx_setup {
 }
 
 function ci_rx_mpy_cross_build {
+    git submodule update --init --recursive
     make ${MAKEOPTS} -C mpy-cross
 }
 
 function ci_rx_gr_rose_build {
-    git submodule update --init --recursive
+    export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
     export BOARD="GR_ROSE"
     make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} clean
     make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
