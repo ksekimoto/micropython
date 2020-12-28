@@ -515,5 +515,7 @@ function ci_rz_gr_mango_build {
     export BOARD="GR_MANGO_DD"
     if [ -f 'lib/lv_bindings/lv_conf.h' ];then mv lib/lv_bindings/lv_conf.h lib/lv_bindings/lv_conf.h_ ;fi
     cd ports/rz
+    make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} clean
+    make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} clean-mbed
     make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
 }
