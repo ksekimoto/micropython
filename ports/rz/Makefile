@@ -292,6 +292,7 @@ ifeq ($(DEBUG), 1)
 CFLAGS += -g3
 COPT += -Os
 C_CPP_COMMON += -Os -g3
+MICROPY_ROM_TEXT_COMPRESSION = 0
 else
 COPT += -Os -DNDEBUG
 endif
