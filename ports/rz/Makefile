@@ -176,14 +176,15 @@ endif
 #CFLAGS_MCU_h7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
 #CFLAGS_MCU_wb = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4
 #CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -marm -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
-CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard -mno-unaligned-access
+CFLAGS_MCU_a9 = -mcpu=cortex-a9 -mthumb-interwork -march=armv7-a -marm -mlittle-endian -mfloat-abi=hard -mfpu=neon -mno-unaligned-access
 
 C_CPP_COMMON += $(CFLAGS_MCU_a9)
 C_CPP_COMMON += -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -fno-delete-null-pointer-checks -fomit-frame-pointer
 C_CPP_COMMON += $(INC)
 
 CFLAGS += $(C_CPP_COMMON)
-CFLAGS += -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion
+#CFLAGS += -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion
+CFLAGS += -Wall -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
 CFLAGS += -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 
 IS_GCC_ABOVE_VERSION_9 := $(shell expr "$(GCC_VERSION)" ">=" "$(GCC_VERSION_9)")
