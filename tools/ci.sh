@@ -494,7 +494,25 @@ function ci_rx_mpy_cross_build {
 
 function ci_rx_gr_rose_build {
     export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
-    export BOARD="GR_ROSE"
-    make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} clean
-    make ${MAKEOPTS} -C ports/rx V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+    export BOARD="GR_ROSE_DD"
+    make ${MAKEOPTS} -C ports/rx DEBUG=1 BOARD=${BOARD} clean
+    make ${MAKEOPTS} -C ports/rx DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+}
+
+########################################################################################
+# ports/rz
+
+function ci_rz_setup {
+    ci_gcc_arm_setup
+}
+
+function ci_rz_mpy_cross_build {
+    git submodule update --init --recursive
+    make ${MAKEOPTS} -C mpy-cross
+}
+
+function ci_rz_gr_mango_build {
+    export BOARD="GR_MANGO_DD"
+    if [ -f '/lib/lv_bindings/lv_conf.h' ] mv /lib/lv_bindings/lv_conf.h /lib/lv_bindings/lv_conf.h_ ; fi
+    make ${MAKEOPTS} -C ports/rz DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
 }
