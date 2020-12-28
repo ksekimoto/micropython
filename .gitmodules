@@ -41,4 +41,4 @@
 	url = https://github.com/littlevgl/lv_bindings.git
 [submodule "lib/mbed-gr-libs"]
 	path = lib/mbed-gr-libs
-	url = https://github.com/d-kato/mbed-gr-libs
+	url = https://github.com/ksekimoto/mbed-gr-libs.git
