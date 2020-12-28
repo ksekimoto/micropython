@@ -13,7 +13,7 @@ on:
       - 'ports/rz/**'
 
 jobs:
-  build_gr_rose:
+  build_gr_mango:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
