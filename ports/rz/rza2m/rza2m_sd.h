@@ -27,6 +27,13 @@
 #ifndef PORTS_RZ_RZA2M_RZA2M_SD_H_
 #define PORTS_RZ_RZA2M_RZA2M_SD_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include <stdbool.h>
+
 typedef struct _sd_map {
     uint32_t pin;
     uint32_t ch;
@@ -40,5 +47,9 @@ void rza2m_sdcard_power_off(void);
 uint64_t rza2m_sdcard_get_capacity_in_bytes(void);
 uint32_t rza2m_sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks);
 uint32_t rza2m_sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PORTS_RZ_RZA2M_RZA2M_SD_H_ */
