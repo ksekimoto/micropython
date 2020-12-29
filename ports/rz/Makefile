@@ -44,7 +44,7 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
@@ -90,9 +90,9 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= boards/manifest.py
 
-ifeq ($(MICROPY_PY_LVGL), 1)
-LVGL_ENABLE = 1
-endif
+#ifeq ($(MICROPY_PY_LVGL), 1)
+#LVGL_ENABLE = 1
+#endif
 
 # include py core make definitions
 include $(TOP)/py/py.mk
