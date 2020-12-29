@@ -503,6 +503,8 @@ function ci_rx_gr_rose_build {
 # ports/rz
 
 function ci_rz_setup {
+    sudo apt-get update -qq
+    sudo apt-get install -y build-essential curl wget
     ci_gcc_arm_setup
 }
 
