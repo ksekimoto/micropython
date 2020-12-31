@@ -475,11 +475,11 @@ function ci_zephyr_build {
 # ports/rx
 
 function ci_gcc_rx_setup {
-    wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/4.9.4/rx-elf-gcc-4.9.4.tar.gz"
-    tar xvf rx-elf-gcc-4.9.4.tar.gz
-    sudo mv ./rx-elf-gcc-4.9.4 /opt
-    sudo chmod 777 /opt/rx-elf-gcc-4.9.4
-    export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/9.2.0/rx-elf-gcc-9.2.0.tar.gz"
+    tar xvf rx-elf-gcc-9.2.0.tar.gz
+    sudo mv ./rx-elf-gcc-9.2.0 /opt
+    sudo chmod 777 /opt/rx-elf-gcc-9.2.0
+    export PATH=/opt/rx-elf-gcc-9.2.0/bin:$PATH
     rx-elf-gcc --version
 }
 
@@ -493,10 +493,10 @@ function ci_rx_mpy_cross_build {
 }
 
 function ci_rx_gr_rose_build {
-    export PATH=/opt/rx-elf-gcc-4.9.4/bin:$PATH
+    export PATH=/opt/rx-elf-gcc-9.2.0/bin:$PATH
     export BOARD="GR_ROSE_DD"
-    make ${MAKEOPTS} -C ports/rx DEBUG=1 BOARD=${BOARD} clean
-    make ${MAKEOPTS} -C ports/rx DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+    make ${MAKEOPTS} -C ports/rx BOARD=${BOARD} clean
+    make ${MAKEOPTS} -C ports/rx BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
 }
 
 ########################################################################################
@@ -517,7 +517,7 @@ function ci_rz_gr_mango_build {
     export BOARD="GR_MANGO_DD"
     if [ -f 'lib/lv_bindings/lv_conf.h' ];then mv lib/lv_bindings/lv_conf.h lib/lv_bindings/lv_conf.h_ ;fi
     cd ports/rz
-    make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} clean
-    make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} clean-mbed
-    make ${MAKEOPTS} V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} clean
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} clean-mbed
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
 }
