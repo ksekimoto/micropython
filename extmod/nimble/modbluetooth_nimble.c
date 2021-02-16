@@ -81,9 +81,11 @@ STATIC int ble_hs_err_to_errno(int err) {
         return 0;
     }
     if (err >= 0 && (unsigned)err < MP_ARRAY_SIZE(ble_hs_err_to_errno_table) && ble_hs_err_to_errno_table[err]) {
+        // Return an MP_Exxx error code.
         return ble_hs_err_to_errno_table[err];
     } else {
-        return MP_EIO;
+        // Pass through the BLE error code.
+        return -err;
     }
 }
 
@@ -1279,14 +1281,15 @@ int mp_bluetooth_gattc_discover_descriptors(uint16_t conn_handle, uint16_t start
 }
 
 STATIC int ble_gatt_attr_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
-    DEBUG_printf("ble_gatt_attr_read_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, attr ? attr->handle : -1);
+    uint16_t handle = attr ? attr->handle : (error ? error->att_handle : 0xffff);
+    DEBUG_printf("ble_gatt_attr_read_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
     if (error->status == 0) {
         gattc_on_data_available(MP_BLUETOOTH_IRQ_GATTC_READ_RESULT, conn_handle, attr->handle, attr->om);
     }
-    mp_bluetooth_gattc_on_read_write_status(MP_BLUETOOTH_IRQ_GATTC_READ_DONE, conn_handle, attr ? attr->handle : -1, error->status);
+    mp_bluetooth_gattc_on_read_write_status(MP_BLUETOOTH_IRQ_GATTC_READ_DONE, conn_handle, handle, error->status);
     return 0;
 }
 
@@ -1300,11 +1303,12 @@ int mp_bluetooth_gattc_read(uint16_t conn_handle, uint16_t value_handle) {
 }
 
 STATIC int ble_gatt_attr_write_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
-    DEBUG_printf("ble_gatt_attr_write_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, attr ? attr->handle : -1);
+    uint16_t handle = attr ? attr->handle : (error ? error->att_handle : 0xffff);
+    DEBUG_printf("ble_gatt_attr_write_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
-    mp_bluetooth_gattc_on_read_write_status(MP_BLUETOOTH_IRQ_GATTC_WRITE_DONE, conn_handle, attr->handle, error->status);
+    mp_bluetooth_gattc_on_read_write_status(MP_BLUETOOTH_IRQ_GATTC_WRITE_DONE, conn_handle, handle, error->status);
     return 0;
 }
 
@@ -1353,6 +1357,7 @@ typedef struct _mp_bluetooth_nimble_l2cap_channel_t {
     struct os_mbuf_pool sdu_mbuf_pool;
     struct os_mempool sdu_mempool;
     struct os_mbuf *rx_pending;
+    bool irq_in_progress;
     uint16_t mtu;
     os_membuf_t sdu_mem[];
 } mp_bluetooth_nimble_l2cap_channel_t;
@@ -1439,7 +1444,23 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
             chan->chan->coc_rx.sdu = sdu_rx;
 
             ble_l2cap_get_chan_info(event->receive.chan, &info);
+
+            // Don't allow granting more credits until after the IRQ is handled.
+            chan->irq_in_progress = true;
+
             mp_bluetooth_gattc_on_l2cap_recv(event->receive.conn_handle, info.scid);
+            chan->irq_in_progress = false;
+
+            // If all data has been consumed by the IRQ handler, then now allow
+            // more credits. If the IRQ handler doesn't consume all available data
+            // then rx_pending will be still set.
+            if (!chan->rx_pending) {
+                struct os_mbuf *sdu_rx = chan->chan->coc_rx.sdu;
+                assert(sdu_rx);
+                if (sdu_rx) {
+                    ble_l2cap_recv_ready(chan->chan, sdu_rx);
+                }
+            }
             break;
         }
         case BLE_L2CAP_EVENT_COC_TX_UNSTALLED: {
@@ -1506,6 +1527,7 @@ STATIC int create_l2cap_channel(uint16_t mtu, mp_bluetooth_nimble_l2cap_channel_
 
     chan->mtu = mtu;
     chan->rx_pending = NULL;
+    chan->irq_in_progress = false;
 
     int err = os_mempool_init(&chan->sdu_mempool, buf_blocks, L2CAP_BUF_BLOCK_SIZE, chan->sdu_mem, "l2cap_sdu_pool");
     if (err != 0) {
@@ -1633,13 +1655,17 @@ int mp_bluetooth_l2cap_recvinto(uint16_t conn_handle, uint16_t cid, uint8_t *buf
                 os_mbuf_free_chain(chan->rx_pending);
                 chan->rx_pending = NULL;
 
-                // We've already given the channel a new mbuf in l2cap_channel_event above, so
-                // re-use that mbuf in the call to ble_l2cap_recv_ready. This will just
-                // give the channel more credits.
-                struct os_mbuf *sdu_rx = chan->chan->coc_rx.sdu;
-                assert(sdu_rx);
-                if (sdu_rx) {
-                    ble_l2cap_recv_ready(chan->chan, sdu_rx);
+                // If we're in the call stack of the l2cap_channel_event handler, then don't
+                // re-enable receiving yet (as we need to complete the rest of IRQ handler first).
+                if (!chan->irq_in_progress) {
+                    // We've already given the channel a new mbuf in l2cap_channel_event above, so
+                    // re-use that mbuf in the call to ble_l2cap_recv_ready. This will just
+                    // give the channel more credits.
+                    struct os_mbuf *sdu_rx = chan->chan->coc_rx.sdu;
+                    assert(sdu_rx);
+                    if (sdu_rx) {
+                        ble_l2cap_recv_ready(chan->chan, sdu_rx);
+                    }
                 }
             } else {
                 // Trim the used bytes from the start of the mbuf.
@@ -1659,6 +1685,25 @@ int mp_bluetooth_l2cap_recvinto(uint16_t conn_handle, uint16_t cid, uint8_t *buf
 }
 
 #endif // MICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_HCI_CMD
+
+// For ble_hs_hci_cmd_tx
+#include "nimble/host/src/ble_hs_hci_priv.h"
+
+int mp_bluetooth_hci_cmd(uint16_t ogf, uint16_t ocf, const uint8_t *req, size_t req_len, uint8_t *resp, size_t resp_len, uint8_t *status) {
+    int rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(ogf, ocf), req, req_len, resp, resp_len);
+    if (rc < BLE_HS_ERR_HCI_BASE || rc >= BLE_HS_ERR_HCI_BASE + 0x100) {
+        // The controller didn't handle the command (e.g. HCI timeout).
+        return ble_hs_err_to_errno(rc);
+    } else {
+        // The command executed, but had an error (i.e. invalid parameter).
+        *status = rc - BLE_HS_ERR_HCI_BASE;
+        return 0;
+    }
+}
+
+#endif // MICROPY_PY_BLUETOOTH_ENABLE_HCI_CMD
 
 #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
 
