@@ -37,12 +37,12 @@
 
 #include "bootstrap.h"
 #include "rza2m_config.h"
-#include "rza2m_ether.h"
-#include "rza2m_gpio.h"
-#include "rza2m_init.h"
-#include "rza2m_ostm2.h"
-#include "rza2m_sci.h"
-#include "rza2m_utils.h"
+#include "rz_ether.h"
+#include "rz_gpio.h"
+#include "rz_init.h"
+#include "rz_ostm2.h"
+#include "rz_sci.h"
+#include "rz_utils.h"
 
 #if defined(USE_DBG_PRINT)
 #include "debug_printf.h"

@@ -98,6 +98,12 @@ FROZEN_MANIFEST ?= boards/manifest.py
 include $(TOP)/py/py.mk
 
 GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+ifeq ($(MBED_OS), 1)
+GIT_SUBMODULES += lib/mbed-os
+endif
+ifeq ($(MBED_GR_LIBS), 1)
+GIT_SUBMODULES += lib/mbed-gr-libs
+endif
 
 GCC_VERSION = "`$(CC) -dumpversion`"
 GCC_VERSION_9 = "9.0"
@@ -130,7 +136,8 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
-INC += -I$(MCU_SERIES_LOW)
+INC += -Irz
+INC += -Irz/$(MCU_SERIES_LOW)
 INC += -I$(TOP)/lib/oofatfs
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
@@ -487,38 +494,38 @@ ifeq ($(BOOT_LOADER),1)
 SRC_C += boards/$(BOARD)/$(BOARD)_bl.c
 endif
 
-SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_adc.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_exti.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+SRC_C += rz/$(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += rz/rz_adc.c
+SRC_C += rz/rz_exti.c
+SRC_C += rz/rz_gpio.c
 ifneq ($(MBED_OS_EMAC),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
+SRC_C += rz/rz_ether.c
 endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_mtu.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_servo.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
+SRC_C += rz/rz_init.c
+SRC_C += rz/rz_mtu.c
+SRC_C += rz/rz_servo.c
+SRC_C += rz/rz_ostm2.c
+SRC_C += rz/rz_rtc.c
 ifneq ($(MBED_UART_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
+SRC_C += rz/rz_sci.c
 endif
 ifneq ($(MBED_SPI_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
+SRC_C += rz/rz_spi.c
 endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
+SRC_C += rz/rz_utils.c
 ifneq ($(MBED_SD_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_dev_low.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_device.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cmd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_int.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_init.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_mount.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_read.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_trns.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_util.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_write.c
+SRC_C += rz/rz_sd.c
+SRC_C += rz/sd/sd_dev_low.c
+SRC_C += rz/sd/sd_device.c
+SRC_C += rz/sd/sd_cd.c
+SRC_C += rz/sd/sd_cmd.c
+SRC_C += rz/sd/sd_int.c
+SRC_C += rz/sd/sd_init.c
+SRC_C += rz/sd/sd_mount.c
+SRC_C += rz/sd/sd_read.c
+SRC_C += rz/sd/sd_trns.c
+SRC_C += rz/sd/sd_util.c
+SRC_C += rz/sd/sd_write.c
 endif
 
 ifeq ($(MBED_GR_LIBS), 1)

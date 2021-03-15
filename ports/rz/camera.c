@@ -65,22 +65,22 @@ int pyb_jpeg_save_xy(const char *filename, const char *buf, uint32_t wx, uint32_
     uint32_t size = wx * wy * 2;
     uint32_t writed;
     char *jpeg_buf;
-    int err=0;
+    int err = 0;
 
     mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_CAMERA)
+        #if defined(DEBUG_CAMERA)
         debug_printf("Cannot find user mount for %s\n", filename);
-#endif
+        #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &fp, filename, FA_WRITE | FA_CREATE_ALWAYS);
     if (res != FR_OK) {
-#if defined(DEBUG_CAMERA)
+        #if defined(DEBUG_CAMERA)
         debug_printf("File can't be opened", filename);
-#endif
+        #endif
         return -1;
     }
     writed = size;
@@ -100,22 +100,22 @@ int pyb_jpeg_load_xy(const char *filename, const char *buf, uint32_t wx, uint32_
     uint32_t size = wx * wy * 2;
     uint32_t reads;
     char *jpeg_buf;
-    int err=0;
+    int err = 0;
 
     mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_CAMERA)
+        #if defined(DEBUG_CAMERA)
         debug_printf("Cannot find user mount for %s\n", filename);
-#endif
+        #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
     if (res != FR_OK) {
-#if defined(DEBUG_CAMERA)
+        #if defined(DEBUG_CAMERA)
         debug_printf("File can't be opened", filename);
-#endif
+        #endif
         return -1;
     }
     reads = (uint32_t)f_size(&fp);
@@ -234,5 +234,5 @@ const mp_obj_type_t pyb_camera_type = {
     .name = MP_QSTR_CAMERA,
     .print = camera_obj_print,
     .make_new = camera_obj_make_new,
-    .locals_dict = (mp_obj_dict_t*)&camera_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&camera_locals_dict,
 };

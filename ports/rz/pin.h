@@ -30,34 +30,34 @@
 // This file requires pin_defs_xxx.h (which has port specific enums and
 // defines, so we include it here. It should never be included directly
 
-//#include MICROPY_PIN_DEFS_PORT_H
+// #include MICROPY_PIN_DEFS_PORT_H
 #include "py/obj.h"
 
 typedef struct {
-  mp_obj_base_t base;
-  qstr name;
-  uint8_t idx;
-  uint8_t fn;
-  uint8_t unit;
-  uint8_t type;
-  void *reg; // The peripheral associated with this AF
+    mp_obj_base_t base;
+    qstr name;
+    uint8_t idx;
+    uint8_t fn;
+    uint8_t unit;
+    uint8_t type;
+    void *reg; // The peripheral associated with this AF
 } pin_af_obj_t;
 
 typedef struct {
-  mp_obj_base_t base;
-  qstr name;
-  uint32_t pin;
-  uint8_t bit;
-  uint8_t channel;
+    mp_obj_base_t base;
+    qstr name;
+    uint32_t pin;
+    uint8_t bit;
+    uint8_t channel;
 } pin_ad_obj_t;
 
 typedef struct {
-  mp_obj_base_t base;
-  qstr name;
-  uint32_t pin;
-  uint8_t num_af;
-  const pin_af_obj_t *af;
-  const pin_ad_obj_t *ad;
+    mp_obj_base_t base;
+    qstr name;
+    uint32_t pin;
+    uint8_t num_af;
+    const pin_af_obj_t *af;
+    const pin_ad_obj_t *ad;
 } pin_obj_t;
 
 extern const mp_obj_type_t pin_type;
@@ -67,14 +67,14 @@ extern const mp_obj_type_t pin_af_type;
 #include "genhdr/pins.h"
 
 typedef struct {
-  const char *name;
-  const pin_obj_t *pin;
+    const char *name;
+    const pin_obj_t *pin;
 } pin_named_pin_t;
 
 extern const pin_named_pin_t pin_board_pins[];
 extern const pin_named_pin_t pin_cpu_pins[];
 
-//extern pin_map_obj_t pin_map_obj;
+// extern pin_map_obj_t pin_map_obj;
 
 typedef struct {
     mp_obj_base_t base;

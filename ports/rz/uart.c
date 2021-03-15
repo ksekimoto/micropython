@@ -39,7 +39,7 @@
 #include "systick.h"
 #include "common.h"
 
-//#define MBED_UART_WRAPPER
+// #define MBED_UART_WRAPPER
 
 #if defined(MBED_UART_WRAPPER)
 #include "mbed_uart.h"
@@ -51,14 +51,14 @@
 #define MBED_UART_DEINIT                mbed_uart_deinit
 #define MBED_UART_SET_KBD_INTERRUPT     mbed_uart_set_kbd_interrupt
 #else
-#include "rza2m_sci.h"
-#define MBED_UART_TX_WAIT               sci_tx_wait
-#define MBED_UART_RX_ANY                sci_rx_any
-#define MBED_UART_TX_CH                 sci_tx_ch
-#define MBED_UART_RX_CH                 sci_rx_ch
-#define MBED_UART_INIT_WITH_PINS        sci_init_with_pins
-#define MBED_UART_DEINIT                sci_deinit
-#define MBED_UART_SET_KBD_INTERRUPT     sci_rx_set_callback
+#include "rz_sci.h"
+#define MBED_UART_TX_WAIT               rz_sci_tx_wait
+#define MBED_UART_RX_ANY                rz_sci_rx_any
+#define MBED_UART_TX_CH                 rz_sci_tx_ch
+#define MBED_UART_RX_CH                 rz_sci_rx_ch
+#define MBED_UART_INIT_WITH_PINS        rz_sci_init_with_pins
+#define MBED_UART_DEINIT                rz_sci_deinit
+#define MBED_UART_SET_KBD_INTERRUPT     rz_sci_rx_set_callback
 #endif
 
 /// \moduleref pyb
@@ -100,8 +100,7 @@ extern void NORETURN __fatal_error(const char *msg);
 #if MICROPY_KBD_EXCEPTION
 extern int mp_interrupt_char;
 
-static int chk_kbd_interrupt(int d)
-{
+static int chk_kbd_interrupt(int d) {
     if (d == mp_interrupt_char) {
         pendsv_kbd_intr();
         return 1;
@@ -135,26 +134,32 @@ bool uart_exists(uint uart_id) {
     }
     switch (uart_id) {
         #if defined(MICROPY_HW_UART0_TX) && defined(MICROPY_HW_UART0_RX)
-        case PYB_UART_0: return true;
+        case PYB_UART_0:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
-        case PYB_UART_1: return true;
+        case PYB_UART_1:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
-        case PYB_UART_2: return true;
+        case PYB_UART_2:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
-        case PYB_UART_3: return true;
+        case PYB_UART_3:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
-        case PYB_UART_4: return true;
+        case PYB_UART_4:
+            return true;
         #endif
 
-        default: return false;
+        default:
+            return false;
     }
 }
 
@@ -223,11 +228,11 @@ void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
     self->read_buf_tail = 0;
     self->read_buf_len = len;
     self->read_buf = buf;
-    //if (len == 0) {
+    // if (len == 0) {
     //    UART_RXNE_IT_DIS(self->uartx);
-    //} else {
+    // } else {
     //    UART_RXNE_IT_EN(self->uartx);
-    //}
+    // }
 }
 void uart_deinit(pyb_uart_obj_t *self) {
     self->is_enabled = false;
@@ -236,13 +241,13 @@ void uart_deinit(pyb_uart_obj_t *self) {
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
-#if MICROPY_KBD_EXCEPTION
+    #if MICROPY_KBD_EXCEPTION
     if (attached) {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)chk_kbd_interrupt);
     } else {
         MBED_UART_SET_KBD_INTERRUPT((int)self->uart_id, (void *)0);
     }
-#endif
+    #endif
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {

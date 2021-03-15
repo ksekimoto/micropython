@@ -33,7 +33,7 @@
 #define TICKS_PERIOD 0x80000000
 #define TICKS_DIFF(t1, t0) ((int32_t)(((t1 - t0 + TICKS_PERIOD / 2) & (TICKS_PERIOD - 1)) - TICKS_PERIOD / 2))
 
-//extern __IO uint32_t uwTick;
+// extern __IO uint32_t uwTick;
 
 volatile uint32_t soft_timer_next;
 

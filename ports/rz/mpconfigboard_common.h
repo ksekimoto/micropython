@@ -28,7 +28,7 @@
 // Common settings and defaults for board configuration.
 // The defaults here should be overridden in mpconfigboard.h.
 
-//#include RZ_HAL_H
+// #include RZ_HAL_H
 
 /*****************************************************************************/
 // Feature settings with defaults
@@ -120,7 +120,7 @@
 
 // The volume label used when creating the flash filesystem
 #ifndef MICROPY_HW_FLASH_FS_LABEL
-//#define MICROPY_HW_FLASH_FS_LABEL "pybflash"
+// #define MICROPY_HW_FLASH_FS_LABEL "pybflash"
 #define MICROPY_HW_FLASH_FS_LABEL "rzbflash"
 #endif
 
@@ -162,16 +162,16 @@
 
 // Configuration for RZA2M series
 
-//#define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
+// #define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
 #define PYB_EXTI_NUM_VECTORS (16)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (13)
 
-//#if defined(RZA2M)
-//#define MP_HAL_UNIQUE_ID_ADDRESS (0xFEFFFAC0)
-//#else
-//#error "MP_HAL_UNIQUE_ID_ADDRESS should be defined."
-//#endif
+// #if defined(RZA2M)
+// #define MP_HAL_UNIQUE_ID_ADDRESS (0xFEFFFAC0)
+// #else
+// #error "MP_HAL_UNIQUE_ID_ADDRESS should be defined."
+// #endif
 
 // Configure HSE for bypass or oscillator
 #if MICROPY_HW_CLK_USE_BYPASS

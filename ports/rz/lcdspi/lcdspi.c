@@ -44,12 +44,12 @@
 #include "ST7789.h"
 #include "font.h"
 #if defined(RX65N)
-#include "rx65n_gpio.h"
-#include "rx65n_spi.h"
+#include "rx_gpio.h"
+#include "rx_spi.h"
 #endif
 #if defined(RZA2M)
-#include "rza2m_gpio.h"
-#include "rza2m_spi.h"
+#include "rz_gpio.h"
+#include "rz_spi.h"
 #endif
 #include "jpeg.h"
 #include "lcdspi.h"
@@ -57,9 +57,9 @@
 #if MICROPY_PY_PYB_LCDSPI
 
 #if defined(RZA2M)
-#define GPIO_SET_OUTPUT     _gpio_mode_output
-#define GPIO_SET_INPUT      _gpio_mode_input
-#define GPIO_WRITE          _gpio_write
+#define GPIO_SET_OUTPUT     rz_gpio_mode_output
+#define GPIO_SET_INPUT      rz_gpio_mode_input
+#define GPIO_WRITE          rz_gpio_write
 #define SPI_WRITE_BYTE      rz_spi_write_byte
 #define SPI_INIT            rz_spi_init
 #define SPI_GET_CONF        rz_spi_get_conf
@@ -67,9 +67,9 @@
 #define SPI_END_XFER        rz_spi_end_xfer
 #define SPI_TRANSFER        rz_spi_transfer
 #else
-#define GPIO_SET_OUTPUT     gpio_mode_output
-#define GPIO_SET_INPUT      gpio_mode_input
-#define GPIO_WRITE          gpio_write
+#define GPIO_SET_OUTPUT     rx_gpio_mode_output
+#define GPIO_SET_INPUT      rx_gpio_mode_input
+#define GPIO_WRITE          rx_gpio_write
 #define SPI_WRITE_BYTE      rx_spi_write_byte
 #define SPI_INIT            rx_spi_init
 #define SPI_GET_CONF        rx_spi_get_conf

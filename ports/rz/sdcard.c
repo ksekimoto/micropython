@@ -38,7 +38,7 @@
 #include "pin_static_af.h"
 #include "bufhelper.h"
 
-//#if MICROPY_HW_ENABLE_SDCARD
+// #if MICROPY_HW_ENABLE_SDCARD
 
 
 /******************************************************************************/
@@ -136,9 +136,9 @@ STATIC mp_obj_t pyb_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
         case MP_BLOCKDEV_IOCTL_INIT:
-            //if (!sdcard_power_on()) {
+            // if (!sdcard_power_on()) {
             //    return MP_OBJ_NEW_SMALL_INT(-1); // error
-            //}
+            // }
             return MP_OBJ_NEW_SMALL_INT(0); // success
 
         case MP_BLOCKDEV_IOCTL_DEINIT:
@@ -197,4 +197,4 @@ void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->blockdev.u.ioctl[1] = MP_OBJ_FROM_PTR(&pyb_sdcard_obj);
 }
 
-//#endif // MICROPY_HW_ENABLE_SDCARD
+// #endif // MICROPY_HW_ENABLE_SDCARD

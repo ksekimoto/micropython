@@ -125,7 +125,7 @@
 #define MICROPY_PY_SYS_STDFILES     (1)
 #define MICROPY_PY_SYS_STDIO_BUFFER (1)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
-//#define MICROPY_PY_SYS_PLATFORM     "pyboard"
+// #define MICROPY_PY_SYS_PLATFORM     "pyboard"
 #define MICROPY_PY_SYS_PLATFORM     "rzboard"
 #endif
 #define MICROPY_PY_UERRNO           (1)
@@ -471,7 +471,7 @@ struct _mp_bluetooth_btstack_root_pointers_t;
 
 // type definitions for the specific machine
 
-#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void*)((uint32_t)(p) | 1))
+#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((uint32_t)(p) | 1))
 
 #define MP_SSIZE_MAX (0x7fffffff)
 
@@ -501,8 +501,8 @@ static inline void __WFI() {
 
 static inline uint32_t get_int_status(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
-                            "AND %0,%0,#0x80" : "=r" (state) : : );
+    __asm__ __volatile__ ("MRS %0,APSR\n\t"
+        "AND %0,%0,#0x80" : "=r" (state) : :);
     return state;
 }
 
@@ -514,9 +514,9 @@ static inline void enable_irq(mp_uint_t state) {
 
 static inline mp_uint_t disable_irq(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
-                            "AND %0,%0,#0x80\n\t"
-                            "cpsid i" : "=r" (state) : : );
+    __asm__ __volatile__ ("MRS %0,APSR\n\t"
+        "AND %0,%0,#0x80\n\t"
+        "cpsid i" : "=r" (state) : :);
     return state;
 }
 

@@ -29,7 +29,7 @@
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "mphalport.h"
-#include "rza2m_mtu.h"
+#include "rz_mtu.h"
 
 // Forward dec'l
 extern const mp_obj_type_t pyb_pwm_type;
@@ -59,7 +59,8 @@ STATIC bool pwm_is_active(void) {
     bool is_active = false;
     for (int i = 0; i < PWM_CHANNEL_SIZE; i++) {
         if (pwm_channel_init[i] == true) {
-            is_active = true;;
+            is_active = true;
+            ;
         }
     }
     return is_active;
@@ -79,15 +80,15 @@ STATIC void pwm_deinit(void) {
 STATIC void pyb_pwm_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pyb_pwm_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "PWM(%u", self->pin);
-    //if (self->active) {
+    // if (self->active) {
     //    mp_printf(print, ", freq=%u, duty=%u", timer_cfg.freq_hz,
     //        ledc_get_duty(PWMODE, self->channel));
-    //}
+    // }
     mp_printf(print, ")");
 }
 
 STATIC void pyb_pwm_init_helper(pyb_pwm_obj_t *self,
-        size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_freq, ARG_duty };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_freq, MP_ARG_INT, {.u_int = -1} },
@@ -102,21 +103,21 @@ STATIC void pyb_pwm_init_helper(pyb_pwm_obj_t *self,
     if (freq != -1) {
         if (freq != (int)(rz_pwm_get_freq(self->pin))) {
             rz_pwm_set_freq(self->pin, (float)freq);
-       }
+        }
     }
     int duty = args[ARG_duty].u_int;
     if (duty != -1) {
         if (duty != (int)(rz_pwm_get_duty(self->pin))) {
             rz_pwm_set_duty(self->pin, (float)duty);
-       }
+        }
     }
 }
 
 STATIC mp_obj_t pyb_pwm_make_new(const mp_obj_type_t *type,
-        size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
     pin_obj_t *pin = args[0];
-    //gpio_num_t pin_id = machine_pin_get_id(args[0]);
+    // gpio_num_t pin_id = machine_pin_get_id(args[0]);
     // create PWM object from the given pin
     pyb_pwm_obj_t *self = m_new_obj(pyb_pwm_obj_t);
     self->base.type = &pyb_pwm_type;
@@ -136,7 +137,7 @@ STATIC mp_obj_t pyb_pwm_make_new(const mp_obj_type_t *type,
 }
 
 STATIC mp_obj_t pyb_pwm_init(size_t n_args,
-        const mp_obj_t *args, mp_map_t *kw_args) {
+    const mp_obj_t *args, mp_map_t *kw_args) {
     pyb_pwm_init_helper(args[0], n_args - 1, args + 1, kw_args);
     return mp_const_none;
 }
@@ -206,5 +207,5 @@ const mp_obj_type_t pyb_pwm_type = {
     .name = MP_QSTR_PWM,
     .print = pyb_pwm_print,
     .make_new = pyb_pwm_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_pwm_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_pwm_locals_dict,
 };

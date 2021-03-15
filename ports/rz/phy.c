@@ -37,7 +37,7 @@
 #include "common.h"
 #include "phy.h"
 
-//typedef __uint32_t uint32_t;
+// typedef __uint32_t uint32_t;
 
 #if defined(USE_DBG_PRINT)
 #define DEBUG_PHY
@@ -53,7 +53,7 @@ static char PhyAddr[] = {
 };
 
 static uint32_t s_phy_addr = PHY_ADDR;
-#define PHY_MAX (sizeof(PhyAddr)/sizeof(char))
+#define PHY_MAX (sizeof(PhyAddr) / sizeof(char))
 
 bool phy_read(uint32_t ch, uint32_t reg_addr, uint32_t *data) {
     return rz_ether_phy_read(ch, s_phy_addr, reg_addr, data, MII_RD_TOUT);
@@ -93,9 +93,9 @@ static bool phy_verify_id(uint32_t ch) {
     if (!phy_read(ch, PHY_REG_IDR2, &id2)) {
         return false;
     }
-#if defined(DEBUG_PHY)
+    #if defined(DEBUG_PHY)
     debug_printf("PHY(%d) ID: %2x%2x\r\n", ch, id1, id2);
-#endif
+    #endif
     return true;
 }
 
@@ -123,9 +123,9 @@ bool phy_set_link_speed(uint32_t ch) {
     bool full_duplex, mbit_100;
 
     if (!phy_set_auto_negotiate(ch)) {
-#if defined(DEBUG_PHY)
-            debug_printf("PHY(%d) AN NG\r\n", ch);
-#endif
+        #if defined(DEBUG_PHY)
+        debug_printf("PHY(%d) AN NG\r\n", ch);
+        #endif
         mbit_100 = true;
         full_duplex = true;
     } else {
@@ -142,9 +142,9 @@ bool phy_set_link_speed(uint32_t ch) {
         } else {
             mbit_100 = true;
         }
-#if defined(DEBUG_PHY)
+        #if defined(DEBUG_PHY)
         debug_printf("PHY(%d) AN FD:%d 100M:%d\r\n", ch, full_duplex, mbit_100);
-#endif
+        #endif
     }
     rz_ether_set_link_speed(ch, mbit_100, full_duplex);
     return true;

@@ -34,14 +34,14 @@
 #include "extmod/misc.h"
 #include "usb.h"
 #include "uart.h"
-//#include "usb_entry.h"
+// #include "usb_entry.h"
 
 typedef enum
 {
-  HAL_OK       = 0x00,
-  HAL_ERROR    = 0x01,
-  HAL_BUSY     = 0x02,
-  HAL_TIMEOUT  = 0x03
+    HAL_OK       = 0x00,
+    HAL_ERROR    = 0x01,
+    HAL_BUSY     = 0x02,
+    HAL_TIMEOUT  = 0x03
 } HAL_StatusTypeDef;
 
 // this table converts from HAL_StatusTypeDef to POSIX errno
@@ -76,20 +76,20 @@ void _mp_hal_stdout_tx_strn(const char *str, int len);
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
         flash_cache_commit();
-#if 0
-#ifdef USE_HOST_MODE
+        #if 0
+        #ifdef USE_HOST_MODE
         pyb_usb_host_process();
         int c = pyb_usb_host_get_keyboard();
         if (c != 0) {
             return c;
         }
-#endif
-#endif
+        #endif
+        #endif
         #if MICROPY_HW_ENABLE_RZ_USB
-        //byte c;
-        //if ((c = usbcdc_read()) != 0) {
+        // byte c;
+        // if ((c = usbcdc_read()) != 0) {
         //    return c;
-        //}
+        // }
         #endif
         if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
             return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
@@ -110,15 +110,15 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
-#if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
+    #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);
-#endif
-    //#if MICROPY_HW_ENABLE_RZ_USB
-    //uint8_t *p = (uint8_t *)str;
-    //while (len--) {
+    #endif
+    // #if MICROPY_HW_ENABLE_RZ_USB
+    // uint8_t *p = (uint8_t *)str;
+    // while (len--) {
     //    usbcdc_write(*p++);
-    //}
-    //#endif
+    // }
+    // #endif
 
     mp_uos_dupterm_tx_strn(str, len);
 }
@@ -147,7 +147,7 @@ void mp_hal_ticks_cpu_enable(void) {
 }
 
 void mp_hal_pin_config(mp_hal_pin_obj_t pin_obj, uint32_t mode, uint32_t pull, uint32_t alt) {
-    _gpio_config(pin_obj->pin, mode, pull, alt);
+    rz_gpio_config(pin_obj->pin, mode, pull, alt);
 }
 
 bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint8_t fn, uint8_t unit) {

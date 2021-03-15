@@ -61,8 +61,8 @@ STATIC mp_obj_t time_localtime(size_t n_args, const mp_obj_t *args) {
         rtc_init_finalise();
         RTC_DateTypeDef date;
         RTC_TimeTypeDef time;
-        //HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
-        //HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
+        // HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
+        // HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
         rtc_get_time(&time);
         rtc_get_date(&date);
         mp_obj_t tuple[8] = {
@@ -113,8 +113,8 @@ STATIC mp_obj_t time_mktime(mp_obj_t tuple) {
     }
 
     return mp_obj_new_int_from_uint(timeutils_mktime(mp_obj_get_int(elem[0]),
-            mp_obj_get_int(elem[1]), mp_obj_get_int(elem[2]), mp_obj_get_int(elem[3]),
-            mp_obj_get_int(elem[4]), mp_obj_get_int(elem[5])));
+        mp_obj_get_int(elem[1]), mp_obj_get_int(elem[2]), mp_obj_get_int(elem[3]),
+        mp_obj_get_int(elem[4]), mp_obj_get_int(elem[5])));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(time_mktime_obj, time_mktime);
 
@@ -126,8 +126,8 @@ STATIC mp_obj_t time_time(void) {
     rtc_init_finalise();
     RTC_DateTypeDef date;
     RTC_TimeTypeDef time;
-    //HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
-    //HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
+    // HAL_RTC_GetTime(&RTCHandle, &time, RTC_FORMAT_BIN);
+    // HAL_RTC_GetDate(&RTCHandle, &date, RTC_FORMAT_BIN);
     rtc_get_time(&time);
     rtc_get_date(&date);
     return mp_obj_new_int(timeutils_seconds_since_epoch(2000 + date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds));
@@ -156,5 +156,5 @@ STATIC MP_DEFINE_CONST_DICT(time_module_globals, time_module_globals_table);
 
 const mp_obj_module_t mp_module_utime = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&time_module_globals,
+    .globals = (mp_obj_dict_t *)&time_module_globals,
 };

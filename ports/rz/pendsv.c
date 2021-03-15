@@ -31,7 +31,7 @@
 #include "lib/utils/interrupt_char.h"
 #include "pendsv.h"
 #include "irq.h"
-#include "rza2m_ostm2.h"
+#include "rz_ostm2.h"
 
 // This variable is used to save the exception object between a ctrl-C and the
 // PENDSV call that actually raises the exception.  It must be non-static
@@ -51,8 +51,8 @@ void pendsv_init(void) {
     pendsv_dispatch_active = false;
     #endif
     // set PendSV interrupt at lowest priority
-    rza2m_ostm2_set_irq_period (1);
-    rza2m_ostm2_set_irq_handler((void *)pendsv_dispatch_handler);
+    rz_ostm2_set_irq_period(1);
+    rz_ostm2_set_irq_handler((void *)pendsv_dispatch_handler);
 }
 
 // Call this function to raise a pending exception during an interrupt.
@@ -89,5 +89,5 @@ void pendsv_dispatch_handler(void) {
 }
 #endif
 
-// Replace with rza2m_ostm2 timer with lowest priority
-//__attribute__((naked)) void PendSV_Handler(void) {}
+// Replace with rz_ostm2 timer with lowest priority
+// __attribute__((naked)) void PendSV_Handler(void) {}
