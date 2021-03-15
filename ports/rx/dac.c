@@ -32,7 +32,7 @@
 #include "py/mphal.h"
 #include "timer.h"
 #include "dac.h"
-//#include "dma.h"
+// #include "dma.h"
 #include "pin.h"
 
 /// \moduleref pyb
@@ -86,7 +86,7 @@ STATIC void pyb_dac_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 
 STATIC mp_obj_t pyb_dac_init_helper(pyb_dac_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // GPIO configuration
-    //mp_hal_pin_config(self->pin, MP_HAL_PIN_MODE_ANALOG, MP_HAL_PIN_PULL_NONE, 0);
+    // mp_hal_pin_config(self->pin, MP_HAL_PIN_MODE_ANALOG, MP_HAL_PIN_PULL_NONE, 0);
     rx_dac_init((uint8_t)(self->pin->pin));
     return mp_const_none;
 }
@@ -105,16 +105,16 @@ STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_
 
     // get pin/channel to output on
     mp_int_t pin_idx;
-    //if (mp_obj_is_int(args[0])) {
+    // if (mp_obj_is_int(args[0])) {
     //    pin_idx = mp_obj_get_int(args[0]);
-    //} else {
-        const pin_obj_t *pin = pin_find(args[0]);
-        pin_idx = pin->pin;
-        uint8_t channel = rx_dac_get_channel(pin_idx);
-        if (channel == 0xff) {
-            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Pin(%q) doesn't have DAC capabilities"), pin->name);
-        }
-    //}
+    // } else {
+    const pin_obj_t *pin = pin_find(args[0]);
+    pin_idx = pin->pin;
+    uint8_t channel = rx_dac_get_channel(pin_idx);
+    if (channel == 0xff) {
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Pin(%q) doesn't have DAC capabilities"), pin->name);
+    }
+    // }
     pyb_dac_obj_t *dac = m_new_obj(pyb_dac_obj_t);
     dac->base.type = &pyb_dac_type;
     dac->pin = pin;
@@ -135,7 +135,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_dac_init_obj, 1, pyb_dac_init);
 /// \method deinit()
 /// Turn off the DAC, enable other use of pin.
 STATIC mp_obj_t pyb_dac_deinit(mp_obj_t self_in) {
-    //pyb_dac_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // pyb_dac_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // ToDo: add dac_deinit()
     return mp_const_none;
 }
@@ -164,7 +164,7 @@ const mp_obj_type_t pyb_dac_type = {
     .name = MP_QSTR_DAC,
     .print = pyb_dac_print,
     .make_new = pyb_dac_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_dac_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_dac_locals_dict,
 };
 
 #endif // MICROPY_HW_ENABLE_DAC

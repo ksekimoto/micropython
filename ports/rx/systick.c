@@ -31,7 +31,7 @@
 #include "pendsv.h"
 #include "systick.h"
 #include "softtimer.h"
-//#include "pybthread.h"
+// #include "pybthread.h"
 
 // ToDo: implement the same functionality
 
@@ -57,7 +57,7 @@ void SysTick_Handler(void) {
     // Read the systick control regster. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
     // work properly.
-    //SysTick->CTRL;
+    // SysTick->CTRL;
 
     // Dispatch to any registered handlers in a cycle
     systick_dispatch_t f = systick_dispatch_table[uw_tick & (SYSTICK_DISPATCH_NUM_SLOTS - 1)];
@@ -74,7 +74,7 @@ void SysTick_Handler(void) {
     if (pyb_thread_enabled) {
         if (pyb_thread_cur->timeslice == 0) {
             if (pyb_thread_cur->run_next != pyb_thread_cur) {
-                //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+                // SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
             }
         } else {
             --pyb_thread_cur->timeslice;
@@ -136,7 +136,7 @@ void mp_hal_delay_us(mp_uint_t usec) {
         }
     } else {
         // IRQs disabled, so need to use a busy loop for the delay
-        volatile uint32_t ucount = (MICROPY_HW_MCU_PCLK / 1000000 / 10) * usec ;
+        volatile uint32_t ucount = (MICROPY_HW_MCU_PCLK / 1000000 / 10) * usec;
         while (ucount-- > 0) {
             __asm__ __volatile__ ("nop");
         }

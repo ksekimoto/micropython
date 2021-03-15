@@ -77,8 +77,7 @@ extern void NORETURN __fatal_error(const char *msg);
 #if MICROPY_KBD_EXCEPTION
 extern int mp_interrupt_char;
 
-static int chk_kbd_interrupt(int d)
-{
+static int chk_kbd_interrupt(int d) {
     if (d == mp_interrupt_char) {
         pendsv_kbd_intr();
         return 1;
@@ -112,58 +111,72 @@ bool uart_exists(int uart_id) {
     }
     switch (uart_id) {
         #if defined(MICROPY_HW_UART0_TX) && defined(MICROPY_HW_UART0_RX)
-        case PYB_UART_0: return true;
+        case PYB_UART_0:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
-        case PYB_UART_1: return true;
+        case PYB_UART_1:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
-        case PYB_UART_2: return true;
+        case PYB_UART_2:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
-        case PYB_UART_3: return true;
+        case PYB_UART_3:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
-        case PYB_UART_4: return true;
+        case PYB_UART_4:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART5_TX) && defined(MICROPY_HW_UART5_RX)
-        case PYB_UART_5: return true;
+        case PYB_UART_5:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART6_TX) && defined(MICROPY_HW_UART6_RX)
-        case PYB_UART_6: return true;
+        case PYB_UART_6:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART7_TX) && defined(MICROPY_HW_UART7_RX)
-        case PYB_UART_7: return true;
+        case PYB_UART_7:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART8_TX) && defined(MICROPY_HW_UART8_RX)
-        case PYB_UART_8: return true;
+        case PYB_UART_8:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART9_TX) && defined(MICROPY_HW_UART9_RX)
-        case PYB_UART_9: return true;
+        case PYB_UART_9:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART10_TX) && defined(MICROPY_HW_UART10_RX)
-        case PYB_UART_10: return true;
+        case PYB_UART_10:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART11_TX) && defined(MICROPY_HW_UART11_RX)
-        case PYB_UART_11: return true;
+        case PYB_UART_11:
+            return true;
         #endif
 
         #if defined(MICROPY_HW_UART12_TX) && defined(MICROPY_HW_UART12_RX)
-        case PYB_UART_12: return true;
+        case PYB_UART_12:
+            return true;
         #endif
 
-        default: return false;
+        default:
+            return false;
     }
 }
 
@@ -285,7 +298,7 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
             return false;
     }
 
-    sci_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
+    rx_sci_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
 
     uart_obj->is_enabled = true;
     uart_obj->attached_to_repl = false;
@@ -297,32 +310,27 @@ void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
     self->read_buf_tail = 0;
     self->read_buf_len = len;
     self->read_buf = buf;
-    //if (len == 0) {
-    //    UART_RXNE_IT_DIS(self->uartx);
-    //} else {
-    //    UART_RXNE_IT_EN(self->uartx);
-    //}
 }
+
 void uart_deinit(pyb_uart_obj_t *self) {
     self->is_enabled = false;
-    sci_deinit(self->uart_id);
-
-    // ToDo: implement
+    rx_sci_deinit(self->uart_id);
 }
+
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
     self->attached_to_repl = attached;
-#if MICROPY_KBD_EXCEPTION
+    #if MICROPY_KBD_EXCEPTION
     if (attached) {
-        sci_rx_set_callback((int)self->uart_id, (SCI_CALLBACK)chk_kbd_interrupt);
+        rx_sci_rx_set_callback((int)self->uart_id, (SCI_CALLBACK)chk_kbd_interrupt);
     } else {
-        sci_rx_set_callback((int)self->uart_id, (SCI_CALLBACK)NULL);
+        rx_sci_rx_set_callback((int)self->uart_id, (SCI_CALLBACK)NULL);
     }
-#endif
+    #endif
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
     int ch = (int)self->uart_id;
-    return sci_rx_any(ch);
+    return rx_sci_rx_any(ch);
 }
 
 // Waits at most timeout milliseconds for at least 1 char to become ready for
@@ -332,7 +340,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
-        if (sci_rx_any(ch)) {
+        if (rx_sci_rx_any(ch)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -345,7 +353,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 // assumes there is a character available
 int uart_rx_char(pyb_uart_obj_t *self) {
     int ch = (int)self->uart_id;
-    return sci_rx_ch(ch);
+    return rx_sci_rx_ch(ch);
 }
 
 // Waits at most timeout milliseconds for TX register to become empty.
@@ -354,7 +362,7 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id;
     uint32_t start = mtick();
     for (;;) {
-        if (sci_tx_wait(ch)) {
+        if (rx_sci_tx_wait(ch)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -364,28 +372,8 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     }
 }
 
-#if 0
-// ToDo: check if this function is needed?
-// Waits at most timeout milliseconds for UART flag to be set.
-// Returns true if flag is/was set, false on timeout.
-STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
-    // Note: we don't use WFI to idle in this loop because UART tx doesn't generate
-    // an interrupt and the flag can be set quickly if the baudrate is large.
-    int ch = (int)self->uart_id;
-    uint32_t start = mtick();
-    for (;;) {
-        if (sci_tx_wait(ch)) {
-            return true;
-        }
-        if (timeout == 0 || mtick() - start >= timeout) {
-            return false; // timeout
-        }
-    }
-}
-#endif
-
-// src - a pointer to the data to send (16-bit aligned for 9-bit chars)
-// num_chars - number of characters to send (9-bit chars count for 2 bytes from src)
+// src - a pointer to the data to send
+// num_chars - number of characters to send (9-bit chars is not supported for RX implementation
 // *errcode - returns 0 for success, MP_Exxx on error
 // returns the number of characters sent (valid even if there was an error)
 size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
@@ -397,8 +385,9 @@ size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, 
     }
     int i;
     for (i = 0; i < (int)num_chars; i++) {
-        sci_tx_ch(ch, *data++);
+        rx_sci_tx_ch(ch, *data++);
     }
+
     *errcode = 0;
     return (size_t)i;
 }

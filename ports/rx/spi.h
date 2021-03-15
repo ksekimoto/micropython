@@ -28,11 +28,11 @@
 
 #include "drivers/bus/spi.h"
 
-//#define SPI_NUM_CH  3
+// #define SPI_NUM_CH  3
 
 typedef struct _spi_t {
-    uint32_t    ch;
-    uint32_t    bits;
+    uint32_t ch;
+    uint32_t bits;
 } spi_t;
 
 typedef struct _spi_proto_cfg_t {

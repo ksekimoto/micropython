@@ -378,7 +378,7 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
 int get_font_by_name(char *name) {
     int idx = 0;
     FONT_TBL *p = (FONT_TBL *)fontTblList;
-    while (p != NULL) {
+    while ((p != NULL) && (p->font_name != NULL)) {
         if (strcmp(p->font_name, name) == 0) {
             return idx;
         }

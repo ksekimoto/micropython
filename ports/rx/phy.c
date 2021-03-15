@@ -37,9 +37,9 @@
 #include "common.h"
 #include "phy.h"
 
-//typedef __uint32_t uint32_t;
+// typedef __uint32_t uint32_t;
 
-//#define DEBUG_PHY
+// #define DEBUG_PHY
 
 // PHY Address
 static char PhyAddr[] = {
@@ -51,7 +51,7 @@ static char PhyAddr[] = {
 };
 
 static uint32_t s_phy_addr = PHY_ADDR;
-#define PHY_MAX (sizeof(PhyAddr)/sizeof(char))
+#define PHY_MAX (sizeof(PhyAddr) / sizeof(char))
 
 bool phy_read(uint32_t reg_addr, uint32_t *data) {
     return rx_ether_phy_read(s_phy_addr, reg_addr, data, MII_RD_TOUT);
@@ -118,9 +118,9 @@ bool phy_set_link_speed(void) {
     bool full_duplex, mbit_100;
 
     if (!phy_set_auto_negotiate()) {
-#if defined(DEBUG_PHY)
-            debug_printf("PHY AN NG\r\n");
-#endif
+        #if defined(DEBUG_PHY)
+        debug_printf("PHY AN NG\r\n");
+        #endif
         mbit_100 = true;
         full_duplex = true;
     } else {
@@ -137,9 +137,9 @@ bool phy_set_link_speed(void) {
         } else {
             mbit_100 = true;
         }
-#if defined(DEBUG_PHY)
+        #if defined(DEBUG_PHY)
         debug_printf("PHY AN FD:%d SP:%d\r\n", full_duplex, mbit_100);
-#endif
+        #endif
     }
     rx_ether_set_link_speed(mbit_100, full_duplex);
     return true;

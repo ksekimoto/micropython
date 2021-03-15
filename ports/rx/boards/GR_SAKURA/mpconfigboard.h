@@ -74,6 +74,7 @@
 #define MICROPY_HW_LED_ON(pin)      mp_hal_pin_high(pin)
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
+#if MICROPY_HW_ENABLE_SDCARD
 // SD card detect switch
 #define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P15)
 #define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
@@ -83,6 +84,7 @@
 #define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
 #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
 #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
+#endif
 
 // Add MICRO_PY_LWIP=1 as a parameter of make command when adding LWIP
 //#define MICROPY_PY_LWIP (1)

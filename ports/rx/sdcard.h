@@ -26,11 +26,6 @@
 #ifndef MICROPY_INCLUDED_RX_SDCARD_H
 #define MICROPY_INCLUDED_RX_SDCARD_H
 
-#define STATIC_AF_SDCARD_MOSI   0
-#define STATIC_AF_SDCARD_MISO   0
-#define STATIC_AF_SDCARD_CK     0
-#define STATIC_AF_SDCARD_CS     0
-
 // this is a fixed size and should not be changed
 #define SDCARD_BLOCK_SIZE (512)
 

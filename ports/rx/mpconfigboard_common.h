@@ -28,7 +28,7 @@
 // Common settings and defaults for board configuration.
 // The defaults here should be overridden in mpconfigboard.h.
 
-//#include RX_HAL_H
+// #include RX_HAL_H
 
 /*****************************************************************************/
 // Feature settings with defaults
@@ -120,7 +120,7 @@
 
 // The volume label used when creating the flash filesystem
 #ifndef MICROPY_HW_FLASH_FS_LABEL
-//#define MICROPY_HW_FLASH_FS_LABEL "pybflash"
+// #define MICROPY_HW_FLASH_FS_LABEL "pybflash"
 #define MICROPY_HW_FLASH_FS_LABEL "rxbflash"
 #endif
 
@@ -162,7 +162,7 @@
 
 // Configuration for RX63N series
 
-//#define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
+// #define MP_HAL_UNIQUE_ID_ADDRESS (0x1ffff7ac)
 #define PYB_EXTI_NUM_VECTORS (16)
 #define MICROPY_HW_MAX_TIMER (17)
 #define MICROPY_HW_MAX_UART (13)

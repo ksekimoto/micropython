@@ -38,10 +38,10 @@
 
 typedef enum
 {
-  HAL_OK       = 0x00,
-  HAL_ERROR    = 0x01,
-  HAL_BUSY     = 0x02,
-  HAL_TIMEOUT  = 0x03
+    HAL_OK       = 0x00,
+    HAL_ERROR    = 0x01,
+    HAL_BUSY     = 0x02,
+    HAL_TIMEOUT  = 0x03
 } HAL_StatusTypeDef;
 
 // this table converts from HAL_StatusTypeDef to POSIX errno
@@ -72,15 +72,15 @@ void flash_cache_commit(void);
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
         flash_cache_commit();
-#if 0
-#ifdef USE_HOST_MODE
+        #if 0
+        #ifdef USE_HOST_MODE
         pyb_usb_host_process();
         int c = pyb_usb_host_get_keyboard();
         if (c != 0) {
             return c;
         }
-#endif
-#endif
+        #endif
+        #endif
 
         #if MICROPY_HW_ENABLE_USB
         byte c;
@@ -113,9 +113,9 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
-#if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
+    #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);
-#endif
+    #endif
     #if MICROPY_HW_ENABLE_USB
     if (usb_vcp_is_enabled()) {
         usb_vcp_send_strn(str, len);
@@ -154,7 +154,7 @@ void mp_hal_ticks_cpu_enable(void) {
 }
 
 void mp_hal_pin_config(mp_hal_pin_obj_t pin_obj, uint32_t mode, uint32_t pull, uint32_t alt) {
-    gpio_config(pin_obj->pin, mode, pull, alt);
+    rx_gpio_config(pin_obj->pin, mode, pull, alt);
 }
 
 bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint8_t fn, uint8_t unit) {

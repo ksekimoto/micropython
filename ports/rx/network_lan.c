@@ -66,11 +66,11 @@ STATIC void network_lan_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
         netif->ip_addr.addr >> 8 & 0xff,
         netif->ip_addr.addr >> 16 & 0xff,
         netif->ip_addr.addr >> 24
-    );
+        );
 }
 
 err_t eth_netif_output(struct netif *netif, struct pbuf *p);
-err_t ethernetif_init(struct netif *netif) ;
+err_t ethernetif_init(struct netif *netif);
 void ethernetif_input(struct netif *netif);
 
 /*
@@ -89,9 +89,9 @@ STATIC void network_lan_init(eth_t *self) {
     ipconfig[2].addr = 0;
     ipconfig[3].addr = 0;
 
-    //g_netif = &self->netif;
+    // g_netif = &self->netif;
     memset(&self->netif, 0, sizeof(struct netif));
-    self-> netif.linkoutput = eth_netif_output;
+    self->netif.linkoutput = eth_netif_output;
 
     netif_add(&self->netif, &ipconfig[0], &ipconfig[1], &ipconfig[2], self, ethernetif_init, ethernet_input);
     netif_set_default(&self->netif);
@@ -101,7 +101,7 @@ STATIC void network_lan_init(eth_t *self) {
 STATIC mp_obj_t network_lan_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     const network_lan_obj_t *self = &network_lan_eth0;
-    //rx_ether_obj.poll_callback = network_lan_poll;
+    // rx_ether_obj.poll_callback = network_lan_poll;
     // Hardware init
     network_lan_init(&eth_instance);
     return MP_OBJ_FROM_PTR(self);
@@ -204,7 +204,7 @@ const mp_obj_type_t network_lan_type = {
     .name = MP_QSTR_LAN,
     .print = network_lan_print,
     .make_new = network_lan_make_new,
-    .locals_dict = (mp_obj_dict_t*)&network_lan_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&network_lan_locals_dict,
 };
 
 #endif // defined(MICROPY_HW_ETH_MDC)

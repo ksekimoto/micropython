@@ -41,21 +41,21 @@ void flash_cache_commit(void);
 int mp_hal_stdin_rx_chr(void) {
     int c = 0;
     flash_cache_commit();
-#if defined(MP_USBCDC)
+    #if defined(MP_USBCDC)
     c = usbcdc_read();
-#else
+    #else
     c = (int)sci_rx_ch(SCI_CH);
-#endif
+    #endif
     return c;
 }
 
 // Send string of given length
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     while (len--) {
-#if defined(MP_USBCDC)
+        #if defined(MP_USBCDC)
         usbcdc_write((unsigned char)*str++);
-#else
+        #else
         sci_tx_ch(SCI_CH, *str++);
-#endif
+        #endif
     }
 }

@@ -39,21 +39,21 @@ uint32_t htonl(uint32_t netlong);
 #ifndef _TIMEVAL_DEFINED
 #define _TIMEVAL_DEFINED
 struct timeval {
-  time_t      tv_sec;
-  suseconds_t tv_usec;
+    time_t tv_sec;
+    suseconds_t tv_usec;
 };
 #endif
 
-//time_t time(time_t *t);
-//time_t mktime(void *tm);
-//struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
-int gettimeofday(struct timeval *tv , void *tz);
-_sig_func_ptr signal (int sig, _sig_func_ptr handler);
+// time_t time(time_t *t);
+// time_t mktime(void *tm);
+// struct tm *gmtime(const time_t *timer, struct tm *tmbuf);
+int gettimeofday(struct timeval *tv, void *tz);
+_sig_func_ptr signal(int sig, _sig_func_ptr handler);
 
 int atoi(const char *s);
 char *itoa(int num, char *str, int base);
 int rand(void);
 int rand_r(int seed);
-//void __attribute__((noreturn)) abort(void);
+// void __attribute__((noreturn)) abort(void);
 
 #endif /* PORTS_RX_POSIX_HELPERS_H_ */

@@ -58,6 +58,6 @@ void pendsv_schedule_dispatch(size_t slot, pendsv_dispatch_t f);
 
 // since we play tricks with the stack, the compiler must not generate a
 // prelude for this function
-//void pendsv_isr_handler(void) __attribute__((naked));
+// void pendsv_isr_handler(void) __attribute__((naked));
 
 #endif // MICROPY_INCLUDED_RX_PENDSV_H

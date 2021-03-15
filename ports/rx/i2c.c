@@ -26,6 +26,7 @@
 
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/runtime.h"
 #include "i2c.h"
 
 #if MICROPY_HW_ENABLE_HW_I2C
@@ -37,12 +38,12 @@ int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t fr
     // ToDo implement
     uint32_t i2c_id = 0;
     // Init pins
-    //if (!mp_hal_pin_config_alt(scl, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
+    // if (!mp_hal_pin_config_alt(scl, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
     //    return -MP_EPERM;
-    //}
-    //if (!mp_hal_pin_config_alt(sda, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
+    // }
+    // if (!mp_hal_pin_config_alt(sda, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
     //    return -MP_EPERM;
-    //}
+    // }
     // Save timeout value
     i2c_timeout_ms[i2c_id] = timeout_ms;
 
@@ -121,22 +122,22 @@ int i2c_find_peripheral(mp_obj_t id) {
     if (mp_obj_is_str(id)) {
         const char *port = mp_obj_str_get_str(id);
         if (0) {
-        #ifdef MICROPY_HW_I2C1_NAME
+            #ifdef MICROPY_HW_I2C1_NAME
         } else if (strcmp(port, MICROPY_HW_I2C1_NAME) == 0) {
             i2c_id = 1;
-        #endif
-        #ifdef MICROPY_HW_I2C2_NAME
+            #endif
+            #ifdef MICROPY_HW_I2C2_NAME
         } else if (strcmp(port, MICROPY_HW_I2C2_NAME) == 0) {
             i2c_id = 2;
-        #endif
-        #ifdef MICROPY_HW_I2C3_NAME
+            #endif
+            #ifdef MICROPY_HW_I2C3_NAME
         } else if (strcmp(port, MICROPY_HW_I2C3_NAME) == 0) {
             i2c_id = 3;
-        #endif
-        #ifdef MICROPY_HW_I2C4_NAME
+            #endif
+            #ifdef MICROPY_HW_I2C4_NAME
         } else if (strcmp(port, MICROPY_HW_I2C4_NAME) == 0) {
             i2c_id = 4;
-        #endif
+            #endif
         } else {
             mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("I2C(%s) doesn't exist"), port);
         }

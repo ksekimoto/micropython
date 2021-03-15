@@ -93,9 +93,9 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
     self->spi->bits = args[6].u_int;
     // set the SPI configuration values
     // ToDo: implement mode
-    //uint32_t mode = args[0].u_int;
+    // uint32_t mode = args[0].u_int;
     // ToDo: implement direction
-    //uint32_t direction = args[5].u_int;
+    // uint32_t direction = args[5].u_int;
     uint32_t nss = args[7].u_int;
     // ToDo
     // init the SPI bus

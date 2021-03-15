@@ -125,7 +125,7 @@
 #define MICROPY_PY_SYS_STDFILES     (1)
 #define MICROPY_PY_SYS_STDIO_BUFFER (1)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
-//#define MICROPY_PY_SYS_PLATFORM     "pyboard"
+// #define MICROPY_PY_SYS_PLATFORM     "pyboard"
 #define MICROPY_PY_SYS_PLATFORM     "rxboard"
 #endif
 #define MICROPY_PY_UERRNO           (1)
@@ -464,7 +464,7 @@ struct _mp_bluetooth_btstack_root_pointers_t;
 
 // type definitions for the specific machine
 
-#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void*)((uint32_t)(p) | 1))
+#define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((uint32_t)(p) | 1))
 
 #define MP_SSIZE_MAX (0x7fffffff)
 
@@ -481,7 +481,7 @@ typedef long mp_off_t;
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
 static inline void __WFI(void) {
-    __asm__("wait");
+    __asm__ ("wait");
 }
 
 // We have inlined IRQ functions for efficiency (they are generally
@@ -494,8 +494,8 @@ static inline void __WFI(void) {
 
 static inline uint32_t get_int_status(void) {
     uint32_t ipl;
-    __asm__ __volatile__ ("mvfc psw,%0":"=r"(ipl):);
-    return ((ipl & 0x00010000) >> 16);
+    __asm__ __volatile__ ("mvfc psw,%0" : "=r" (ipl) :);
+    return (ipl & 0x00010000) >> 16;
 }
 
 static inline uint32_t get_irq(void) {
@@ -506,7 +506,7 @@ static inline uint32_t get_irq(void) {
         "revl %[r14], %[r1]\n\t"
         "and #0x0f, %[r1]\n\t"
         : [r14] "=r" (temp), [r1] "=r" (pri)
-    );
+        );
     return pri;
 }
 
@@ -520,7 +520,7 @@ static inline void set_irq(uint32_t pri) {
         "or %[r14], %[r1]\n\t"
         "mvtc %[r1], psw\n\t"
         : [r14] "=&r" (temp), [r1] "+r" (pri)
-    );
+        );
     return;
 }
 

@@ -44,8 +44,8 @@
 #include "ST7789.h"
 #include "font.h"
 #if defined(RX65N)
-#include "rx65n_gpio.h"
-#include "rx65n_spi.h"
+#include "rx_gpio.h"
+#include "rx_spi.h"
 #endif
 #if defined(RZA2M)
 #include "rza2m_gpio.h"
@@ -67,11 +67,11 @@
 #define SPI_END_XFER        rz_spi_end_xfer
 #define SPI_TRANSFER        rz_spi_transfer
 #else
-#define GPIO_SET_OUTPUT     gpio_mode_output
-#define GPIO_SET_INPUT      gpio_mode_input
-#define GPIO_WRITE          gpio_write
+#define GPIO_SET_OUTPUT     rx_gpio_mode_output
+#define GPIO_SET_INPUT      rx_gpio_mode_input
+#define GPIO_WRITE          rx_gpio_write
 #define SPI_WRITE_BYTE      rx_spi_write_byte
-#define SPI_INIT            rx_spi_init
+#define SPI_INIT            rx_spi_init_with_pin
 #define SPI_GET_CONF        rx_spi_get_conf
 #define SPI_START_XFER      rx_spi_start_xfer
 #define SPI_END_XFER        rx_spi_end_xfer
@@ -502,7 +502,14 @@ void lcdspi_spi_init(int spi_id, lcdspi_t *lcdspi) {
         GPIO_SET_OUTPUT(_resetPin);
         GPIO_SET_OUTPUT(_rsPin);
         // ToDo
-        SPI_INIT(spi_id, lcdspi->lcdspi_pins->csPin->pin, lcdspi->baud, 8, (lcdspi->phase << 1 | lcdspi->polarity) & 0x3);
+        SPI_INIT(spi_id,
+            lcdspi->lcdspi_pins->doutPin->pin,
+            lcdspi->lcdspi_pins->dinPin->pin,
+            lcdspi->lcdspi_pins->clkPin->pin,
+            lcdspi->lcdspi_pins->csPin->pin,
+            lcdspi->baud,
+            8,
+            (lcdspi->phase << 1 | lcdspi->polarity) & 0x3);
         SPI_GET_CONF(spi_id, &lcdspi->spcmd, &lcdspi->spbr);
     } else {
         SPISW_SetPinMode();

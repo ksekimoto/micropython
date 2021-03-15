@@ -34,15 +34,15 @@
 #include "py/mphal.h"
 #include "py/gc.h"
 
-//#if MICROPY_PY_LWIP
-//#include "sntp_client.h"
-//#endif
+// #if MICROPY_PY_LWIP
+// #include "sntp_client.h"
+// #endif
 
 #include "rng.h"
 #include "posix_helpers.h"
 
-//#define DEBUG_TIME
-//#define DEBUG_SIGNAL
+// #define DEBUG_TIME
+// #define DEBUG_SIGNAL
 
 // Functions for external libs like axTLS, BerkeleyDB, etc.
 
@@ -72,9 +72,9 @@ void *realloc(void *ptr, size_t size) {
 void *calloc(size_t nmemb, size_t size) {
     void *ptr;
     if (nmemb == 0 || size == 0) {
-      nmemb = size = 1;
+        nmemb = size = 1;
     }
-    ptr = malloc (nmemb * size);
+    ptr = malloc(nmemb * size);
     if (ptr) {
         memset(ptr, 0, nmemb * size);
     }
@@ -92,14 +92,14 @@ uint32_t htonl(uint32_t netlong) {
 
 time_t time(time_t *t) {
     // ToDo: implementation
-//#if MICROPY_PY_LWIP
+// #if MICROPY_PY_LWIP
 //    return get_sntp_time();
-//#else
+// #else
 //    return mp_hal_ticks_ms() / 1000;
-//#endif
+// #endif
     rtc_t rtc;
     struct tm tmbuf;
-    time_t  ret;
+    time_t ret;
     rx_rtc_get_time(&rtc);
     tmbuf.tm_hour = (int)rtc.hour;
     tmbuf.tm_mday = (int)rtc.date;
@@ -115,9 +115,9 @@ time_t time(time_t *t) {
     if (t) {
         *t = ret;
     }
-#if defined(DEBUG_TIME)
+    #if defined(DEBUG_TIME)
     debug_printf("time:%d\r\n", ret);
-#endif
+    #endif
     return ret;
 }
 
@@ -138,30 +138,30 @@ void set_time(time_t *t) {
 #ifndef _TIMEVAL_DEFINED
 #define _TIMEVAL_DEFINED
 struct timeval {
-  time_t      tv_sec;
-  suseconds_t tv_usec;
+    time_t tv_sec;
+    suseconds_t tv_usec;
 };
 #endif
 
-int gettimeofday(struct timeval *tv , void *tz) {
+int gettimeofday(struct timeval *tv, void *tz) {
     // ToDo: implementation
-    //return mp_hal_ticks_ms();
+    // return mp_hal_ticks_ms();
     time_t t;
     t = time(NULL);
     tv->tv_sec = t;
     tv->tv_usec = 0;
-#if defined(DEBUG_GETTIMEOFDAY)
+    #if defined(DEBUG_GETTIMEOFDAY)
     debug_printf("gettimeofday:%d\r\n", t);
-#endif
+    #endif
     return (int)0;
 }
 
 #if !MICROPY_SSL_AXTLS
-_sig_func_ptr signal (int sig, _sig_func_ptr handler) {
+_sig_func_ptr signal(int sig, _sig_func_ptr handler) {
     // ToDo: implementation
-#if defined(DEBUG_SIGNAL)
+    #if defined(DEBUG_SIGNAL)
     debug_printf("signal\r\n");
-#endif
+    #endif
     return (_sig_func_ptr)handler;
 }
 #endif
@@ -172,8 +172,9 @@ int atoi(const char *s) {
         sign = -1;
         s++;
     }
-    while (*s >= '0' && *s <= '9')
+    while (*s >= '0' && *s <= '9') {
         result = result * 10 + (*(s++) - '0');
+    }
     return result * sign;
 }
 
@@ -211,8 +212,9 @@ char *itoa(int num, char *str, int base) {
         str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
         num = num / base;
     }
-    if (minus)
+    if (minus) {
         str[i++] = '-';
+    }
     str[i] = '\0';
     reverse(str, i);
     return str;
@@ -226,12 +228,12 @@ int rand_r(int seed) {
     return (int)rng_get();
 }
 
-//void __attribute__((noreturn)) abort(void) {
+// void __attribute__((noreturn)) abort(void) {
 //    __asm__ __volatile__ ("nop");
 //    while (1) {
 //        ;
 //    }
-//}
+// }
 
 __attribute__ ((weak)) char *strncpy(char *dst, const char *src, size_t len) {
     char *q = (char *)dst;
@@ -239,8 +241,9 @@ __attribute__ ((weak)) char *strncpy(char *dst, const char *src, size_t len) {
     char ch;
     while (len--) {
         *q++ = ch = *p++;
-        if (!ch)
+        if (!ch) {
             break;
+        }
     }
     return dst;
 }

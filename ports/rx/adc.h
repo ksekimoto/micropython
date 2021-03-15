@@ -27,7 +27,7 @@
 #define MICROPY_INCLUDED_RX_ADC_H
 
 typedef struct {
-    int dummy;
+    uint8_t dummy;
 } ADC_HandleTypeDef;
 
 extern const mp_obj_type_t pyb_adc_type;

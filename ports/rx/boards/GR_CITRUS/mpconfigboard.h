@@ -6,7 +6,7 @@
 #define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (1)
-#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (1)
 #define MICROPY_HW_ENABLE_RTC       (1)
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
@@ -36,11 +36,11 @@
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
-//#define MICROPY_HW_SPI1_NAME "X"
-//#define MICROPY_HW_SPI1_NSS  (pin_PC4)
-//#define MICROPY_HW_SPI1_SCK  (pin_PC5)
-//#define MICROPY_HW_SPI1_MISO (pin_PC7)
-//#define MICROPY_HW_SPI1_MOSI (pin_PC6)
+#define MICROPY_HW_SPI1_NAME "X"
+#define MICROPY_HW_SPI1_NSS  (pin_PC4)
+#define MICROPY_HW_SPI1_SCK  (pin_PC5)
+#define MICROPY_HW_SPI1_MISO (pin_PC7)
+#define MICROPY_HW_SPI1_MOSI (pin_PC6)
 // USRSW is pulled low. Pressing the button makes the input go high.
 //#define MICROPY_HW_USRSW_PIN        (pin_PA7)
 //#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)

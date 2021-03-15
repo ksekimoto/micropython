@@ -371,19 +371,19 @@ static void esp8266_serial_clear_buf(void) {
 }
 
 static void esp8266_serial_begin(void) {
-    sci_init_default(esp8266_ch, esp8266_baud);
+    rx_sci_init_default(esp8266_ch, esp8266_baud);
 }
 
 static int esp8266_serial_available(void) {
-    return sci_rx_any(esp8266_ch);
+    return rx_sci_rx_any(esp8266_ch);
 }
 
 static int esp8266_serial_read(void) {
-    return (int)sci_rx_ch(esp8266_ch);
+    return (int)rx_sci_rx_ch(esp8266_ch);
 }
 
 static void esp8266_serial_write_byte(uint8_t c) {
-    sci_tx_ch(esp8266_ch, (uint8_t)c);
+    rx_sci_tx_ch(esp8266_ch, (uint8_t)c);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     if (debug_write) {
         if (isdisplayed(c)) {
@@ -396,7 +396,7 @@ static void esp8266_serial_write_byte(uint8_t c) {
 }
 
 static void esp8266_serial_print(const char *s) {
-    sci_tx_str(esp8266_ch, (uint8_t *)s);
+    rx_sci_tx_str(esp8266_ch, (uint8_t *)s);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
 #endif
@@ -405,7 +405,7 @@ static void esp8266_serial_print(const char *s) {
 static void esp8266_serial_printi(int i) {
     char s[MAX_DIGITS];
     itoa(i, (char *)s, 10);
-    sci_tx_str(esp8266_ch, (uint8_t *)s);
+    rx_sci_tx_str(esp8266_ch, (uint8_t *)s);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
 #endif
@@ -413,8 +413,8 @@ static void esp8266_serial_printi(int i) {
 
 static void esp8266_serial_println(const char *s) {
     esp8266_serial_print(s);
-    sci_tx_ch(esp8266_ch, '\r');
-    sci_tx_ch(esp8266_ch, '\n');
+    rx_sci_tx_ch(esp8266_ch, '\r');
+    rx_sci_tx_ch(esp8266_ch, '\n');
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
@@ -423,8 +423,8 @@ static void esp8266_serial_println(const char *s) {
 
 static void esp8266_serial_printiln(int i) {
     esp8266_serial_printi(i);
-    sci_tx_ch(esp8266_ch, '\r');
-    sci_tx_ch(esp8266_ch, '\n');
+    rx_sci_tx_ch(esp8266_ch, '\r');
+    rx_sci_tx_ch(esp8266_ch, '\n');
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');

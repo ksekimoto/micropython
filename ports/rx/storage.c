@@ -35,13 +35,17 @@
 #include "led.h"
 #include "storage.h"
 #include "irq.h"
-#include "common.h"
+#if defined(USE_DBG_PRINT)
+#include "debug_printf.h"
+#endif
 
 #if MICROPY_HW_ENABLE_STORAGE
 
+#if defined(USE_DBG_PRINT)
 /* debug */
-//#define DEBUG_STORAGE
-//#define DEBUG_STORAGE_W_MEM
+// #define DEBUG_STORAGE
+// #define DEBUG_STORAGE_W_MEM
+#endif
 
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"
@@ -57,7 +61,7 @@
 static bool storage_is_initialised = false;
 
 // ToDo: check how to implement
-//static void storage_systick_callback(uint32_t ticks_ms);
+// static void storage_systick_callback(uint32_t ticks_ms);
 
 void storage_init(void) {
     if (!storage_is_initialised) {
@@ -134,10 +138,10 @@ static void build_partition(uint8_t *buf, int boot, int type, uint32_t start_blo
 }
 
 bool storage_read_block(uint8_t *dest, uint32_t block) {
-    //printf("RD %u\n", block);
-#if defined(DEBUG_STORAGE)
-    //debug_printf("SRD %x b:%x\r\n", dest, block);
-#endif
+    // printf("RD %u\n", block);
+    #if defined(DEBUG_STORAGE)
+    // debug_printf("SRD %x b:%x\r\n", dest, block);
+    #endif
     if (block == 0) {
         // fake the MBR so we can decide on our own partition table
 
@@ -159,57 +163,57 @@ bool storage_read_block(uint8_t *dest, uint32_t block) {
 
         return true;
 
-    #if defined(MICROPY_HW_BDEV_READBLOCK)
-#if defined(DEBUG_USE_RAMDISK)
+        #if defined(MICROPY_HW_BDEV_READBLOCK)
+        #if defined(DEBUG_USE_RAMDISK)
     } else if (block < RamDiskGetNumBlocks()) {
-#if defined(DEBUG_STORAGE)
+        #if defined(DEBUG_STORAGE)
         debug_printf("SRD %x-%x b:%x\r\n", RamDiskGetBuffer(block), dest, block);
-#endif
+        #endif
         memcpy(dest, RamDiskGetBuffer(block), 512);
         return true;
-#else
+        #else
     } else if (FLASH_PART1_START_BLOCK <= block && block < FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_READBLOCK(dest, block - FLASH_PART1_START_BLOCK);
-#endif
-    #endif
+        #endif
+        #endif
     } else {
         return false;
     }
 }
 
 bool storage_write_block(const uint8_t *src, uint32_t block) {
-    //printf("WR %u\n", block);
-#if defined(DEBUG_STORAGE)
-    //debug_printf("SWT %x b:%x\r\n", src, block);
-#endif
+    // printf("WR %u\n", block);
+    #if defined(DEBUG_STORAGE)
+    // debug_printf("SWT %x b:%x\r\n", src, block);
+    #endif
     if (block == 0) {
         // can't write MBR, but pretend we did
         return true;
-    #if defined(MICROPY_HW_BDEV_WRITEBLOCK)
-#if defined(DEBUG_USE_RAMDISK)
+        #if defined(MICROPY_HW_BDEV_WRITEBLOCK)
+        #if defined(DEBUG_USE_RAMDISK)
     } else if (block < RamDiskGetNumBlocks()) {
-#if defined(DEBUG_STORAGE)
+        #if defined(DEBUG_STORAGE)
         debug_printf("SWT %x-%x b:%x\r\n", src, RamDiskGetBuffer(block), block);
-#endif
+        #endif
         memcpy(RamDiskGetBuffer(block), src, 512);
         return true;
-#else
+        #else
     } else if (FLASH_PART1_START_BLOCK <= block && block < FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_WRITEBLOCK(src, block - FLASH_PART1_START_BLOCK);
-#endif
-    #endif
+        #endif
+        #endif
     } else {
         return false;
     }
 }
 
 int storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) {
-#if defined(DEBUG_STORAGE)
+    #if defined(DEBUG_STORAGE)
     debug_printf("SRD b:%x n:%x\r\n", block_num, num_blocks);
-#endif
-#if defined(DEBUG_STORAGE_W_MEM)
+    #endif
+    #if defined(DEBUG_STORAGE_W_MEM)
     debug_printf("SRD %x b:%x n:%x\r\n", dest, block_num, num_blocks);
-#endif
+    #endif
     #if defined(MICROPY_HW_BDEV_READBLOCKS)
     if (FLASH_PART1_START_BLOCK <= block_num && block_num + num_blocks <= FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_READBLOCKS(dest, block_num - FLASH_PART1_START_BLOCK, num_blocks);
@@ -231,12 +235,12 @@ int storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks) 
 }
 
 int storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks) {
-#if defined(DEBUG_STORAGE)
+    #if defined(DEBUG_STORAGE)
     debug_printf("SWT b:%x n:%x\r\n", block_num, num_blocks);
-#endif
-#if defined(DEBUG_STORAGE_W_MEM)
+    #endif
+    #if defined(DEBUG_STORAGE_W_MEM)
     debug_printf("SWT %x b:%x n:%x\r\n", src, block_num, num_blocks);
-#endif
+    #endif
     #if defined(MICROPY_HW_BDEV_WRITEBLOCKS)
     if (FLASH_PART1_START_BLOCK <= block_num && block_num + num_blocks <= FLASH_PART1_START_BLOCK + MICROPY_HW_BDEV_IOCTL(BDEV_IOCTL_NUM_BLOCKS, 0)) {
         return MICROPY_HW_BDEV_WRITEBLOCKS(src, block_num - FLASH_PART1_START_BLOCK, num_blocks);
@@ -412,11 +416,11 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
                 // Will be using extended block protocol
                 if (self == &pyb_flash_obj) {
                     ret = -1;
-                #if defined(SPIFLASH)
+                    #if defined(SPIFLASH)
                 } else {
                     // Switch to use native block size of SPI flash
                     self->use_native_block_size = true;
-                #endif
+                    #endif
                 }
             }
             return MP_OBJ_NEW_SMALL_INT(ret);
@@ -433,10 +437,10 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
             if (self == &pyb_flash_obj) {
                 // Get true size
                 n = storage_get_block_count();
-            #if defined(SPIFLASH)
+                #if defined(SPIFLASH)
             } else if (self->use_native_block_size) {
                 n = self->len / PYB_FLASH_NATIVE_BLOCK_SIZE;
-            #endif
+                #endif
             } else {
                 n = self->len / FLASH_BLOCK_SIZE;
             }

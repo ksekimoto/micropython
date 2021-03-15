@@ -32,12 +32,7 @@
 #include "extint.h"
 #include "rtc.h"
 #include "irq.h"
-#if defined(RX63N)
-#include "rx63n_rtc.h"
-#endif
-#if defined(RX65N)
-#include "rx65n_rtc.h"
-#endif
+#include "rx_rtc.h"
 
 #define RTC_INIT_YEAR   2019
 #define RTC_INIT_MONTH  1
@@ -59,7 +54,7 @@
 ///     rtc.datetime((2014, 5, 1, 4, 13, 0, 0, 0))
 ///     print(rtc.datetime())
 
-#define HAL_StatusTypeDef	void
+#define HAL_StatusTypeDef       void
 // rtc_info indicates various things about RTC startup
 // it's a bit of a hack at the moment
 static mp_uint_t rtc_info;
@@ -68,9 +63,9 @@ static mp_uint_t rtc_info;
 // ck_spre(1Hz) = RTCCLK(LSE) /(uwAsynchPrediv + 1)*(uwSynchPrediv + 1)
 // modify RTC_ASYNCH_PREDIV & RTC_SYNCH_PREDIV in board/<BN>/mpconfigport.h to change sub-second ticks
 // default is 3906.25 µs, min is ~30.52 µs (will increas Ivbat by ~500nA)
-//#ifndef RTC_ASYNCH_PREDIV
-//#define RTC_ASYNCH_PREDIV (0x7f)
-//#endif
+// #ifndef RTC_ASYNCH_PREDIV
+// #define RTC_ASYNCH_PREDIV (0x7f)
+// #endif
 #ifndef RTC_SYNCH_PREDIV
 #define RTC_SYNCH_PREDIV  (0x00ff)
 #endif
@@ -92,7 +87,7 @@ void rtc_get_time(RTC_TimeTypeDef *time) {
     time->Minutes = dt.minute;
     time->SecondFraction = 0;
     time->Seconds = dt.second;
-    //time->StoreOperation;
+    // time->StoreOperation;
     time->SubSeconds = 0;
     time->TimeFormat = 0;
 }
@@ -107,7 +102,7 @@ void rtc_get_date(RTC_DateTypeDef *date) {
 }
 
 void rtc_init_start(bool force_init) {
-	/* ToDo */
+    /* ToDo */
     /* Configure RTC prescaler and RTC data registers */
     rtc_need_init_finalise = false;
     if (!force_init) {
@@ -126,7 +121,7 @@ void rtc_init_finalise(void) {
         return;
     }
     rtc_info = 0x20000000;
-	PYB_RTC_Init();
+    PYB_RTC_Init();
     RTC_CalendarConfig();
     rtc_info |= (mtick() - rtc_startup_tick) & 0xffff;
     rtc_need_init_finalise = false;
@@ -139,12 +134,12 @@ STATIC HAL_StatusTypeDef PYB_RCC_OscConfig(void) {
 STATIC HAL_StatusTypeDef PYB_RTC_Init(void) {
     // Check the RTC peripheral state
     // if RTC state is reset
-#if 0
+    #if 0
     if (SYSTEM.RSTSR1.BIT.CWSF == 0) {
         // cold reset
         PYB_RTC_MspInit_Finalise();
     }
-#endif
+    #endif
     // Set RTC state
     rx_rtc_init();
 }
@@ -306,7 +301,7 @@ mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
     mp_raise_ValueError(MP_ERROR_TEXT("Not implemented"));
     return mp_const_none;
 }
-//MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
+// MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 1, 4, pyb_rtc_wakeup);
 
 // calibration(None)
@@ -333,5 +328,5 @@ const mp_obj_type_t pyb_rtc_type = {
     { &mp_type_type },
     .name = MP_QSTR_RTC,
     .make_new = pyb_rtc_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_rtc_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_rtc_locals_dict,
 };
