@@ -65,6 +65,22 @@
 //#define DEBUG_ESP8266_SOCKET_SEND
 #endif
 
+#if defined(RZA2M)
+#define SCI_INIT_DEFAULT    rz_sci_init_default
+#define SCI_RX_ANY          rz_sci_rx_any
+#define SCI_RX_CH           rz_sci_rx_ch
+#define SCI_TX_CH           rz_sci_tx_ch
+#define SCI_TX_STR          rz_sci_tx_str
+
+#else
+#define SCI_INIT_DEFAULT    rx_sci_init_default
+#define SCI_RX_ANY          rx_sci_rx_any
+#define SCI_RX_CH           rx_sci_rx_ch
+#define SCI_TX_CH           rx_sci_tx_ch
+#define SCI_TX_STR          rx_sci_tx_str
+
+#endif
+
 char *itoa(int num, char *str, int base);
 uint32_t esp8266_read(uint32_t timeout);
 void esp8266_socket_handler(bool connect, int id);
@@ -371,19 +387,19 @@ static void esp8266_serial_clear_buf(void) {
 }
 
 static void esp8266_serial_begin(void) {
-    rx_sci_init_default(esp8266_ch, esp8266_baud);
+    SCI_INIT_DEFAULT(esp8266_ch, esp8266_baud);
 }
 
 static int esp8266_serial_available(void) {
-    return rx_sci_rx_any(esp8266_ch);
+    return SCI_RX_ANY(esp8266_ch);
 }
 
 static int esp8266_serial_read(void) {
-    return (int)rx_sci_rx_ch(esp8266_ch);
+    return (int)SCI_RX_CH(esp8266_ch);
 }
 
 static void esp8266_serial_write_byte(uint8_t c) {
-    rx_sci_tx_ch(esp8266_ch, (uint8_t)c);
+    SCI_TX_CH(esp8266_ch, (uint8_t)c);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     if (debug_write) {
         if (isdisplayed(c)) {
@@ -396,7 +412,7 @@ static void esp8266_serial_write_byte(uint8_t c) {
 }
 
 static void esp8266_serial_print(const char *s) {
-    rx_sci_tx_str(esp8266_ch, (uint8_t *)s);
+    SCI_TX_STR(esp8266_ch, (uint8_t *)s);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
 #endif
@@ -405,7 +421,7 @@ static void esp8266_serial_print(const char *s) {
 static void esp8266_serial_printi(int i) {
     char s[MAX_DIGITS];
     itoa(i, (char *)s, 10);
-    rx_sci_tx_str(esp8266_ch, (uint8_t *)s);
+    SCI_TX_STR(esp8266_ch, (uint8_t *)s);
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
 #endif
@@ -413,8 +429,8 @@ static void esp8266_serial_printi(int i) {
 
 static void esp8266_serial_println(const char *s) {
     esp8266_serial_print(s);
-    rx_sci_tx_ch(esp8266_ch, '\r');
-    rx_sci_tx_ch(esp8266_ch, '\n');
+    SCI_TX_CH(esp8266_ch, '\r');
+    SCI_TX_CH(esp8266_ch, '\n');
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
@@ -423,8 +439,8 @@ static void esp8266_serial_println(const char *s) {
 
 static void esp8266_serial_printiln(int i) {
     esp8266_serial_printi(i);
-    rx_sci_tx_ch(esp8266_ch, '\r');
-    rx_sci_tx_ch(esp8266_ch, '\n');
+    SCI_TX_CH(esp8266_ch, '\r');
+    SCI_TX_CH(esp8266_ch, '\n');
 #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
