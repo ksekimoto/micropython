@@ -5,8 +5,8 @@ get_filename_component(MICROPY_DIR ${PROJECT_DIR}/../.. ABSOLUTE)
 include(${MICROPY_DIR}/py/py.cmake)
 include(${MICROPY_DIR}/extmod/extmod.cmake)
 
-set(MICROPY_SOURCE_EXTMOD_EXTRA
-    ${MICROPY_DIR}/extmod/modonewire.c
+set(MICROPY_QSTRDEFS_PORT
+    ${PROJECT_DIR}/qstrdefsport.h
 )
 
 set(MICROPY_SOURCE_LIB
@@ -55,6 +55,7 @@ set(MICROPY_SOURCE_PORT
     ${PROJECT_DIR}/mpnimbleport.c
     ${PROJECT_DIR}/modsocket.c
     ${PROJECT_DIR}/modesp.c
+    ${PROJECT_DIR}/esp32_nvs.c
     ${PROJECT_DIR}/esp32_partition.c
     ${PROJECT_DIR}/esp32_rmt.c
     ${PROJECT_DIR}/esp32_ulp.c
@@ -70,7 +71,6 @@ set(MICROPY_SOURCE_PORT
 set(MICROPY_SOURCE_QSTR
     ${MICROPY_SOURCE_PY}
     ${MICROPY_SOURCE_EXTMOD}
-    ${MICROPY_SOURCE_EXTMOD_EXTRA}
     ${MICROPY_SOURCE_LIB}
     ${MICROPY_SOURCE_PORT}
 )
@@ -113,12 +113,17 @@ if(IDF_VERSION_MINOR GREATER_EQUAL 2)
     list(APPEND IDF_COMPONENTS esp_timer)
 endif()
 
+if(IDF_VERSION_MINOR GREATER_EQUAL 3)
+    list(APPEND IDF_COMPONENTS esp_hw_support)
+    list(APPEND IDF_COMPONENTS esp_pm)
+    list(APPEND IDF_COMPONENTS hal)
+endif()
+
 # Register the main IDF component.
 idf_component_register(
     SRCS
         ${MICROPY_SOURCE_PY}
         ${MICROPY_SOURCE_EXTMOD}
-        ${MICROPY_SOURCE_EXTMOD_EXTRA}
         ${MICROPY_SOURCE_LIB}
         ${MICROPY_SOURCE_DRIVERS}
         ${MICROPY_SOURCE_PORT}

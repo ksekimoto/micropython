@@ -196,7 +196,7 @@ int mp_bluetooth_hci_uart_init(uint32_t port, uint32_t baudrate) {
     MP_STATE_PORT(pyb_uart_obj_all)[mp_bluetooth_hci_uart_obj.uart_id - 1] = &mp_bluetooth_hci_uart_obj;
 
     // Initialise the UART.
-    uart_init(&mp_bluetooth_hci_uart_obj, 115200, UART_WORDLENGTH_8B, UART_PARITY_NONE, UART_STOPBITS_1, UART_HWCONTROL_RTS | UART_HWCONTROL_CTS);
+    uart_init(&mp_bluetooth_hci_uart_obj, baudrate, UART_WORDLENGTH_8B, UART_PARITY_NONE, UART_STOPBITS_1, UART_HWCONTROL_RTS | UART_HWCONTROL_CTS);
     uart_set_rxbuf(&mp_bluetooth_hci_uart_obj, sizeof(hci_uart_rxbuf), hci_uart_rxbuf);
 
     // Add IRQ handler for IDLE (i.e. packet finished).
@@ -232,7 +232,7 @@ int mp_bluetooth_hci_uart_write(const uint8_t *buf, size_t len) {
     int errcode;
     uart_tx_data(&mp_bluetooth_hci_uart_obj, (void *)buf, len, &errcode);
     if (errcode != 0) {
-        printf("\nmp_bluetooth_hci_uart_write: failed to write to UART %d\n", errcode);
+        mp_printf(&mp_plat_print, "\nmp_bluetooth_hci_uart_write: failed to write to UART %d\n", errcode);
     }
     return 0;
 }

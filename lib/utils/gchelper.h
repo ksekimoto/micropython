@@ -41,6 +41,8 @@ typedef uintptr_t gc_helper_regs_t[4];
 typedef uintptr_t gc_helper_regs_t[10];
 #elif defined (__RX__)
 typedef uintptr_t gc_helper_regs_t[20];
+#elif defined(__aarch64__)
+typedef uintptr_t gc_helper_regs_t[11]; // x19-x29
 #endif
 
 #endif
