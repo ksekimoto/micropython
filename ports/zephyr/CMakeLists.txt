@@ -40,12 +40,14 @@ set(MICROPY_SOURCE_PORT
     machine_i2c.c
     machine_pin.c
     machine_uart.c
+    modbluetooth_zephyr.c
     modmachine.c
     moduos.c
     modusocket.c
     modutime.c
     modzephyr.c
     modzsensor.c
+    mphalport.c
     uart_core.c
     zephyr_storage.c
 )
@@ -85,7 +87,7 @@ set(MICROPY_CPP_FLAGS_EXTRA ${includes} ${system_includes} ${definitions} ${opti
 zephyr_library_named(${MICROPY_TARGET})
 
 zephyr_library_include_directories(
-    ${MICROPY_DIR}
+    ${MICROPY_INC_CORE}
     ${MICROPY_PORT_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
 )
