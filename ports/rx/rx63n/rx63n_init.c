@@ -40,12 +40,11 @@ void rx63n_init(void) {
     exti_deinit();
     udelay_init();
     rx_rtc_init();
-#ifdef USE_DBG_PRINT
+    #ifdef USE_DBG_PRINT
     sci_init_default(DEBUG_CH, SCI_BAUD);
-    //sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    //sci_tx_str(DEBUG_CH, (uint8_t *)"rx63n_init\r\n");
-#endif
-    //usb_init();
+    // sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
+    // sci_tx_str(DEBUG_CH, (uint8_t *)"rx63n_init\r\n");
+    #endif
+    // usb_init();
     internal_flash_init();
 }
-

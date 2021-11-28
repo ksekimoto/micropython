@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2018 Kentaro Sekimoto
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, m_free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -70,15 +70,15 @@ void jpeg_init(jpeg_t *jpeg) {
 
 void jpeg_deinit(jpeg_t *jpeg) {
     f_close(&g_pInFile);
-#if defined(DEBUG_JPEG)
+    #if defined(DEBUG_JPEG)
     debug_printf("File closed");
-#endif
+    #endif
     if (jpeg->pImage != (uint8_t *)NULL) {
-        free(jpeg->pImage);
+        m_free(jpeg->pImage);
         jpeg->pImage = (uint8_t *)NULL;
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("pImage deallocated");
-#endif
+        #endif
     }
 }
 
@@ -95,14 +95,14 @@ inline int MCUHeight(jpeg_t *jpeg) {
     return (int)jpeg->image_info.m_MCUHeight;
 }
 
-unsigned char pjpeg_need_bytes_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data) {
+unsigned char pjpeg_need_bytes_callback(unsigned char *pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data) {
     int n;
     uint32_t readed;
     n = (int)min(g_nInFileSize - g_nInFileOfs, buf_size);
-#if defined(DEBUG_JPEG)
+    #if defined(DEBUG_JPEG)
     debug_printf("FileSize:%d\r\n", g_nInFileSize);
     debug_printf("FileOfs:%d\r\n", g_nInFileOfs);
-#endif
+    #endif
     f_read(&g_pInFile, (void *)pBuf, (UINT)n, (UINT *)&readed);
     *pBytes_actually_read = (unsigned char)(n);
     g_nInFileOfs += n;
@@ -119,37 +119,37 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("Cannot find user mount for %s\r\n", filename);
-#endif
+        #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &g_pInFile, filename, FA_READ);
     if (res != FR_OK) {
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("File can't be opened %s\r\n", filename);
-#endif
+        #endif
         return -1;
     }
     g_nInFileOfs = 0;
     g_nInFileSize = f_size(&g_pInFile);
-#if defined(DEBUG_JPEG)
+    #if defined(DEBUG_JPEG)
     debug_printf("FileSize:%d\r\n", g_nInFileSize);
-#endif
+    #endif
     jpeg->err = (int)pjpeg_decode_init(&jpeg->image_info, (pjpeg_need_bytes_callback_t)pjpeg_need_bytes_callback, (void *)NULL, jpeg->m_split);
     if (jpeg->err != 0) {
-#if defined(DEBUG_JPEG)
-        debug_printf("pjpeg_decode_init() NG %d\r\n", (int )jpeg->err);
-#endif
+        #if defined(DEBUG_JPEG)
+        debug_printf("pjpeg_decode_init() NG %d\r\n", (int)jpeg->err);
+        #endif
         if (jpeg->err == PJPG_UNSUPPORTED_MODE) {
-#if defined(DEBUG_JPEG)
-            debug_printf("Progressive JPEG not supported.%d\r\n", (int )jpeg->err);
-#endif
+            #if defined(DEBUG_JPEG)
+            debug_printf("Progressive JPEG not supported.%d\r\n", (int)jpeg->err);
+            #endif
         }
         f_close(&g_pInFile);
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("File closed %s\r\n", filename);
-#endif
+        #endif
         return -1;
     }
     int MCUWidth = jpeg->image_info.m_MCUWidth;
@@ -165,7 +165,7 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
     jpeg->MCUSPerRow = jpeg->image_info.m_MCUSPerRow;
     jpeg->MCUSPerCol = jpeg->image_info.m_MCUSPerCol;
     jpeg->scanType = jpeg->image_info.m_scanType;
-#if defined(DEBUG_JPEG)
+    #if defined(DEBUG_JPEG)
     debug_printf("decoded_width: %d\r\n", jpeg->decoded_width);
     debug_printf("decoded_height: %d\r\n", jpeg->decoded_height);
     debug_printf("m_MCUWidth: %d\r\n", MCUWidth);
@@ -175,22 +175,22 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
     debug_printf("MCUSPerRow: %d\r\n", jpeg->MCUSPerRow);
     debug_printf("MCUSPerCol: %d \r\n", jpeg->MCUSPerCol);
     debug_printf("scanType: %d\r\n", jpeg->image_info.m_scanType);
-#endif
+    #endif
     int ImageSize = MCUWidth * MCUHeight * jpeg->image_info.m_comps;
-    jpeg->pImage = (uint8_t *)malloc(ImageSize);
+    jpeg->pImage = (uint8_t *)m_malloc(ImageSize);
     if (!jpeg->pImage) {
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("Memory allocation failed.\r\n");
-#endif
+        #endif
         f_close(&g_pInFile);
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("File closed %s\r\n", filename);
-#endif
+        #endif
         return -1;
     } else {
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("pImage allocated:%d\r\n", ImageSize);
-#endif
+        #endif
     }
     memset(jpeg->pImage, 0, ImageSize);
     jpeg->row_blocks_per_mcu = MCUWidth >> 3;
@@ -204,19 +204,19 @@ int jpeg_decode_mcu(jpeg_t *jpeg) {
     if (jpeg->err != 0) {
         jpeg->is_available = 0;
         f_close(&g_pInFile);
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("File closed\r\n", 0);
-#endif
+        #endif
         if (jpeg->err != PJPG_NO_MORE_BLOCKS) {
-#if defined(DEBUG_JPEG)
+            #if defined(DEBUG_JPEG)
             debug_printf("pjpeg_decode_mcu() failed with status %d\r\n", jpeg->err);
-#endif
+            #endif
             if (jpeg->pImage != (uint8_t *)NULL) {
-                free(jpeg->pImage);
+                m_free(jpeg->pImage);
                 jpeg->pImage = (uint8_t *)NULL;
-#if defined(DEBUG_JPEG)
+                #if defined(DEBUG_JPEG)
                 debug_printf("pImage deallocated\r\n");
-#endif
+                #endif
             }
             return -1;
         }
@@ -228,30 +228,31 @@ int jpeg_read(jpeg_t *jpeg) {
     int y, x;
     uint8_t *pDst_row;
 
-    if (jpeg->is_available == 0)
+    if (jpeg->is_available == 0) {
         return 0;
+    }
     if (jpeg->mcu_y >= jpeg->image_info.m_MCUSPerCol) {
         f_close(&g_pInFile);
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("File closed\r\n");
-#endif
+        #endif
         if (jpeg->pImage != (uint8_t *)NULL) {
-            free(jpeg->pImage);
+            m_free(jpeg->pImage);
             jpeg->pImage = (uint8_t *)NULL;
-#if defined(DEBUG_JPEG)
+            #if defined(DEBUG_JPEG)
             debug_printf("pImage deallocated\r\n");
-#endif
+            #endif
         }
         return 0;
     }
     if (jpeg->m_split) {
         pDst_row = jpeg->pImage;
-#if defined(DEBUG_JPEG)
+        #if defined(DEBUG_JPEG)
         debug_printf("col_blocks: %d\r\n", jpeg->col_blocks_per_mcu);
         debug_printf("row_blocks: %d\r\n", jpeg->row_blocks_per_mcu);
         debug_printf("pDst_row ofs: %d\r\n", (int)(pDst_row - jpeg->pImage));
         debug_printf("row_pitch: %d\r\n", jpeg->row_pitch);
-#endif
+        #endif
         if (jpeg->image_info.m_scanType == PJPG_GRAYSCALE) {
             *pDst_row = jpeg->image_info.m_pMCUBufR[0];
         } else {
@@ -266,10 +267,10 @@ int jpeg_read(jpeg_t *jpeg) {
                     src_ofs += 64;
                 }
                 pDst_row += (jpeg->row_pitch - 3 * jpeg->row_blocks_per_mcu);
-#if defined(DEBUG_JPEG)
+                #if defined(DEBUG_JPEG)
                 debug_printf("pDst_row ofs: %d\r\n", (int)(pDst_row - jpeg->pImage));
                 debug_printf("(row_pitch - 3 * row_blocks_per_mcu): %d\r\n", (int)(jpeg->row_pitch - 3 * jpeg->row_blocks_per_mcu));
-#endif
+                #endif
             }
         }
     } else {
@@ -293,8 +294,9 @@ int jpeg_read(jpeg_t *jpeg) {
                     int bx, by;
                     for (by = 0; by < by_limit; by++) {
                         uint8_t *pDst = pDst_block;
-                        for (bx = 0; bx < bx_limit; bx++)
+                        for (bx = 0; bx < bx_limit; bx++) {
                             *pDst++ = *pSrcR++;
+                        }
                         pSrcR += (8 - bx_limit);
                         pDst_block += jpeg->row_pitch;
                     }
@@ -325,9 +327,9 @@ int jpeg_read(jpeg_t *jpeg) {
         jpeg->mcu_x = 0;
         jpeg->mcu_y++;
     }
-    if (jpeg_decode_mcu(jpeg) == -1)
+    if (jpeg_decode_mcu(jpeg) == -1) {
         jpeg->is_available = 0;
+    }
     return 1;
 }
 #endif
-

@@ -31,24 +31,24 @@
 #include "tinymalloc.h"
 
 #ifdef USE_DBG_PRINT
-//#define DEBUG_TINY_MALLOC
+// #define DEBUG_TINY_MALLOC
 #endif
 
-//#define TMEM_SIZE   20000
-//char memory[TMEM_SIZE];
+// #define TMEM_SIZE   20000
+// char memory[TMEM_SIZE];
 
-static struct block *freeList=(void*)NULL;
+static struct block *freeList = (void *)NULL;
 static void *memory_start = NULL;
 static int memory_size = 0;
 
 void tinymalloc_init(void *memory, size_t size) {
     memory_start = memory;
     memory_size = (int)size;
-#if defined(DEBUG_TINY_MALLOC)
+    #if defined(DEBUG_TINY_MALLOC)
     debug_printf("tinymalloc_init() start=%08x, size=%d\r\n", memory_start, memory_size);
-#endif
+    #endif
     memset(memory, 0, size);
-    freeList=(void*)memory;
+    freeList = (void *)memory;
     freeList->size = size - sizeof(struct block);
     freeList->free = 1;
     freeList->next = NULL;
@@ -81,9 +81,9 @@ void *tinymalloc(size_t noOfBytes) {
     } else {
         result = NULL;
     }
-#if defined(DEBUG_TINY_MALLOC)
+    #if defined(DEBUG_TINY_MALLOC)
     debug_printf("tinymalloc() addr=%08x, size=%d\r\n", result, (int)noOfBytes);
-#endif
+    #endif
     return result;
 }
 
@@ -106,7 +106,7 @@ void tinyfree(void *ptr) {
         curr->free = 1;
         merge();
     }
-#if defined(DEBUG_TINY_MALLOC)
+    #if defined(DEBUG_TINY_MALLOC)
     debug_printf("tinyfree() addr=%08x\r\n", ptr);
-#endif
+    #endif
 }

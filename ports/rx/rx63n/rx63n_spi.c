@@ -82,25 +82,26 @@ void rx_spi_get_pins(uint32_t ch, uint8_t *mosi, uint8_t *miso, uint8_t *clk) {
 
 static void rx_spi_set_MSTP(uint32_t ch, int bit) {
     switch (ch) {
-    case 0:
-        SYSTEM.MSTPCRB.BIT.MSTPB17 = bit;
-        break;
-    case 1:
-        SYSTEM.MSTPCRB.BIT.MSTPB16 = bit;
-        break;
-    default:
-        SYSTEM.MSTPCRC.BIT.MSTPC22 = bit;
-        break;
+        case 0:
+            SYSTEM.MSTPCRB.BIT.MSTPB17 = bit;
+            break;
+        case 1:
+            SYSTEM.MSTPCRB.BIT.MSTPB16 = bit;
+            break;
+        default:
+            SYSTEM.MSTPCRC.BIT.MSTPC22 = bit;
+            break;
     }
 }
 
 static void rx_spi_set_PMR(uint8_t pin, uint32_t value) {
     uint8_t port = pin >> 3;
     uint8_t bit = pin & 0x7;
-    if (value)
+    if (value) {
         _PMR(port) |= (1 << bit);
-    else
+    } else {
         _PMR(port) &= ~(1 << bit);
+    }
 }
 
 inline static void rx_spi_set_ir(uint32_t ch, int bit) {
@@ -108,7 +109,7 @@ inline static void rx_spi_set_ir(uint32_t ch, int bit) {
 }
 
 inline static bool rx_spi_chk_ir(uint32_t ch, int bit) {
-    return (g_spri[ch]->IR == bit);
+    return g_spri[ch]->IR == bit;
 }
 
 void rx_spi_set_bits(uint32_t ch, uint32_t bits) {
@@ -123,8 +124,9 @@ void rx_spi_set_bits(uint32_t ch, uint32_t bits) {
 }
 
 void rx_spi_set_clk(uint32_t ch, uint32_t baud) {
-    if (baud == 0)
+    if (baud == 0) {
         return;
+    }
     vp_rspi prspi = g_rspi[ch];
     prspi->SPCR.BIT.SPE = 0;
     prspi->SPBR = BCLK / 2 / baud - 1;
@@ -133,10 +135,11 @@ void rx_spi_set_clk(uint32_t ch, uint32_t baud) {
 
 void rx_spi_set_firstbit(uint32_t ch, uint32_t firstbit) {
     vp_rspi prspi = g_rspi[ch];
-    if (firstbit)
+    if (firstbit) {
         prspi->SPCMD0.WORD |= 0x1000;
-    else
+    } else {
         prspi->SPCMD0.WORD &= ~0x1000;
+    }
 }
 
 void rx_spi_set_mode(uint32_t ch, uint32_t polarity, uint32_t phase) {
@@ -225,8 +228,9 @@ uint8_t rx_spi_write_byte(uint32_t ch, uint8_t b) {
     vp_rspi prspi = g_rspi[ch];
     rx_spi_set_ir(ch, 0);
     prspi->SPDR.LONG = (uint32_t)(b);
-    while (rx_spi_chk_ir(ch, 0))
-            ;
+    while (rx_spi_chk_ir(ch, 0)) {
+        ;
+    }
     return (uint8_t)(prspi->SPDR.LONG);
 }
 
@@ -236,8 +240,9 @@ void rx_spi_write_bytes8(uint32_t ch, uint8_t *buf, uint32_t count) {
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         prspi->SPDR.LONG;
     }
 }
@@ -248,8 +253,9 @@ void rx_spi_write_bytes16(uint32_t ch, uint16_t *buf, uint32_t count) {
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         prspi->SPDR.LONG;
     }
     rx_spi_set_bits(ch, 8);
@@ -261,8 +267,9 @@ void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*buf++);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         prspi->SPDR.LONG;
     }
     rx_spi_set_bits(ch, 8);
@@ -284,8 +291,9 @@ void rx_spi_transfer8(uint32_t ch, uint8_t *dst, uint8_t *src, uint32_t count) {
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*src);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         *dst = (uint8_t)(prspi->SPDR.LONG);
         src++;
         dst++;
@@ -298,8 +306,9 @@ void rx_spi_transfer16(uint32_t ch, uint16_t *dst, uint16_t *src, uint32_t count
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*src);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         *dst = (uint16_t)(prspi->SPDR.LONG);
         src++;
         dst++;
@@ -313,8 +322,9 @@ void rx_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
     while (count--) {
         rx_spi_set_ir(ch, 0);
         prspi->SPDR.LONG = (uint32_t)(*src);
-        while (rx_spi_chk_ir(ch, 0))
+        while (rx_spi_chk_ir(ch, 0)) {
             ;
+        }
         *dst = (uint32_t)(prspi->SPDR.LONG);
         src++;
         dst++;
@@ -334,10 +344,10 @@ void rx_spi_transfer(uint32_t ch, uint32_t bits, uint8_t *dst, uint8_t *src, uin
 
 void rx_spi_start_xfer(uint32_t ch, uint16_t spcmd, uint8_t spbr) {
     vp_rspi prspi = g_rspi[ch];
-    prspi->SPCR.BIT.SPE = 0; //Stop SPI
+    prspi->SPCR.BIT.SPE = 0; // Stop SPI
     prspi->SPCMD0.WORD = spcmd;
     prspi->SPBR = spbr;
-    prspi->SPCR.BIT.SPE = 1; //Start SPI
+    prspi->SPCR.BIT.SPE = 1; // Start SPI
 }
 
 void rx_spi_end_xfer(uint32_t ch) {

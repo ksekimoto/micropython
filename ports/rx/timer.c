@@ -34,7 +34,7 @@
 #include "common.h"
 
 #define TIMER_SIZE  3
-//#define TIMER_CHANNEL
+// #define TIMER_CHANNEL
 
 void timer_irq_handler(void *param);
 STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args);
@@ -53,9 +53,9 @@ typedef struct _pyb_timer_obj_t {
     mp_obj_base_t base;
     uint8_t tim_id;
     mp_obj_t callback;
-#if defined(TIMER_CHANNEL)
+    #if defined(TIMER_CHANNEL)
     pyb_timer_channel_obj_t *channel;
-#endif
+    #endif
 } pyb_timer_obj_t;
 #define PYB_TIMER_OBJ_ALL_NUM MP_ARRAY_SIZE(MP_STATE_PORT(pyb_timer_obj_all))
 
@@ -145,7 +145,7 @@ STATIC void pyb_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
 ///
 ///  You must either specify freq or both of period and prescaler.
 STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    //enum { ARG_freq, ARG_prescaler, ARG_period, ARG_tick_hz, ARG_mode, ARG_div, ARG_callback, ARG_deadtime };
+    // enum { ARG_freq, ARG_prescaler, ARG_period, ARG_tick_hz, ARG_mode, ARG_div, ARG_callback, ARG_deadtime };
     enum { ARG_freq, ARG_period, ARG_callback };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_freq,         MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
@@ -157,10 +157,10 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // init TIM
-    //HAL_TIM_Base_Init(&self->tim);
-    //config_deadtime(self, args[ARG_deadtime].u_int);
+    // HAL_TIM_Base_Init(&self->tim);
+    // config_deadtime(self, args[ARG_deadtime].u_int);
     for (int i = 1; i <= TIMER_SIZE; i++) {
-        cmt_timer_set_callback(i, (CMT_TIMER_FUNC)timer_irq_handler, (void *)&cmt_timer_ch[i-1]);
+        cmt_timer_set_callback(i, (CMT_TIMER_FUNC)timer_irq_handler, (void *)&cmt_timer_ch[i - 1]);
     }
     cmt_timer_init(self->tim_id, DEF_CLKDEV);
     if (args[ARG_freq].u_obj != mp_const_none) {
@@ -235,7 +235,7 @@ STATIC mp_obj_t pyb_timer_deinit(mp_obj_t self_in) {
     // Disable the base interrupt
     pyb_timer_callback(self_in, mp_const_none);
 
-#if defined(TIMER_CHANNEL)
+    #if defined(TIMER_CHANNEL)
     pyb_timer_channel_obj_t *chan = self->channel;
     self->channel = NULL;
 
@@ -246,7 +246,7 @@ STATIC mp_obj_t pyb_timer_deinit(mp_obj_t self_in) {
         chan = chan->next;
         prev_chan->next = NULL;
     }
-#endif
+    #endif
 
     cmt_timer_deinit(self->tim_id);
     return mp_const_none;
@@ -375,10 +375,10 @@ STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args) {
         uint32_t counter;
         uint32_t freq;
         if (0) {
-#if MICROPY_PY_BUILTINS_FLOAT
-        } else if MP_OBJ_IS_TYPE(args[1], &mp_type_float) {
+        #if MICROPY_PY_BUILTINS_FLOAT
+        } else if (mp_obj_is_type(args[1], &mp_type_float)) {
             freq = (int)mp_obj_get_float(args[1]);
-#endif
+        #endif
         } else {
             freq = mp_obj_get_int(args[1]);
         }
@@ -424,16 +424,16 @@ STATIC mp_obj_t pyb_timer_callback(mp_obj_t self_in, mp_obj_t callback) {
     pyb_timer_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (callback == mp_const_none) {
         // stop interrupt (but not timer)
-        //__HAL_TIM_DISABLE_IT(&self->tim, TIM_IT_UPDATE);
+        // __HAL_TIM_DISABLE_IT(&self->tim, TIM_IT_UPDATE);
         self->callback = mp_const_none;
     } else if (mp_obj_is_callable(callback)) {
-        //__HAL_TIM_DISABLE_IT(&self->tim, TIM_IT_UPDATE);
+        // __HAL_TIM_DISABLE_IT(&self->tim, TIM_IT_UPDATE);
         self->callback = callback;
         // start timer, so that it interrupts on overflow, but clear any
         // pending interrupts which may have been set by initializing it.
-        //__HAL_TIM_CLEAR_FLAG(&self->tim, TIM_IT_UPDATE);
-        //HAL_TIM_Base_Start_IT(&self->tim); // This will re-enable the IRQ
-        //HAL_NVIC_EnableIRQ(self->irqn);
+        // __HAL_TIM_CLEAR_FLAG(&self->tim, TIM_IT_UPDATE);
+        // HAL_TIM_Base_Start_IT(&self->tim); // This will re-enable the IRQ
+        // HAL_NVIC_EnableIRQ(self->irqn);
     } else {
         mp_raise_ValueError(MP_ERROR_TEXT("callback must be None or a callable object"));
     }
@@ -457,7 +457,7 @@ const mp_obj_type_t pyb_timer_type = {
     .name = MP_QSTR_Timer,
     .print = pyb_timer_print,
     .make_new = pyb_timer_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_timer_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_timer_locals_dict,
 };
 
 #if defined(TIMER_CHANNEL)
@@ -475,8 +475,8 @@ STATIC void pyb_timer_channel_print(const mp_print_t *print, mp_obj_t self_in, m
     pyb_timer_channel_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     mp_printf(print, "TimerChannel(timer=%u, channel=%u",
-          self->timer->tim_id,
-          self->channel);
+        self->timer->tim_id,
+        self->channel);
 }
 
 /// \method capture([value])
@@ -503,7 +503,7 @@ STATIC mp_obj_t pyb_timer_channel_capture_compare(size_t n_args, const mp_obj_t 
         return mp_const_none;
     } else {
         // set
-        //__HAL_TIM_SET_COMPARE(&self->timer->tim, TIMER_CHANNEL(self), mp_obj_get_int(args[1]) & TIMER_CNT_MASK(self->timer));
+        // __HAL_TIM_SET_COMPARE(&self->timer->tim, TIMER_CHANNEL(self), mp_obj_get_int(args[1]) & TIMER_CNT_MASK(self->timer));
         return mp_const_none;
     }
 }
@@ -517,16 +517,16 @@ STATIC mp_obj_t pyb_timer_channel_callback(mp_obj_t self_in, mp_obj_t callback) 
     pyb_timer_channel_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (callback == mp_const_none) {
         // stop interrupt (but not timer)
-        //_HAL_TIM_DISABLE_IT(&self->timer->tim, TIMER_IRQ_MASK(self->channel));
+        // _HAL_TIM_DISABLE_IT(&self->timer->tim, TIMER_IRQ_MASK(self->channel));
         self->callback = mp_const_none;
     } else if (mp_obj_is_callable(callback)) {
         self->callback = callback;
         uint8_t tim_id = self->timer->tim_id;
-        //__HAL_TIM_CLEAR_IT(&self->timer->tim, TIMER_IRQ_MASK(self->channel));
+        // __HAL_TIM_CLEAR_IT(&self->timer->tim, TIMER_IRQ_MASK(self->channel));
         if (tim_id == 1) {
-            //HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
+            // HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
         } else {
-            //HAL_NVIC_EnableIRQ(self->timer->irqn);
+            // HAL_NVIC_EnableIRQ(self->timer->irqn);
         }
         // start timer, so that it interrupts on overflow
     } else {
@@ -548,7 +548,7 @@ STATIC const mp_obj_type_t pyb_timer_channel_type = {
     { &mp_type_type },
     .name = MP_QSTR_TimerChannel,
     .print = pyb_timer_channel_print,
-    .locals_dict = (mp_obj_dict_t*)&pyb_timer_channel_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_timer_channel_locals_dict,
 };
 #endif
 
@@ -567,11 +567,11 @@ STATIC void timer_handle_irq_channel(pyb_timer_obj_t *tim, uint8_t channel, mp_o
         } else {
             // Uncaught exception; disable the callback so it doesn't run again.
             tim->callback = mp_const_none;
-            //__HAL_TIM_DISABLE_IT(&tim->tim, irq_mask);
+            // __HAL_TIM_DISABLE_IT(&tim->tim, irq_mask);
             if (channel == 0) {
-                        mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) interrupt handler\n", tim->tim_id);
+                mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) interrupt handler\n", tim->tim_id);
             } else {
-                        mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) channel %u interrupt handler\n", tim->tim_id, channel);
+                mp_printf(MICROPY_ERROR_PRINTER, "uncaught exception in Timer(%u) channel %u interrupt handler\n", tim->tim_id, channel);
             }
             mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));
         }
@@ -592,20 +592,20 @@ void timer_irq_handler(void *param) {
         }
         timer_handle_irq_channel(tim, 0, tim->callback);
         // Check to see if a timer channel interrupt was pending
-#if defined(TIMER_CHANNEL)
+        #if defined(TIMER_CHANNEL)
         pyb_timer_channel_obj_t *chan = tim->channel;
         while (chan != NULL) {
             timer_handle_irq_channel(tim, chan->channel, chan->callback);
-            //handled |= TIMER_IRQ_MASK(chan->channel);
+            // handled |= TIMER_IRQ_MASK(chan->channel);
             chan = chan->next;
         }
-#endif
+        #endif
         // ToDo
         // Finally, clear any remaining interrupt sources. Otherwise we'll
         // just get called continuously.
-        //uint32_t unhandled = 0;
-        //if (unhandled != 0) {
+        // uint32_t unhandled = 0;
+        // if (unhandled != 0) {
         //    printf("Unhandled interrupt SR=0x%02x (now disabled)\n", (unsigned int)unhandled);
-        //}
+        // }
     }
 }

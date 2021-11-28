@@ -26,7 +26,7 @@
 #ifndef MICROPY_INCLUDED_STM32_UART_H
 #define MICROPY_INCLUDED_STM32_UART_H
 
-#include "lib/utils/mpirq.h"
+#include "shared/runtime/mpirq.h"
 
 typedef enum {
     PYB_UART_NONE = 0,
@@ -40,6 +40,9 @@ typedef enum {
     PYB_UART_8 = 8,
     PYB_UART_9 = 9,
     PYB_UART_10 = 10,
+    #ifdef LPUART1
+    PYB_LPUART_1 = MICROPY_HW_MAX_UART + 1,
+    #endif
 } pyb_uart_t;
 
 #define CHAR_WIDTH_8BIT (0)
@@ -85,6 +88,7 @@ void uart_deinit(pyb_uart_obj_t *uart_obj);
 void uart_irq_handler(mp_uint_t uart_id);
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached);
+uint32_t uart_get_source_freq(pyb_uart_obj_t *self);
 uint32_t uart_get_baudrate(pyb_uart_obj_t *self);
 void uart_set_baudrate(pyb_uart_obj_t *self, uint32_t baudrate);
 

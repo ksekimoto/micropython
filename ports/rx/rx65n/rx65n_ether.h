@@ -31,8 +31,9 @@
 extern "C" {
 #endif
 
-#define TX_DESC_SECTION   __attribute__((section ("_TX_DEDC")))
-#define RX_DESC_SECTION   __attribute__((section ("_RX_DESC")))
+#define TX_DESC_SECTION   __attribute__((section("_TX_DEDC")))
+#define RX_DESC_SECTION   __attribute__((section("_RX_DESC")))
+#define ETH_BUF_SECTION   __attribute__((section("_ETH_BUF")))
 
 struct eth_descriptor {
     // little endian
@@ -127,7 +128,7 @@ struct ei_device {
 #define PHY_ST      1
 #define PHY_READ    2
 #define PHY_WRITE   1
-//#define  PHY_ADDR  0x1F
+// #define  PHY_ADDR  0x1F
 
 #define MDC_WAIT    2
 
@@ -144,12 +145,12 @@ struct ei_device {
 #define PHY_AN_LINK_PARTNER_10FULL  0x0040
 #define PHY_AN_LINK_PARTNER_10HALF  0x0020
 
-//#define PHY_RESET_WAIT            0x00020000L
-//#define PHY_AUTO_NEGOTIATON_WAIT  0x00800000L
+// #define PHY_RESET_WAIT            0x00020000L
+// #define PHY_AUTO_NEGOTIATON_WAIT  0x00800000L
 #define PHY_RESET_WAIT              0x00002000L
 #define PHY_AUTO_NEGOTIATON_WAIT    0x00040000L
 
-#define ALIGN(X,Y) ( (X+Y-1)/Y*Y )
+#define ALIGN(X,Y) ((X + Y - 1) / Y * Y)
 #define ALIGNED_BUFSIZE ALIGN(ETH_BUF_SIZE,32)
 
 void rx_ether_int(void);

@@ -1,8 +1,13 @@
 # MicroPython on ESP32, ESP IDF configuration
 # The following options override the defaults
 
-CONFIG_IDF_TARGET="esp32"
 CONFIG_IDF_FIRMWARE_CHIP_ID=0x0000
+
+# Compiler options: use -O2 and disable assertions to improve performance
+# (CONFIG_COMPILER_OPTIMIZATION_LEVEL_RELEASE is for IDF 4.0.2)
+CONFIG_COMPILER_OPTIMIZATION_LEVEL_RELEASE=y
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_DISABLE=y
 
 # Application manager
 CONFIG_APP_EXCLUDE_PROJECT_VER_VAR=y
@@ -23,6 +28,10 @@ CONFIG_ESP32_XTAL_FREQ_AUTO=y
 
 # Power Management
 CONFIG_PM_ENABLE=y
+
+# Memory protection
+# This is required to allow allocating IRAM
+CONFIG_ESP_SYSTEM_MEMPROT_FEATURE=n
 
 # FreeRTOS
 CONFIG_FREERTOS_THREAD_LOCAL_STORAGE_POINTERS=2

@@ -10,7 +10,7 @@
 #define MICROPY_HW_ENABLE_RTC       (1)
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
-#define MICROPY_HW_ETH_RX           (1)
+#define MICROPY_HW_ETH_MDC          (1)
 #define MICROPY_HW_ENABLE_RNG       (1)
 
 // UART config

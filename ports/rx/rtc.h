@@ -30,14 +30,14 @@ extern const mp_obj_type_t pyb_rtc_type;
 
 typedef struct
 {
-  uint8_t Hours;
-  uint8_t Minutes;
-  uint8_t Seconds;
-  uint8_t TimeFormat;
-  uint32_t SubSeconds;
-  uint32_t SecondFraction;
-  uint32_t DayLightSaving;
-  uint32_t StoreOperation;
+    uint8_t Hours;
+    uint8_t Minutes;
+    uint8_t Seconds;
+    uint8_t TimeFormat;
+    uint32_t SubSeconds;
+    uint32_t SecondFraction;
+    uint32_t DayLightSaving;
+    uint32_t StoreOperation;
 } RTC_TimeTypeDef;
 
 /**
@@ -45,10 +45,10 @@ typedef struct
   */
 typedef struct
 {
-  uint8_t WeekDay;
-  uint8_t Month;
-  uint8_t Date;
-  uint8_t Year;
+    uint8_t WeekDay;
+    uint8_t Month;
+    uint8_t Date;
+    uint8_t Year;
 } RTC_DateTypeDef;
 
 #define RTC_FORMAT_BIN                      0x000000000U

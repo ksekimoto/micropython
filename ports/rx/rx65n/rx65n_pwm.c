@@ -32,19 +32,22 @@
 #include "rx65n_pwm.h"
 
 static bool rx_pwm_channel_init_flag[PWM_CHANNEL_SIZE] = {
-    false, false, false, false, false };
+    false, false, false, false, false
+};
 static float rx_pwm_channel_freq[PWM_CHANNEL_SIZE] = {
     PWM_DEFAULT_FREQ,
     PWM_DEFAULT_FREQ,
     PWM_DEFAULT_FREQ,
     PWM_DEFAULT_FREQ,
-    PWM_DEFAULT_FREQ };
+    PWM_DEFAULT_FREQ
+};
 static float rx_pwm_channel_duty[PWM_CHANNEL_SIZE] = {
     PWM_DEFAULT_DUTY,
     PWM_DEFAULT_DUTY,
     PWM_DEFAULT_DUTY,
     PWM_DEFAULT_DUTY,
-    PWM_DEFAULT_DUTY};
+    PWM_DEFAULT_DUTY
+};
 
 enum PWM_MTU_CHANNEL_PIN {
     MTIOC0A,    /* channel 0-0: output */
@@ -147,7 +150,7 @@ uint8_t rx_pwm_get_mtu_pin(uint8_t pin_idx) {
             break;
         }
         if (pin_mtu_af1[i] == pin_idx) {
-            mtu_pin = pin_mtu_af1[i+1];
+            mtu_pin = pin_mtu_af1[i + 1];
             break;
         }
         i += 2;
@@ -167,7 +170,7 @@ uint8_t rx_pwm_get_mtu_channel(uint8_t pin_idx) {
             break;
         }
         if (mtu_pin_channel[i] == mtu_pin) {
-            mtu_channel = mtu_pin_channel[i+1];
+            mtu_channel = mtu_pin_channel[i + 1];
             break;
         }
         i += 2;
@@ -231,199 +234,199 @@ uint32_t rx_pwm_get_clock_dev(int channel, float freq) {
 
 void rx_pwm_set_clock(int channel, uint32_t clkdev) {
     switch (channel) {
-    case 0:
-        switch (clkdev) {
+        case 0:
+            switch (clkdev) {
+                case 1:
+                    MTU0.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    MTU0.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    MTU0.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    MTU0.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
         case 1:
-            MTU0.TCR.BIT.TPSC = 0x0;
+            switch (clkdev) {
+                case 1:
+                    MTU1.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    MTU1.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    MTU1.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    MTU1.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 2:
+            switch (clkdev) {
+                case 1:
+                    MTU2.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    MTU2.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    MTU2.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    MTU2.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 3:
+            switch (clkdev) {
+                case 1:
+                    MTU3.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    MTU3.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    MTU3.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    MTU3.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    MTU3.TCR.BIT.TPSC = 0x4;
+                    break;
+                case 1024:
+                    MTU3.TCR.BIT.TPSC = 0x5;
+                    break;
+                default:
+                    break;
+            }
             break;
         case 4:
-            MTU0.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            MTU0.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            MTU0.TCR.BIT.TPSC = 0x3;
-            break;
         default:
+            switch (clkdev) {
+                case 1:
+                    MTU4.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    MTU4.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    MTU4.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    MTU4.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    MTU4.TCR.BIT.TPSC = 0x4;
+                    break;
+                case 1024:
+                    MTU4.TCR.BIT.TPSC = 0x5;
+                    break;
+            }
             break;
-        }
-        break;
-    case 1:
-        switch (clkdev) {
-        case 1:
-            MTU1.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            MTU1.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            MTU1.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            MTU1.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 2:
-        switch (clkdev) {
-        case 1:
-            MTU2.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            MTU2.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            MTU2.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            MTU2.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 3:
-        switch (clkdev) {
-        case 1:
-            MTU3.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            MTU3.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            MTU3.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            MTU3.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            MTU3.TCR.BIT.TPSC = 0x4;
-            break;
-        case 1024:
-            MTU3.TCR.BIT.TPSC = 0x5;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 4:
-    default:
-        switch (clkdev) {
-        case 1:
-            MTU4.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            MTU4.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            MTU4.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            MTU4.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            MTU4.TCR.BIT.TPSC = 0x4;
-            break;
-        case 1024:
-            MTU4.TCR.BIT.TPSC = 0x5;
-            break;
-        }
-        break;
     }
 }
 
 
 void rx_pwm_channel_enable(int channel) {
-#if defined(RX63N)
+    #if defined(RX63N)
     switch (channel) {
-    case 0:
-        MTU.TSTR.BYTE |= 0x01;     // start counter
-        break;
-    case 1:
-        MTU.TSTR.BYTE |= 0x02;     // start counter
-        break;
-    case 2:
-        MTU.TSTR.BYTE |= 0x04;     // start counter
-        break;
-    case 3:
-        MTU.TSTR.BYTE |= 0x40;     // start counter
-        break;
-    case 4:
-        MTU.TSTR.BYTE |= 0x80;     // start counter
-        break;
-    default:
-        break;
+        case 0:
+            MTU.TSTR.BYTE |= 0x01; // start counter
+            break;
+        case 1:
+            MTU.TSTR.BYTE |= 0x02; // start counter
+            break;
+        case 2:
+            MTU.TSTR.BYTE |= 0x04; // start counter
+            break;
+        case 3:
+            MTU.TSTR.BYTE |= 0x40; // start counter
+            break;
+        case 4:
+            MTU.TSTR.BYTE |= 0x80; // start counter
+            break;
+        default:
+            break;
     }
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     switch (channel) {
-    case 0:
-        MTU.TSTRA.BYTE |= 0x01;     // start counter
-        break;
-    case 1:
-        MTU.TSTRA.BYTE |= 0x02;     // start counter
-        break;
-    case 2:
-        MTU.TSTRA.BYTE |= 0x04;     // start counter
-        break;
-    case 3:
-        MTU.TSTRA.BYTE |= 0x40;     // start counter
-        break;
-    case 4:
-        MTU.TSTRA.BYTE |= 0x80;     // start counter
-        break;
-    default:
-        break;
+        case 0:
+            MTU.TSTRA.BYTE |= 0x01; // start counter
+            break;
+        case 1:
+            MTU.TSTRA.BYTE |= 0x02; // start counter
+            break;
+        case 2:
+            MTU.TSTRA.BYTE |= 0x04; // start counter
+            break;
+        case 3:
+            MTU.TSTRA.BYTE |= 0x40; // start counter
+            break;
+        case 4:
+            MTU.TSTRA.BYTE |= 0x80; // start counter
+            break;
+        default:
+            break;
     }
-#endif
+    #endif
 }
 
 void rx_pwm_channel_disable(int channel) {
-#if defined(RX63N)
+    #if defined(RX63N)
     switch (channel) {
-    case 0:
-        MTU.TSTR.BYTE &= 0xFE;    // stop counter
-        break;
-    case 1:
-        MTU.TSTR.BYTE &= 0xFD;    // stop counter
-        break;
-    case 2:
-        MTU.TSTR.BYTE &= 0xFB;    // stop counter
-        break;
-    case 3:
-        MTU.TSTR.BYTE &= 0xBF;    // stop counter
-        break;
-    case 4:
-        MTU.TSTR.BYTE &= 0x7F;    // stop counter
-        break;
-    default:
-        break;
+        case 0:
+            MTU.TSTR.BYTE &= 0xFE; // stop counter
+            break;
+        case 1:
+            MTU.TSTR.BYTE &= 0xFD; // stop counter
+            break;
+        case 2:
+            MTU.TSTR.BYTE &= 0xFB; // stop counter
+            break;
+        case 3:
+            MTU.TSTR.BYTE &= 0xBF; // stop counter
+            break;
+        case 4:
+            MTU.TSTR.BYTE &= 0x7F; // stop counter
+            break;
+        default:
+            break;
     }
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     switch (channel) {
-    case 0:
-        MTU.TSTRA.BYTE &= 0xFE;    // stop counter
-        break;
-    case 1:
-        MTU.TSTRA.BYTE &= 0xFD;    // stop counter
-        break;
-    case 2:
-        MTU.TSTRA.BYTE &= 0xFB;    // stop counter
-        break;
-    case 3:
-        MTU.TSTRA.BYTE &= 0xBF;    // stop counter
-        break;
-    case 4:
-        MTU.TSTRA.BYTE &= 0x7F;    // stop counter
-        break;
-    default:
-        break;
+        case 0:
+            MTU.TSTRA.BYTE &= 0xFE; // stop counter
+            break;
+        case 1:
+            MTU.TSTRA.BYTE &= 0xFD; // stop counter
+            break;
+        case 2:
+            MTU.TSTRA.BYTE &= 0xFB; // stop counter
+            break;
+        case 3:
+            MTU.TSTRA.BYTE &= 0xBF; // stop counter
+            break;
+        case 4:
+            MTU.TSTRA.BYTE &= 0x7F; // stop counter
+            break;
+        default:
+            break;
     }
-#endif
+    #endif
 }
 
 void rx_pwm_channel_deinit(int channel) {
@@ -433,69 +436,69 @@ void rx_pwm_channel_deinit(int channel) {
 void rx_pwm_channel_init(int channel) {
     rx_pwm_channel_disable(channel);
     switch (channel) {
-    case 0:
-        MTU0.TCR.BIT.CCLR = 0x6;    // compare match clear by TGRD
-#if defined(RX63N)
-        MTU0.TMDR.BIT.MD = 0x2;     // PWM mode 1
-#endif
-#if defined(RX65N)
-        MTU0.TMDR1.BIT.MD = 0x2;     // PWM mode 1
-#endif
-        MTU0.TIORH.BIT.IOA = 0x5;   // compare match high - low
-        MTU0.TIORH.BIT.IOB = 0x6;   // compare match high - high
-        MTU0.TIORL.BIT.IOC = 0x5;   // compare match high - low
-        MTU0.TIORL.BIT.IOD = 0x6;   // compare match high - high
-        break;
-    case 1:
-        MTU1.TCR.BIT.CCLR = 0x6;    // compare match clear by TGRD
-#if defined(RX63N)
-        MTU1.TMDR.BIT.MD = 0x2;     // PWM mode 1
-#endif
-#if defined(RX65N)
-        MTU1.TMDR1.BIT.MD = 0x2;     // PWM mode 1
-#endif
-        MTU1.TIOR.BIT.IOA = 0x5;    // compare match high - low
-        MTU1.TIOR.BIT.IOB = 0x6;    // compare match high - high
-        break;
-    case 2:
-        MTU2.TCR.BIT.CCLR = 0x6;    // compare match clear by TGRD
-#if defined(RX63N)
-        MTU2.TMDR.BIT.MD = 0x2;     // PWM mode 1
-#endif
-#if defined(RX65N)
+        case 0:
+            MTU0.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
+            #if defined(RX63N)
+            MTU0.TMDR.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            #if defined(RX65N)
+            MTU0.TMDR1.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            MTU0.TIORH.BIT.IOA = 0x5; // compare match high - low
+            MTU0.TIORH.BIT.IOB = 0x6; // compare match high - high
+            MTU0.TIORL.BIT.IOC = 0x5; // compare match high - low
+            MTU0.TIORL.BIT.IOD = 0x6; // compare match high - high
+            break;
+        case 1:
+            MTU1.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
+            #if defined(RX63N)
+            MTU1.TMDR.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            #if defined(RX65N)
+            MTU1.TMDR1.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            MTU1.TIOR.BIT.IOA = 0x5; // compare match high - low
+            MTU1.TIOR.BIT.IOB = 0x6; // compare match high - high
+            break;
+        case 2:
+            MTU2.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
+            #if defined(RX63N)
+            MTU2.TMDR.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            #if defined(RX65N)
 //        MTU2.TMDR1.BIT.MD = 0x2;     // PWM mode 1
-#endif
-        MTU2.TIOR.BIT.IOA = 0x5;    // compare match high - low
-        MTU2.TIOR.BIT.IOB = 0x6;    // compare match high - high
-        break;
-    case 3:
-        MTU3.TCR.BIT.CCLR = 0x6;    // compare match clear by TGRD
-#if defined(RX63N)
-        MTU3.TMDR.BIT.MD = 0x2;     // PWM mode 1
-#endif
-#if defined(RX65N)
-        MTU3.TMDR1.BIT.MD = 0x2;     // PWM mode 1
-#endif
-        MTU3.TIORH.BIT.IOA = 0x5;   // compare match high - low
-        MTU3.TIORH.BIT.IOB = 0x6;   // compare match high - high
-        MTU3.TIORL.BIT.IOC = 0x5;   // compare match high - low
-        MTU3.TIORL.BIT.IOD = 0x6;   // compare match high - high
-        break;
-    case 4:
-        MTU4.TCR.BIT.CCLR = 0x6;    // compare match clear by TGRD
-#if defined(RX63N)
-        MTU4.TMDR.BIT.MD = 0x2;     // PWM mode 1
-#endif
-#if defined(RX65N)
-        MTU4.TMDR1.BIT.MD = 0x2;     // PWM mode 1
-#endif
-        MTU4.TIORH.BIT.IOA = 0x5;   // compare match high - low
-        MTU4.TIORH.BIT.IOB = 0x6;   // compare match high - high
-        MTU4.TIORL.BIT.IOC = 0x5;   // compare match high - low
-        MTU4.TIORL.BIT.IOD = 0x6;   // compare match high - high
-        break;
-    default:
-        break;
+            #endif
+            MTU2.TIOR.BIT.IOA = 0x5; // compare match high - low
+            MTU2.TIOR.BIT.IOB = 0x6; // compare match high - high
+            break;
+        case 3:
+            MTU3.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
+            #if defined(RX63N)
+            MTU3.TMDR.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            #if defined(RX65N)
+            MTU3.TMDR1.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            MTU3.TIORH.BIT.IOA = 0x5; // compare match high - low
+            MTU3.TIORH.BIT.IOB = 0x6; // compare match high - high
+            MTU3.TIORL.BIT.IOC = 0x5; // compare match high - low
+            MTU3.TIORL.BIT.IOD = 0x6; // compare match high - high
+            break;
+        case 4:
+            MTU4.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
+            #if defined(RX63N)
+            MTU4.TMDR.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            #if defined(RX65N)
+            MTU4.TMDR1.BIT.MD = 0x2; // PWM mode 1
+            #endif
+            MTU4.TIORH.BIT.IOA = 0x5; // compare match high - low
+            MTU4.TIORH.BIT.IOB = 0x6; // compare match high - high
+            MTU4.TIORL.BIT.IOC = 0x5; // compare match high - low
+            MTU4.TIORL.BIT.IOD = 0x6; // compare match high - high
+            break;
+        default:
+            break;
     }
 }
 
@@ -505,83 +508,83 @@ void rx_pwm_set_channel_params(uint8_t pin_idx, int channel, float freq, float d
     uint8_t mtu_pin = rx_pwm_get_mtu_pin(pin_idx);
     uint32_t clkdev = rx_pwm_get_clock_dev(channel, freq);
     rx_pwm_set_clock(channel, clkdev);
-    float ticks = ((float)PCLK)/(freq * ((float)clkdev));
+    float ticks = ((float)PCLK) / (freq * ((float)clkdev));
     period_ticks = (uint32_t)ticks;
     duration_ticks = (uint32_t)(ticks * duty);
     switch (channel)
     {
-    case 0:
-        if (mtu_pin == MTIOC0A) {
-            MTU0.TGRA = duration_ticks;
-            MTU0.TGRB = period_ticks;
-            MTU0.TGRD = period_ticks;
-            MTU0.TCNT = 0;
-        } else if (mtu_pin == MTIOC0C) {
-            MTU0.TGRC = duration_ticks;
-            MTU0.TGRB = period_ticks;
-            MTU0.TGRD = period_ticks;
-            MTU0.TCNT = 0;
-            MTU0.TCNT = 0;
-        }
-        break;
-    case 1:
-        if (mtu_pin == MTIOC1A) {
-            MTU1.TGRA = duration_ticks;
-            MTU1.TGRB = period_ticks;
-            MTU1.TCNT = 0;
-        }
-        break;
-    case 2:
-        if (mtu_pin == MTIOC2A) {
-            MTU2.TGRA = duration_ticks;
-            MTU2.TGRB = period_ticks;
-            MTU2.TCNT = 0;
-        }
-        break;
-    case 3:
-        if (mtu_pin == MTIOC3A) {
-            MTU3.TGRA = duration_ticks;
-            MTU3.TGRB = period_ticks;
-            MTU3.TGRD = period_ticks;
-            MTU3.TCNT = 0;
-        } else if (mtu_pin == MTIOC3C) {
-            MTU3.TGRC = duration_ticks;
-            MTU3.TGRB = period_ticks;
-            MTU3.TGRD = period_ticks;
-            MTU3.TCNT = 0;
-        }
-        break;
-    case 4:
-        if (mtu_pin == MTIOC4A) {
-            MTU4.TGRA = duration_ticks;
-            MTU4.TGRB = period_ticks;
-            MTU4.TGRD = period_ticks;
-            MTU4.TCNT = 0;
-#if defined(RX63N)
-            MTU.TOER.BIT.OE4A = 1;
-#endif
-#if defined(RX65N)
-            MTU.TOERA.BIT.OE4A = 1;
-#endif
-        } else if (mtu_pin == MTIOC4C) {
-            MTU4.TGRC = duration_ticks;
-            MTU4.TGRB = period_ticks;
-            MTU4.TGRD = period_ticks;
-            MTU4.TCNT = 0;
-#if defined(RX63N)
-            MTU.TOER.BIT.OE4C = 1;
-#endif
-#if defined(RX65N)
-            MTU.TOERA.BIT.OE4C = 1;
-#endif
-        }
-        break;
-    default:
-        return;
+        case 0:
+            if (mtu_pin == MTIOC0A) {
+                MTU0.TGRA = duration_ticks;
+                MTU0.TGRB = period_ticks;
+                MTU0.TGRD = period_ticks;
+                MTU0.TCNT = 0;
+            } else if (mtu_pin == MTIOC0C) {
+                MTU0.TGRC = duration_ticks;
+                MTU0.TGRB = period_ticks;
+                MTU0.TGRD = period_ticks;
+                MTU0.TCNT = 0;
+                MTU0.TCNT = 0;
+            }
+            break;
+        case 1:
+            if (mtu_pin == MTIOC1A) {
+                MTU1.TGRA = duration_ticks;
+                MTU1.TGRB = period_ticks;
+                MTU1.TCNT = 0;
+            }
+            break;
+        case 2:
+            if (mtu_pin == MTIOC2A) {
+                MTU2.TGRA = duration_ticks;
+                MTU2.TGRB = period_ticks;
+                MTU2.TCNT = 0;
+            }
+            break;
+        case 3:
+            if (mtu_pin == MTIOC3A) {
+                MTU3.TGRA = duration_ticks;
+                MTU3.TGRB = period_ticks;
+                MTU3.TGRD = period_ticks;
+                MTU3.TCNT = 0;
+            } else if (mtu_pin == MTIOC3C) {
+                MTU3.TGRC = duration_ticks;
+                MTU3.TGRB = period_ticks;
+                MTU3.TGRD = period_ticks;
+                MTU3.TCNT = 0;
+            }
+            break;
+        case 4:
+            if (mtu_pin == MTIOC4A) {
+                MTU4.TGRA = duration_ticks;
+                MTU4.TGRB = period_ticks;
+                MTU4.TGRD = period_ticks;
+                MTU4.TCNT = 0;
+                #if defined(RX63N)
+                MTU.TOER.BIT.OE4A = 1;
+                #endif
+                #if defined(RX65N)
+                MTU.TOERA.BIT.OE4A = 1;
+                #endif
+            } else if (mtu_pin == MTIOC4C) {
+                MTU4.TGRC = duration_ticks;
+                MTU4.TGRB = period_ticks;
+                MTU4.TGRD = period_ticks;
+                MTU4.TCNT = 0;
+                #if defined(RX63N)
+                MTU.TOER.BIT.OE4C = 1;
+                #endif
+                #if defined(RX65N)
+                MTU.TOERA.BIT.OE4C = 1;
+                #endif
+            }
+            break;
+        default:
+            return;
     }
-#ifdef DEBUG_PWM
+    #ifdef DEBUG_PWM
     debug_printf("Dt/D/P %04x/%06x/%06x\r\n", (UINT16)duration_ticks, duration, period);
-#endif
+    #endif
     return;
 }
 
@@ -635,8 +638,7 @@ void rx_pwm_stop(uint8_t pin_idx) {
     rx_pwm_channel_disable(channel);
 }
 
-static void rx_pwm_set_pin(uint8_t pin_idx)
-{
+static void rx_pwm_set_pin(uint8_t pin_idx) {
     uint8_t port = GPIO_PORT(pin_idx);
     uint8_t mask = GPIO_MASK(pin_idx);
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */
@@ -649,8 +651,7 @@ static void rx_pwm_set_pin(uint8_t pin_idx)
     MPC.PWPR.BYTE = 0x80;   /* Disable write to PFSWE and PFS*/
 }
 
-static void rx_pwm_reset_pin(uint8_t pin_idx)
-{
+static void rx_pwm_reset_pin(uint8_t pin_idx) {
     uint8_t port = GPIO_PORT(pin_idx);
     uint8_t mask = GPIO_MASK(pin_idx);
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */

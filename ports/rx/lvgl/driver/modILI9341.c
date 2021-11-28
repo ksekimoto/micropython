@@ -93,22 +93,21 @@ typedef struct {
 STATIC ILI9341_t *g_ILI9341 = NULL;
 
 STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args);
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args);
 
 STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_ILI9341_obj, mp_init_ILI9341);
 
-STATIC mp_obj_t mp_activate_ILI9341(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_activate_ILI9341(mp_obj_t self_in) {
     ILI9341_t *self = MP_OBJ_TO_PTR(self_in);
     g_ILI9341 = self;
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_ILI9341_obj, mp_activate_ILI9341);
 
-STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
+STATIC void ili9431_flush(struct _disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p);
 DEFINE_PTR_OBJ(ili9431_flush);
 
 STATIC const mp_rom_map_elem_t ILI9341_locals_dict_table[] = {
@@ -121,33 +120,32 @@ STATIC MP_DEFINE_CONST_DICT(ILI9341_locals_dict, ILI9341_locals_dict_table);
 STATIC const mp_obj_type_t ILI9341_type = {
     { &mp_type_type },
     .name = MP_QSTR_ILI9341,
-    //.print = ILI9341_print,
+    // .print = ILI9341_print,
     .make_new = ILI9341_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ILI9341_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&ILI9341_locals_dict,
 };
 
 STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args)
-{
-    enum{
-         ARG_baudrate,
-         ARG_spihost,
-         ARG_mode,
-         ARG_miso,
-         ARG_mosi,
-         ARG_clk,
-         ARG_cs,
-         ARG_dc,
-         ARG_rst,
-         ARG_backlight,
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args) {
+    enum {
+        ARG_baudrate,
+        ARG_spihost,
+        ARG_mode,
+        ARG_miso,
+        ARG_mosi,
+        ARG_clk,
+        ARG_cs,
+        ARG_dc,
+        ARG_rst,
+        ARG_backlight,
     };
 
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_baudrate,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24000000}},
-        { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=0}},
-        { MP_QSTR_mode,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
+        { MP_QSTR_baudrate,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 24000000}},
+        { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
+        { MP_QSTR_mode,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1}},
         { MP_QSTR_miso, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
         { MP_QSTR_mosi, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
         { MP_QSTR_clk, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
@@ -167,21 +165,21 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
     self->mode = args[ARG_mode].u_int;
 
     if (args[ARG_miso].u_obj == MP_OBJ_NULL) {
-        //nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "miso pin not specified"));
+        // nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "miso pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_miso].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->miso = MP_OBJ_TO_PTR(args[ARG_miso].u_obj);
     }
     if (args[ARG_mosi].u_obj == MP_OBJ_NULL) {
-        //nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "mosi pin not specified"));
+        // nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "mosi pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_mosi].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         self->mosi = MP_OBJ_TO_PTR(args[ARG_mosi].u_obj);
     }
     if (args[ARG_clk].u_obj == MP_OBJ_NULL) {
-        //nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "clk pin not specified"));
+        // nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "clk pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_clk].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
@@ -202,7 +200,7 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
         self->dc = MP_OBJ_TO_PTR(args[ARG_dc].u_obj);
     }
     if (args[ARG_rst].u_obj == MP_OBJ_NULL) {
-        //nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "rst pin not specified"));
+        // nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "rst pin not specified"));
         self->rst = (pin_obj_t *)0;
     } else if (!mp_obj_is_type(args[ARG_rst].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
@@ -210,7 +208,7 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
         self->rst = MP_OBJ_TO_PTR(args[ARG_rst].u_obj);
     }
     if (args[ARG_backlight].u_obj == MP_OBJ_NULL) {
-        //nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "backlight pin not specified"));
+        // nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "backlight pin not specified"));
     } else if (!mp_obj_is_type(args[ARG_backlight].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
@@ -220,27 +218,26 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
 }
 
 STATIC const mp_rom_map_elem_t ILI9341_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ILI9341) },
-        { MP_ROM_QSTR(MP_QSTR_display), (mp_obj_t)&ILI9341_type},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ILI9341) },
+    { MP_ROM_QSTR(MP_QSTR_display), (mp_obj_t)&ILI9341_type},
 };
-         
 
-STATIC MP_DEFINE_CONST_DICT (
+
+STATIC MP_DEFINE_CONST_DICT(
     mp_module_ILI9341_globals,
     ILI9341_globals_table
-);
+    );
 
 const mp_obj_module_t mp_module_ILI9341 = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_ILI9341_globals
+    .globals = (mp_obj_dict_t *)&mp_module_ILI9341_globals
 };
 
 //////////////////////////////////////////////////////////////////////////////
 // ILI9341 driver implementation
 //////////////////////////////////////////////////////////////////////////////
 
-STATIC void disp_spi_init(ILI9341_t *self)
-{
+STATIC void disp_spi_init(ILI9341_t *self) {
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     uint32_t state = disable_irq();
@@ -250,8 +247,9 @@ STATIC void disp_spi_init(ILI9341_t *self)
 }
 
 STATIC void disp_spi_send(ILI9341_t *self, const uint8_t *data, uint16_t length) {
-    if (length == 0)
-        return; //no need to send anything
+    if (length == 0) {
+        return; // no need to send anything
+    }
     uint32_t state = disable_irq();
     SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
     mp_hal_pin_write(self->cs, 0);
@@ -274,38 +272,38 @@ STATIC void ili9341_send_data(ILI9341_t *self, const void *data, uint16_t length
 typedef struct {
     uint8_t cmd;
     uint8_t data[16];
-    uint8_t databytes; //No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
+    uint8_t databytes; // No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
 } lcd_init_cmd_t;
 
-STATIC const lcd_init_cmd_t ili_init_cmds[]={
-        {0x01, {0}, 0x80},                          /* software reset */
-        {0x28, {0}, 0x0},                           /* display off */
-        {0xCB, {0x39, 0x2C, 0x00, 0x34, 0x02}, 5},  /* Power control a */
-        {0xCF, {0x00, 0xC1, 0X30}, 3},              /* Power control b 83->c1 */
-        {0xE8, {0x85, 0x00, 0x78}, 3},              /* driver timing control a 01->00 79->78 */
-        {0xEA, {0x00, 0x00}, 2},                    /* driver timing control b */
-        {0xED, {0x64, 0x03, 0X12, 0X81}, 4},        /* power on sequence control */
+STATIC const lcd_init_cmd_t ili_init_cmds[] = {
+    {0x01, {0}, 0x80},                              /* software reset */
+    {0x28, {0}, 0x0},                               /* display off */
+    {0xCB, {0x39, 0x2C, 0x00, 0x34, 0x02}, 5},      /* Power control a */
+    {0xCF, {0x00, 0xC1, 0X30}, 3},                  /* Power control b 83->c1 */
+    {0xE8, {0x85, 0x00, 0x78}, 3},                  /* driver timing control a 01->00 79->78 */
+    {0xEA, {0x00, 0x00}, 2},                        /* driver timing control b */
+    {0xED, {0x64, 0x03, 0X12, 0X81}, 4},            /* power on sequence control */
 //        {0xF7, {0x20}, 1},                        /* pump ratio control */
-        {0xC0, {0x23}, 1},                          /* Power control 1 26->23 */
-        {0xC1, {0x10}, 1},                          /* Power control 2 11->10 */
-        {0xC5, {0x3e, 0x28}, 2},                    /* VCOM control 1 33->3e,3e->28 */
-        {0xC7, {0x86}, 1},                          /* VCOM control 2 be->86 */
-        {0x36, {0x48}, 1},                          /* Memory Access Control */
-        {0x3A, {0x55}, 1},                          /* Pixel Format Set */
-        {0xB1, {0x00, 0x18}, 2},                    /* set frame control 1b->18 */
-        {0xB6, {0x08, 0x82, 0x27}, 3},              /* display function control */
+    {0xC0, {0x23}, 1},                              /* Power control 1 26->23 */
+    {0xC1, {0x10}, 1},                              /* Power control 2 11->10 */
+    {0xC5, {0x3e, 0x28}, 2},                        /* VCOM control 1 33->3e,3e->28 */
+    {0xC7, {0x86}, 1},                              /* VCOM control 2 be->86 */
+    {0x36, {0x48}, 1},                              /* Memory Access Control */
+    {0x3A, {0x55}, 1},                              /* Pixel Format Set */
+    {0xB1, {0x00, 0x18}, 2},                        /* set frame control 1b->18 */
+    {0xB6, {0x08, 0x82, 0x27}, 3},                  /* display function control */
 //        {0xB6, {0x0A, 0x82, 0x27, 0x00}, 4},        /* display function control */
-        {0xF2, {0x02}, 1},                          /* enable 3g 08->02 */
-        {0x26, {0x01}, 1},                          /* gamma set */
-        {0xE0, {0x1F, 0x1A, 0x18, 0x0A, 0x0F, 0x06, 0x45, 0X87, 0x32, 0x0A, 0x07, 0x02, 0x07, 0x05, 0x00}, 15},
-        {0XE1, {0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3A, 0x78, 0x4D, 0x05, 0x18, 0x0D, 0x38, 0x3A, 0x1F}, 15},
-        {0x2A, {0x00, 0x00, 0x00, 0xEF}, 4},
-        {0x2B, {0x00, 0x00, 0x01, 0x3f}, 4},
-        {0x2C, {0}, 0},
+    {0xF2, {0x02}, 1},                              /* enable 3g 08->02 */
+    {0x26, {0x01}, 1},                              /* gamma set */
+    {0xE0, {0x1F, 0x1A, 0x18, 0x0A, 0x0F, 0x06, 0x45, 0X87, 0x32, 0x0A, 0x07, 0x02, 0x07, 0x05, 0x00}, 15},
+    {0XE1, {0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3A, 0x78, 0x4D, 0x05, 0x18, 0x0D, 0x38, 0x3A, 0x1F}, 15},
+    {0x2A, {0x00, 0x00, 0x00, 0xEF}, 4},
+    {0x2B, {0x00, 0x00, 0x01, 0x3f}, 4},
+    {0x2C, {0}, 0},
 //        {0xB7, {0x07}, 1},
-        {0x11, {0}, 0x80},                          /* sleep out */
-        {0x29, {0}, 0x80},                          /* display on */
-        {0, {0}, 0xff},
+    {0x11, {0}, 0x80},                              /* sleep out */
+    {0x29, {0}, 0x80},                              /* display on */
+    {0, {0}, 0xff},
 };
 
 STATIC void ili9431_clear(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t col);
@@ -316,13 +314,14 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in) {
 
     disp_spi_init(self);
 
-    //Initialize non-SPI GPIOs
+    // Initialize non-SPI GPIOs
     mp_hal_pin_output(self->dc);
     mp_hal_pin_output(self->rst);
-    if (self->backlight != MP_OBJ_NULL)
+    if (self->backlight != MP_OBJ_NULL) {
         mp_hal_pin_output(self->backlight);
+    }
 
-    //Reset the display
+    // Reset the display
     if (self->rst) {
         mp_hal_pin_write(self->rst, 1);
         mp_hal_delay_ms(100);
@@ -332,7 +331,7 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in) {
         mp_hal_delay_ms(100);
     }
 
-    //Send all the commands
+    // Send all the commands
     uint16_t cmd = 0;
     while (ili_init_cmds[cmd].databytes != 0xff) {
         ili9441_send_cmd(self, ili_init_cmds[cmd].cmd);
@@ -343,11 +342,12 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in) {
         cmd++;
     }
 
-    //Enable backlight
-    if (self->backlight != MP_OBJ_NULL)
+    // Enable backlight
+    if (self->backlight != MP_OBJ_NULL) {
         mp_hal_pin_write(self->backlight, 1);
+    }
 
-    //ili9431_clear(0, 0, 239, 319, 0);
+    // ili9431_clear(0, 0, 239, 319, 0);
 
     return mp_const_none;
 }
@@ -382,7 +382,7 @@ STATIC void ili9431_clear(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16
     uint8_t *p = (uint8_t *)&col;
     for (i = 0; i < size; i++) {
         ili9341_send_data(self, (void *)p, 1);
-        ili9341_send_data(self, (void *)(p+1), 1);
+        ili9341_send_data(self, (void *)(p + 1), 1);
     }
 }
 

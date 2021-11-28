@@ -25,7 +25,8 @@
  */
 #ifndef MICROPY_INCLUDED_RX_PENDSV_H
 #define MICROPY_INCLUDED_RX_PENDSV_H
-#define PENDSV_ENABLE
+
+#include "boardctrl.h"
 
 enum {
     PENDSV_DISPATCH_SOFT_TIMER,
@@ -38,26 +39,19 @@ enum {
     #if MICROPY_PY_BLUETOOTH && !MICROPY_PY_BLUETOOTH_USE_SYNC_EVENTS
     PENDSV_DISPATCH_BLUETOOTH_HCI,
     #endif
+    MICROPY_BOARD_PENDSV_ENTRIES
     #if MICROPY_PY_LVGL
     PENDSV_DISPATCH_LV,
     #endif
     PENDSV_DISPATCH_MAX
 };
 
-#if defined(PENDSV_ENABLE)
 #define PENDSV_DISPATCH_NUM_SLOTS PENDSV_DISPATCH_MAX
-#else
-#define PENDSV_DISPATCH_NUM_SLOTS 0
-#endif
 
 typedef void (*pendsv_dispatch_t)(void);
 
 void pendsv_init(void);
 void pendsv_kbd_intr(void);
 void pendsv_schedule_dispatch(size_t slot, pendsv_dispatch_t f);
-
-// since we play tricks with the stack, the compiler must not generate a
-// prelude for this function
-//void pendsv_isr_handler(void) __attribute__((naked));
 
 #endif // MICROPY_INCLUDED_RX_PENDSV_H

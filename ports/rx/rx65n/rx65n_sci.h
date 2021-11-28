@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+typedef int (*SCI_CB)(uint32_t ch, uint32_t d);
+
 void sci_init(int ch, int baud, int bits, int parity, int stop, int flow);
 void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int parity, int stop, int flow);
 void sci_init_default(int ch, int baud);

@@ -51,18 +51,18 @@
 #include "esp8266_driver.h"
 
 #if defined(USE_DBG_PRINT)
-//#define DEBUG_ESP8266_ERR
-//#define DEBUG_ESP8266_AT_ERR
-//#define DEBUG_ESP8266_SOCKET_ERR
-//#define DEBUG_ESP8266_AT
-//#define DEBUG_ESP8266_RAW_DATA
-//#define DEBUG_ESP8266_PACKET
-//#define DEBUG_ESP8266_DRIVER
-//#define DEBUG_ESP8266_DRIVER_PACKET_HANDLE
-//#define DEBUG_ESP8266_DRIVER_PACKET_READ
-//#define DEBUG_ESP8266_SOCKET
-//#define DEBUG_ESP8266_SOCKET_RECV
-//#define DEBUG_ESP8266_SOCKET_SEND
+// #define DEBUG_ESP8266_ERR
+// #define DEBUG_ESP8266_AT_ERR
+// #define DEBUG_ESP8266_SOCKET_ERR
+// #define DEBUG_ESP8266_AT
+// #define DEBUG_ESP8266_RAW_DATA
+// #define DEBUG_ESP8266_PACKET
+// #define DEBUG_ESP8266_DRIVER
+// #define DEBUG_ESP8266_DRIVER_PACKET_HANDLE
+// #define DEBUG_ESP8266_DRIVER_PACKET_READ
+// #define DEBUG_ESP8266_SOCKET
+// #define DEBUG_ESP8266_SOCKET_RECV
+// #define DEBUG_ESP8266_SOCKET_SEND
 #endif
 
 char *itoa(int num, char *str, int base);
@@ -108,7 +108,7 @@ static bool _ids[ESP8266_SOCKET_COUNT] = {false};
 struct {
     void (*callback)(void *);
     void *data;
-    int  Notified;
+    int Notified;
 } _cbs[ESP8266_SOCKET_COUNT];
 
 /*******************************************************************/
@@ -133,7 +133,7 @@ void debug_read_off() {
 
 void dump_socket_info() {
     for (int i = 0; i < ESP8266_SOCKET_COUNT; i++) {
-        debug_printf("si[%d] open=%d sport=%d proto=%d\r\n", i,
+        printf("si[%d] open=%d sport=%d proto=%d\r\n", i,
             socket_info[i].open,
             socket_info[i].sport,
             socket_info[i].proto);
@@ -151,7 +151,7 @@ void dump_socket_info() {
  */
 void dump_esp8266_socket(esp8266_socket_t *s) {
     if (s) {
-        debug_printf("esp8266 socket id=%d connected=%d ka=%d accept_id=%d server=%d\r\n",
+        printf("esp8266 socket id=%d connected=%d ka=%d accept_id=%d server=%d\r\n",
             s->id,
             s->connected,
             s->keepalive,
@@ -160,12 +160,18 @@ void dump_esp8266_socket(esp8266_socket_t *s) {
     }
 }
 #else
-void debug_write_on() {}
-void debug_write_off() {}
-void debug_read_on() {}
-void debug_read_off() {}
-void dump_socket_info() {}
-void dump_esp8266_socket(esp8266_socket_t *s) {}
+void debug_write_on() {
+}
+void debug_write_off() {
+}
+void debug_read_on() {
+}
+void debug_read_off() {
+}
+void dump_socket_info() {
+}
+void dump_esp8266_socket(esp8266_socket_t *s) {
+}
 #endif
 
 /*******************************************************************/
@@ -173,11 +179,11 @@ void dump_esp8266_socket(esp8266_socket_t *s) {}
 /*******************************************************************/
 
 static bool is_socket_connected(uint32_t id) {
-    return (_id_bits_connect & (1 << id));
+    return _id_bits_connect & (1 << id);
 }
 
 static bool is_socket_closed(uint32_t id) {
-    return (_id_bits_close & (1 << id));
+    return _id_bits_close & (1 << id);
 }
 
 static void set_socket_closed(uint32_t id) {
@@ -216,11 +222,11 @@ bool isdisplayed(uint8_t c) {
  */
 static char hex_to_digit(char ch) {
     if (('0' <= ch) && (ch <= '9')) {
-        return (ch - '0');
+        return ch - '0';
     } else if (('A' <= ch) && (ch <= 'F')) {
-        return (ch - 'A' + 10);
+        return ch - 'A' + 10;
     } else if (('a' <= ch) && (ch <= 'f')) {
-        return (ch - 'a' + 10);
+        return ch - 'a' + 10;
     }
     return ch;
 }
@@ -251,26 +257,26 @@ static void ip_str_to_array(const char *ip_str, uint8_t *ip) {
     uint8_t num = 0;
     uint8_t c, n;
     while ((c = *p) != 0) {
-       if ((c >= '0') && (c <= '9')) {
-           num = num * 10 + (c - '0');
-       }
-       p++;
-       n = *p;
-       if (n < '0' || n > '9') {
-           ip[i] = num;
-//#if defined(DEBUG_ESP8266_RAW_DATA)
+        if ((c >= '0') && (c <= '9')) {
+            num = num * 10 + (c - '0');
+        }
+        p++;
+        n = *p;
+        if (n < '0' || n > '9') {
+            ip[i] = num;
+// #if defined(DEBUG_ESP8266_RAW_DATA)
 //           char s[MAX_DIGITS];
 //           itoa((int)num, (char *)s, 10);
 //           DEBUG_TXSTR(s);
 //           DEBUG_TXCH('\r');
 //           DEBUG_TXCH('\n');
-//#endif
-           i++;
-           num = 0;
-       }
-       if ((i > 3) || !((n >= '0' && n <= '9') || n == '.')) {
-           break;
-       }
+// #endif
+            i++;
+            num = 0;
+        }
+        if ((i > 3) || !((n >= '0' && n <= '9') || n == '.')) {
+            break;
+        }
     }
 }
 
@@ -327,11 +333,11 @@ static char *parse_int(const char *str, char *token, int *val) {
     }
     strncpy(tmpbuf, (const char *)start, (size_t)len);
     tmpbuf[len] = 0;
-//#if defined(DEBUG_ESP8266_RAW_DATA)
+// #if defined(DEBUG_ESP8266_RAW_DATA)
 //    DEBUG_TXSTR(tmpbuf);
 //    DEBUG_TXCH('\r');
 //    DEBUG_TXCH('\n');
-//#endif
+// #endif
     *val = atoi(tmpbuf);
     return end;
 }
@@ -354,11 +360,11 @@ static char *parse_str_between(const char *str, char ch1, char ch2, char *dst, i
     int size = (len > (dst_size - 1))? dst_size - 1 : len;
     strncpy(dst, (const char *)start, size);
     dst[size] = 0;
-//#if defined(DEBUG_ESP8266_RAW_DATA)
+// #if defined(DEBUG_ESP8266_RAW_DATA)
 //    DEBUG_TXSTR(dst);
 //    DEBUG_TXCH('\r');
 //    DEBUG_TXCH('\n');
-//#endif
+// #endif
     return pos2;
 }
 
@@ -384,7 +390,7 @@ static int esp8266_serial_read(void) {
 
 static void esp8266_serial_write_byte(uint8_t c) {
     sci_tx_ch(esp8266_ch, (uint8_t)c);
-#if defined(DEBUG_ESP8266_RAW_DATA)
+    #if defined(DEBUG_ESP8266_RAW_DATA)
     if (debug_write) {
         if (isdisplayed(c)) {
             DEBUG_TXCH(c);
@@ -392,57 +398,57 @@ static void esp8266_serial_write_byte(uint8_t c) {
             DEBUG_TXCH('*');
         }
     }
-#endif
+    #endif
 }
 
 static void esp8266_serial_print(const char *s) {
     sci_tx_str(esp8266_ch, (uint8_t *)s);
-#if defined(DEBUG_ESP8266_RAW_DATA)
+    #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
-#endif
+    #endif
 }
 
 static void esp8266_serial_printi(int i) {
     char s[MAX_DIGITS];
     itoa(i, (char *)s, 10);
     sci_tx_str(esp8266_ch, (uint8_t *)s);
-#if defined(DEBUG_ESP8266_RAW_DATA)
+    #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXSTR(s);
-#endif
+    #endif
 }
 
 static void esp8266_serial_println(const char *s) {
     esp8266_serial_print(s);
     sci_tx_ch(esp8266_ch, '\r');
     sci_tx_ch(esp8266_ch, '\n');
-#if defined(DEBUG_ESP8266_RAW_DATA)
+    #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
-#endif
+    #endif
 }
 
 static void esp8266_serial_printiln(int i) {
     esp8266_serial_printi(i);
     sci_tx_ch(esp8266_ch, '\r');
     sci_tx_ch(esp8266_ch, '\n');
-#if defined(DEBUG_ESP8266_RAW_DATA)
+    #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
-#endif
+    #endif
 }
 
 #if esp8266_serial_printf
 #include "vsnprintf.h"
-static int esp8266_serial_printf(const void* format, ...) {
+static int esp8266_serial_printf(const void *format, ...) {
 #define ESP8266_PRINTF_BUF_SIZE 1024
     char buf[ESP8266_PRINTF_BUF_SIZE];
     int len;
     va_list arg_ptr;
     va_start(arg_ptr, format);
-    len = vxsnprintf(buf, (size_t)(ESP8266_PRINTF_BUF_SIZE-1), format, arg_ptr);
-#if defined(DEBUG_ESP8266_RAW_DATA)
-    DEBUG_TXSTR((uint8_t*)buf);
-#endif
+    len = vxsnprintf(buf, (size_t)(ESP8266_PRINTF_BUF_SIZE - 1), format, arg_ptr);
+    #if defined(DEBUG_ESP8266_RAW_DATA)
+    DEBUG_TXSTR((uint8_t *)buf);
+    #endif
     va_end(arg_ptr);
     return len;
 }
@@ -456,9 +462,9 @@ static char *esp8266_serial_read_handler(const char *s1, const char *s2, uint32_
     while ((i < (WIFI_DATA_MAX - 1)) && ((uint32_t)mtick() - start < timeout)) {
         while (esp8266_serial_available() > 0) {
             c = (uint8_t)esp8266_serial_read();
-#if defined(DEBUG_ESP8266_RAW_DATA)
+            #if defined(DEBUG_ESP8266_RAW_DATA)
             DEBUG_TXCH(c);
-#endif
+            #endif
             if (c == '\0') {
                 continue;
             }
@@ -513,13 +519,13 @@ static char *esp8266_serial_read_handler(const char *s1, const char *s2, uint32_
 }
 
 static void esp8266_serial_empty(void) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    //debug_printf("esp8266_serial_empty(s)\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    // printf("esp8266_serial_empty(s)\r\n");
+    #endif
     esp8266_serial_read_handler((const char *)NULL, (const char *)NULL, 10);
-#if defined(DEBUG_ESP8266_DRIVER)
-    //debug_printf("esp8266_serial_empty(e)\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    // printf("esp8266_serial_empty(e)\r\n");
+    #endif
 }
 
 static bool esp8266_serial_recv_find_tm(char *s, uint32_t tm) {
@@ -528,9 +534,9 @@ static bool esp8266_serial_recv_find_tm(char *s, uint32_t tm) {
     if (strstr((const char *)buf, s) != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_ERR)
-    debug_printf("esp8266_serial_recv_find_tm: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_ERR)
+    printf("esp8266_serial_recv_find_tm: err\r\n");
+    #endif
     return false;
 }
 
@@ -559,9 +565,9 @@ static bool esp8266_serial_recv_find_filter(char *s, char *begin, char *end, cha
         }
     }
     *val = '\0';
-#if defined(DEBUG_ESP8266_ERR)
-    debug_printf("esp8266_serial_recv_find_filter: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_ERR)
+    printf("esp8266_serial_recv_find_filter: err\r\n");
+    #endif
     return false;
 }
 
@@ -576,9 +582,9 @@ static bool esp8266_serial_recv_find_filter(char *s, char *begin, char *end, cha
  * if id == -1 then clear all of packets
  */
 void packet_clear(int id) {
-#if defined(DEBUG_ESP8266_PACKET)
-    debug_printf("packet_clear(%d)\r\n", id);
-#endif
+    #if defined(DEBUG_ESP8266_PACKET)
+    printf("packet_clear(%d)\r\n", id);
+    #endif
     _packet_t **p = &_packets_top;
     while (*p) {
         if ((*p)->id == id || id == ESP8266_ALL_SOCKET_IDS) {
@@ -589,9 +595,9 @@ void packet_clear(int id) {
             }
             *p = (*p)->next;
             if (q) {
-#if defined(DEBUG_ESP8266_PACKET)
-    debug_printf("packet_tinyfree: id=%d, len=%d\r\n", q->id, q->alloc_len);
-#endif
+                #if defined(DEBUG_ESP8266_PACKET)
+                printf("packet_tinyfree: id=%d, len=%d\r\n", q->id, q->alloc_len);
+                #endif
                 tinyfree(q);
             }
             _heap_usage -= pdu_len;
@@ -617,14 +623,14 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
     int i = 0;
     uint8_t c;
     debug_read_on();
-#if defined(DEBUG_ESP8266_PACKET)
-    debug_printf("packet_read()");
-#endif
+    #if defined(DEBUG_ESP8266_PACKET)
+    printf("packet_read()");
+    #endif
     s = (uint32_t)mtick();
     while ((uint32_t)mtick() - s < timeout) {
         while (esp8266_serial_available() > 0) {
             c = esp8266_serial_read();
-#if defined(DEBUG_ESP8266_RAW_DATA) || defined(DEBUG_ESP8266_DRIVER_PACKET_READ)
+            #if defined(DEBUG_ESP8266_RAW_DATA) || defined(DEBUG_ESP8266_DRIVER_PACKET_READ)
             if (debug_read) {
                 if (isdisplayed(c)) {
                     DEBUG_TXCH(c);
@@ -632,7 +638,7 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
                     DEBUG_TXCH('*');
                 }
             }
-#endif
+            #endif
             if (buf) {
                 buf[i] = c;
             }
@@ -644,9 +650,9 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
     }
 packet_read_exit:
     debug_read_on();
-#if defined(DEBUG_ESP8266_PACKET)
-    debug_printf("\r\npacket_read() time=%d, req=%d, act=%d\r\n", (uint32_t)mtick()-s, amount, i);
-#endif
+    #if defined(DEBUG_ESP8266_PACKET)
+    printf("\r\npacket_read() time=%d, req=%d, act=%d\r\n", (uint32_t)mtick() - s, amount, i);
+    #endif
     return i;
 }
 
@@ -654,31 +660,31 @@ packet_read_exit:
  * packet_handle
  */
 int32_t packet_handle(int id, int amount, uint32_t timeout) {
-#if defined(DEBUG_ESP8266_DRIVER) || defined(DEBUG_ESP8266_DRIVER_PACKET_HANDLE)
-    debug_printf("packet_handle(id=%d, amount=%d)\r\n", id, amount);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER) || defined(DEBUG_ESP8266_DRIVER_PACKET_HANDLE)
+    printf("packet_handle(id=%d, amount=%d)\r\n", id, amount);
+    #endif
     int pdu_len;
     int count = 0;
     pdu_len = sizeof(_packet_t) + amount;
     if ((_heap_usage + pdu_len) > ESP8266_SOCKET_BUFSIZE) {
-#if defined(DEBUG_ESP8266_ERR)
-        debug_printf("packet_handle: heap limit. dropped\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_ERR)
+        printf("packet_handle: heap limit. dropped\r\n");
+        #endif
         count = packet_read((uint8_t *)0, amount, timeout);
         goto packet_handle_exit;
     }
     _packet_t *packet = (_packet_t *)tinymalloc(pdu_len);
     if (!packet) {
-#if defined(DEBUG_ESP8266_ERR)
-        debug_printf("packet_handler: alloc fail. dropped\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_ERR)
+        printf("packet_handler: alloc fail. dropped\r\n");
+        #endif
         // just read, no store
         count = packet_read((uint8_t *)0, amount, timeout);
         goto packet_handle_exit;
     } else {
-#if defined(DEBUG_ESP8266_PACKET)
-        debug_printf("packet alloc: id=%d, len=%d\r\n", id, amount);
-#endif
+        #if defined(DEBUG_ESP8266_PACKET)
+        printf("packet alloc: id=%d, len=%d\r\n", id, amount);
+        #endif
     }
     _heap_usage += pdu_len;
     packet->id = id;
@@ -688,9 +694,9 @@ int32_t packet_handle(int id, int amount, uint32_t timeout) {
     count = packet_read((uint8_t *)(packet + 1), amount, timeout);
     if (count < amount) {
         if (packet) {
-#if defined(DEBUG_ESP8266_PACKET)
-            debug_printf("packet tinyfree: id=%d, len=%d\r\n", id, amount);
-#endif
+            #if defined(DEBUG_ESP8266_PACKET)
+            printf("packet tinyfree: id=%d, len=%d\r\n", id, amount);
+            #endif
             tinyfree(packet);
         }
         _heap_usage -= pdu_len;
@@ -700,9 +706,9 @@ int32_t packet_handle(int id, int amount, uint32_t timeout) {
         _packets_end = (_packet_t **)&packet->next;
     }
 packet_handle_exit:
-#if defined(DEBUG_ESP8266_DRIVER) || defined(DEBUG_ESP8266_DRIVER_PACKET_HANDLE)
-    debug_printf("packet_handle(timeout=%d) count=%d heap=%d\r\n", timeout, count, _heap_usage);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER) || defined(DEBUG_ESP8266_DRIVER_PACKET_HANDLE)
+    printf("packet_handle(timeout=%ld) count=%d heap=%d\r\n", timeout, count, _heap_usage);
+    #endif
     return count;
 }
 
@@ -711,14 +717,14 @@ packet_handle_exit:
 /*******************************************************************/
 
 static void esp8266_serial_prepare_AT(void) {
-#if defined(DEBUG_ESP8266_AT)
-    debug_printf("prepare_AT(s)\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT)
+    printf("prepare_AT(s)\r\n");
+    #endif
     esp8266_serial_empty();
     esp8266_serial_clear_buf();
-#if defined(DEBUG_ESP8266_AT)
-    debug_printf("prepare_AT(e)\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT)
+    printf("prepare_AT(e)\r\n");
+    #endif
 }
 
 /*
@@ -728,17 +734,17 @@ static void esp8266_serial_prepare_AT(void) {
  * ATE1: Switches echo on
  */
 bool esp8266_ATE0(void) {
-#if defined(DEBUG_ESP8266_AT)
-    debug_printf("ATE0\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT)
+    printf("ATE0\r\n");
+    #endif
     esp8266_serial_prepare_AT();
     esp8266_serial_println("ATE0");
     bool ret = esp8266_serial_recv_find_tm("ready\r\n", WIFI_ATE0_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("ATE0: err\r\n");
+        printf("ATE0: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -747,17 +753,17 @@ bool esp8266_ATE0(void) {
  * Tests AT Startup
  */
 bool esp8266_AT(void) {
-#if defined(DEBUG_ESP8266_AT)
-    debug_printf("AT\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT)
+    printf("AT\r\n");
+    #endif
     esp8266_serial_prepare_AT();
     esp8266_serial_println("AT");
     bool ret = esp8266_serial_recv_find("OK\r\n");
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT: err\r\n");
+        printf("AT: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -768,11 +774,11 @@ bool esp8266_AT_RST(void) {
     esp8266_serial_prepare_AT();
     esp8266_serial_println("AT+RST");
     bool ret = esp8266_serial_recv_find("OK\r\n");
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+RST: err\r\n");
+        printf("AT+RST: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -783,11 +789,11 @@ bool esp8266_AT_CWAUTOCONN_0(void) {
     esp8266_serial_prepare_AT();
     esp8266_serial_println("AT+CWAUTOCONN=0");
     bool ret = esp8266_serial_recv_find("OK\r\n");
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CWAUTOCONN\r\n");
+        printf("AT+CWAUTOCONN\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -799,11 +805,11 @@ bool esp8266_AT_CWQAP(void) {
     esp8266_serial_prepare_AT();
     esp8266_serial_println("AT+CWQAP");
     bool ret = esp8266_serial_recv_find("OK\r\n");
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CWQAP: err\r\n");
+        printf("AT+CWQAP: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -825,19 +831,19 @@ bool esp8266_AT_GMR(char *at_ver, size_t at_len, char *sdk_ver, size_t sdk_len) 
             return false;
         }
         start += 10;
-        end = parse_str_between((const char*)start, ':', '\r', at_ver, at_len);
+        end = parse_str_between((const char *)start, ':', '\r', at_ver, at_len);
         start = end + 1;
         start = strstr(start, "SDK version");
         if (!start) {
             return false;
         }
         start += 11;
-        end = parse_str_between((const char*)start, ':', '\r', sdk_ver, sdk_len);
+        end = parse_str_between((const char *)start, ':', '\r', sdk_ver, sdk_len);
         return true;
     } else {
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+GMR: err\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_AT_ERR)
+        printf("AT+GMR: err\r\n");
+        #endif
         return false;
     }
 }
@@ -851,11 +857,11 @@ bool esp8266_set_AT_CIPMUX(uint8_t mode) {
     esp8266_serial_print("AT+CIPMUX=");
     esp8266_serial_printiln(mode);
     bool ret = esp8266_serial_read_handler("OK\r\n", NULL, WIFI_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CIPMUX: err\r\n");
+        printf("AT+CIPMUX: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -868,11 +874,11 @@ bool esp8266_set_AT_CIPRECVMODE(uint8_t mode) {
     esp8266_serial_print("AT+CIPRECVMODE=");
     esp8266_serial_printiln(mode);
     bool ret = esp8266_serial_read_handler("OK\r\n", NULL, WIFI_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CIPRECVMODE: err\r\n");
+        printf("AT+CIPRECVMODE: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -895,9 +901,9 @@ bool esp8266_get_AT_CWMODE(uint8_t *mode) {
         *mode = (uint8_t)atoi((const char *)str_mode);
         return true;
     } else {
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CWMODE: err\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_AT_ERR)
+        printf("AT+CWMODE: err\r\n");
+        #endif
         return false;
     }
 }
@@ -916,9 +922,9 @@ bool esp8266_set_AT_CWMODE(uint8_t mode) {
     if (strstr((const char *)buf, "OK") != NULL || strstr((const char *)buf, "no change") != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CWMODE: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CWMODE: err\r\n");
+    #endif
     return false;
 }
 
@@ -939,9 +945,9 @@ bool esp8266_set_AT_CWJAP(const char *ssid, const char *pwd) {
     if (strstr((const char *)buf, "OK") != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CWJAP: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CWJAP: err\r\n");
+    #endif
     return false;
 }
 
@@ -986,9 +992,9 @@ bool esp8266_get_AT_CWJAP_CUR(char *ssid, char *bssid, char *channel, char *rssi
         }
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CWJAP_CUR?: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CWJAP_CUR?: err\r\n");
+    #endif
     return false;
 }
 
@@ -1015,9 +1021,9 @@ bool esp8266_set_AT_CWDHCP(uint8_t mode, bool enabled) {
     if (strstr((const char *)buf, "OK") != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-    debug_printf("AT+CWDHCP: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CWDHCP: err\r\n");
+    #endif
     return false;
 }
 
@@ -1033,9 +1039,9 @@ bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
         return false;
     }
     if (strlen(domain) >= 64) {
-#if defined(DEBUG_ESP8266_DRIVER)
-        debug_printf("ESP8266 ERR: domain name too long\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_DRIVER)
+        printf("ESP8266 ERR: domain name too long\r\n");
+        #endif
         return false;
     }
     esp8266_serial_prepare_AT();
@@ -1057,11 +1063,11 @@ bool esp8266_AT_CIPDOMAIN(const char *domain, uint8_t *ip) {
     }
     strncpy(ip_buf, (const char *)(start + 1), len);
     ip_buf[len] = 0;
-#if defined(DEBUG_ESP8266_DRIVER)
+    #if defined(DEBUG_ESP8266_DRIVER)
     DEBUG_TXSTR(ip_buf);
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
-#endif
+    #endif
     ip_str_to_array((const char *)ip_buf, ip);
     return true;
 }
@@ -1088,9 +1094,9 @@ bool esp8266_get_AT_CIPSTAMAC_CUR(uint8_t *mac) {
         mac[5] = hex_to_u8((const char *)&str_mac[15]);
         return true;
     } else {
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPSTAMAC_CUR?: err\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_AT_ERR)
+        printf("AT+CIPSTAMAC_CUR?: err\r\n");
+        #endif
         return false;
     }
 }
@@ -1115,19 +1121,19 @@ bool esp8266_get_AT_CIPSTA(uint8_t *ip, uint8_t *gw, uint8_t *mask) {
         char *start;
         char *end;
         start = str_config;
-        end = parse_str_between((const char*)start, '"', '"', str_ip, IP_STR_MAX);
+        end = parse_str_between((const char *)start, '"', '"', str_ip, IP_STR_MAX);
         start = end + 1;
-        end = parse_str_between((const char*)start, '"', '"', str_gw, GW_STR_MAX);
+        end = parse_str_between((const char *)start, '"', '"', str_gw, GW_STR_MAX);
         start = end + 1;
-        end = parse_str_between((const char*)start, '"', '"', str_mask, MASK_STR_MAX);
+        end = parse_str_between((const char *)start, '"', '"', str_mask, MASK_STR_MAX);
         ip_str_to_array(str_ip, ip);
         ip_str_to_array(str_gw, gw);
         ip_str_to_array(str_mask, mask);
         return true;
     } else {
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPSTA?: err\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_AT_ERR)
+        printf("AT+CIPSTA?: err\r\n");
+        #endif
         return false;
     }
 }
@@ -1150,11 +1156,11 @@ bool esp8266_set_AT_CIPSTA(const char *ip, const char *gw, const char *mask) {
     esp8266_serial_print(mask);
     esp8266_serial_println("\"");
     ret = esp8266_serial_read_handler("OK\r\n", NULL, WIFI_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CIPSTA: err\r\n");
+        printf("AT+CIPSTA: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -1175,9 +1181,9 @@ bool esp8266_get_AT_CIPDNS_CUR(uint8_t *dns) {
         ip_str_to_array(str_config, dns);
         return true;
     } else {
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPDNS_CUR?: err\r\n");
-#endif
+        #if defined(DEBUG_ESP8266_AT_ERR)
+        printf("AT+CIPDNS_CUR?: err\r\n");
+        #endif
         return false;
     }
 }
@@ -1201,11 +1207,11 @@ bool esp8266_set_AT_CIPDNS_CUR(const char *dns, bool flag) {
     esp8266_serial_print(dns);
     esp8266_serial_println("\"");
     ret = esp8266_serial_read_handler("OK\r\n", NULL, WIFI_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CIPDNS_CUR: err\r\n");
+        printf("AT+CIPDNS_CUR: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -1222,9 +1228,9 @@ bool esp8266_set_AT_CIPSTO(int timeout) {
     if (strstr((const char *)buf, "OK") != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-    debug_printf("AT+CIPSTO: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CIPSTO: err\r\n");
+    #endif
     return false;
 }
 
@@ -1237,11 +1243,11 @@ bool esp8266_set_AT_CIPDINFO(uint8_t mode) {
     esp8266_serial_print("AT+CIPDINFO=");
     esp8266_serial_printiln(mode);
     bool ret = esp8266_serial_read_handler("OK\r\n", NULL, WIFI_TIMEOUT);
-#if defined(DEBUG_ESP8266_AT_ERR)
+    #if defined(DEBUG_ESP8266_AT_ERR)
     if (!ret) {
-        debug_printf("AT+CIPSTO: err\r\n");
+        printf("AT+CIPSTO: err\r\n");
     }
-#endif
+    #endif
     return ret;
 }
 
@@ -1249,9 +1255,9 @@ bool esp8266_set_AT_CIPDINFO(uint8_t mode) {
  * socket_handler
  */
 void esp8266_socket_handler(bool connect, int id) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("\r\nesp8266_socket_handler(id=%d)\r\n", id);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("\r\nesp8266_socket_handler(id=%d)\r\n", id);
+    #endif
     _cbs[id].Notified = 0;
     if (connect) {
         set_socket_connected(id);
@@ -1273,9 +1279,9 @@ void esp8266_socket_handler(bool connect, int id) {
             }
         }
     }
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("_cip_server=%d\r\n", _cip_server);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("_cip_server=%d\r\n", _cip_server);
+    #endif
 }
 
 uint32_t esp8266_read(uint32_t timeout) {
@@ -1287,16 +1293,16 @@ uint32_t esp8266_read(uint32_t timeout) {
     int i;
     char ip_buf[IP_BUF_SIZE];
 
-#if defined(DEBUG_ESP8266_DRIVER)
-    //debug_printf("esp8266_read(timeout=%d)\r\n", timeout);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    // printf("esp8266_read(timeout=%d)\r\n", timeout);
+    #endif
     memset((void *)data, 0, sizeof(recv_buf));
     i = 0;
     s = (uint32_t)mtick();
     while ((uint32_t)mtick() - s < timeout) {
         if (esp8266_serial_available() > 0) {
             uint8_t c = (uint8_t)esp8266_serial_read();
-#if defined(DEBUG_ESP8266_DRIVER)
+            #if defined(DEBUG_ESP8266_DRIVER)
             if (debug_read) {
                 if (isdisplayed(c)) {
                     DEBUG_TXCH(c);
@@ -1304,7 +1310,7 @@ uint32_t esp8266_read(uint32_t timeout) {
                     DEBUG_TXCH('*');
                 }
             }
-#endif
+            #endif
             data[i++] = c;
             data[i] = 0;
             if (strstr((const char *)data, "CONNECT") != NULL) {
@@ -1337,7 +1343,8 @@ uint32_t esp8266_read(uint32_t timeout) {
                 }
                 if (strstr((const char *)data, "1,CLOSED") != NULL) {
                     esp8266_socket_handler(false, 1);
-                    goto esp8266_read_exit;;
+                    goto esp8266_read_exit;
+                    ;
                 }
                 if (strstr((const char *)data, "2,CLOSED") != NULL) {
                     esp8266_socket_handler(false, 2);
@@ -1353,14 +1360,14 @@ uint32_t esp8266_read(uint32_t timeout) {
                 }
             }
             if (c == ':') {
-    #if defined(DEBUG_ESP8266_DRIVER)
+                #if defined(DEBUG_ESP8266_DRIVER)
                 DEBUG_TXCH('\r');
                 DEBUG_TXCH('\n');
-    #endif
+                #endif
                 break;
             }
         }
-        if (i == (RECV_BUF_MAX-1)) {
+        if (i == (RECV_BUF_MAX - 1)) {
             break;
         }
     }
@@ -1373,7 +1380,7 @@ uint32_t esp8266_read(uint32_t timeout) {
     int port = 0;
     start += 5;
     int count = count_ch((const char *)start, ',');
-    if (count == 0 || count == 2  ) {
+    if (count == 0 || count == 2) {
         end = parse_int(start, ",:", &len);
         if (end == NULL) {
             goto esp8266_read_exit;
@@ -1407,15 +1414,16 @@ uint32_t esp8266_read(uint32_t timeout) {
     } else {
         goto esp8266_read_exit;
     }
-#if defined(DEBUG_ESP8266_DRIVER)
-        debug_printf("len=%d\r\n", len);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("len=%d\r\n", len);
+    #endif
     recvd = packet_handle(id, len, ESP8266_PACKET_TIMEOUT);
 esp8266_read_exit:
-#if defined(DEBUG_ESP8266_DRIVER)
-    if (recvd != 0)
-        debug_printf("\r\nesp8266_read() time=%d, recvd=%d, addr=%s, port=%d\r\n", (uint32_t)mtick() - s, recvd, ip_buf, port);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    if (recvd != 0) {
+        printf("\r\nesp8266_read() time=%ld, recvd=%d, addr=%s, port=%d\r\n", (uint32_t)mtick() - s, recvd, ip_buf, port);
+    }
+    #endif
     return recvd;
 }
 
@@ -1447,9 +1455,9 @@ bool esp8266_set_AT_CIPSEND(int id, const uint8_t *buffer, uint32_t len) {
             return true;
         }
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPSEND: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CIPSEND: err\r\n");
+    #endif
     return false;
 }
 
@@ -1461,9 +1469,9 @@ bool esp8266_set_AT_CIPCLOSE(int id) {
     if (strstr((const char *)buf, "OK") != NULL) {
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPCLOSE: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CIPCLOSE: err\r\n");
+    #endif
     return false;
 }
 
@@ -1479,9 +1487,9 @@ bool esp8266_set_AT_CIPSERVER(int port) {
         _cip_server = true;
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-        debug_printf("AT+CIPSERVER=1: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CIPSERVER=1: err\r\n");
+    #endif
     return false;
 }
 
@@ -1493,16 +1501,16 @@ bool esp8266_reset_AT_CIPSERVER(void) {
         _cip_server = false;
         return true;
     }
-#if defined(DEBUG_ESP8266_AT_ERR)
-    debug_printf("AT+CIPSERVER=0: err\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_AT_ERR)
+    printf("AT+CIPSERVER=0: err\r\n");
+    #endif
     return false;
 }
 
 uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32_t timeout, int id) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_recv(id=%d, amount=%d)\r\n", id, amount);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_recv(id=%d, amount=%ld)\r\n", id, amount);
+    #endif
     int len = 0;
     if (data == NULL || data_len == NULL) {
         return 0;
@@ -1521,15 +1529,15 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
                     uint32_t pdu_len = sizeof(_packet_t) + q->alloc_len;
                     uint32_t len = q->len;
                     if (q) {
-#if defined(DEBUG_ESP8266_PACKET)
-                        debug_printf("packet tinyfree: id=%d, len=%d\r\n", q->id, q->alloc_len);
-#endif
-                        tinyfree((void * )q);
+                        #if defined(DEBUG_ESP8266_PACKET)
+                        printf("packet tinyfree: id=%d, len=%d\r\n", q->id, q->alloc_len);
+                        #endif
+                        tinyfree((void *)q);
                     }
                     _heap_usage -= pdu_len;
-#if defined(DEBUG_ESP8266_DRIVER)
-                    debug_printf("esp8266_recv() len=%d\r\n", len);
-#endif
+                    #if defined(DEBUG_ESP8266_DRIVER)
+                    printf("esp8266_recv() len=%ld\r\n", len);
+                    #endif
                     *data_len = len;
                     return len;
                 } else { // return only partial packet
@@ -1537,9 +1545,9 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
                     q->len -= amount;
                     memmove((void *)(q + 1), (const void *)((char *)(q + 1) + amount), (size_t)q->len);
                     *data_len = amount;
-#if defined(DEBUG_ESP8266_DRIVER)
-                    debug_printf("esp8266_recv() amount=%d\r\n", amount);
-#endif
+                    #if defined(DEBUG_ESP8266_DRIVER)
+                    printf("esp8266_recv() amount=%ld\r\n", amount);
+                    #endif
                     return amount;
                 }
             }
@@ -1549,9 +1557,9 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
             break;
         }
     }
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_recv() amount=%d\r\n", len);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_recv() amount=%d\r\n", len);
+    #endif
     return len;
 }
 
@@ -1563,9 +1571,9 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
  * driver_init
  */
 void esp8266_driver_init(uint32_t ch, uint32_t baud) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_driver_init()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_driver_init()\r\n");
+    #endif
     esp8266_ch = ch;
     esp8266_baud = baud;
     tinymalloc_init((void *)local_buf, (size_t)LOCAL_BUF_MAX);
@@ -1596,11 +1604,11 @@ void esp8266_driver_init(uint32_t ch, uint32_t baud) {
  * Note: not working now - hang up communication between ESP8266
  */
 bool esp8266_driver_reset(void) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_driver_reset()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_driver_reset()\r\n");
+    #endif
     bool ret = true;
-    //ret = esp8266_AT_RST();
+    // ret = esp8266_AT_RST();
     // need to wait for resetting
     mp_hal_delay_ms(3000);
     packet_clear(ESP8266_ALL_SOCKET_IDS);
@@ -1611,9 +1619,9 @@ bool esp8266_driver_reset(void) {
  * gethostbyname
  */
 bool esp8266_gethostbyname(const char *name, uint8_t *ip) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_gethostbyname()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_gethostbyname()\r\n");
+    #endif
     return esp8266_AT_CIPDOMAIN(name, ip);
 }
 
@@ -1621,9 +1629,9 @@ bool esp8266_gethostbyname(const char *name, uint8_t *ip) {
  * close
  */
 bool esp8266_close(int id) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_close(id=%d)\r\n", id);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_close(id=%d)\r\n", id);
+    #endif
     if (!is_socket_closed(id)) {
         esp8266_set_AT_CIPCLOSE(id);
     }
@@ -1633,9 +1641,9 @@ bool esp8266_close(int id) {
     driver_info[id].tcp_data_avbl = 0;
     driver_info[id].tcp_data_rcvd = 0;
     packet_clear(id);
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_close() ret=1\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_close() ret=1\r\n");
+    #endif
     return true;
 }
 
@@ -1643,16 +1651,16 @@ bool esp8266_close(int id) {
  * open_tcp
  */
 bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_open_tcp(id=%d, keepalive=%d)\r\n", id, keepalive);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_open_tcp(id=%d, keepalive=%d)\r\n", id, keepalive);
+    #endif
     char ip_str[16];
     bool done = false;
     if (id >= ESP8266_SOCKET_COUNT || driver_info[id].open) {
         esp8266_errno = ESP8266_ERROR_PARAMETER;
-#if defined(DEBUG_ESP8266_DRIVER)
-        debug_printf("esp8266_open_tcp() ret=%d\r\n", false);
-#endif
+        #if defined(DEBUG_ESP8266_DRIVER)
+        printf("esp8266_open_tcp() ret=%d\r\n", false);
+        #endif
         return false;
     }
     snprintf(ip_str, 16, "%u.%u.%u.%u", addr[0], addr[1], addr[2], addr[3]);
@@ -1680,26 +1688,26 @@ bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
                 _sock_already = false;
                 done = esp8266_close(id);
                 if (!done) {
-#if defined(DEBUG_ESP8266_DRIVER)
-                    debug_printf("device refused to close socket\r\n");
-#endif
+                    #if defined(DEBUG_ESP8266_DRIVER)
+                    printf("device refused to close socket\r\n");
+                    #endif
                 }
             }
             continue;
         } else {
             driver_info[id].open = true;
             driver_info[id].proto = ESP8266_TCP;
-#if defined(DEBUG_ESP8266_DRIVER)
-            debug_printf("TCP socket %d opened\r\n", id);
-#endif
+            #if defined(DEBUG_ESP8266_DRIVER)
+            printf("TCP socket %d opened\r\n", id);
+            #endif
             done = true;
             break;
         }
     }
     packet_clear(id);
-#if defined(DEBUG_ESP8266_DRIVER)
-        debug_printf("esp8266_open_tcp() ret=%d\r\n", done);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_open_tcp() ret=%d\r\n", done);
+    #endif
     return done;
 }
 
@@ -1707,9 +1715,9 @@ bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive) {
  * open_udp
  */
 bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_open_udp(%d)\r\n", id);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_open_udp(%d)\r\n", id);
+    #endif
     char ip_str[16];
     bool done = false;
     if (id >= ESP8266_SOCKET_COUNT || driver_info[id].open) {
@@ -1741,18 +1749,18 @@ bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
                 _sock_already = false;
                 done = esp8266_close(id);
                 if (!done) {
-#if defined(DEBUG_ESP8266_DRIVER)
-                    debug_printf("device refused to close socket\r\n");
-#endif
+                    #if defined(DEBUG_ESP8266_DRIVER)
+                    printf("device refused to close socket\r\n");
+                    #endif
                 }
             }
             continue;
         } else {
             driver_info[id].open = true;
             driver_info[id].proto = ESP8266_UDP;
-#if defined(DEBUG_ESP8266_DRIVER)
-            debug_printf("UDP socket %d opened", id);
-#endif
+            #if defined(DEBUG_ESP8266_DRIVER)
+            printf("UDP socket %d opened", id);
+            #endif
             done = true;
             break;
         }
@@ -1765,11 +1773,11 @@ bool esp8266_open_udp(int id, const char *addr, int port, int local_port) {
  * send
  */
 int32_t esp8266_send(int id, const void *data, uint32_t amount) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_send(id=%d, amount=%d)\r\n", id, amount);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_send(id=%d, amount=%ld)\r\n", id, amount);
+    #endif
     int32_t ret = 0;
-    int error_cnt =0;
+    int error_cnt = 0;
     while (error_cnt < 2) {
         if (!is_socket_connected(id) || is_socket_closed(id)) {
             ret = -1;
@@ -1780,9 +1788,9 @@ int32_t esp8266_send(int id, const void *data, uint32_t amount) {
         if (amount > CIPSEND_MAX && socket_info[id].proto == ESP8266_TCP) {
             amount = CIPSEND_MAX;
         } else if (amount > CIPSEND_MAX && socket_info[id].proto == ESP8266_UDP) {
-#if defined(DEBUG_ESP8266_DRIVER)
-            debug_printf("UDP datagram maximum size is 2048");
-#endif
+            #if defined(DEBUG_ESP8266_DRIVER)
+            printf("UDP datagram maximum size is 2048");
+            #endif
             esp8266_errno = ESP8266_ERROR_PARAMETER;
             return false;
         }
@@ -1794,9 +1802,9 @@ int32_t esp8266_send(int id, const void *data, uint32_t amount) {
             error_cnt++;
         }
     }
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_send() ret=%d\r\n", ret);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_send() ret=%ld\r\n", ret);
+    #endif
     return ret;
 }
 
@@ -1804,14 +1812,14 @@ int32_t esp8266_send(int id, const void *data, uint32_t amount) {
  * recv_tcp
  */
 int32_t esp8266_recv_tcp(int id, const void *data, uint32_t amount) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_recv_tcp(id=%d, amount=%d)\r\n", id, amount);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_recv_tcp(id=%d, amount=%ld)\r\n", id, amount);
+    #endif
     uint32_t data_len;
     int32_t count = (int32_t)esp8266_recv((uint8_t *)data, amount, &data_len, WIFI_TIMEOUT, id);
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_recv_tcp() ret=%d\r\n", count);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_recv_tcp() ret=%ld\r\n", count);
+    #endif
     return count;
 }
 
@@ -1819,9 +1827,9 @@ int32_t esp8266_recv_tcp(int id, const void *data, uint32_t amount) {
  * recv_udp
  */
 int32_t esp8266_recv_udp(int id, const void *data, uint32_t amount) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_recv_udp(%d)\r\n", id);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_recv_udp(%d)\r\n", id);
+    #endif
     uint32_t data_len;
     int32_t count = (int32_t)esp8266_recv((uint8_t *)data, amount, &data_len, WIFI_TIMEOUT, id);
     return count;
@@ -1831,16 +1839,16 @@ int32_t esp8266_recv_udp(int id, const void *data, uint32_t amount) {
  * check if accept_id vector is empty?
  */
 bool is_accept_id_empty(void) {
-    return (vector_count(&_accept_id) == 0);
+    return vector_count(&_accept_id) == 0;
 }
 
 /*
  * accept
  */
 bool esp8266_accept(int *p_id) {
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_accept(%08x)\r\n", p_id);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_accept(%08ld)\r\n", (uint32_t)p_id);
+    #endif
     bool ret = false;
     *p_id = -1;
     while (!ret) {
@@ -1851,7 +1859,7 @@ bool esp8266_accept(int *p_id) {
         if (!is_accept_id_empty()) {
             ret = true;
         } else {
-            //_parser.process_oob(); // Poll for inbound packets
+            // _parser.process_oob(); // Poll for inbound packets
             esp8266_read(ESP8266_ACCEPT_TIMEOUT);
             if (!is_accept_id_empty()) {
                 ret = true;
@@ -1879,9 +1887,9 @@ bool esp8266_accept(int *p_id) {
             mp_hal_delay_ms(10);
         }
     }
-#if defined(DEBUG_ESP8266_DRIVER)
-    debug_printf("esp8266_accept() ret=%d\r\n", ret);
-#endif
+    #if defined(DEBUG_ESP8266_DRIVER)
+    printf("esp8266_accept() ret=%d\r\n", ret);
+    #endif
     return ret;
 }
 
@@ -1893,9 +1901,9 @@ bool esp8266_accept(int *p_id) {
  * socket_open
  */
 int esp8266_socket_open(void **handle, esp8266_protocol_t proto) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_open()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_open()\r\n");
+    #endif
     int err = 0;
     int id = -1;
     for (int i = 0; i < ESP8266_SOCKET_COUNT; i++) {
@@ -1906,7 +1914,7 @@ int esp8266_socket_open(void **handle, esp8266_protocol_t proto) {
         }
     }
     if (id == -1) {
-        err =  -1;
+        err = -1;
     } else {
         struct esp8266_socket *socket = (struct esp8266_socket *)tinymalloc(sizeof(struct esp8266_socket));
         if (!socket) {
@@ -1919,17 +1927,17 @@ int esp8266_socket_open(void **handle, esp8266_protocol_t proto) {
             socket->accept_id = false;
             socket->tcp_server = false;
             *handle = socket;
-#if defined(DEBUG_ESP8266_SOCKET)
+            #if defined(DEBUG_ESP8266_SOCKET)
             dump_esp8266_socket(socket);
-            debug_printf("socket alloc id=%d\r\n", id);
-#endif
+            printf("socket alloc id=%d\r\n", id);
+            #endif
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_open(): err\r\n");
+        printf("esp8266_socket_open(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -1937,9 +1945,9 @@ int esp8266_socket_open(void **handle, esp8266_protocol_t proto) {
  * socket_close
  */
 int esp8266_socket_close(void *handle) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_close(handle=%08x)\r\n", handle);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_close(handle=%08x)\r\n", handle);
+    #endif
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     int err = 0;
     if (!socket) {
@@ -1950,20 +1958,20 @@ int esp8266_socket_close(void *handle) {
         socket_info[socket->id].open = false;
         socket_info[socket->id].sport = 0;
         if (socket) {
-#if defined(DEBUG_ESP8266_SOCKET)
-            debug_printf("socket tinyfree id=%d\r\n", socket->id);
-#endif
+            #if defined(DEBUG_ESP8266_SOCKET)
+            printf("socket tinyfree id=%d\r\n", socket->id);
+            #endif
             tinyfree(socket);
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_close() ret=%d\r\n", err);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_close() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_close(): err\r\n");
+        printf("esp8266_socket_close(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -1971,9 +1979,9 @@ int esp8266_socket_close(void *handle) {
  * socket_bind
  */
 int esp8266_socket_bind(void *handle, const esp8266_socket_address_t *address) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_bind(handle=%08x, addr=%08x)\r\n", handle, address);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_bind(handle=%08x, addr=%08x)\r\n", handle, address);
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -1997,15 +2005,15 @@ int esp8266_socket_bind(void *handle, const esp8266_socket_address_t *address) {
             socket->addr = *(esp8266_socket_address_t *)address;
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET)
+    #if defined(DEBUG_ESP8266_SOCKET)
     dump_socket_info();
-    debug_printf("esp8266_socket_bind() ret=%d\r\n", err);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    printf("esp8266_socket_bind() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_bind(): err\r\n");
+        printf("esp8266_socket_bind(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2013,9 +2021,9 @@ int esp8266_socket_bind(void *handle, const esp8266_socket_address_t *address) {
  * socket_listen
  */
 bool esp8266_socket_listen(void *handle, int backlog) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_listen(handle=%08x,backlog=%d)\r\n", handle, backlog);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_listen(handle=%08x,backlog=%d)\r\n", handle, backlog);
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -2029,27 +2037,27 @@ bool esp8266_socket_listen(void *handle, int backlog) {
             }
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET)
+    #if defined(DEBUG_ESP8266_SOCKET)
     if (!socket) {
         dump_esp8266_socket(socket);
     }
-    debug_printf("esp8266_socket_listen() ret=%d\r\n", err);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    printf("esp8266_socket_listen() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_listen(): err\r\n");
+        printf("esp8266_socket_listen(): err\r\n");
     }
-#endif
-    return (err == 0);
+    #endif
+    return err == 0;
 }
 
 /*
  * socket_connect
  */
 bool esp8266_socket_connect(void *handle, const esp8266_socket_address_t *addr) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_connect(handle=%08x)\r\n", handle);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_connect(handle=%08x)\r\n", handle);
+    #endif
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     int err = 0;
     if (!socket) {
@@ -2062,17 +2070,17 @@ bool esp8266_socket_connect(void *handle, const esp8266_socket_address_t *addr) 
         }
         socket->connected = (err == 0);
     }
-#if defined(DEBUG_ESP8266_SOCKET)
+    #if defined(DEBUG_ESP8266_SOCKET)
     if (!socket) {
         dump_esp8266_socket(socket);
     }
-    debug_printf("esp8266_socket_connect() ret=%d\r\n", ret);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    printf("esp8266_socket_connect() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_connect(): err\r\n");
+        printf("esp8266_socket_connect(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2080,10 +2088,11 @@ bool esp8266_socket_connect(void *handle, const esp8266_socket_address_t *addr) 
  * socket_accept
  */
 bool esp8266_socket_accept(void *server, void **socket, esp8266_socket_address_t *addr) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_accept(server=%08x,socket=%08x,addr=%08x)\r\n", server, socket, addr);
-#endif
-    int id = -1;;
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_accept(server=%08x,socket=%08x,addr=%08x)\r\n", server, socket, addr);
+    #endif
+    int id = -1;
+    ;
     int err = -1;
     struct esp8266_socket *socket_new = (struct esp8266_socket *)tinymalloc(sizeof(struct esp8266_socket));
     if (!socket_new) {
@@ -2107,15 +2116,15 @@ bool esp8266_socket_accept(void *server, void **socket, esp8266_socket_address_t
         addr->_addr.bytes[3] = 0;
         addr->_port = 0;
     }
-#if defined(DEBUG_ESP8266_SOCKET)
+    #if defined(DEBUG_ESP8266_SOCKET)
     dump_esp8266_socket(socket_new);
-    debug_printf("esp8266_socket_accept() ret=%d id=%d\r\n", ret, id);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    printf("esp8266_socket_accept() ret=%d id=%d\r\n", err, id);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_accept(): err\r\n");
+        printf("esp8266_socket_accept(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2123,9 +2132,9 @@ bool esp8266_socket_accept(void *server, void **socket, esp8266_socket_address_t
  * socket_send
  */
 int esp8266_socket_send(void *handle, const void *data, unsigned size) {
-#if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_SEND)
-    debug_printf("esp8266_socket_send(handle=%08x, size=%d)\r\n", handle, size);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_SEND)
+    printf("esp8266_socket_send(handle=%08x, size=%d)\r\n", handle, size);
+    #endif
     int err;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -2136,14 +2145,14 @@ int esp8266_socket_send(void *handle, const void *data, unsigned size) {
             err = (int)esp8266_send(socket->id, data, size);
         } while ((start - (uint32_t)mtick() < 50) && (err != 0));
     }
-#if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_SEND)
-    debug_printf("esp8266_socket_send() ret=%d\r\n", status);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_SEND)
+    printf("esp8266_socket_send() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_send(): err\r\n");
+        printf("esp8266_socket_send(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2151,9 +2160,9 @@ int esp8266_socket_send(void *handle, const void *data, unsigned size) {
  * socket_recv
  */
 int esp8266_socket_recv(void *handle, void *data, unsigned size) {
-#if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_RECV)
-    debug_printf("esp8266_socket_recv(handle=%08x, size=%d)\r\n", handle, size);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_RECV)
+    printf("esp8266_socket_recv(handle=%08x, size=%d)\r\n", handle, size);
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -2161,24 +2170,24 @@ int esp8266_socket_recv(void *handle, void *data, unsigned size) {
     } else {
         if (socket->proto == ESP8266_TCP) {
             err = (int)esp8266_recv_tcp(socket->id, data, size);
-            //if (recv <= 0) {
+            // if (recv <= 0) {
             //    socket->connected = false;
-            //}
-            //if (recv == 0) {
+            // }
+            // if (recv == 0) {
             //    recv = -1;
-            //}
+            // }
         } else {
             err = (int)esp8266_recv_udp(socket->id, data, size);
         }
-#if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_RECV)
-    debug_printf("esp8266_socket_recv() ret=%d\r\n", recv);
-#endif
+        #if defined(DEBUG_ESP8266_SOCKET) || defined(DEBUG_ESP8266_SOCKET_RECV)
+        printf("esp8266_socket_recv() ret=%d\r\n", err);
+        #endif
     }
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_recv(): err\r\n");
+        printf("esp8266_socket_recv(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2186,9 +2195,9 @@ int esp8266_socket_recv(void *handle, void *data, unsigned size) {
  * socket_sendto
  */
 int esp8266_socket_sendto(void *handle, const esp8266_socket_address_t *addr, const void *data, unsigned size) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_sendto()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_sendto()\r\n");
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -2211,11 +2220,11 @@ int esp8266_socket_sendto(void *handle, const esp8266_socket_address_t *addr, co
         }
         err = esp8266_socket_send(socket, data, size);
     }
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err < 0) {
-        debug_printf("esp8266_socket_sendto(): err\r\n");
+        printf("esp8266_socket_sendto(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2223,9 +2232,9 @@ int esp8266_socket_sendto(void *handle, const esp8266_socket_address_t *addr, co
  * socket_recvfrom
  */
 int esp8266_socket_recvfrom(void *handle, esp8266_socket_address_t *addr, void *data, unsigned size) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_socket_recvfrom()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_socket_recvfrom()\r\n");
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!socket) {
@@ -2236,11 +2245,11 @@ int esp8266_socket_recvfrom(void *handle, esp8266_socket_address_t *addr, void *
             *addr = socket->addr;
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err != 0) {
-        debug_printf("esp8266_socket_recvfrom(): err\r\n");
+        printf("esp8266_socket_recvfrom(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2248,9 +2257,9 @@ int esp8266_socket_recvfrom(void *handle, esp8266_socket_address_t *addr, void *
  * setsockopt
  */
 int esp8266_setsockopt(int handle, int level, int optname, const void *optval, unsigned optlen) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_setsockopt(handle=%08x, level=%d, optname=%d, optlen=%d)\r\n", handle, level, optname, optlen);
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_setsockopt(handle=%08x, level=%d, optname=%d, optlen=%d)\r\n", handle, level, optname, optlen);
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!optlen) {
@@ -2281,14 +2290,14 @@ int esp8266_setsockopt(int handle, int level, int optname, const void *optval, u
             }
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_setsockopt() ret=%d\r\n", ret);
-#endif
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_setsockopt() ret=%d\r\n", err);
+    #endif
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err != 0) {
-        debug_printf("esp8266_getsockopt(): err\r\n");
+        printf("esp8266_getsockopt(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }
 
@@ -2296,9 +2305,9 @@ int esp8266_setsockopt(int handle, int level, int optname, const void *optval, u
  * getsockopt
  */
 int esp8266_getsockopt(int handle, int level, int optname, void *optval, unsigned *optlen) {
-#if defined(DEBUG_ESP8266_SOCKET)
-    debug_printf("esp8266_getsockopt()\r\n");
-#endif
+    #if defined(DEBUG_ESP8266_SOCKET)
+    printf("esp8266_getsockopt()\r\n");
+    #endif
     int err = 0;
     struct esp8266_socket *socket = (struct esp8266_socket *)handle;
     if (!optval || !optlen) {
@@ -2318,10 +2327,10 @@ int esp8266_getsockopt(int handle, int level, int optname, void *optval, unsigne
             }
         }
     }
-#if defined(DEBUG_ESP8266_SOCKET_ERR)
+    #if defined(DEBUG_ESP8266_SOCKET_ERR)
     if (err != 0) {
-        debug_printf("esp8266_getsockopt(): err\r\n");
+        printf("esp8266_getsockopt(): err\r\n");
     }
-#endif
+    #endif
     return err;
 }

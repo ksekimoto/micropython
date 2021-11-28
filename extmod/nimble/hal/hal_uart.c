@@ -27,6 +27,7 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "nimble/ble.h"
+#include "extmod/nimble/modbluetooth_nimble.h"
 #include "extmod/nimble/hal/hal_uart.h"
 #include "extmod/nimble/nimble/nimble_npl_os.h"
 #include "extmod/mpbthci.h"
@@ -66,7 +67,7 @@ void hal_uart_start_tx(uint32_t port) {
     }
 
     #if HCI_TRACE
-    printf("< [% 8d] %02x", mp_hal_ticks_ms(), mp_bluetooth_hci_cmd_buf[0]);
+    printf("< [% 8d] %02x", (int)mp_hal_ticks_ms(), mp_bluetooth_hci_cmd_buf[0]);
     for (size_t i = 1; i < len; ++i) {
         printf(":%02x", mp_bluetooth_hci_cmd_buf[i]);
     }
@@ -74,6 +75,11 @@ void hal_uart_start_tx(uint32_t port) {
     #endif
 
     mp_bluetooth_hci_uart_write(mp_bluetooth_hci_cmd_buf, len);
+
+    if (len > 0) {
+        // Allow modbluetooth bindings to hook "sent packet" (e.g. to unstall l2cap channels).
+        mp_bluetooth_nimble_sent_hci_packet();
+    }
 }
 
 int hal_uart_close(uint32_t port) {
@@ -86,7 +92,7 @@ void mp_bluetooth_nimble_hci_uart_process(bool run_events) {
     int chr;
     while ((chr = mp_bluetooth_hci_uart_readchar()) >= 0) {
         #if HCI_TRACE
-        printf("> %02x (%d)\n", chr);
+        printf("> %02x\n", chr);
         #endif
         hal_uart_rx_cb(hal_uart_rx_arg, chr);
 

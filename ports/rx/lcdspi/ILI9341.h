@@ -61,14 +61,14 @@
 #define ILI9341_RDID2 0xDB      // read ID2
 #define ILI9341_RDID3 0xDC      // read ID3
 
-#define ILI9341_PWX		240
-#define ILI9341_PWY		320
-#define ILI9341_SX		0
-#define ILI9341_SY		0
-#define ILI9341_WX		240
-#define ILI9341_WY		320
-#define ILI9341_BITSPERPIXEL	16
-#define ILI9341_FCOL	0xFFFFFFFF
-#define ILI9341_BCOL	0x00000000
+#define ILI9341_PWX             240
+#define ILI9341_PWY             320
+#define ILI9341_SX              0
+#define ILI9341_SY              0
+#define ILI9341_WX              240
+#define ILI9341_WY              320
+#define ILI9341_BITSPERPIXEL    16
+#define ILI9341_FCOL    0xFFFFFFFF
+#define ILI9341_BCOL    0x00000000
 
 #endif /* LCD_ILI9341_H_ */

@@ -96,18 +96,18 @@ unsigned int cmt_timer_get_prescale(unsigned int ch) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     unsigned int prescale = 0;
     switch (cmtn->CMCR.WORD) {
-    case 0x40:
-        prescale = 8;
-        break;
-    case 0x41:
-        prescale = 32;
-        break;
-    case 0x42:
-        prescale = 128;
-        break;
-    case 0x43:
-        prescale = 512;
-        break;
+        case 0x40:
+            prescale = 8;
+            break;
+        case 0x41:
+            prescale = 32;
+            break;
+        case 0x42:
+            prescale = 128;
+            break;
+        case 0x43:
+            prescale = 512;
+            break;
     }
     return prescale;
 }
@@ -116,18 +116,18 @@ void cmt_timer_set_prescale(unsigned int ch, unsigned int prescale) {
     volatile struct st_cmt0 *cmtn = CMTN[ch];
     unsigned short val = 0;
     switch (prescale) {
-    case 8:
-        val = 0x40;
-        break;
-    case 32:
-        val = 0x41;
-        break;
-    case 128:
-        val = 0x42;
-        break;
-    case 512:
-        val = 0x43;
-        break;
+        case 8:
+            val = 0x40;
+            break;
+        case 32:
+            val = 0x41;
+            break;
+        case 128:
+            val = 0x42;
+            break;
+        case 512:
+            val = 0x43;
+            break;
     }
     cmtn->CMCR.WORD = (unsigned short)val;
 }
@@ -148,24 +148,24 @@ void cmt_timer_init(unsigned int ch, unsigned int prescale) {
     cmt_timer_set_prescale(ch, prescale);
 
     switch (ch) {
-    case 0:
-        ICU.IPR[0x04].BIT.IPR = PRI_TIM0;   // IPR = 15 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN4 = 1;         // IER enable
-        break;
-    case 1:
-        ICU.IPR[0x05].BIT.IPR = PRI_TIM1;   // IPR = 5 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN5 = 1;         // IER enable
-        break;
-    case 2:
-        ICU.IPR[0x06].BIT.IPR = PRI_TIM2;   // IPR = 12 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN6 = 1;         // IER enable
-        break;
-    case 3:
-        ICU.IPR[0x07].BIT.IPR = PRI_TIM3;   // IPR = 12 (15: highest priority)
-        ICU.IER[0x03].BIT.IEN7 = 1;         // IER enable
-        break;
-    default:
-        break;
+        case 0:
+            ICU.IPR[0x04].BIT.IPR = PRI_TIM0; // IPR = 15 (15: highest priority)
+            ICU.IER[0x03].BIT.IEN4 = 1;     // IER enable
+            break;
+        case 1:
+            ICU.IPR[0x05].BIT.IPR = PRI_TIM1; // IPR = 5 (15: highest priority)
+            ICU.IER[0x03].BIT.IEN5 = 1;     // IER enable
+            break;
+        case 2:
+            ICU.IPR[0x06].BIT.IPR = PRI_TIM2; // IPR = 12 (15: highest priority)
+            ICU.IER[0x03].BIT.IEN6 = 1;     // IER enable
+            break;
+        case 3:
+            ICU.IPR[0x07].BIT.IPR = PRI_TIM3; // IPR = 12 (15: highest priority)
+            ICU.IER[0x03].BIT.IEN7 = 1;     // IER enable
+            break;
+        default:
+            break;
     }
     CMT.CMSTR0.WORD |= (ch == 0 ? 1 : 2);   // enable clock
 }
@@ -173,20 +173,20 @@ void cmt_timer_init(unsigned int ch, unsigned int prescale) {
 void cmt_timer_deinit(unsigned int ch) {
     cmt_count[ch] = 0L;
     switch (ch) {
-    case 0:
-        ICU.IER[0x03].BIT.IEN4 = 0;         // IER disable
-        break;
-    case 1:
-        ICU.IER[0x03].BIT.IEN5 = 0;         // IER disable
-        break;
-    case 2:
-        ICU.IER[0x03].BIT.IEN6 = 0;         // IER disable
-        break;
-    case 3:
-        ICU.IER[0x03].BIT.IEN7 = 0;         // IER disable
-        break;
-    default:
-        break;
+        case 0:
+            ICU.IER[0x03].BIT.IEN4 = 0;     // IER disable
+            break;
+        case 1:
+            ICU.IER[0x03].BIT.IEN5 = 0;     // IER disable
+            break;
+        case 2:
+            ICU.IER[0x03].BIT.IEN6 = 0;     // IER disable
+            break;
+        case 3:
+            ICU.IER[0x03].BIT.IEN7 = 0;     // IER disable
+            break;
+        default:
+            break;
     }
     cmt_timer_func[ch] = (CMT_TIMER_FUNC)0;
     cmt_timer_param[ch] = (void *)0;
@@ -263,6 +263,6 @@ void mdelay(int m) {
 }
 
 unsigned long mtick(void) {
-    //return cmt_count[MSEC_CH];
+    // return cmt_count[MSEC_CH];
     return cmt_count[USEC_CH] / 100UL;
 }

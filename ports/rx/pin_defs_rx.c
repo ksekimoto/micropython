@@ -51,4 +51,3 @@ uint32_t pin_get_pull(const pin_obj_t *pin) {
 uint32_t pin_get_af(const pin_obj_t *pin) {
     return (uint32_t)gpio_get_af(pin->pin);
 }
-

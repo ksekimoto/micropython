@@ -45,11 +45,11 @@
 #define DEBUG_LCDSPI
 #endif
 
-//#define   DEBUG       // Define if you want to debug
+// #define   DEBUG       // Define if you want to debug
 #ifdef DEBUG
-#  define debug_printf(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
+#define debug_printf(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
 #else
-#  define debug_printf(m,v)    // do nothing
+#define debug_printf(m,v)      // do nothing
 #endif
 
 #ifdef MISAKIFONT4X8
@@ -59,7 +59,8 @@ static const ASCII_FONT_TBL _misaki_font4x8_Tbl = {
     4,
     8,
     8,
-    (unsigned char *)misaki_font4x8_data };
+    (unsigned char *)misaki_font4x8_data
+};
 
 static const FONT_TBL misaki_font4x8_tbl = {
     FONT_ASCII,
@@ -67,7 +68,8 @@ static const FONT_TBL misaki_font4x8_tbl = {
     8, /* UnitY */
     (char *)"MisakiFont4x8",
     (ASCII_FONT_TBL *)&_misaki_font4x8_Tbl,
-    (UNICODE_FONT_TBL *)NULL };
+    (UNICODE_FONT_TBL *)NULL
+};
 #endif
 
 #ifdef MISAKIFONT6X12
@@ -77,7 +79,8 @@ static const ASCII_FONT_TBL _misaki_font6x12_Tbl = {
     6,
     12,
     12,
-    (unsigned char *)misaki_font6x12_data };
+    (unsigned char *)misaki_font6x12_data
+};
 
 static const FONT_TBL misaki_font6x12_tbl = {
     FONT_ASCII,
@@ -85,7 +88,8 @@ static const FONT_TBL misaki_font6x12_tbl = {
     12, /* UnitY */
     (char *)"MisakiFont6x12",
     (ASCII_FONT_TBL *)&_misaki_font6x12_Tbl,
-    (UNICODE_FONT_TBL *)NULL };
+    (UNICODE_FONT_TBL *)NULL
+};
 #endif
 
 #ifdef MISAKIFONT8X8
@@ -97,7 +101,8 @@ static const UNICODE_FONT_TBL _misaki_font8x8_Tbl = {
     8,
     (unsigned short *)misaki_font8x8_CUniFontIdx,
     (unsigned char *)misaki_font8x8_CUniFontMap,
-    (unsigned char *)misaki_font8x8_data };
+    (unsigned char *)misaki_font8x8_data
+};
 
 static const FONT_TBL misaki_font8x8_tbl = {
     FONT_UNICODE,
@@ -105,7 +110,8 @@ static const FONT_TBL misaki_font8x8_tbl = {
     8, /* UnitY */
     (char *)"MisakiFont8x8",
     (ASCII_FONT_TBL *)&_misaki_font4x8_Tbl,
-    (UNICODE_FONT_TBL *)&_misaki_font8x8_Tbl };
+    (UNICODE_FONT_TBL *)&_misaki_font8x8_Tbl
+};
 #endif
 
 #ifdef MISAKIFONT12X12
@@ -117,7 +123,8 @@ static const UNICODE_FONT_TBL _misaki_font12x12_Tbl = {
     24,
     (unsigned short *)misaki_font12x12_CUniFontIdx,
     (unsigned char *)misaki_font12x12_CUniFontMap,
-    (unsigned char *)misaki_font12x12_data };
+    (unsigned char *)misaki_font12x12_data
+};
 
 static const FONT_TBL misaki_font12x12_tbl = {
     FONT_UNICODE,
@@ -125,23 +132,24 @@ static const FONT_TBL misaki_font12x12_tbl = {
     12, /* UnitY */
     (char *)"MisakiFont12x12",
     (ASCII_FONT_TBL *)&_misaki_font6x12_Tbl,
-    (UNICODE_FONT_TBL *)&_misaki_font12x12_Tbl };
+    (UNICODE_FONT_TBL *)&_misaki_font12x12_Tbl
+};
 #endif
 
 static const FONT_TBL *fontTblList[] = {
-#ifdef MISAKIFONT4X8
-	(FONT_TBL *)&misaki_font4x8_tbl,
-#endif
-#ifdef MISAKIFONT6X12
-	(FONT_TBL *)&misaki_font6x12_tbl,
-#endif
-#ifdef MISAKIFONT8X8
-	(FONT_TBL *)&misaki_font8x8_tbl,
-#endif
-#ifdef MISAKIFONT12X12
-	(FONT_TBL *)&misaki_font12x12_tbl,
-#endif
-	(FONT_TBL *)NULL
+    #ifdef MISAKIFONT4X8
+    (FONT_TBL *)&misaki_font4x8_tbl,
+    #endif
+    #ifdef MISAKIFONT6X12
+    (FONT_TBL *)&misaki_font6x12_tbl,
+    #endif
+    #ifdef MISAKIFONT8X8
+    (FONT_TBL *)&misaki_font8x8_tbl,
+    #endif
+    #ifdef MISAKIFONT12X12
+    (FONT_TBL *)&misaki_font12x12_tbl,
+    #endif
+    (FONT_TBL *)NULL
 };
 
 /*
@@ -189,18 +197,18 @@ font_t MisakiFont12x12 = {
 #endif
 
 font_t *fontList[] = {
-#ifdef MISAKIFONT4X8
+    #ifdef MISAKIFONT4X8
     (font_t *)&MisakiFont4x8,
-#endif
-#ifdef MISAKIFONT6X12
-	(font_t *)&MisakiFont6x12,
-#endif
-#ifdef MISAKIFONT8X8
-	(font_t *)&MisakiFont8x8,
-#endif
-#ifdef MISAKIFONT12X12
-	(font_t *)&MisakiFont12x12,
-#endif
+    #endif
+    #ifdef MISAKIFONT6X12
+    (font_t *)&MisakiFont6x12,
+    #endif
+    #ifdef MISAKIFONT8X8
+    (font_t *)&MisakiFont8x8,
+    #endif
+    #ifdef MISAKIFONT12X12
+    (font_t *)&MisakiFont12x12,
+    #endif
 };
 
 typedef struct _pyb_font_obj_t {
@@ -210,18 +218,18 @@ typedef struct _pyb_font_obj_t {
 } pyb_font_obj_t;
 
 STATIC const pyb_font_obj_t pyb_font_obj[] = {
-#ifdef MISAKIFONT4X8
+    #ifdef MISAKIFONT4X8
     {{&pyb_font_type}, MISAKIFONT4X8, (const font_t *)&MisakiFont4x8},
-#endif
-#ifdef MISAKIFONT8X8
+    #endif
+    #ifdef MISAKIFONT8X8
     {{&pyb_font_type}, MISAKIFONT8X8, (const font_t *)&MisakiFont8x8},
-#endif
-#ifdef MISAKIFONT6X12
+    #endif
+    #ifdef MISAKIFONT6X12
     {{&pyb_font_type}, MISAKIFONT6X12, (const font_t *)&MisakiFont6x12},
-#endif
-#ifdef MISAKIFONT12X12
+    #endif
+    #ifdef MISAKIFONT12X12
     {{&pyb_font_type}, MISAKIFONT12X12, (const font_t *)&MisakiFont12x12},
-#endif
+    #endif
 };
 #define NUM_FONTS   MP_ARRAY_SIZE(pyb_font_obj)
 
@@ -249,24 +257,27 @@ int font_fontUnitY(font_t *font) {
 }
 
 int font_fontWidth(font_t *font, int c) {
-    if (c < 0x100)
+    if (c < 0x100) {
         return font->_font_tbl->ascii_font_tbl->font_wx;
-    else
+    } else {
         return font->_font_tbl->unicode_font_tbl->font_wx;
+    }
 }
 
 int font_fontHeight(font_t *font, int c) {
-    if (c < 0x100)
+    if (c < 0x100) {
         return font->_font_tbl->ascii_font_tbl->font_wy;
-    else
+    } else {
         return font->_font_tbl->unicode_font_tbl->font_wy;
+    }
 }
 
 int font_fontBytes(font_t *font, int c) {
-    if (c < 0x100)
+    if (c < 0x100) {
         return font->_font_tbl->ascii_font_tbl->font_bytes;
-    else
+    } else {
         return font->_font_tbl->unicode_font_tbl->font_bytes;
+    }
 }
 
 /*
@@ -276,16 +287,16 @@ unsigned char *font_fontData(font_t *font, int idx) {
     unsigned char *p;
     if (idx < 0x100) {
         idx &= 0xff;
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("font8 idx: ", idx);
-#endif
+        #endif
         p = font->_font_tbl->ascii_font_tbl->ascii_font_data;
         p += (idx * font_fontBytes(font, idx));
         return p;
     } else {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("font16 idx: ", idx);
-#endif
+        #endif
         int i;
         int fidx;
         int tblH = idx / CUNIFONT_TBL_SIZE;
@@ -301,16 +312,16 @@ unsigned char *font_fontData(font_t *font, int idx) {
                     fidx++;
                 }
             }
-#if defined(DEBUG_LCDSPI)
+            #if defined(DEBUG_LCDSPI)
             debug_printf("font16 fidx: ", fidx);
-#endif
+            #endif
             p = font->_font_tbl->unicode_font_tbl->unicode_font_data;
             p += (fidx * font_fontBytes(font, idx));
         } else {
-#if defined(DEBUG_LCDSPI)
+            #if defined(DEBUG_LCDSPI)
             debug_printf("font16 fidx: ", -1);
-#endif
-            p = (unsigned char *) NULL;
+            #endif
+            p = (unsigned char *)NULL;
         }
         return p;
     }
@@ -371,7 +382,7 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
         }
     }
     debug_printf("len", idst)
-    *dlen = idst;
+    * dlen = idst;
 }
 #endif
 
@@ -441,8 +452,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_font_height_obj, pyb_font_height);
 STATIC mp_obj_t pyb_font_data(mp_obj_t self_in, mp_obj_t idx) {
     pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int font_idx = mp_obj_get_int(idx);
-    int font_bytes = font_fontBytes((font_t*)self->font, font_idx);
-    unsigned char *font_data = font_fontData((font_t*)self->font, font_idx);
+    int font_bytes = font_fontBytes((font_t *)self->font, font_idx);
+    unsigned char *font_data = font_fontData((font_t *)self->font, font_idx);
     return mp_obj_new_bytearray_by_ref((size_t)font_bytes, (void *)font_data);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_font_data_obj, pyb_font_data);
@@ -468,10 +479,10 @@ STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&pyb_font_height_obj) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_8), MP_ROM_INT(MISAKIFONT4X8) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_12), MP_ROM_INT(MISAKIFONT6X12) },
-#if MICROPY_PY_PYB_UNICODE_FONT
+    #if MICROPY_PY_PYB_UNICODE_FONT
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_8), MP_ROM_INT(MISAKIFONT8X8) },
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_12), MP_ROM_INT(MISAKIFONT12X12) },
-#endif
+    #endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(font_locals_dict, font_locals_dict_table);
@@ -481,7 +492,7 @@ const mp_obj_type_t pyb_font_type = {
     .name = MP_QSTR_FONT,
     .print = font_obj_print,
     .make_new = font_obj_make_new,
-    .locals_dict = (mp_obj_dict_t*)&font_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&font_locals_dict,
 };
 
 #endif

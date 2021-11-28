@@ -92,18 +92,18 @@ enum AF_INDEX {
 #define  GPIO_NOPULL            13
 #define  GPIO_PULLUP            14
 
-#define IS_GPIO_MODE(MODE) (((MODE) == GPIO_MODE_INPUT)              ||\
-                            ((MODE) == GPIO_MODE_OUTPUT_PP)          ||\
-                            ((MODE) == GPIO_MODE_OUTPUT_OD)          ||\
-                            ((MODE) == GPIO_MODE_AF_PP)              ||\
-                            ((MODE) == GPIO_MODE_AF_OD)              ||\
-                            ((MODE) == GPIO_MODE_IT_RISING)          ||\
-                            ((MODE) == GPIO_MODE_IT_FALLING)         ||\
-                            ((MODE) == GPIO_MODE_IT_RISING_FALLING)  ||\
-                            ((MODE) == GPIO_MODE_EVT_RISING)         ||\
-                            ((MODE) == GPIO_MODE_EVT_FALLING)        ||\
-                            ((MODE) == GPIO_MODE_EVT_RISING_FALLING) ||\
-                            ((MODE) == GPIO_MODE_ANALOG))
+#define IS_GPIO_MODE(MODE) (((MODE) == GPIO_MODE_INPUT) || \
+    ((MODE) == GPIO_MODE_OUTPUT_PP) || \
+    ((MODE) == GPIO_MODE_OUTPUT_OD) || \
+    ((MODE) == GPIO_MODE_AF_PP) || \
+    ((MODE) == GPIO_MODE_AF_OD) || \
+    ((MODE) == GPIO_MODE_IT_RISING) || \
+    ((MODE) == GPIO_MODE_IT_FALLING) || \
+    ((MODE) == GPIO_MODE_IT_RISING_FALLING) || \
+    ((MODE) == GPIO_MODE_EVT_RISING) || \
+    ((MODE) == GPIO_MODE_EVT_FALLING) || \
+    ((MODE) == GPIO_MODE_EVT_RISING_FALLING) || \
+    ((MODE) == GPIO_MODE_ANALOG))
 
 #define IS_GPIO_PULL(PULL) (((PULL) == GPIO_NOPULL) || ((PULL) == GPIO_PULLUP))
 
@@ -113,24 +113,24 @@ enum AF_INDEX {
 #define GPIO_MASK(pin)  (1 << (pin & 7))
 #define GPIO_BIT(pin)   (pin & 7)
 
-#define _PXXPFS(port, bit)  (*(volatile uint8_t *)(0x0008c140 + port*8 + (bit)))
+#define _PXXPFS(port, bit)  (*(volatile uint8_t *)(0x0008c140 + port * 8 + (bit)))
 #define _PDR(port)  (*(volatile uint8_t *)(0x0008c000 + port))
 #define _PODR(port) (*(volatile uint8_t *)(0x0008c020 + port))
 #define _PIDR(port) (*(volatile uint8_t *)(0x0008c040 + port))
 #define _PMR(port)  (*(volatile uint8_t *)(0x0008c060 + port))
-#define _ODR0(port) (*(volatile uint8_t *)(0x0008c080 + port*2))
-#define _ODR1(port) (*(volatile uint8_t *)(0x0008c081 + port*2))
+#define _ODR0(port) (*(volatile uint8_t *)(0x0008c080 + port * 2))
+#define _ODR1(port) (*(volatile uint8_t *)(0x0008c081 + port * 2))
 #define _PCR(port)  (*(volatile uint8_t *)(0x0008c0C0 + port))
 #define _DSCR(port) (*(volatile uint8_t *)(0x0008c0E0 + port))
 #define _MPC(pin)   (*(volatile uint8_t *)(0x0008c140 + pin))
 
-#define _PPXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port*8 + (bit)))
+#define _PPXXPFS(port, bit)  ((volatile uint8_t *)(0x0008c140 + port * 8 + (bit)))
 #define _PPDR(port)  ((volatile uint8_t *)(0x0008c000 + port))
 #define _PPODR(port) ((volatile uint8_t *)(0x0008c020 + port))
 #define _PPIDR(port) ((volatile uint8_t *)(0x0008c040 + port))
 #define _PPMR(port)  ((volatile uint8_t *)(0x0008c060 + port))
-#define _PODR0(port) ((volatile uint8_t *)(0x0008c080 + port*2))
-#define _PODR1(port) ((volatile uint8_t *)(0x0008c081 + port*2))
+#define _PODR0(port) ((volatile uint8_t *)(0x0008c080 + port * 2))
+#define _PODR1(port) ((volatile uint8_t *)(0x0008c081 + port * 2))
 #define _PPCR(port)  ((volatile uint8_t *)(0x0008c0C0 + port))
 #define _PDSCR(port) ((volatile uint8_t *)(0x0008c0E0 + port))
 #define _PMPC(pin)   ((volatile uint8_t *)(0x0008c140 + pin))
@@ -144,11 +144,11 @@ enum AF_INDEX {
  */
 
 inline void bit_clr(uint8_t *port, uint32_t bit) {
-    __asm __volatile ( "bclr %1, [%0].b\n" : : "r" (port), "r" (bit) : );
+    __asm __volatile("bclr %1, [%0].b\n" : : "r" (port), "r" (bit) :);
 }
 
 inline void bit_set(uint8_t *port, uint32_t bit) {
-    __asm __volatile ( "bset %1, [%0].b\n" : : "r" (port), "r" (bit) : );
+    __asm __volatile("bset %1, [%0].b\n" : : "r" (port), "r" (bit) :);
 }
 
 void gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt);

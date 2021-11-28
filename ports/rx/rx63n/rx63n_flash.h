@@ -36,7 +36,7 @@ extern "C" {
 
 typedef unsigned char CHIP_WORD;
 
-#define FLASH_SECTION   __attribute__((section ("FLASH_OP")))
+#define FLASH_SECTION   __attribute__((section("FLASH_OP")))
 
 void fcu_Interrupt_Disable(void) FLASH_SECTION;
 void fcu_Reset(void) FLASH_SECTION;

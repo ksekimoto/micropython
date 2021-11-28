@@ -59,14 +59,19 @@ STATIC thread_t *thread = NULL; // root pointer, handled by mp_thread_gc_others
 void mp_thread_init(void *stack, uint32_t stack_len) {
     mp_thread_set_state(&mp_state_ctx.thread);
     // create the first entry in the linked list of all threads
-    thread = &thread_entry0;
-    thread->id = xTaskGetCurrentTaskHandle();
-    thread->ready = 1;
-    thread->arg = NULL;
-    thread->stack = stack;
-    thread->stack_len = stack_len;
-    thread->next = NULL;
+    thread_entry0.id = xTaskGetCurrentTaskHandle();
+    thread_entry0.ready = 1;
+    thread_entry0.arg = NULL;
+    thread_entry0.stack = stack;
+    thread_entry0.stack_len = stack_len;
+    thread_entry0.next = NULL;
     mp_thread_mutex_init(&thread_mutex);
+
+    // memory barrier to ensure above data is committed
+    __sync_synchronize();
+
+    // vPortCleanUpTCB needs the thread ready after thread_mutex is ready
+    thread = &thread_entry0;
 }
 
 void mp_thread_gc_others(void) {
@@ -166,6 +171,8 @@ void mp_thread_finish(void) {
     mp_thread_mutex_unlock(&thread_mutex);
 }
 
+// This is called from the FreeRTOS idle task and is not within Python context,
+// so MP_STATE_THREAD is not valid and it does not have the GIL.
 void vPortCleanUpTCB(void *tcb) {
     if (thread == NULL) {
         // threading not yet initialised
@@ -182,8 +189,7 @@ void vPortCleanUpTCB(void *tcb) {
                 // move the start pointer
                 thread = th->next;
             }
-            // explicitly release all its memory
-            m_del(thread_t, th, 1);
+            // The "th" memory will eventually be reclaimed by the GC.
             break;
         }
     }
@@ -191,7 +197,10 @@ void vPortCleanUpTCB(void *tcb) {
 }
 
 void mp_thread_mutex_init(mp_thread_mutex_t *mutex) {
-    mutex->handle = xSemaphoreCreateMutexStatic(&mutex->buffer);
+    // Need a binary semaphore so a lock can be acquired on one Python thread
+    // and then released on another.
+    mutex->handle = xSemaphoreCreateBinaryStatic(&mutex->buffer);
+    xSemaphoreGive(mutex->handle);
 }
 
 int mp_thread_mutex_lock(mp_thread_mutex_t *mutex, int wait) {

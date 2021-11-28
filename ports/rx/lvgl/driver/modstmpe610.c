@@ -92,7 +92,7 @@ typedef struct _stmpe610_obj_t
     int16_t x_max;
     int16_t y_max;
     bool x_inv;
-    bool y_inv;    
+    bool y_inv;
     bool xy_swap;
 
     spi_device_handle_t spi;
@@ -104,25 +104,23 @@ typedef struct _stmpe610_obj_t
 
 STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in);
 STATIC mp_obj_t mp_stmpe610_deinit(mp_obj_t self_in);
-static bool stmpe610_read(lv_indev_data_t * data);
+static bool stmpe610_read(lv_indev_data_t *data);
 
 // Unfortunately, lvgl doesn't pass user_data to callbacks, so we use this global.
 // This means we can have only one active touch driver instance, pointed by this global.
 STATIC stmpe610_obj_t *g_stmpe610 = NULL;
 
-STATIC mp_obj_t mp_activate_stmpe610(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_activate_stmpe610(mp_obj_t self_in) {
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(self_in);
     g_stmpe610 = self;
     return mp_const_none;
 }
 
 STATIC mp_obj_t stmpe610_make_new(const mp_obj_type_t *type,
-                               size_t n_args,
-                               size_t n_kw,
-                               const mp_obj_t *all_args)
-{
-    enum{
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args) {
+    enum {
         ARG_baudrate,
         ARG_spihost,
         ARG_mode,
@@ -203,25 +201,25 @@ STATIC MP_DEFINE_CONST_DICT(stmpe610_locals_dict, stmpe610_locals_dict_table);
 STATIC const mp_obj_type_t stmpe610_type = {
     { &mp_type_type },
     .name = MP_QSTR_stmpe610,
-    //.print = stmpe610_print,
+    // .print = stmpe610_print,
     .make_new = stmpe610_make_new,
-    .locals_dict = (mp_obj_dict_t*)&stmpe610_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&stmpe610_locals_dict,
 };
 
 STATIC const mp_rom_map_elem_t stmpe610_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_stmpe610) },
-        { MP_ROM_QSTR(MP_QSTR_stmpe610), (mp_obj_t)&stmpe610_type},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_stmpe610) },
+    { MP_ROM_QSTR(MP_QSTR_stmpe610), (mp_obj_t)&stmpe610_type},
 };
-         
 
-STATIC MP_DEFINE_CONST_DICT (
+
+STATIC MP_DEFINE_CONST_DICT(
     mp_module_stmpe610_globals,
     stmpe610_globals_table
-);
+    );
 
 const mp_obj_module_t mp_module_stmpe610 = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_stmpe610_globals
+    .globals = (mp_obj_dict_t *)&mp_module_stmpe610_globals
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -261,8 +259,7 @@ STATIC uint16_t read_16bit_reg(stmpe610_obj_t *self, uint8_t reg) {
     return (uint16_t)dst[0] << 8 | (uint16_t)dst[1];
 }
 
-STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
     uint8_t u8 = 0;
     uint16_t u16 = 0;
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -283,20 +280,20 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in)
 
     u16 = read_16bit_reg(self, STMPE_CHIP_ID);
     if (u16 != 0x811) {
-#if defined(DEBUG_STMPE610)
+        #if defined(DEBUG_STMPE610)
         debug_printf(TAG, "Incorrect version: 0x%x", u16);
-#endif
+        #endif
         return MP_OBJ_NEW_SMALL_INT(u16);
     }
     write_8bit_reg(self, STMPE_SYS_CTRL2, 0x00); // Disable clocks
     write_8bit_reg(self, STMPE_TSC_CTRL, 0);     // Disable to allow writing
     write_8bit_reg(self, STMPE_TSC_CTRL,
-                   STEMP_TSC_CTRL_TRACK_0 |
-                   STMPE_TSC_CTRL_XYZ |
-                   STMPE_TSC_CTRL_EN);
+        STEMP_TSC_CTRL_TRACK_0 |
+        STMPE_TSC_CTRL_XYZ |
+        STMPE_TSC_CTRL_EN);
     write_8bit_reg(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
-                   STMPE_TSC_CFG_DELAY_1MS |
-                   STMPE_TSC_CFG_SETTLE_1MS);
+        STMPE_TSC_CFG_DELAY_1MS |
+        STMPE_TSC_CFG_SETTLE_1MS);
     write_8bit_reg(self, STMPE_TSC_FRACTION_Z, 0x7);
     write_8bit_reg(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
     write_8bit_reg(self, STMPE_SYS_CTRL2, 0x04);                    // GPIO clock off, TSC clock on, ADC clock on
@@ -324,38 +321,40 @@ static void read_data(stmpe610_obj_t *self, int16_t *x, int16_t *y, uint8_t *z) 
 }
 
 static bool buffer_empty(stmpe610_obj_t *self) {
-    return ((read_8bit_reg(self, STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY) == STMPE_FIFO_STA_EMPTY);
+    return (read_8bit_reg(self, STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY) == STMPE_FIFO_STA_EMPTY;
 }
 
 static void adjust_data(int16_t *x, int16_t *y) {
-#if STMPE610_XY_SWAP != 0
+    #if STMPE610_XY_SWAP != 0
     int16_t swap_tmp;
     swap_tmp = *x;
     *x = *y;
     *y = swap_tmp;
-#endif
+    #endif
 
-    if ((*x) > STMPE610_X_MIN)
+    if ((*x) > STMPE610_X_MIN) {
         (*x) -= STMPE610_X_MIN;
-    else
+    } else {
         (*x) = 0;
+    }
 
-    if ((*y) > STMPE610_Y_MIN)
+    if ((*y) > STMPE610_Y_MIN) {
         (*y) -= STMPE610_Y_MIN;
-    else
+    } else {
         (*y) = 0;
+    }
 
     (*x) = (uint32_t)((uint32_t)(*x) * LV_HOR_RES) / (STMPE610_X_MAX - STMPE610_X_MIN);
 
     (*y) = (uint32_t)((uint32_t)(*y) * LV_VER_RES) / (STMPE610_Y_MAX - STMPE610_Y_MIN);
 
-#if STMPE610_X_INV != 0
+    #if STMPE610_X_INV != 0
     (*x) = LV_HOR_RES - (*x);
-#endif
+    #endif
 
-#if STMPE610_Y_INV != 0
+    #if STMPE610_Y_INV != 0
     (*y) = LV_VER_RES - (*y);
-#endif
+    #endif
 
 }
 
@@ -366,8 +365,9 @@ static void adjust_data(int16_t *x, int16_t *y) {
  */
 static bool stmpe610_read(lv_indev_data_t *data) {
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(g_stmpe610);
-    if (!self)
+    if (!self) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("stmpe610 instance needs to be created before callback is called!"));
+    }
     static int16_t last_x = 0;
     static int16_t last_y = 0;
     bool valid = true;
@@ -384,12 +384,12 @@ static bool stmpe610_read(lv_indev_data_t *data) {
         }
 
         if (c > 0) {
-            //ESP_LOGI(TAG, "%d: %d %d %d", c, x, y, z);
+            // ESP_LOGI(TAG, "%d: %d %d %d", c, x, y, z);
 
             adjust_data(&x, &y);
             last_x = x;
             last_y = y;
-            //ESP_LOGI(TAG, "  ==> %d %d", x, y);
+            // ESP_LOGI(TAG, "  ==> %d %d", x, y);
         }
 
         z = read_8bit_reg(self, STMPE_INT_STA);  // Clear interrupts
@@ -412,4 +412,3 @@ static bool stmpe610_read(lv_indev_data_t *data) {
     data->state = valid == false ? LV_INDEV_STATE_REL : LV_INDEV_STATE_PR;
     return valid;
 }
-

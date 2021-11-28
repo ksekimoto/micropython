@@ -22,6 +22,8 @@
 // UART buses
 #define MICROPY_HW_UART1_TX         (pin_B6)
 #define MICROPY_HW_UART1_RX         (pin_B7)
+#define MICROPY_HW_LPUART1_TX       (pin_A2)
+#define MICROPY_HW_LPUART1_RX       (pin_A3)
 // USART 1 is connected to the virtual com port on the ST-LINK
 #define MICROPY_HW_UART_REPL        PYB_UART_1
 #define MICROPY_HW_UART_REPL_BAUD   115200
@@ -57,8 +59,8 @@
 
 // USB config
 #define MICROPY_HW_USB_FS           (1)
-#define USBD_CDC_RX_DATA_SIZE       (512)
-#define USBD_CDC_TX_DATA_SIZE       (512)
+#define MICROPY_HW_USB_CDC_RX_DATA_SIZE (512)
+#define MICROPY_HW_USB_CDC_TX_DATA_SIZE (512)
 
 // Bluetooth config
 #define MICROPY_HW_BLE_UART_ID       (0)

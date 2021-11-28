@@ -54,6 +54,6 @@ unsigned int __umodsi3(unsigned int a, unsigned int b);
 /* 64bit remainder of the unsigned division */
 unsigned long long __umoddi3(unsigned long long a, unsigned long long b);
 
-unsigned long long __udivmoddi3(unsigned long long a, unsigned long long b, unsigned long long *c); 
+unsigned long long __udivmoddi3(unsigned long long a, unsigned long long b, unsigned long long *c);
 
 #endif

@@ -66,16 +66,16 @@ static volatile struct st_sci0 *SCI[] = {
 
 static const uint8_t sci_tx_pins[] = {
     P20,    /* ch 0 P20 */
-#if defined(GRROSE)
+    #if defined(GRROSE)
     P26,    /* ch 1 P16 */
-#else
+    #else
     P16,    /* ch 1 P16 */
-#endif
+    #endif
     P50,    /* ch 2 P50 */
     P23,    /* ch 3 P23 */
     0xff,   /* ch 4 */
     PC3,    /* ch 5 PC3 */
-    P32 ,   /* ch 6 P32 */
+    P32,    /* ch 6 P32 */
     0xff,   /* ch 7 */
     0xff,   /* ch 8 */
     0xff,   /* ch 9 */
@@ -86,11 +86,11 @@ static const uint8_t sci_tx_pins[] = {
 
 static const uint8_t sci_rx_pins[] = {
     P21,    /* ch 0 P21 */
-#if defined(GRROSE)
+    #if defined(GRROSE)
     P30,    /* ch 1 P15 */
-#else
+    #else
     P15,    /* ch 1 P15 */
-#endif
+    #endif
     P52,    /* ch 2 P52 */
     P25,    /* ch 3 P25 */
     0xff,   /* ch 4 */
@@ -121,21 +121,21 @@ static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
 static void delay_us(volatile unsigned int us) {
     us *= 60;
-    while (us-- > 0)
+    while (us-- > 0) {
         ;
+    }
 }
 
-void sci_rx_set_callback(int ch, SCI_CALLBACK callback)
-{
+void sci_rx_set_callback(int ch, SCI_CALLBACK callback) {
     sci_callback[ch] = callback;
 }
 
 void sci_rx_set_int(int ch, int flag) {
-#if defined(RX63N)
+    #if defined(RX63N)
     int idx = (214 + ch * 3) / 8;
     int bit = (214 + ch * 3) & 7;
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     int idx;
     int bit;
     if (ch < 3) {
@@ -151,7 +151,7 @@ void sci_rx_set_int(int ch, int flag) {
         idx = (92 + ch * 2) / 8;
         bit = (92 + ch * 2) & 7;
     }
-#endif
+    #endif
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -165,11 +165,11 @@ void sci_rx_int_disable(int ch) {
 }
 
 void sci_tx_set_int(int ch, int flag) {
-#if defined(RX63N)
+    #if defined(RX63N)
     int idx = (215 + ch * 3) / 8;
     int bit = (215 + ch * 3) & 7;
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     int idx;
     int bit;
     if (ch < 3) {
@@ -185,7 +185,7 @@ void sci_tx_set_int(int ch, int flag) {
         idx = (93 + ch * 2) / 8;
         bit = (93 + ch * 2) & 7;
     }
-#endif
+    #endif
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -201,7 +201,7 @@ void sci_tx_int_disable(int ch) {
 #if defined(RX63N)
 void sci_te_set_int(int ch, int flag) {
     int idx = (216 + ch * 3) / 8;
-    int bit = (0 +  ch * 3) & 7;
+    int bit = (0 + ch * 3) & 7;
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -210,45 +210,45 @@ void sci_te_set_int(int ch, int flag) {
 #if defined(RX65N)
 void sci_te_set_int(int ch, int flag) {
     switch (ch) {
-    case 0:
-        ICU.GENBL0.BIT.EN0 = flag;  // vec: 110
-        break;
-    case 1:
-        ICU.GENBL0.BIT.EN2 = flag;  // vec: 110
-        break;
-    case 2:
-        ICU.GENBL0.BIT.EN4 = flag;  // vec: 110
-        break;
-    case 3:
-        ICU.GENBL0.BIT.EN6 = flag;  // vec: 110
-        break;
-    case 4:
-        ICU.GENBL0.BIT.EN8 = flag;  // vec: 110
-        break;
-    case 5:
-        ICU.GENBL0.BIT.EN10 = flag; // vec: 110
-        break;
-    case 6:
-        ICU.GENBL0.BIT.EN12 = flag; // vec: 110
-        break;
-    case 7:
-        ICU.GENBL0.BIT.EN14 = flag; // vec: 110
-        break;
-    case 8:
-        ICU.GENBL1.BIT.EN24 = flag; // vec: 111
-        break;
-    case 9:
-        ICU.GENBL1.BIT.EN26 = flag; // vec: 111
-        break;
-    case 10:
-        ICU.GENAL0.BIT.EN8 = flag;  // vec: 112
-        break;
-    case 11:
-        ICU.GENAL0.BIT.EN12 = flag; // vec: 112
-        break;
-    case 12:
-        ICU.GENBL0.BIT.EN16 = flag; // vec: 110
-        break;
+        case 0:
+            ICU.GENBL0.BIT.EN0 = flag; // vec: 110
+            break;
+        case 1:
+            ICU.GENBL0.BIT.EN2 = flag; // vec: 110
+            break;
+        case 2:
+            ICU.GENBL0.BIT.EN4 = flag; // vec: 110
+            break;
+        case 3:
+            ICU.GENBL0.BIT.EN6 = flag; // vec: 110
+            break;
+        case 4:
+            ICU.GENBL0.BIT.EN8 = flag; // vec: 110
+            break;
+        case 5:
+            ICU.GENBL0.BIT.EN10 = flag; // vec: 110
+            break;
+        case 6:
+            ICU.GENBL0.BIT.EN12 = flag; // vec: 110
+            break;
+        case 7:
+            ICU.GENBL0.BIT.EN14 = flag; // vec: 110
+            break;
+        case 8:
+            ICU.GENBL1.BIT.EN24 = flag; // vec: 111
+            break;
+        case 9:
+            ICU.GENBL1.BIT.EN26 = flag; // vec: 111
+            break;
+        case 10:
+            ICU.GENAL0.BIT.EN8 = flag; // vec: 112
+            break;
+        case 11:
+            ICU.GENAL0.BIT.EN12 = flag; // vec: 112
+            break;
+        case 12:
+            ICU.GENBL0.BIT.EN16 = flag; // vec: 110
+            break;
     }
 }
 #endif
@@ -264,45 +264,45 @@ void sci_te_int_disable(int ch) {
 #if defined(RX65N)
 void sci_er_set_int(int ch, int flag) {
     switch (ch) {
-    case 0:
-        ICU.GENBL0.BIT.EN1 = flag;  // vec: 110
-        break;
-    case 1:
-        ICU.GENBL0.BIT.EN3 = flag;  // vec: 110
-        break;
-    case 2:
-        ICU.GENBL0.BIT.EN5 = flag;  // vec: 110
-        break;
-    case 3:
-        ICU.GENBL0.BIT.EN7 = flag;  // vec: 110
-        break;
-    case 4:
-        ICU.GENBL0.BIT.EN9 = flag;  // vec: 110
-        break;
-    case 5:
-        ICU.GENBL0.BIT.EN11 = flag; // vec: 110
-        break;
-    case 6:
-        ICU.GENBL0.BIT.EN13 = flag; // vec: 110
-        break;
-    case 7:
-        ICU.GENBL0.BIT.EN15 = flag; // vec: 110
-        break;
-    case 8:
-        ICU.GENBL1.BIT.EN25 = flag; // vec: 111
-        break;
-    case 9:
-        ICU.GENBL1.BIT.EN27 = flag; // vec: 111
-        break;
-    case 10:
-        ICU.GENBL1.BIT.EN29 = flag; // vec: 110
-        break;
-    case 11:
-        ICU.GENAL0.BIT.EN9 = flag;  // vec: 112
-        break;
-    case 12:
-        ICU.GENAL0.BIT.EN13 = flag; // vec: 112
-        break;
+        case 0:
+            ICU.GENBL0.BIT.EN1 = flag; // vec: 110
+            break;
+        case 1:
+            ICU.GENBL0.BIT.EN3 = flag; // vec: 110
+            break;
+        case 2:
+            ICU.GENBL0.BIT.EN5 = flag; // vec: 110
+            break;
+        case 3:
+            ICU.GENBL0.BIT.EN7 = flag; // vec: 110
+            break;
+        case 4:
+            ICU.GENBL0.BIT.EN9 = flag; // vec: 110
+            break;
+        case 5:
+            ICU.GENBL0.BIT.EN11 = flag; // vec: 110
+            break;
+        case 6:
+            ICU.GENBL0.BIT.EN13 = flag; // vec: 110
+            break;
+        case 7:
+            ICU.GENBL0.BIT.EN15 = flag; // vec: 110
+            break;
+        case 8:
+            ICU.GENBL1.BIT.EN25 = flag; // vec: 111
+            break;
+        case 9:
+            ICU.GENBL1.BIT.EN27 = flag; // vec: 111
+            break;
+        case 10:
+            ICU.GENBL1.BIT.EN29 = flag; // vec: 110
+            break;
+        case 11:
+            ICU.GENAL0.BIT.EN9 = flag; // vec: 112
+            break;
+        case 12:
+            ICU.GENAL0.BIT.EN13 = flag; // vec: 112
+            break;
     }
 }
 #endif
@@ -348,12 +348,12 @@ static void sci_isr_rx(int ch) {
 void sci_isr_er(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     sci->RDR;
-    //sci->SSR.BYTE = 0x84;
+    // sci->SSR.BYTE = 0x84;
     while (0 != (sci->SSR.BYTE & 0x38)) {
         sci->RDR;
         sci->SSR.BYTE = (sci->SSR.BYTE & ~0x38) | 0xc0;
         if (0 != (sci->SSR.BYTE & 0x38)) {
-            __asm__ __volatile__("nop");
+            __asm__ __volatile__ ("nop");
         }
     }
 }
@@ -361,9 +361,9 @@ void sci_isr_er(int ch) {
 static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     if (!tx_fifo[ch].busy) {
-        //sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
+        // sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
         goto sci_isr_tx_exit;
     }
     if (tx_fifo[ch].len != 0) {
@@ -376,8 +376,8 @@ static void sci_isr_tx(int ch) {
         sci->SCR.BYTE |= 0x04; /* TEI set */
     }
 sci_isr_tx_exit:
-    rx_enable_irq();
-#if 0
+    rx_enable_irq(state);
+    #if 0
     if (tx_fifo[ch].len != 0) {
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
@@ -386,13 +386,13 @@ sci_isr_tx_exit:
     } else {
         tx_fifo[ch].busy = 0;
     }
-#endif
+    #endif
 }
 
 void sci_isr_te(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
-    rx_disable_irq();
-    //if (!tx_fifo[ch].busy)
+    // rx_disable_irq();
+    // if (!tx_fifo[ch].busy)
     //    goto sci_isr_te_exit;
     sci->SCR.BYTE &= ~0xa4; /* TIE, TE and TEI reset */
     if (tx_fifo[ch].len == 0) {
@@ -400,8 +400,8 @@ void sci_isr_te(int ch) {
     } else {
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
     }
-//sci_isr_te_exit:
-    rx_enable_irq();
+// sci_isr_te_exit:
+    // rx_enable_irq();
 }
 
 uint8_t sci_rx_ch(int ch) {
@@ -428,14 +428,14 @@ void sci_tx_ch(int ch, uint8_t c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     while (tx_fifo[ch].len == SCI_BUF_SIZE) {
-        rx_disable_irq();
+        uint32_t state = rx_disable_irq();
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
         tx_fifo[ch].len--;
         tx_fifo[ch].tail = i % SCI_BUF_SIZE;
-        rx_enable_irq();
+        rx_enable_irq(state);
     }
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     if (!tx_fifo[ch].busy) {
         tx_fifo[ch].busy = 1;
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
@@ -444,10 +444,12 @@ void sci_tx_ch(int ch, uint8_t c) {
     tx_fifo[ch].buff[i++] = c;
     tx_fifo[ch].head = i % SCI_BUF_SIZE;
     tx_fifo[ch].len++;
-    rx_enable_irq();
-#if 0
+    rx_enable_irq(state);
+    #if 0
     while (tx_fifo[ch].len == SCI_BUF_SIZE) {
-        while ((sci->SSR.BYTE & 0x04) == 0) ;
+        while ((sci->SSR.BYTE & 0x04) == 0) {
+            ;
+        }
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
         tx_fifo[ch].len--;
@@ -464,7 +466,7 @@ void sci_tx_ch(int ch, uint8_t c) {
         sci->TDR = c;
         tx_fifo[ch].busy = 1;
     }
-#endif
+    #endif
 }
 
 int sci_tx_wait(int ch) {
@@ -492,99 +494,99 @@ static void sci_fifo_init(int ch) {
 
 void sci_int_priority(int ch, int priority) {
     switch (ch) {
-    case 0:
-        IPR(SCI0, RXI0) = priority;
-        IPR(SCI0, TXI0) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 1:
-        IPR(SCI1, RXI1) = priority;
-        IPR(SCI1, TXI1) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 2:
-        IPR(SCI2, RXI2) = priority;
-        IPR(SCI2, TXI2) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 3:
-        IPR(SCI3, RXI3) = priority;
-        IPR(SCI3, TXI3) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 4:
-        IPR(SCI4, RXI4) = priority;
-        IPR(SCI4, TXI4) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 5:
-        IPR(SCI5, RXI5) = priority;
-        IPR(SCI5, TXI5) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 6:
-        IPR(SCI6, RXI6) = priority;
-        IPR(SCI6, TXI6) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 7:
-        IPR(SCI7, RXI7) = priority;
-        IPR(SCI7, TXI7) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    case 8:
-        IPR(SCI8, RXI8) = priority;
-        IPR(SCI8, TXI8) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl1(priority);
-#endif
-        break;
-    case 9:
-        IPR(SCI9, RXI9) = priority;
-        IPR(SCI9, TXI9) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl1(priority);
-#endif
-        break;
-    case 10:
-        IPR(SCI10, RXI10) = priority;
-        IPR(SCI10, TXI10) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupal0(priority);
-#endif
-        break;
-    case 11:
-        IPR(SCI11, RXI11) = priority;
-        IPR(SCI11, TXI11) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupal0(priority);
-#endif
-        break;
-    case 12:
-        IPR(SCI12, RXI12) = priority;
-        IPR(SCI12, TXI12) = priority;
-#if (defined(RX64M) || defined(RX65N))
-        set_int_priority_groupbl0(priority);
-#endif
-        break;
-    default:
-        break;
+        case 0:
+            IPR(SCI0, RXI0) = priority;
+            IPR(SCI0, TXI0) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 1:
+            IPR(SCI1, RXI1) = priority;
+            IPR(SCI1, TXI1) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 2:
+            IPR(SCI2, RXI2) = priority;
+            IPR(SCI2, TXI2) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 3:
+            IPR(SCI3, RXI3) = priority;
+            IPR(SCI3, TXI3) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 4:
+            IPR(SCI4, RXI4) = priority;
+            IPR(SCI4, TXI4) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 5:
+            IPR(SCI5, RXI5) = priority;
+            IPR(SCI5, TXI5) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 6:
+            IPR(SCI6, RXI6) = priority;
+            IPR(SCI6, TXI6) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 7:
+            IPR(SCI7, RXI7) = priority;
+            IPR(SCI7, TXI7) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        case 8:
+            IPR(SCI8, RXI8) = priority;
+            IPR(SCI8, TXI8) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl1(priority);
+            #endif
+            break;
+        case 9:
+            IPR(SCI9, RXI9) = priority;
+            IPR(SCI9, TXI9) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl1(priority);
+            #endif
+            break;
+        case 10:
+            IPR(SCI10, RXI10) = priority;
+            IPR(SCI10, TXI10) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupal0(priority);
+            #endif
+            break;
+        case 11:
+            IPR(SCI11, RXI11) = priority;
+            IPR(SCI11, TXI11) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupal0(priority);
+            #endif
+            break;
+        case 12:
+            IPR(SCI12, RXI12) = priority;
+            IPR(SCI12, TXI12) = priority;
+            #if (defined(RX64M) || defined(RX65N))
+            set_int_priority_groupbl0(priority);
+            #endif
+            break;
+        default:
+            break;
     }
 }
 
@@ -593,7 +595,7 @@ void sci_int_enable(int ch) {
     sci_rx_set_int(ch, 1);
     sci_er_set_int(ch, 1);
     sci_te_set_int(ch, 1);
-#if (defined(RX64M) || defined(RX65N))
+    #if (defined(RX64M) || defined(RX65N))
     if (ch < 8 || ch == 12) {
         set_int_state_groupbl0(1);
     } else if (ch == 8 || ch == 9) {
@@ -601,7 +603,7 @@ void sci_int_enable(int ch) {
     } else {
         set_int_state_groupal0(1);
     }
-#endif
+    #endif
 }
 
 void sci_int_disable(int ch) {
@@ -609,60 +611,60 @@ void sci_int_disable(int ch) {
     sci_rx_set_int(ch, 0);
     sci_er_set_int(ch, 0);
     sci_te_set_int(ch, 0);
-#if (defined(RX64M) || defined(RX65N))
-    //if (ch < 8 || ch == 12) {
+    #if (defined(RX64M) || defined(RX65N))
+    // if (ch < 8 || ch == 12) {
     //    set_int_state_groupbl0(0);
-    //} else if (ch == 8 || ch == 9) {
+    // } else if (ch == 8 || ch == 9) {
     //    set_int_state_groupbl1(0);
-    //} else {
+    // } else {
     //    set_int_state_groupal0(0);
-    //}
-#endif
+    // }
+    #endif
 }
 
 void sci_module(int ch, int flag) {
     switch (ch) {
-    case 0:
-        MSTP_SCI0 = flag;
-        break;
-    case 1:
-        MSTP_SCI1 = flag;
-        break;
-    case 2:
-        MSTP_SCI2 = flag;
-        break;
-    case 3:
-        MSTP_SCI3 = flag;
-        break;
-    case 4:
-        MSTP_SCI4 = flag;
-        break;
-    case 5:
-        MSTP_SCI5 = flag;
-        break;
-    case 6:
-        MSTP_SCI6 = flag;
-        break;
-    case 7:
-        MSTP_SCI7 = flag;
-        break;
-    case 8:
-        MSTP_SCI8 = flag;
-        break;
-    case 9:
-        MSTP_SCI9 = flag;
-        break;
-    case 10:
-        MSTP_SCI10 = flag;
-        break;
-    case 11:
-        MSTP_SCI11 = flag;
-        break;
-    case 12:
-        MSTP_SCI12 = flag;
-        break;
-    default:
-        break;
+        case 0:
+            MSTP_SCI0 = flag;
+            break;
+        case 1:
+            MSTP_SCI1 = flag;
+            break;
+        case 2:
+            MSTP_SCI2 = flag;
+            break;
+        case 3:
+            MSTP_SCI3 = flag;
+            break;
+        case 4:
+            MSTP_SCI4 = flag;
+            break;
+        case 5:
+            MSTP_SCI5 = flag;
+            break;
+        case 6:
+            MSTP_SCI6 = flag;
+            break;
+        case 7:
+            MSTP_SCI7 = flag;
+            break;
+        case 8:
+            MSTP_SCI8 = flag;
+            break;
+        case 9:
+            MSTP_SCI9 = flag;
+            break;
+        case 10:
+            MSTP_SCI10 = flag;
+            break;
+        case 11:
+            MSTP_SCI11 = flag;
+            break;
+        case 12:
+            MSTP_SCI12 = flag;
+            break;
+        default:
+            break;
     }
 }
 
@@ -677,27 +679,27 @@ void sci_module_stop(int ch) {
 void sci_set_baud(int ch, int baud) {
     volatile struct st_sci0 *sci = SCI[ch];
     if (baud == 0) {
-    	sci->SMR.BYTE &= ~0x03; // PCLK/1
-    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
-    	sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 8 - 1);
-    	//sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * SCI_DEFAULT_BAUD * 32 * 256) / PCLK);
+        sci->SMR.BYTE &= ~0x03; // PCLK/1
+        sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+        sci->BRR = (uint8_t)((int)PCLK / SCI_DEFAULT_BAUD / 8 - 1);
+        // sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * SCI_DEFAULT_BAUD * 32 * 256) / PCLK);
     } else if (baud > 19200) {
-    	sci->SMR.BYTE &= ~0x03; // PCLK/1
-    sci->SEMR.BYTE |= 0x50; //  BGDM and ABCS
+        sci->SMR.BYTE &= ~0x03; // PCLK/1
+        sci->SEMR.BYTE |= 0x50; //  BGDM and ABCS
         sci->BRR = (uint8_t)((int)PCLK / baud / 8 - 1);
-        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
+        // sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
     } else if (baud > 2400) {
-    	sci->SMR.BYTE &= ~0x03;
-    	sci->SMR.BYTE |= 0x02;  // PCLK/16
-    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
-    	sci->BRR = (uint8_t)((int)PCLK / baud / 128 - 1);
-        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
+        sci->SMR.BYTE &= ~0x03;
+        sci->SMR.BYTE |= 0x02;  // PCLK/16
+        sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+        sci->BRR = (uint8_t)((int)PCLK / baud / 128 - 1);
+        // sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
     } else {
-    	sci->SMR.BYTE &= ~0x03;
-    	sci->SMR.BYTE |= 0x03;  // PCLK/64
-    	sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
-    	sci->BRR = (uint8_t)((int)PCLK / baud / 512 - 1);
-        //sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
+        sci->SMR.BYTE &= ~0x03;
+        sci->SMR.BYTE |= 0x03;  // PCLK/64
+        sci->SEMR.BYTE |= 0x50; // BGDM and ABCS
+        sci->BRR = (uint8_t)((int)PCLK / baud / 512 - 1);
+        // sci->MDDR = (uint8_t)((((int)(sci->BRR) + 1) * baud * 32 * 256) / PCLK);
     }
 }
 
@@ -731,8 +733,9 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     _PXXPFS(rx_port, rx_pin & 7) = 0x0a;
     _PMR(tx_port) |= tx_mask;
     _PMR(rx_port) |= rx_mask;
-    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    // MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
     SYSTEM.PRCR.WORD = 0xA500;
+    uint32_t state = rx_disable_irq();
     sci->SCR.BYTE = 0;
     if (bits == 7) {
         smr |= 0x40;
@@ -766,7 +769,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     sci->SCR.BYTE = 0xd0;
     sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
     sci_int_enable(ch);
-    rx_enable_irq();
+    rx_enable_irq(state);
     if (!sci_init_flag[ch]) {
         sci_init_flag[ch] = true;
     }
@@ -791,7 +794,7 @@ void sci_deinit(int ch) {
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */
     MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
     sci_module_stop(ch);
-    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    // MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
     SYSTEM.PRCR.WORD = 0xA500;
     sci_callback[ch] = 0;
 }

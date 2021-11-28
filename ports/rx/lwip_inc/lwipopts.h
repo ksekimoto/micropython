@@ -3,7 +3,7 @@
 
 #define SSIZE_MAX INT_MAX
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdint.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -102,13 +102,6 @@ extern uint32_t rng_get(void);
 #endif
 
 typedef uint32_t sys_prot_t;
-
-//#if !defined(MICROPY_PY_LWIP)
-// For now, we can simply define this as a macro for the timer code. But this function isn't
-// universal and other ports will need to do something else. It may be necessary to move
-// things like this into a port-provided header file.
-//#define sys_now mp_hal_ticks_ms
-//#endif
 
 #include "lwip/arch.h"
 #include "sntp_client.h"

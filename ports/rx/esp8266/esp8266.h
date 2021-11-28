@@ -33,7 +33,7 @@ extern "C" {
 
 #define  WIFI_SERIAL    6   /* sci6 */
 #define  WIFI_BAUDRATE  115200
-//#define  WIFI_CTS     15
+// #define  WIFI_CTS     15
 #define  WIFI_WAIT_MSEC 10000
 
 void esp8266_at_version(void);

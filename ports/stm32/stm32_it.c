@@ -527,7 +527,11 @@ void TAMP_STAMP_IRQHandler(void) {
 
 void RTC_WKUP_IRQHandler(void) {
     IRQ_ENTER(RTC_WKUP_IRQn);
+    #if defined(STM32H7A3xx) || defined(STM32H7A3xxQ) || defined(STM32H7B3xx) || defined(STM32H7B3xxQ)
+    RTC->SR &= ~RTC_SR_WUTF; // clear wakeup interrupt flag
+    #else
     RTC->ISR &= ~RTC_ISR_WUTF; // clear wakeup interrupt flag
+    #endif
     Handle_EXTI_Irq(EXTI_RTC_WAKEUP); // clear EXTI flag and execute optional callback
     IRQ_EXIT(RTC_WKUP_IRQn);
 }
@@ -625,7 +629,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void) {
     IRQ_EXIT(TIM1_TRG_COM_TIM11_IRQn);
 }
 
-#if defined(STM32L4)
+#if defined(STM32L4) || defined(STM32WB)
 void TIM1_TRG_COM_TIM17_IRQHandler(void) {
     IRQ_ENTER(TIM1_TRG_COM_TIM17_IRQn);
     timer_irq_handler(17);
@@ -742,11 +746,13 @@ void USART1_IRQHandler(void) {
     IRQ_EXIT(USART1_IRQn);
 }
 
+#if defined(USART2)
 void USART2_IRQHandler(void) {
     IRQ_ENTER(USART2_IRQn);
     uart_irq_handler(2);
     IRQ_EXIT(USART2_IRQn);
 }
+#endif
 
 #if defined(STM32F0)
 
@@ -772,29 +778,37 @@ void USART4_5_IRQHandler(void) {
 
 #else
 
+#if defined(USART3)
 void USART3_IRQHandler(void) {
     IRQ_ENTER(USART3_IRQn);
     uart_irq_handler(3);
     IRQ_EXIT(USART3_IRQn);
 }
+#endif
 
+#if defined(UART4)
 void UART4_IRQHandler(void) {
     IRQ_ENTER(UART4_IRQn);
     uart_irq_handler(4);
     IRQ_EXIT(UART4_IRQn);
 }
+#endif
 
+#if defined(UART5)
 void UART5_IRQHandler(void) {
     IRQ_ENTER(UART5_IRQn);
     uart_irq_handler(5);
     IRQ_EXIT(UART5_IRQn);
 }
+#endif
 
+#if defined(USART6)
 void USART6_IRQHandler(void) {
     IRQ_ENTER(USART6_IRQn);
     uart_irq_handler(6);
     IRQ_EXIT(USART6_IRQn);
 }
+#endif
 
 #if defined(UART7)
 void UART7_IRQHandler(void) {
@@ -828,6 +842,14 @@ void UART10_IRQHandler(void) {
 }
 #endif
 
+#endif
+
+#if defined(LPUART1)
+void LPUART1_IRQHandler(void) {
+    IRQ_ENTER(LPUART1_IRQn);
+    uart_irq_handler(PYB_LPUART_1);
+    IRQ_EXIT(LPUART1_IRQn);
+}
 #endif
 
 #if MICROPY_PY_PYB_LEGACY

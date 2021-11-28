@@ -23,11 +23,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 #ifndef MICROPY_INCLUDED_RX_UART_H
 #define MICROPY_INCLUDED_RX_UART_H
 
+#include "shared/runtime/mpirq.h"
+
 typedef enum {
-    PYB_UART_0 = 0,
+    PYB_UART_NONE = 0,
     PYB_UART_1 = 1,
     PYB_UART_2 = 2,
     PYB_UART_3 = 3,
@@ -39,8 +42,7 @@ typedef enum {
     PYB_UART_9 = 9,
     PYB_UART_10 = 10,
     PYB_UART_11 = 11,
-    PYB_UART_12 = 12,
-    PYB_UART_NONE = 100,
+
 } pyb_uart_t;
 
 #define CHAR_WIDTH_8BIT (0)
@@ -53,11 +55,24 @@ typedef enum {
 #define UART_PARITY_ODD     (1)
 #define UART_PARITY_EVEN    (2)
 
+#define UART_HWCONTROL_RTS  ((uint16_t)0x0100)
+#define UART_HWCONTROL_CTS  ((uint16_t)0x0200)
+#define UART_FLAG_IDLE      ((uint16_t)0x0010)
+
+// OR-ed IRQ flags which are allowed to be used by the user
+#define MP_UART_ALLOWED_FLAGS ((uint32_t)0x00000010)
+
+// OR-ed IRQ flags which should not be touched by the user
+#define MP_UART_RESERVED_FLAGS ((uint16_t)0x0020)
+
 typedef struct _pyb_uart_obj_t {
     mp_obj_base_t base;
-    pyb_uart_t uart_id;
-    uint32_t baud;
+    pyb_uart_t uart_id : 8;
+    uint32_t baudrate;
     uint8_t bits;
+    uint8_t parity;
+    uint8_t stop;
+    uint8_t flow;
     bool is_static : 1;
     bool is_enabled : 1;
     bool attached_to_repl;              // whether the UART is attached to REPL
@@ -66,24 +81,29 @@ typedef struct _pyb_uart_obj_t {
     uint16_t timeout;                   // timeout waiting for first char
     uint16_t timeout_char;              // timeout waiting between chars
     uint16_t read_buf_len;              // len in chars; buf can hold len-1 chars
-    volatile uint16_t read_buf_head;    // indexes first empty slot
-    uint16_t read_buf_tail;             // indexes first full slot (not full if equals head)
     byte *read_buf;                     // byte or uint16_t, depending on char size
+    uint16_t mp_irq_trigger;            // user IRQ trigger mask
+    uint16_t mp_irq_flags;              // user IRQ active IRQ flags
+    mp_irq_obj_t *mp_irq_obj;           // user IRQ object
 } pyb_uart_obj_t;
 
 extern const mp_obj_type_t pyb_uart_type;
+extern const mp_irq_methods_t uart_irq_methods;
 
 void uart_init0(void);
 void uart_deinit_all(void);
 bool uart_exists(int uart_id);
 bool uart_init(pyb_uart_obj_t *uart_obj,
     uint32_t baudrate, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow);
+void uart_irq_config(pyb_uart_obj_t *self, bool enable);
 void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf);
 void uart_deinit(pyb_uart_obj_t *uart_obj);
+// void uart_irq_handler(mp_uint_t uart_id);
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached);
 uint32_t uart_get_baudrate(pyb_uart_obj_t *self);
 mp_uint_t uart_rx_any(pyb_uart_obj_t *uart_obj);
+mp_uint_t uart_tx_avail(pyb_uart_obj_t *uart_obj);
 bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout);
 int uart_rx_char(pyb_uart_obj_t *uart_obj);
 bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout);

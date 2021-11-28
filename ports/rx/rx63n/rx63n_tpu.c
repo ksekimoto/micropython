@@ -28,7 +28,7 @@
 #include "common.h"
 #include "rx63n_tpu.h"
 
-typedef struct st_tpu0* tpu_reg_t;
+typedef struct st_tpu0 *tpu_reg_t;
 
 #if 0
 static tpu_reg_t TPU_REG[] = {
@@ -48,7 +48,7 @@ static tpu_reg_t TPU_REG[] = {
 #endif
 
 #define TPU_IPR_VEC(tpu_pin)    (126 + (uint32_t)tpu_pin)
-#define TPU_IER_VEC(tpu_pin)    ((126 + (uint32_t)tpu_pin) /8)
+#define TPU_IER_VEC(tpu_pin)    ((126 + (uint32_t)tpu_pin) / 8)
 
 static bool rx_tpu_channel_init_flag[TPU_CHANNEL_SIZE] = {
     false, false, false, false, false, false,
@@ -67,7 +67,8 @@ static float rx_tpu_channel_freq[TPU_CHANNEL_SIZE] = {
     TPU_DEFAULT_FREQ,
     TPU_DEFAULT_FREQ,
     TPU_DEFAULT_FREQ,
-    TPU_DEFAULT_FREQ };
+    TPU_DEFAULT_FREQ
+};
 
 static float rx_tpu_channel_duty[TPU_CHANNEL_SIZE] = {
     TPU_DEFAULT_DUTY,
@@ -81,7 +82,8 @@ static float rx_tpu_channel_duty[TPU_CHANNEL_SIZE] = {
     TPU_DEFAULT_DUTY,
     TPU_DEFAULT_DUTY,
     TPU_DEFAULT_DUTY,
-    TPU_DEFAULT_DUTY};
+    TPU_DEFAULT_DUTY
+};
 
 static uint8_t tpu_pin_channel[] = {
     TIOCA0, 0,
@@ -173,7 +175,7 @@ static uint8_t pin_tpu_af3[] = {
  */
 void rx_tpu_int_ipr(uint8_t tpu_pin, uint8_t priority) {
     int idx = (int)TPU_IPR_VEC(tpu_pin);
-    //IPR(TPU5, TGRIA) = priority;
+    // IPR(TPU5, TGRIA) = priority;
     ICU.IPR[idx].BYTE = priority;
 }
 
@@ -188,90 +190,90 @@ void rx_tpu_int_ier(uint8_t tpu_pin, int flag) {
 }
 
 void rx_tpu_channel_int_enable(uint8_t channel, uint8_t bit) {
-    //tpu_reg_t tpu_reg = TPU_REG[channel];
-    //tpu_reg->TIER.BYTE |= (1 << bit);
+    // tpu_reg_t tpu_reg = TPU_REG[channel];
+    // tpu_reg->TIER.BYTE |= (1 << bit);
     uint8_t mask = 1 << bit;
     switch (channel) {
-    case 0:
-        TPU0.TIER.BYTE |= mask;
-        break;
-    case 1:
-        TPU1.TIER.BYTE |= mask;
-        break;
-    case 2:
-        TPU2.TIER.BYTE |= mask;
-        break;
-    case 3:
-        TPU3.TIER.BYTE |= mask;
-        break;
-    case 4:
-        TPU4.TIER.BYTE |= mask;
-        break;
-    case 5:
-        TPU5.TIER.BYTE |= mask;
-        break;
-    case 6:
-        TPU6.TIER.BYTE |= mask;
-        break;
-    case 7:
-        TPU7.TIER.BYTE |= mask;
-        break;
-    case 8:
-        TPU8.TIER.BYTE |= mask;
-        break;
-    case 9:
-        TPU9.TIER.BYTE |= mask;
-        break;
-    case 10:
-        TPU10.TIER.BYTE |= mask;
-        break;
-    case 11:
-        TPU11.TIER.BYTE |= mask;
-        break;
+        case 0:
+            TPU0.TIER.BYTE |= mask;
+            break;
+        case 1:
+            TPU1.TIER.BYTE |= mask;
+            break;
+        case 2:
+            TPU2.TIER.BYTE |= mask;
+            break;
+        case 3:
+            TPU3.TIER.BYTE |= mask;
+            break;
+        case 4:
+            TPU4.TIER.BYTE |= mask;
+            break;
+        case 5:
+            TPU5.TIER.BYTE |= mask;
+            break;
+        case 6:
+            TPU6.TIER.BYTE |= mask;
+            break;
+        case 7:
+            TPU7.TIER.BYTE |= mask;
+            break;
+        case 8:
+            TPU8.TIER.BYTE |= mask;
+            break;
+        case 9:
+            TPU9.TIER.BYTE |= mask;
+            break;
+        case 10:
+            TPU10.TIER.BYTE |= mask;
+            break;
+        case 11:
+            TPU11.TIER.BYTE |= mask;
+            break;
     }
 }
 
 void rx_tpu_channel_int_disable(uint8_t channel, uint8_t bit) {
-    //tpu_reg_t tpu_reg = TPU_REG[channel];
-    //tpu_reg->TIER.BYTE &= ~(1 << bit);
+    // tpu_reg_t tpu_reg = TPU_REG[channel];
+    // tpu_reg->TIER.BYTE &= ~(1 << bit);
     uint8_t mask = 1 << bit;
     switch (channel) {
-    case 0:
-        TPU0.TIER.BYTE &= ~mask;
-        break;
-    case 1:
-        TPU1.TIER.BYTE &= ~mask;
-        break;
-    case 2:
-        TPU2.TIER.BYTE &= ~mask;
-        break;
-    case 3:
-        TPU3.TIER.BYTE &= ~mask;
-        break;
-    case 4:
-        TPU4.TIER.BYTE &= ~mask;
-        break;
-    case 5:
-        TPU5.TIER.BYTE &= ~mask;
-        break;
-    case 6:
-        TPU6.TIER.BYTE &= ~mask;
-        break;
-    case 7:
-        TPU7.TIER.BYTE &= ~mask;
-        break;
-    case 8:
-        TPU8.TIER.BYTE &= ~mask;
-        break;
-    case 9:
-        TPU9.TIER.BYTE &= ~mask;
-        break;
-    case 10:
-        TPU10.TIER.BYTE &= ~mask;
-        break;
-    case 11:
-        TPU11.TIER.BYTE &= ~mask;
-        break;
+        case 0:
+            TPU0.TIER.BYTE &= ~mask;
+            break;
+        case 1:
+            TPU1.TIER.BYTE &= ~mask;
+            break;
+        case 2:
+            TPU2.TIER.BYTE &= ~mask;
+            break;
+        case 3:
+            TPU3.TIER.BYTE &= ~mask;
+            break;
+        case 4:
+            TPU4.TIER.BYTE &= ~mask;
+            break;
+        case 5:
+            TPU5.TIER.BYTE &= ~mask;
+            break;
+        case 6:
+            TPU6.TIER.BYTE &= ~mask;
+            break;
+        case 7:
+            TPU7.TIER.BYTE &= ~mask;
+            break;
+        case 8:
+            TPU8.TIER.BYTE &= ~mask;
+            break;
+        case 9:
+            TPU9.TIER.BYTE &= ~mask;
+            break;
+        case 10:
+            TPU10.TIER.BYTE &= ~mask;
+            break;
+        case 11:
+            TPU11.TIER.BYTE &= ~mask;
+            break;
     }
 }
 
@@ -283,7 +285,7 @@ uint8_t rx_tpu_get_tpu_pin(uint8_t pin_idx) {
             break;
         }
         if (pin_tpu_af3[i] == pin_idx) {
-            tpu_pin = pin_tpu_af3[i+1];
+            tpu_pin = pin_tpu_af3[i + 1];
             break;
         }
         i += 2;
@@ -303,7 +305,7 @@ uint8_t rx_tpu_get_tpu_channel(uint8_t pin_idx) {
             break;
         }
         if (tpu_pin_channel[i] == tpu_pin) {
-            tpu_channel = tpu_pin_channel[i+1];
+            tpu_channel = tpu_pin_channel[i + 1];
             break;
         }
         i += 2;
@@ -367,290 +369,290 @@ uint32_t rx_tpu_get_clock_dev(int channel, float freq) {
 
 void rx_tpu_set_clock(int channel, uint32_t clkdev) {
     switch (channel) {
-    case 0:
-        switch (clkdev) {
+        case 0:
+            switch (clkdev) {
+                case 1:
+                    TPU0.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU0.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU0.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU0.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 6:
+            switch (clkdev) {
+                case 1:
+                    TPU6.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU6.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU6.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU6.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
         case 1:
-            TPU0.TCR.BIT.TPSC = 0x0;
+            switch (clkdev) {
+                case 1:
+                    TPU1.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU1.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU1.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU1.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 7:
+            switch (clkdev) {
+                case 1:
+                    TPU7.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU7.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU7.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU7.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 2:
+            switch (clkdev) {
+                case 1:
+                    TPU2.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU2.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU2.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU2.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 8:
+            switch (clkdev) {
+                case 1:
+                    TPU8.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU8.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU8.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU8.TCR.BIT.TPSC = 0x3;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 3:
+            switch (clkdev) {
+                case 1:
+                    TPU3.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU3.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU3.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU3.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    TPU3.TCR.BIT.TPSC = 0x6;
+                    break;
+                case 1024:
+                    TPU3.TCR.BIT.TPSC = 0x5;
+                    break;
+                case 4096:
+                    TPU3.TCR.BIT.TPSC = 0x7;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 9:
+            switch (clkdev) {
+                case 1:
+                    TPU9.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU9.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU9.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU9.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    TPU9.TCR.BIT.TPSC = 0x6;
+                    break;
+                case 1024:
+                    TPU9.TCR.BIT.TPSC = 0x5;
+                    break;
+                case 4096:
+                    TPU9.TCR.BIT.TPSC = 0x7;
+                    break;
+                default:
+                    break;
+            }
             break;
         case 4:
-            TPU0.TCR.BIT.TPSC = 0x1;
+            switch (clkdev) {
+                case 1:
+                    TPU4.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU4.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU4.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU4.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 1024:
+                    TPU4.TCR.BIT.TPSC = 0x6;
+                    break;
+            }
+            break;
+        case 10:
+            switch (clkdev) {
+                case 1:
+                    TPU10.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU10.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU10.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU10.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 1024:
+                    TPU10.TCR.BIT.TPSC = 0x6;
+                    break;
+            }
+            break;
+        case 5:
+            switch (clkdev) {
+                case 1:
+                    TPU5.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU5.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU5.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU5.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    TPU5.TCR.BIT.TPSC = 0x6;
+                    break;
+            }
+            break;
+        case 11:
+            switch (clkdev) {
+                case 1:
+                    TPU11.TCR.BIT.TPSC = 0x0;
+                    break;
+                case 4:
+                    TPU11.TCR.BIT.TPSC = 0x1;
+                    break;
+                case 16:
+                    TPU11.TCR.BIT.TPSC = 0x2;
+                    break;
+                case 64:
+                    TPU11.TCR.BIT.TPSC = 0x3;
+                    break;
+                case 256:
+                    TPU11.TCR.BIT.TPSC = 0x6;
+                    break;
+            }
             break;
-        case 16:
-            TPU0.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU0.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 6:
-        switch (clkdev) {
-        case 1:
-            TPU6.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU6.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU6.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU6.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 1:
-        switch (clkdev) {
-        case 1:
-            TPU1.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU1.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU1.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU1.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 7:
-        switch (clkdev) {
-        case 1:
-            TPU7.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU7.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU7.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU7.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 2:
-        switch (clkdev) {
-        case 1:
-            TPU2.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU2.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU2.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU2.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 8:
-        switch (clkdev) {
-        case 1:
-            TPU8.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU8.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU8.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU8.TCR.BIT.TPSC = 0x3;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 3:
-        switch (clkdev) {
-        case 1:
-            TPU3.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU3.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU3.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU3.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            TPU3.TCR.BIT.TPSC = 0x6;
-            break;
-        case 1024:
-            TPU3.TCR.BIT.TPSC = 0x5;
-            break;
-        case 4096:
-            TPU3.TCR.BIT.TPSC = 0x7;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 9:
-        switch (clkdev) {
-        case 1:
-            TPU9.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU9.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU9.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU9.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            TPU9.TCR.BIT.TPSC = 0x6;
-            break;
-        case 1024:
-            TPU9.TCR.BIT.TPSC = 0x5;
-            break;
-        case 4096:
-            TPU9.TCR.BIT.TPSC = 0x7;
-            break;
-        default:
-            break;
-        }
-        break;
-    case 4:
-        switch (clkdev) {
-        case 1:
-            TPU4.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU4.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU4.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU4.TCR.BIT.TPSC = 0x3;
-            break;
-        case 1024:
-            TPU4.TCR.BIT.TPSC = 0x6;
-            break;
-        }
-        break;
-    case 10:
-        switch (clkdev) {
-        case 1:
-            TPU10.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU10.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU10.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU10.TCR.BIT.TPSC = 0x3;
-            break;
-        case 1024:
-            TPU10.TCR.BIT.TPSC = 0x6;
-            break;
-        }
-        break;
-    case 5:
-        switch (clkdev) {
-        case 1:
-            TPU5.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU5.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU5.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU5.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            TPU5.TCR.BIT.TPSC = 0x6;
-            break;
-        }
-        break;
-    case 11:
-        switch (clkdev) {
-        case 1:
-            TPU11.TCR.BIT.TPSC = 0x0;
-            break;
-        case 4:
-            TPU11.TCR.BIT.TPSC = 0x1;
-            break;
-        case 16:
-            TPU11.TCR.BIT.TPSC = 0x2;
-            break;
-        case 64:
-            TPU11.TCR.BIT.TPSC = 0x3;
-            break;
-        case 256:
-            TPU11.TCR.BIT.TPSC = 0x6;
-            break;
-        }
-        break;
     }
 }
 
 void rx_tpu_channel_enable(int channel) {
     switch (channel) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-        TPUA.TSTR.BYTE |= (1 << channel);       // start counter
-        break;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-        TPUB.TSTR.BYTE |= (1 << (channel-6));   // start counter
-        break;
-    default:
-        break;
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            TPUA.TSTR.BYTE |= (1 << channel);   // start counter
+            break;
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            TPUB.TSTR.BYTE |= (1 << (channel - 6)); // start counter
+            break;
+        default:
+            break;
     }
 }
 
 void rx_tpu_channel_disable(int channel) {
     switch (channel) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-        TPUA.TSTR.BYTE &= ~(1 << channel);      // stop counter
-        break;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-        TPUB.TSTR.BYTE &= ~(1 << (channel-6));  // stop counter
-        break;
-    default:
-        break;
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            TPUA.TSTR.BYTE &= ~(1 << channel);  // stop counter
+            break;
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            TPUB.TSTR.BYTE &= ~(1 << (channel - 6)); // stop counter
+            break;
+        default:
+            break;
     }
 }
 
@@ -678,48 +680,48 @@ void rx_tpu_channel_deinit(int channel) {
 void rx_tpu_channel_init(int channel) {
     rx_tpu_channel_disable(channel);
     switch (channel) {
-    case 0:
-        TPU0.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
-        TPU0.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU0.TIORH.BIT.IOA = 0x5;   // compare match high - low
-        TPU0.TIORH.BIT.IOB = 0x5;   // compare match high - low
-        TPU0.TIORL.BIT.IOC = 0x5;   // compare match high - low
-        TPU0.TIORL.BIT.IOD = 0x5;   // compare match high - low
-        break;
-    case 1:
-        TPU1.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
-        TPU1.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU1.TIOR.BIT.IOA = 0x5;    // compare match high - low
-        TPU1.TIOR.BIT.IOB = 0x5;    // compare match high - low
-        break;
-    case 2:
-        TPU2.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
-        TPU2.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU2.TIOR.BIT.IOA = 0x5;    // compare match high - low
-        TPU2.TIOR.BIT.IOB = 0x5;    // compare match high - low
-        break;
-    case 3:
-        TPU3.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
-        TPU3.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU3.TIORH.BIT.IOA = 0x5;   // compare match high - low
-        TPU3.TIORH.BIT.IOB = 0x5;   // compare match high - low
-        TPU3.TIORL.BIT.IOC = 0x5;   // compare match high - low
-        TPU3.TIORL.BIT.IOD = 0x5;   // compare match high - low
-        break;
-    case 4:
-        TPU4.TCR.BIT.CCLR = 0x7;    // compare match clear by other counter
-        TPU4.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU4.TIOR.BIT.IOA = 0x5 ;   // compare match high - low
-        TPU4.TIOR.BIT.IOB = 0x5;    // compare match high - low
-        break;
-    case 5:
-        TPU5.TCR.BIT.CCLR = 0x2;    // compare match clear by TGRB
-        TPU5.TMDR.BIT.MD = 0x3;     // PWM mode 2
-        TPU5.TIOR.BIT.IOA = 0x5 ;   // compare match high - low
-        //TPU5.TIOR.BIT.IOB = 0x6;    // compare match high - high
-        break;
-    default:
-        break;
+        case 0:
+            TPU0.TCR.BIT.CCLR = 0x7; // compare match clear by other counter
+            TPU0.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU0.TIORH.BIT.IOA = 0x5; // compare match high - low
+            TPU0.TIORH.BIT.IOB = 0x5; // compare match high - low
+            TPU0.TIORL.BIT.IOC = 0x5; // compare match high - low
+            TPU0.TIORL.BIT.IOD = 0x5; // compare match high - low
+            break;
+        case 1:
+            TPU1.TCR.BIT.CCLR = 0x7; // compare match clear by other counter
+            TPU1.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU1.TIOR.BIT.IOA = 0x5; // compare match high - low
+            TPU1.TIOR.BIT.IOB = 0x5; // compare match high - low
+            break;
+        case 2:
+            TPU2.TCR.BIT.CCLR = 0x7; // compare match clear by other counter
+            TPU2.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU2.TIOR.BIT.IOA = 0x5; // compare match high - low
+            TPU2.TIOR.BIT.IOB = 0x5; // compare match high - low
+            break;
+        case 3:
+            TPU3.TCR.BIT.CCLR = 0x7; // compare match clear by other counter
+            TPU3.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU3.TIORH.BIT.IOA = 0x5; // compare match high - low
+            TPU3.TIORH.BIT.IOB = 0x5; // compare match high - low
+            TPU3.TIORL.BIT.IOC = 0x5; // compare match high - low
+            TPU3.TIORL.BIT.IOD = 0x5; // compare match high - low
+            break;
+        case 4:
+            TPU4.TCR.BIT.CCLR = 0x7; // compare match clear by other counter
+            TPU4.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU4.TIOR.BIT.IOA = 0x5; // compare match high - low
+            TPU4.TIOR.BIT.IOB = 0x5; // compare match high - low
+            break;
+        case 5:
+            TPU5.TCR.BIT.CCLR = 0x2; // compare match clear by TGRB
+            TPU5.TMDR.BIT.MD = 0x3; // PWM mode 2
+            TPU5.TIOR.BIT.IOA = 0x5; // compare match high - low
+            // TPU5.TIOR.BIT.IOB = 0x6;    // compare match high - high
+            break;
+        default:
+            break;
     }
 }
 
@@ -729,7 +731,7 @@ void rx_tpu_set_channel_params(uint8_t pin_idx, int channel, float freq, float d
     uint8_t tpu_pin = rx_tpu_get_tpu_pin(pin_idx);
     uint32_t clkdev = rx_tpu_get_clock_dev(channel, freq);
     rx_tpu_set_clock(channel, clkdev);
-    float ticks = ((float)PCLK)/(freq * ((float)clkdev));
+    float ticks = ((float)PCLK) / (freq * ((float)clkdev));
     period_ticks = (uint32_t)ticks;
     duration_ticks = (uint32_t)(ticks * duty);
     if ((channel >= 0) && (channel <= 5)) {
@@ -757,108 +759,108 @@ void rx_tpu_set_channel_params(uint8_t pin_idx, int channel, float freq, float d
     }
     switch (channel)
     {
-    case 0:
-        if (tpu_pin == TIOCA0) {
-            TPU0.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB0) {
-            TPU0.TGRB = duration_ticks;
-        } else if (tpu_pin == TIOCC0) {
-            TPU0.TGRC = duration_ticks;
-        } else if (tpu_pin == TIOCD0) {
-            TPU0.TGRD = duration_ticks;
-        }
-        break;
-    case 1:
-        if (tpu_pin == TIOCA1) {
-            TPU1.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB1) {
-            TPU1.TGRB = duration_ticks;
-        }
-        break;
-    case 2:
-        if (tpu_pin == TIOCA2) {
-            TPU2.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB2) {
-            TPU2.TGRB = duration_ticks;
-        }
-        break;
-    case 3:
-        if (tpu_pin == TIOCA3) {
-            TPU3.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB3) {
-            TPU3.TGRB = duration_ticks;
-        } else if (tpu_pin == TIOCC3) {
-            TPU3.TGRC = duration_ticks;
-        } else if (tpu_pin == TIOCD3) {
-            TPU3.TGRD = duration_ticks;
-        }
-        break;
-    case 4:
-        if (tpu_pin == TIOCA4) {
-            TPU4.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB4) {
-            TPU4.TGRB = duration_ticks;
-        }
-        break;
-    case 5:
-        if (tpu_pin == TIOCA5) {
-            TPU5.TGRA = duration_ticks;
-        }
-        break;
-    case 6:
-        if (tpu_pin == TIOCA6) {
-            TPU6.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB6) {
-            TPU6.TGRB = duration_ticks;
-        } else if (tpu_pin == TIOCC6) {
-            TPU6.TGRC = duration_ticks;
-        } else if (tpu_pin == TIOCD6) {
-            TPU6.TGRD = duration_ticks;
-        }
-        break;
-    case 7:
-        if (tpu_pin == TIOCA7) {
-            TPU7.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB7) {
-            TPU7.TGRB = duration_ticks;
-        }
-        break;
-    case 8:
-        if (tpu_pin == TIOCA8) {
-            TPU8.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB8) {
-            TPU8.TGRB = duration_ticks;
-        }
-        break;
-    case 9:
-        if (tpu_pin == TIOCA9) {
-            TPU9.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB9) {
-            TPU9.TGRB = duration_ticks;
-        } else if (tpu_pin == TIOCC9) {
-            TPU9.TGRC = duration_ticks;
-        } else if (tpu_pin == TIOCD9) {
-            TPU9.TGRD = duration_ticks;
-        }
-        break;
-    case 10:
-        if (tpu_pin == TIOCA10) {
-            TPU10.TGRA = duration_ticks;
-        } else if (tpu_pin == TIOCB10) {
-            TPU10.TGRB = duration_ticks;
-        }
-        break;
-    case 11:
-        if (tpu_pin == TIOCA11) {
-            TPU11.TGRA = duration_ticks;
-        }
-        break;
-    default:
-        break;
+        case 0:
+            if (tpu_pin == TIOCA0) {
+                TPU0.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB0) {
+                TPU0.TGRB = duration_ticks;
+            } else if (tpu_pin == TIOCC0) {
+                TPU0.TGRC = duration_ticks;
+            } else if (tpu_pin == TIOCD0) {
+                TPU0.TGRD = duration_ticks;
+            }
+            break;
+        case 1:
+            if (tpu_pin == TIOCA1) {
+                TPU1.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB1) {
+                TPU1.TGRB = duration_ticks;
+            }
+            break;
+        case 2:
+            if (tpu_pin == TIOCA2) {
+                TPU2.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB2) {
+                TPU2.TGRB = duration_ticks;
+            }
+            break;
+        case 3:
+            if (tpu_pin == TIOCA3) {
+                TPU3.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB3) {
+                TPU3.TGRB = duration_ticks;
+            } else if (tpu_pin == TIOCC3) {
+                TPU3.TGRC = duration_ticks;
+            } else if (tpu_pin == TIOCD3) {
+                TPU3.TGRD = duration_ticks;
+            }
+            break;
+        case 4:
+            if (tpu_pin == TIOCA4) {
+                TPU4.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB4) {
+                TPU4.TGRB = duration_ticks;
+            }
+            break;
+        case 5:
+            if (tpu_pin == TIOCA5) {
+                TPU5.TGRA = duration_ticks;
+            }
+            break;
+        case 6:
+            if (tpu_pin == TIOCA6) {
+                TPU6.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB6) {
+                TPU6.TGRB = duration_ticks;
+            } else if (tpu_pin == TIOCC6) {
+                TPU6.TGRC = duration_ticks;
+            } else if (tpu_pin == TIOCD6) {
+                TPU6.TGRD = duration_ticks;
+            }
+            break;
+        case 7:
+            if (tpu_pin == TIOCA7) {
+                TPU7.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB7) {
+                TPU7.TGRB = duration_ticks;
+            }
+            break;
+        case 8:
+            if (tpu_pin == TIOCA8) {
+                TPU8.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB8) {
+                TPU8.TGRB = duration_ticks;
+            }
+            break;
+        case 9:
+            if (tpu_pin == TIOCA9) {
+                TPU9.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB9) {
+                TPU9.TGRB = duration_ticks;
+            } else if (tpu_pin == TIOCC9) {
+                TPU9.TGRC = duration_ticks;
+            } else if (tpu_pin == TIOCD9) {
+                TPU9.TGRD = duration_ticks;
+            }
+            break;
+        case 10:
+            if (tpu_pin == TIOCA10) {
+                TPU10.TGRA = duration_ticks;
+            } else if (tpu_pin == TIOCB10) {
+                TPU10.TGRB = duration_ticks;
+            }
+            break;
+        case 11:
+            if (tpu_pin == TIOCA11) {
+                TPU11.TGRA = duration_ticks;
+            }
+            break;
+        default:
+            break;
     }
-#ifdef DEBUG_PWM
+    #ifdef DEBUG_PWM
     debug_printf("Dt/D/P %04x/%06x/%06x\r\n", (UINT16)duration_ticks, duration, period);
-#endif
+    #endif
     return;
 }
 
@@ -918,8 +920,7 @@ void rx_tpu_stop(uint8_t pin_idx) {
     rx_tpu_channel_disable(channel);
 }
 
-static void rx_tpu_set_pin(uint8_t pin_idx)
-{
+static void rx_tpu_set_pin(uint8_t pin_idx) {
     uint8_t port = GPIO_PORT(pin_idx);
     uint8_t mask = GPIO_MASK(pin_idx);
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */
@@ -932,8 +933,7 @@ static void rx_tpu_set_pin(uint8_t pin_idx)
     MPC.PWPR.BYTE = 0x80;   /* Disable write to PFSWE and PFS*/
 }
 
-static void rx_tpu_reset_pin(uint8_t pin_idx)
-{
+static void rx_tpu_reset_pin(uint8_t pin_idx) {
     uint8_t port = GPIO_PORT(pin_idx);
     uint8_t mask = GPIO_MASK(pin_idx);
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */
@@ -953,7 +953,7 @@ void rx_tpu_pin_init(uint8_t pin_idx) {
     rx_tpu_set_channel_params(pin_idx, channel,
         rx_tpu_channel_freq[channel],
         rx_tpu_channel_duty[channel]);
-    //rx_tpu_channel_enable(channel);
+    // rx_tpu_channel_enable(channel);
 }
 
 void rx_tpu_pin_deinit(uint8_t pin_idx) {
@@ -986,4 +986,3 @@ void rx_tpu_deinit() {
     SYSTEM.PRCR.WORD = 0xA500;
     rx_tpu_channel_init_clear_flag();
 }
-

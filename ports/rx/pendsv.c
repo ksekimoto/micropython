@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #include "py/runtime.h"
-#include "lib/utils/interrupt_char.h"
+#include "shared/runtime/interrupt_char.h"
 #include "pendsv.h"
 #if defined(RX63N)
 #include "rx63n_timer.h"
@@ -67,14 +67,14 @@ void pendsv_init(void) {
 // the given exception object using nlr_jump in the context of the top-level
 // thread.
 void pendsv_kbd_intr(void) {
-    if (MP_STATE_VM(mp_pending_exception) == MP_OBJ_NULL) {
-        mp_keyboard_interrupt();
+    if (MP_STATE_MAIN_THREAD(mp_pending_exception) == MP_OBJ_NULL) {
+        mp_sched_keyboard_interrupt();
     } else {
-        MP_STATE_VM(mp_pending_exception) = MP_OBJ_NULL;
+        MP_STATE_MAIN_THREAD(mp_pending_exception) = MP_OBJ_NULL;
         pendsv_object = &MP_STATE_VM(mp_kbd_exception);
         __asm volatile (
             "int    #1\n"
-        );
+            );
     }
 }
 
@@ -82,7 +82,7 @@ void pendsv_kbd_intr(void) {
 void pendsv_schedule_dispatch(size_t slot, pendsv_dispatch_t f) {
     pendsv_dispatch_table[slot] = f;
     pendsv_dispatch_active = true;
-    //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+    // SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
 
 void pendsv_dispatch_handler(void) {
@@ -114,28 +114,27 @@ void __attribute__ ((naked)) INT_Excep_1(void) {
     //   sp[1]: 0xfffffff9
     //   sp[0]: ?
 
-#if MICROPY_PY_THREAD
-#if 0
+    #if MICROPY_PY_THREAD
+    #if 0
     __asm volatile (
 
-    );
-#endif
-#else
+        );
+    #endif
+    #else
     __asm volatile (
-        //"mov.l  [r0], r1\n"
-        //"mvtc   r1, psw\n"
+        // "mov.l  [r0], r1\n"
+        // "mvtc   r1, psw\n"
         "mov.l  #nlr_jump_ptr, r1\n"
         "mov.l  [r1], [r0]\n"
         "mov.l  #pendsv_object_ptr, r1\n"
         "mov.l  [r1], r1\n"                 /* r1: &pendsv_object*/
         "mov.l  [r1], r1\n"                 /* r1: pendsv_object */
-        //"add.l  r0, #4\n"
-        //"mvtc   r0, usp\n"
+        // "add.l  r0, #4\n"
+        // "mvtc   r0, usp\n"
         "rte\n"
         ".align 2\n"
         "pendsv_object_ptr: .word _pendsv_object\n"
         "nlr_jump_ptr: .word _nlr_jump\n"
-    );
-#endif
+        );
+    #endif
 }
-

@@ -134,9 +134,10 @@ SECTIONS
 		. = ALIGN(32);
 		*(._TX_DESC)
 	} > RAM
-	._ETHERNET_BUFFERS : 
+	._ETH_BUF : 
 	{
-		*(._ETHERNET_BUFFERS)
+		. = ALIGN(32);
+		*(._ETH_BUF)
 	} > RAM
 
 	.bss : 

@@ -91,7 +91,7 @@ typedef struct _xpt2046_obj_t
     int16_t x_max;
     int16_t y_max;
     bool x_inv;
-    bool y_inv;    
+    bool y_inv;
     bool xy_swap;
 
     spi_device_handle_t spi;
@@ -105,19 +105,17 @@ typedef struct _xpt2046_obj_t
 // This means we can have only one active touch driver instance, pointed by this global.
 STATIC xpt2046_obj_t *g_xpt2046 = NULL;
 
-STATIC mp_obj_t mp_activate_xpt2046(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_activate_xpt2046(mp_obj_t self_in) {
     xpt2046_obj_t *self = MP_OBJ_TO_PTR(self_in);
     g_xpt2046 = self;
     return mp_const_none;
 }
 
 STATIC mp_obj_t xpt2046_make_new(const mp_obj_type_t *type,
-                               size_t n_args,
-                               size_t n_kw,
-                               const mp_obj_t *all_args)
-{
-    enum{
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args) {
+    enum {
         ARG_baudrate,
         ARG_spihost,
         ARG_mode,
@@ -202,33 +200,32 @@ STATIC MP_DEFINE_CONST_DICT(xpt2046_locals_dict, xpt2046_locals_dict_table);
 STATIC const mp_obj_type_t xpt2046_type = {
     { &mp_type_type },
     .name = MP_QSTR_xpt2046,
-    //.print = xpt2046_print,
+    // .print = xpt2046_print,
     .make_new = xpt2046_make_new,
-    .locals_dict = (mp_obj_dict_t*)&xpt2046_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&xpt2046_locals_dict,
 };
 
 STATIC const mp_rom_map_elem_t xpt2046_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_xpt2046) },
-        { MP_ROM_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&xpt2046_type},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_xpt2046) },
+    { MP_ROM_QSTR(MP_QSTR_xpt2046), (mp_obj_t)&xpt2046_type},
 };
-         
 
-STATIC MP_DEFINE_CONST_DICT (
+
+STATIC MP_DEFINE_CONST_DICT(
     mp_module_xpt2046_globals,
     xpt2046_globals_table
-);
+    );
 
 const mp_obj_module_t mp_module_xpt2046 = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_xpt2046_globals
+    .globals = (mp_obj_dict_t *)&mp_module_xpt2046_globals
 };
 
 //////////////////////////////////////////////////////////////////////////////
 // Module implementation
 //////////////////////////////////////////////////////////////////////////////
 
-STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in) {
     xpt2046_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_hal_pin_input(self->irq);
     mp_hal_pin_output(self->cs);
@@ -239,15 +236,14 @@ STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in)
     return mp_const_none;
 }
 
-STATIC mp_obj_t mp_xpt2046_deinit(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_xpt2046_deinit(mp_obj_t self_in) {
     xpt2046_obj_t *self = MP_OBJ_TO_PTR(self_in);
     SPI_DEINIT((uint32_t)self->spihost, self->cs->pin);
     return mp_const_none;
 }
 
-static void xpt2046_corr(xpt2046_obj_t *self, int16_t * x, int16_t * y);
-static void xpt2046_avg(xpt2046_obj_t *self, int16_t * x, int16_t * y);
+static void xpt2046_corr(xpt2046_obj_t *self, int16_t *x, int16_t *y);
+static void xpt2046_avg(xpt2046_obj_t *self, int16_t *x, int16_t *y);
 static uint8_t tp_spi_xchg(xpt2046_obj_t *self, uint8_t data_send);
 
 /**
@@ -255,9 +251,8 @@ static uint8_t tp_spi_xchg(xpt2046_obj_t *self, uint8_t data_send);
  * @param data store the read data here
  * @return false: because no ore data to be read
  */
-static bool xpt2046_read(lv_indev_data_t * data)
-{
-    xpt2046_obj_t *self = MP_OBJ_TO_PTR(g_xpt2046 );
+static bool xpt2046_read(lv_indev_data_t *data) {
+    xpt2046_obj_t *self = MP_OBJ_TO_PTR(g_xpt2046);
     if (!self) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("xpt2046 instance needs to be created before callback is called!"));
     }
@@ -271,7 +266,7 @@ static bool xpt2046_read(lv_indev_data_t * data)
 
     uint8_t irq = (uint8_t)mp_hal_pin_read(self->irq);
 
-    if(irq == 0) {
+    if (irq == 0) {
         uint32_t state = disable_irq();
         SPI_START_XFER(self->spihost, self->spcmd, self->spbr);
         mp_hal_pin_write(self->cs, 0);
@@ -283,10 +278,10 @@ static bool xpt2046_read(lv_indev_data_t * data)
         buf = tp_spi_xchg(self, CMD_Y_READ);  /*Until x LSB converted y command can be sent*/
         x += buf;
 
-        buf =  tp_spi_xchg(self, 0);   /*Read y MSB*/
+        buf = tp_spi_xchg(self, 0);    /*Read y MSB*/
         y = buf << 8;
 
-        buf =  tp_spi_xchg(self, 0);   /*Read y LSB*/
+        buf = tp_spi_xchg(self, 0);    /*Read y LSB*/
         y += buf;
         mp_hal_pin_write(self->cs, 1);
         enable_irq(state);
@@ -314,49 +309,52 @@ static bool xpt2046_read(lv_indev_data_t * data)
  *   HELPER FUNCTIONS
  **********************/
 
-static uint8_t tp_spi_xchg(xpt2046_obj_t *self, uint8_t data_send)
-{
+static uint8_t tp_spi_xchg(xpt2046_obj_t *self, uint8_t data_send) {
     uint8_t data_rec = 0;
     SPI_TRANSFER(self->spihost, 8, (uint8_t *)&data_rec, (uint8_t *)&data_send, 1, 1000);
-	return data_rec;
+    return data_rec;
 }
 
-static void xpt2046_corr(xpt2046_obj_t *self, int16_t * x, int16_t * y)
-{
-    if (self->xy_swap){
+static void xpt2046_corr(xpt2046_obj_t *self, int16_t *x, int16_t *y) {
+    if (self->xy_swap) {
         int16_t swap_tmp;
         swap_tmp = *x;
         *x = *y;
         *y = swap_tmp;
     }
 
-    if((*x) > self->x_min)(*x) -= self->x_min;
-    else(*x) = 0;
-
-    if((*y) > self->y_min)(*y) -= self->y_min;
-    else(*y) = 0;
-
-    (*x) = (uint32_t)((uint32_t)(*x) * LV_HOR_RES) /
-           (self->x_max - self->x_min);
-
-    (*y) = (uint32_t)((uint32_t)(*y) * LV_VER_RES) /
-           (self->y_max - self->y_min);
-
-    if (self->x_inv){
-        (*x) =  LV_HOR_RES - (*x);
+    if ((*x) > self->x_min) {
+        (*x) -= self->x_min;
+    } else {
+        (*x) = 0;
     }
 
-    if (self->y_inv){
-        (*y) =  LV_VER_RES - (*y);
+    if ((*y) > self->y_min) {
+        (*y) -= self->y_min;
+    } else {
+        (*y) = 0;
+    }
+
+    (*x) = (uint32_t)((uint32_t)(*x) * LV_HOR_RES) /
+        (self->x_max - self->x_min);
+
+    (*y) = (uint32_t)((uint32_t)(*y) * LV_VER_RES) /
+        (self->y_max - self->y_min);
+
+    if (self->x_inv) {
+        (*x) = LV_HOR_RES - (*x);
+    }
+
+    if (self->y_inv) {
+        (*y) = LV_VER_RES - (*y);
     }
 }
 
 
-static void xpt2046_avg(xpt2046_obj_t *self, int16_t * x, int16_t * y)
-{
+static void xpt2046_avg(xpt2046_obj_t *self, int16_t *x, int16_t *y) {
     /*Shift out the oldest data*/
     uint8_t i;
-    for(i = XPT2046_AVG - 1; i > 0 ; i--) {
+    for (i = XPT2046_AVG - 1; i > 0; i--) {
         self->avg_buf_x[i] = self->avg_buf_x[i - 1];
         self->avg_buf_y[i] = self->avg_buf_y[i - 1];
     }
@@ -364,12 +362,14 @@ static void xpt2046_avg(xpt2046_obj_t *self, int16_t * x, int16_t * y)
     /*Insert the new point*/
     self->avg_buf_x[0] = *x;
     self->avg_buf_y[0] = *y;
-    if(self->avg_last < XPT2046_AVG) self->avg_last++;
+    if (self->avg_last < XPT2046_AVG) {
+        self->avg_last++;
+    }
 
     /*Sum the x and y coordinates*/
     int32_t x_sum = 0;
     int32_t y_sum = 0;
-    for(i = 0; i < self->avg_last ; i++) {
+    for (i = 0; i < self->avg_last; i++) {
         x_sum += self->avg_buf_x[i];
         y_sum += self->avg_buf_y[i];
     }

@@ -1,3 +1,5 @@
+[![CI badge](https://github.com/micropython/micropython/workflows/unix%20port/badge.svg)](https://github.com/micropython/micropython/actions?query=branch%3Amaster+event%3Apush) [![codecov](https://codecov.io/gh/micropython/micropython/branch/master/graph/badge.svg?token=I92PfD05sD)](https://codecov.io/gh/micropython/micropython)
+
 The MicroPython project
 =======================
 
@@ -180,7 +182,6 @@ Major components in this repository:
   HTML documentation is available at http://docs.micropython.org.
 
 Additional components:
-- ports/rx/ -- a version of MicroPython that runs on the Renesas RX63N/RX631 boards.
 - ports/bare-arm/ -- a bare minimum version of MicroPython for ARM MCUs. Used
   mostly to control code size.
 - ports/teensy/ -- a version of MicroPython that runs on the Teensy 3.1

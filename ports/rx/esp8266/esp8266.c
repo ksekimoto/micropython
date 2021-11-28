@@ -51,21 +51,21 @@
 
 char *itoa(int num, char *str, int base);
 
-//#define DEBUG_ESP8266
-//#define DEBUG_ESP8266_GET_DATA
-//#define DEBUG_ESP8266_POST
-//#define DEBUG_ESP8266_POST_HEADER
-//#define DEBUG_ESP8266_POST_DATA
-//#define DEBUG_ESP8266_CHKOK
+// #define DEBUG_ESP8266
+// #define DEBUG_ESP8266_GET_DATA
+// #define DEBUG_ESP8266_POST
+// #define DEBUG_ESP8266_POST_HEADER
+// #define DEBUG_ESP8266_POST_DATA
+// #define DEBUG_ESP8266_CHKOK
 
 #ifdef DEBUG_ESP8266
-#  define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
-#  define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
-#  define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
+#define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
+#define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
+#define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
 #else
-#  define DEBUG_PRINT(m,v)      // do nothing
-#  define DEBUG_PRINT1(s)       // do nothing
-#  define DEBUG_PRINTLN1(s)     // do nothing
+#define DEBUG_PRINT(m,v)        // do nothing
+#define DEBUG_PRINT1(s)         // do nothing
+#define DEBUG_PRINTLN1(s)       // do nothing
 #endif
 
 #if MICROPY_HW_ENABLE_SDCARD
@@ -164,12 +164,10 @@ inline int esp8266_at_data_len(void) {
     return (int)strlen((const char *)&wifi_data[0]);
 }
 
-//**************************************************
-// OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、
-// 指定されたシリアルポートに出力します
-//
-// 1:受信した, 0:受信できなかった 2:受信がオーバーフローした
-//**************************************************
+// **************************************************
+// read data in wifi_data or output to serial until OK 0d0a or ERROR 0d0a
+// 1:received, 0:not received 2:overflowed
+// **************************************************
 static int get_data(unsigned int wait_msec) {
     unsigned long times;
     int c;
@@ -183,22 +181,22 @@ static int get_data(unsigned int wait_msec) {
     times = millis();
     while (n < WIFI_DATA_MAX) {
         if (millis() - times > wait_msec) {
-#if defined(DEBUG_ESP8266_GET_DATA)
+            #if defined(DEBUG_ESP8266_GET_DATA)
             debug_printf("get_data:TIMEOUT\r\n");
-#endif
+            #endif
             wifi_data[n] = 0;
             return 0;
         }
         while ((len = esp8266_at_serial_available()) != 0) {
-            //DBG_PRINT1("len=",len);
-            //DBG_PRINT1("n=",n);
+            // DBG_PRINT1("len=",len);
+            // DBG_PRINT1("n=",n);
             for (int i = 0; i < len; i++) {
                 c = esp8266_at_serial_read();
-                //指定のシリアルポートに出す設定であれば、受信値を出力します
+                // output received data to specified serial port
                 if (WiFiRecvOutlNum >= 0) {
                     esp8266_at_serial_write_byte((unsigned char)c);
                 }
-                //DBG_PRINT2("c=",c);
+                // DBG_PRINT2("c=",c);
                 wifi_data[n] = c;
                 n++;
                 if (c == 'O') {
@@ -215,9 +213,9 @@ static int get_data(unsigned int wait_msec) {
                     if (okt == 4 || ert == 7) {
                         // OK 0d0a || ERROR 0d0a
                         wifi_data[n] = 0;
-#if defined(DEBUG_ESP8266_GET_DATA)
+                        #if defined(DEBUG_ESP8266_GET_DATA)
                         debug_printf("wifi_data:%s\r\n", (const char *)wifi_data);
-#endif
+                        #endif
                         return 1;
                     } else {
                         ert = 0;
@@ -233,29 +231,28 @@ static int get_data(unsigned int wait_msec) {
             times = millis();
         }
     }
-#if defined(DEBUG_ESP8266_GET_DATA)
+    #if defined(DEBUG_ESP8266_GET_DATA)
     debug_printf("get_data:OVERFLOW\r\n");
-#endif
+    #endif
     return 2;
 }
 
-//**************************************************
-// ステーションモードの設定: WiFi.cwmode
+// **************************************************
+// set station mode: WiFi.cwmode
 //  mode: 1:Station, 2:SoftAP, 3:Station + SoftAP
-//**************************************************
+// **************************************************
 void esp8266_at_cwmode(int mode) {
     esp8266_at_serial_print((const char *)"AT+CWMODE=");
     esp8266_at_serial_printiln(mode);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// コマンド応答のシリアル出力設定: WiFi.serialOut
+// **************************************************
+// send command response to serial: WiFi.serialOut
 //  WiFi.serialOut( mode[,serialNumber] )
-//  mode: 0:出力しない, 1:出力する
-//  serialNumber: 出力先のシリアル番号
-//**************************************************
+//  mode: 0: not send, 1: send
+//  serialNumber: serial number for sending
+// **************************************************
 void esp8266_at_serialout(int mode, int num) {
     // ToDo: check the original implementation
     int n = 0;
@@ -270,12 +267,12 @@ void esp8266_at_serialout(int mode, int num) {
     }
 }
 
-//**************************************************
-// ATコマンドの送信: WiFi.at
+// **************************************************
+// send AT command: WiFi.at
 //  WiFi.at( command[, mode] )
-//  commnad: ATコマンド文字列
-//  mode: 0:'AT+'を自動追加する、1:'AT+'を自動追加しない
-//**************************************************
+//  command: AT command
+//  mode: 0: add 'AT+' 1: not add 'AT+'
+// **************************************************
 void esp8266_at_at(int n, int mode, const char *s) {
     int len = (int)strlen(s);
     if (n <= 1 || mode == 0) {
@@ -290,24 +287,23 @@ void esp8266_at_at(int n, int mode, const char *s) {
     wifi_data[len] = 0;
 
     esp8266_at_serial_println((const char *)wifi_data);
-    //DBG_PRINT2("WiFi.at",(const char *)wifi_data);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
+    // DBG_PRINT2("WiFi.at",(const char *)wifi_data);
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// WiFi接続します: WiFi.connect
+// **************************************************
+// connect WiFi: WiFi.connect
 //  WiFi.connect(SSID,Passwd)
 //  WiFi.cwjap(SSID,Passwd)
-//  SSID: WiFiのSSID
-//  Passwd: パスワード
-//**************************************************
+//  SSID: WiFi SSID
+//  Passwd: password
+// **************************************************
 void esp8266_at_cwjap(const char *ssid, const char *pass) {
     int slen = (int)strlen(ssid);
     int plen = (int)strlen(pass);
 
     esp8266_at_serial_print((const char *)"AT+CWJAP=");
-    wifi_data[0] = 0x22;     //-> "
+    wifi_data[0] = 0x22;     // -> "
     wifi_data[1] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
     for (int i = 0; i < 254; i++) {
@@ -318,9 +314,9 @@ void esp8266_at_cwjap(const char *ssid, const char *pass) {
     }
     wifi_data[slen] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
-    wifi_data[0] = 0x22;     //-> "
-    wifi_data[1] = 0x2C;     //-> ,
-    wifi_data[2] = 0x22;     //-> "
+    wifi_data[0] = 0x22;     // -> "
+    wifi_data[1] = 0x2C;     // -> ,
+    wifi_data[2] = 0x22;     // -> "
     wifi_data[3] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
     for (int i = 0; i < 254; i++) {
@@ -331,21 +327,20 @@ void esp8266_at_cwjap(const char *ssid, const char *pass) {
     }
     wifi_data[plen] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
-    wifi_data[0] = 0x22;     //-> "
+    wifi_data[0] = 0x22;     // -> "
     wifi_data[1] = 0;
     esp8266_at_serial_println((const char *)wifi_data);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// WiFiアクセスポイントになります: WiFi.softAP
+// **************************************************
+// WiFi access point: WiFi.softAP
 //  WiFi.softAP(SSID,Passwd,Channel,Encrypt)
-//  SSID: WiFiのSSID
-//  Passwd: パスワード
-//  Channel: チャネル
-//  Encrypt: 暗号タイプ 0:Open, 1:WEP, 2:WPA_PSK, 3:WPA2_PSK, 4:WPA_WPA2_PSK
-//**************************************************
+//  SSID: WiFi SSID
+//  Passwd: password
+//  Channel: channel
+//  Encrypt: encryption type 0:Open, 1:WEP, 2:WPA_PSK, 3:WPA2_PSK, 4:WPA_WPA2_PSK
+// **************************************************
 void esp8266_at_softap(const char *ssid, const char *pass, int ch, int enc) {
     int slen = strlen(ssid);
     int plen = strlen(pass);
@@ -354,7 +349,7 @@ void esp8266_at_softap(const char *ssid, const char *pass, int ch, int enc) {
         enc = 0;
     }
     esp8266_at_serial_print((const char *)"AT+CWSAP=");
-    wifi_data[0] = 0x22;     //-> "
+    wifi_data[0] = 0x22;     // -> "
     wifi_data[1] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
     for (int i = 0; i < 254; i++) {
@@ -365,9 +360,9 @@ void esp8266_at_softap(const char *ssid, const char *pass, int ch, int enc) {
     }
     wifi_data[slen] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
-    wifi_data[0] = 0x22;     //-> "
-    wifi_data[1] = 0x2C;     //-> ,
-    wifi_data[2] = 0x22;     //-> "
+    wifi_data[0] = 0x22;     // -> "
+    wifi_data[1] = 0x2C;     // -> ,
+    wifi_data[2] = 0x22;     // -> "
     wifi_data[3] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
     for (int i = 0; i < 254; i++) {
@@ -378,59 +373,55 @@ void esp8266_at_softap(const char *ssid, const char *pass, int ch, int enc) {
     }
     wifi_data[plen] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
-    wifi_data[0] = 0x22;     //-> "
-    wifi_data[1] = 0x2C;     //-> ,
+    wifi_data[0] = 0x22;     // -> "
+    wifi_data[1] = 0x2C;     // -> ,
     wifi_data[2] = 0;
     esp8266_at_serial_print((const char *)wifi_data);
     esp8266_at_serial_printi(ch);
     esp8266_at_serial_print((const char *)",");
     esp8266_at_serial_println((const char *)enc);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// アクセスポイントに接続されているIP取得: WiFi.connetedIP
+// **************************************************
+// get ip address for access point: WiFi.connetedIP
 //  WiFi.connectedIP()
-//**************************************************
+// **************************************************
 void esp8266_at_connectedip(void) {
     esp8266_at_serial_println((const char *)"AT+CWLIF");
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// DHCP有無の切り替え: WiFi.dhcp
+// **************************************************
+// DHCP on/off: WiFi.dhcp
 //  WiFi.dhcp(mode, bool)
 //  mode: 0:SoftAP, 1:Station, 2:Both softAP + Station
 //  bool: 0:disable , 1:enable
-//**************************************************
+// **************************************************
 void esp8266_at_dhcp(int mode, int bl) {
     esp8266_at_serial_print((const char *)"AT+CWDHCP=");
     esp8266_at_serial_printi(mode);
     esp8266_at_serial_print((const char *)",");
     esp8266_at_serial_println((const char *)bl);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
-//**************************************************
-// IPアドレスとMACアドレスの表示: WiFi.ipconfig
+// **************************************************
+// IP address and MAC address: WiFi.ipconfig
 //  WiFi.ipconfig()
 //  WiFi.cifsr()
-//**************************************************
+// **************************************************
 void esp8266_at_cifsr(void) {
     esp8266_at_serial_println((const char *)"AT+CIFSR");
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
 #if 0
-//**************************************************
-// USBポートとESP8266をシリアルで直結します: WiFi.bypass
+// **************************************************
+// connect USB to ESP8266: WiFi.bypass
 //  WiFi.bypass()
-// リセットするまで、処理は戻りません。
-//**************************************************
+// reset for stop
+// **************************************************
 void esp8266_at_bypass(void) {
     int len0, len1, len;
     while (true) {
@@ -459,30 +450,27 @@ void esp8266_at_bypass(void) {
 
 void esp8266_at_version(void) {
     esp8266_at_serial_println((const char *)"AT+GMR");
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
 void esp8266_at_disconnect(void) {
     esp8266_at_serial_println((const char *)"AT+CWQAP");
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
 void esp8266_at_multiconnect(int mode) {
     esp8266_at_serial_print((const char *)"AT+CIPMUX=");
     esp8266_at_serial_printiln(mode);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
 }
 
 #if MICROPY_HW_ENABLE_SDCARD
-//**************************************************
-// ファイルに含まれる+IPDデータを削除します
-// ipd: ipdデータ列
-// strFname1: 元ファイル
-// strFname2: 削除したファイル
-//**************************************************
+// **************************************************
+// remove +IPD data contained in the file
+// ipd: ipd data
+// strFname1: source file
+// strFname2: destination file
+// **************************************************
 int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFname2) {
     FIL fp, fd;
 
@@ -504,7 +492,7 @@ int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFnam
     int dLen;
     unsigned long seekCnt = 0;
     while (true) {
-        //+IPD文字列を探します
+        // finding +IPD string
         cnt = 0;
         while (true) {
             rc = sd_read_byte(&fp);
@@ -525,12 +513,12 @@ int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFnam
                 cnt = 0;
             }
         }
-        //Serial.print("findFlg= ");
-        //Serial.println(findFlg);
+        // Serial.print("findFlg= ");
+        // Serial.println(findFlg);
         if (findFlg == false) {
             break;
         }
-        //ここから後はバイト数が来ているはず
+        // get number of bytes
         cnt = 0;
         while (true) {
             rc = sd_read_byte(&fp);
@@ -554,11 +542,11 @@ int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFnam
         if (findFlg == false) {
             break;
         }
-        //読み込むバイト数を求めます
+        // get bytes for reading
         dLen = atoi((const char *)str);
         seekCnt += dLen;
-        //Serial.print("dLen= ");
-        //Serial.println((const char *)str);
+        // Serial.print("dLen= ");
+        // Serial.println((const char *)str);
         while (dLen > 0) {
             if (dLen >= 256) {
                 sd_read(&fp, wifi_data, 256);
@@ -572,7 +560,7 @@ int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFnam
         }
     }
     if (findFlg == false) {
-        //処理していないところは、そのまま書きます
+        // just output data without processing
         sd_seek(&fp, seekCnt);
 
         while (true) {
@@ -589,44 +577,43 @@ int cut_garbage_data(const char *ipd, const char *strFname1, const char *strFnam
     return 1;
 }
 
-//**************************************************
-// http GETをSDカードに保存します: WiFi.httpGetSD
+// **************************************************
+// store http GET data to sd card: WiFi.httpGetSD
 //  WiFi.httpGetSD( Filename, URL[,Headers] )
-//  Filename: 保存するファイル名
+//  Filename: file name
 //  URL: URL
-//  Headers: ヘッダに追記する文字列の配列
+//  Headers: header array to be written
 //
-//  戻り値は以下のとおり
-//      0: 失敗
-//      1: 成功
-//      2: SDカードが使えない
-//      ... 各種エラー
-//**************************************************
+//      0: fail
+//      1: success
+//      2: SD card unavailable
+//      ...other errors
+// **************************************************
 int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **head, int ssl) {
     const char *tmpFilename = "wifitmp.tmp";
     const char *hedFilename = "hedrfile.tmp";
     int len = 0;
     FIL fp;
     int sla, koron;
-    //httpサーバに送信するデータを、strFname ファイルに生成します。
-    //既にファイルがあれば消す
+    // check if the file exists or not
+    // remove the file if it exists
     if (sd_exists(hedFilename)) {
         sd_remove(hedFilename);
     }
-    //ファイルオープン
+    // open file
     if (!sd_open(&fp, hedFilename, FA_WRITE | FA_CREATE_NEW)) {
         return 3;
     }
-    //1行目を生成
+    // write the first line
     {
-        sd_write(&fp, (unsigned char*)"GET /", 5);
-        //httpsかチェック
+        sd_write(&fp, (unsigned char *)"GET /", 5);
+        // check https
         if (ssl) {
-            //DBG_PRINT1("AT+CIPSSLSIZE=4096");
+            // DBG_PRINT1("AT+CIPSSLSIZE=4096");
             esp8266_at_serial_println((const char *)"AT+CIPSSLSIZE=4096");
             get_data(WIFI_WAIT_MSEC);
         }
-        //URLからドメインを分割する
+        // get domain from url
         len = strlen(strURL);
         sla = len;
         koron = 0;
@@ -642,11 +629,11 @@ int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **he
         for (int i = sla + 1; i < len; i++) {
             sd_write(&fp, &strURL[i], 1);
         }
-        sd_write(&fp, (unsigned char*)" HTTP/1.1", 9);
+        sd_write(&fp, (unsigned char *)" HTTP/1.1", 9);
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //Hostヘッダを生成
+    // create host header
     {
         sd_write(&fp, (unsigned char *)"Host: ", 6);
         if (koron == 0) {
@@ -658,21 +645,20 @@ int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **he
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //ヘッダ情報が追加されているとき
+    // when there is header information
     for (int i = 0; i < n; i++) {
         len = strlen(*head);
-        //ヘッダの追記
-        sd_write(&fp, (const unsigned char*)*head++, len);
+        // adding headers
+        sd_write(&fp, (const unsigned char *)*head++, len);
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //改行のみの行を追加する
+    // adding CRLF
     sd_write_byte(&fp, 0x0D);
     sd_write_byte(&fp, 0x0A);
     sd_flush(&fp);
     sd_close(&fp);
-    //****** AT+CIPSTARTコマンド ******
-    //wifi_data[]に、ドメインとポート番号を取得
+    // ****** AT+CIPSTART command ******
     for (int i = 0; i < sla; i++) {
         wifi_data[i] = strURL[i];
         if (i == koron) {
@@ -696,38 +682,35 @@ int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **he
             esp8266_at_serial_println("80");
         }
     }
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //Serial.print("httpServer Connect: ");
-    //Serial.print((const char *)wifi_data);
-    //****** AT+CIPSEND コマンド ******
-    //送信データサイズ取得
+    // Serial.print("httpServer Connect: ");
+    // Serial.print((const char *)wifi_data);
+    // ****** AT+CIPSEND command ******
     if (!sd_open(&fp, hedFilename, FA_READ)) {
         return 4;
     }
-    //ファイルサイズ取得
+    // get file size
     int sByte = (int)sd_size(&fp);
     sd_close(&fp);
-    //Serial.print("AT+CIPSEND=4,");
+    // Serial.print("AT+CIPSEND=4,");
     esp8266_at_serial_print((const char *)"AT+CIPSEND=4,");
-    itoa(sByte, (char*)wifi_data, 10);
-    //Serial.println((const char *)wifi_data);
+    itoa(sByte, (char *)wifi_data, 10);
+    // Serial.println((const char *)wifi_data);
     esp8266_at_serial_println((const char *)wifi_data);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //Serial.print("> Waiting: ");
-    //Serial.print((const char *)wifi_data);
-    //****** 送信データ受付モードになったので、http GETデータを送信する ******
+    // Serial.print("> Waiting: ");
+    // Serial.print((const char *)wifi_data);
+    // sending http GET data since mode is changed for accepting data
     {
         if (!sd_open(&fp, hedFilename, FA_READ)) {
             return 5;
@@ -735,23 +718,22 @@ int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **he
         wifi_data[1] = 0;
         for (int i = 0; i < sByte; i++) {
             wifi_data[0] = (unsigned char)sd_read_byte(&fp);
-            //Serial.print((const char *)wifi_data);
+            // Serial.print((const char *)wifi_data);
             esp8266_at_serial_print((const char *)wifi_data);
         }
         sd_close(&fp);
-        sd_remove(tmpFilename); //受信するためファイルを事前に消している
-        //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
+        sd_remove(tmpFilename);
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-                || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-            //DBG_PRINT1("WIFI ERR");
+              || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+            // DBG_PRINT1("WIFI ERR");
             return 0;
         }
-        //Serial.print("Send Finish: ");
-        //Serial.print((const char *)wifi_data);
+        // Serial.print("Send Finish: ");
+        // Serial.print((const char *)wifi_data);
     }
-    //****** 送信終了 ******
-    //****** 受信開始 ******
+    // ****** sending done ******
+    // ****** receiving start ******
     if (!sd_open(&fp, tmpFilename, FA_WRITE | FA_CREATE_NEW)) {
         return 6;
     }
@@ -760,61 +742,59 @@ int esp8266_at_get_sd(const char *strURL, const char *strFname, int n, char **he
     unsigned char recv[2];
     times = millis();
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
         while ((len = esp8266_at_serial_available()) != 0) {
             for (int i = 0; i < len; i++) {
                 recv[0] = (unsigned char)esp8266_at_serial_read();
-                sd_write(&fp, (unsigned char*)recv, 1);
+                sd_write(&fp, (unsigned char *)recv, 1);
             }
             times = millis();
-            wait_msec = 1000;   //データが届き始めたら、1sec待ちに変更する
+            wait_msec = 1000;
         }
     }
     sd_flush(&fp);
     sd_close(&fp);
-    //****** 受信終了 ******
-    //Serial.println("Recv Finish");
-    //受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
+    // ****** receiving done ******
+    // Serial.println("Recv Finish");
+    // removing '\r\n+\r\n+IPD,4,****:'
     int ret = cut_garbage_data("\r\n+IPD,4,", tmpFilename, strFname);
     if (ret != 1) {
         return 7;
     }
-    //****** AT+CIPCLOSE コマンド ******
-    //DBG_PRINT1("AT+CIPCLOSE=4");
+    // ****** AT+CIPCLOSE command ******
+    // DBG_PRINT1("AT+CIPCLOSE=4");
     esp8266_at_serial_println((const char *)"AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
-    //Serial.println((const char *)wifi_data);
+    // Serial.println((const char *)wifi_data);
     return 1;
 }
 #endif
 
-//**************************************************
-// http GETプロトコルを送信する: WiFi.httpGet
+// **************************************************
+// send http GET: WiFi.httpGet
 //  WiFi.httpGet( URL[,Headers] )
-//　送信のみで、結果を受信しない
+//  sending only
 //  URL: URL
-//  Headers: ヘッダに追記する文字列の配列
+//  Headers: string to be added to header
 //
-//  戻り値は以下のとおり
-//      0: 失敗
-//      1: 成功
-//**************************************************
+//      0: fail
+//      1: success
+// **************************************************
 int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
     int len = 0;
     int sla, cnt;
     int koron = 0;
     char sData[1024];
 
-    //httpsかチェック
+    // check https
     if (ssl) {
-        //DBG_PRINT1("AT+CIPSSLSIZE=4096");
+        // DBG_PRINT1("AT+CIPSSLSIZE=4096");
         esp8266_at_serial_println((const char *)"AT+CIPSSLSIZE=4096");
         get_data(WIFI_WAIT_MSEC);
     }
-    //URLからドメインを分割する
+    // get domain from URL
     len = (int)strlen((const char *)strURL);
     sla = len;
     for (int i = 0; i < len; i++) {
@@ -829,8 +809,8 @@ int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
     if (koron == 0) {
         koron = sla;
     }
-    //****** AT+CIPSTARTコマンド ******
-    //wifi_data[]に、ドメインとポート番号を取得
+    // ****** AT+CIPSTART command ******
+    // get domain and port number in wifi_data[]
     for (int i = 0; i < sla; i++) {
         wifi_data[i] = strURL[i];
         if (i == koron) {
@@ -854,15 +834,13 @@ int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
             esp8266_at_serial_println("80");
         }
     }
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //****** AT+CIPSEND コマンド ******
-    //ヘッダの1行目を生成
+    // ****** AT+CIPSEND command ******
     {
         strcpy(sData, "GET /");
         cnt = 5;
@@ -873,7 +851,7 @@ int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
         sData[cnt] = 0;
         strcat(sData, " HTTP/1.1\r\n");
     }
-    //Hostヘッダを生成
+    // create host header
     {
         strcat(sData, "Host: ");
         cnt = strlen(sData);
@@ -884,45 +862,42 @@ int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
         sData[cnt] = 0;
         strcat(sData, "\r\n");
     }
-    //ヘッダ情報が追加されているとき
+    // when there is header information
     for (int i = 0; i < n; i++) {
         len = (int)strlen((const char *)*hes);
-        //ヘッダの追記
+        // adding header
         strcat(sData, (const char *)*hes++);
         strcat(sData, "\r\n");
     }
-    //改行のみの行を追加する
+    // adding CRLF
     strcat(sData, "\r\n");
-    //送信データサイズ取得
+    // get data size
     len = strlen(sData);
-    //DBG_PRINT1((const char *)sData);
+    // DBG_PRINT1((const char *)sData);
     esp8266_at_serial_print("AT+CIPSEND=4,");
     esp8266_at_serial_printiln(len);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //****** 送信データ受付モードになったので、http GETデータを送信する ******
+    // sending http GET data since mode is changed for accepting data
     {
         esp8266_at_serial_print((const char *)sData);
-        //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-                || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-            //DBG_PRINT1("WIFI ERR");
+              || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+            // DBG_PRINT1("WIFI ERR");
             return 0;
         }
     }
-    //****** 送信終了 ******
-    //****** 受信開始 ******
+    // ****** sending done ******
+    // ****** receiving start ******
     unsigned long times;
     unsigned int wait_msec = WIFI_WAIT_MSEC;
     times = millis();
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
@@ -931,52 +906,52 @@ int esp8266_at_get(const char *strURL, char **hes, int n, int ssl) {
                 esp8266_at_serial_read();
             }
             times = millis();
-            wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
+            wait_msec = 100;
         }
     }
-    //****** 受信終了 ******
-    //****** AT+CIPCLOSE コマンド ******
+    // ****** receiving done ******
+    // ****** AT+CIPCLOSE command ******
     esp8266_at_serial_println((const char *)"AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
     return 1;
 }
 
-//**************************************************
-// TCP/UDP接続を閉じる: WiFi.cClose
+// **************************************************
+// close TCP/UDP connection: WiFi.cClose
 //  WiFi.cClose(number)
-//  number: 接続番号(1～4)
-//**************************************************
+//  number: connection number(1-4)
+// **************************************************
 void esp8266_at_cclose(int num) {
     esp8266_at_serial_print((const char *)"AT+CIPCLOSE=");
     esp8266_at_serial_printiln(num);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     return;
 }
 
-//**************************************************
-// UDP接続を開始します: WiFi.udpOpen
+// **************************************************
+// start UDP connection: WiFi.udpOpen
 //  WiFi.udpOpen( number, IP_Address, SendPort, ReceivePort )
-//　number: 接続番号(1～4)
-//  IP_Address: 通信相手アドレス
-//  SendPort: 送信ポート番号
-//  ReceivePort: 受信ポート番号
-//**************************************************
+//  number: connection number(1-4)
+//  IP_Address: IP address
+//  SendPort: sending port
+//  ReceivePort: receiving port
+// **************************************************
 static int chk_OK() {
     char *p = (char *)wifi_data;
     int n = strlen((const char *)wifi_data);
-#if defined(DEBUG_ESP8266_CHKOK)
+    #if defined(DEBUG_ESP8266_CHKOK)
     DBG_PRINT1((const char *)wifi_data);
-#endif
+    #endif
     if (n >= 4) {
-        if ((p[n - 4] == 'O') && (p[n - 3] == 'K'))
+        if ((p[n - 4] == 'O') && (p[n - 3] == 'K')) {
             return 1;
+        }
     }
     return 0;
 }
 
 int esp8266_at_udpopen(int num, const char *strIpAdd, int sport, int rport) {
-    //****** AT+CIPSTARTコマンド ******
+    // ****** AT+CIPSTART command ******
     esp8266_at_serial_print((const char *)"AT+CIPSTART=");
     esp8266_at_serial_printi(num);
     esp8266_at_serial_print((const char *)",\"UDP\",\"");
@@ -985,42 +960,38 @@ int esp8266_at_udpopen(int num, const char *strIpAdd, int sport, int rport) {
     esp8266_at_serial_printi(sport);
     esp8266_at_serial_print((const char *)",");
     esp8266_at_serial_printiln(rport);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     return chk_OK();
 }
 
-//**************************************************
-// 指定接続番号にデータを送信します: WiFi.send
+// **************************************************
+// send data to specified connection WiFi.send
 //  WiFi.send( number, Data[, length] )
-//　number: 接続番号(0～3)
-//  Data: 送信するデータ
-//　length: 送信データサイズ
+//  number: connection number(0-3)
+//  Data: sending data
+//  length: sending data size
 //
-//  戻り値は
-//    送信データサイズ
-//**************************************************
+//    data size for sending
+// **************************************************
 int esp8266_at_send(int num, char *strdata, int len) {
-    //****** AT+CIPSTARTコマンド ******
+    // ****** AT+CIPSTART command ******
     esp8266_at_serial_print((const char *)"AT+CIPSEND=");
     esp8266_at_serial_printi(num);
     esp8266_at_serial_print((const char *)",");
     esp8266_at_serial_printiln(len);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
         return 0;
     }
-    //esp8266_at_serial_print((const char *)strdata);
+    // esp8266_at_serial_print((const char *)strdata);
     for (int i = 0; i < len; i++) {
         esp8266_at_serial_write_byte((char)strdata[i]);
     }
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //タイムアウトと思われるので、強制的にデータサイズの不足分の0x0Dを送信する
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // forcely sending CRLF since timeout might happen
         for (int i = 0; i < len - (int)strlen(strdata); i++) {
             esp8266_at_serial_write_byte('\r');
         }
@@ -1029,33 +1000,31 @@ int esp8266_at_send(int num, char *strdata, int len) {
     return len;
 }
 
-//**************************************************
-// 指定接続番号からデータを受信します: WiFi.recv
+// **************************************************
+// receive data from specified connection number: WiFi.recv
 //  WiFi.recv( number )
-//　number: 接続番号(0～3)
+//  number: connection number(0-3)
 //
-//  戻り値は
-//    受信したデータの配列　ただし、256以下
-//**************************************************
-//static char *esp8266_at_recv_buf[256];
+//    array of received data (less than 256)
+// **************************************************
+// static char *esp8266_at_recv_buf[256];
 int esp8266_at_recv(int num, char *recv_buf, int *recv_cnt) {
     char str[16];
     strcpy((char *)str, "\r\n+IPD,");
     itoa(num, (char *)&str[7], 10);
     strcat(str, ",");
-    //sprintf((char*)str, "\r\n+IPD,%d,", num);
-    //if(esp8266_at_serial_available() == 0){
+    // sprintf((char*)str, "\r\n+IPD,%d,", num);
+    // if(esp8266_at_serial_available() == 0){
     //  return -1;
-    //}
-    //****** 受信開始 ******
+    // }
+    // ****** receiving start ******
     unsigned long times;
     unsigned int wait_msec = WIFI_WAIT_MSEC;
     times = millis();
-    int len = strlen((char*)str);
+    int len = strlen((char *)str);
     int cnt = 0;
     unsigned char c;
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
@@ -1072,14 +1041,13 @@ int esp8266_at_recv(int num, char *recv_buf, int *recv_cnt) {
                 cnt = 0;
             }
             times = millis();
-            wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
+            wait_msec = 100;
         }
     }
-    //ここから後はバイト数が来ているはず
+    // get number of bytes
     times = millis();
     cnt = 0;
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             str[cnt] = 0;
             break;
@@ -1099,13 +1067,12 @@ int esp8266_at_recv(int num, char *recv_buf, int *recv_cnt) {
         }
     }
     len = atoi((const char *)str);
-    //Serial.print("len= ");
-    //Serial.println(len);
-    //データを取りだします
+    // Serial.print("len= ");
+    // Serial.println(len);
+    // receiving data
     times = millis();
     *recv_cnt = 0;
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
@@ -1118,60 +1085,57 @@ int esp8266_at_recv(int num, char *recv_buf, int *recv_cnt) {
             times = millis();
         }
     }
-    //****** 受信終了 ******
+    // ****** receiving done ******
     return 1;
 }
 
 #if MICROPY_HW_ENABLE_SDCARD
-//**************************************************
-// http POSTとしてSDカードのファイルをPOSTします: WiFi.httpPostSD
+// **************************************************
+// http POST to SD card: WiFi.httpPostSD
 //  WiFi.httpPostSD( URL, Headers, Filename, Filename )
 //  URL: URL
-//  Headers: ヘッダに追記する文字列の配列
-//  Filename: POSTするファイル名
+//  Headers: array of header
+//  Filename: POST file name
 //
-//  戻り値は以下のとおり
-//      0: 失敗
-//      1: 成功
-//      2: SDカードが使えない
-//      ... 各種エラー
-//**************************************************
+//      0: fail
+//      1: success
+//      2: unavailable SD card
+//      ... other errors
+// **************************************************
 int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *strDFname, int n,
-        char **head, int ssl) {
+    char **head, int ssl) {
     const char *tmpFilename = "wifitmp.tmp";
     const char *headFilename = "headfile.tmp";
     int len = 0;
     FIL fp;
     int sla, koron;
     int sBody, sHeader;
-    //送信ファイルサイズ取得
+    // get file size
     if (!sd_open(&fp, strSFname, FA_READ)) {
         return 3;
     }
-    //ファイルサイズ取得
+    // get file size
     sBody = (int)sd_size(&fp);
     sd_close(&fp);
-    //httpサーバに送信するデータを、strFname ファイルに生成します。
-    //既にファイルがあれば消す
     if (sd_exists(headFilename)) {
         sd_remove(headFilename);
     }
-    //ファイルオープン
+    // open file
     if (!sd_open(&fp, headFilename, FA_WRITE | FA_CREATE_NEW)) {
         return 4;
     }
     esp8266_at_serial_println((const char *)"AT+CIPMUX=1");
     get_data(WIFI_WAIT_MSEC);
-    //1行目を生成
+    // create the first line
     {
-        sd_write(&fp, (unsigned char*)"POST /", 6);
-        //httpsかチェック
+        sd_write(&fp, (unsigned char *)"POST /", 6);
+        // check https
         if (ssl) {
-            //DBG_PRINT1("AT+CIPSSLSIZE=4096");
+            // DBG_PRINT1("AT+CIPSSLSIZE=4096");
             esp8266_at_serial_println("AT+CIPSSLSIZE=4096");
             get_data(WIFI_WAIT_MSEC);
         }
-        //URLからドメインを分割する
+        // get domain from URL
         len = strlen(strURL);
         sla = len;
         koron = 0;
@@ -1187,13 +1151,13 @@ int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *st
         for (int i = sla + 1; i < len; i++) {
             sd_write_byte(&fp, strURL[i]);
         }
-        sd_write(&fp, (unsigned char*)" HTTP/1.1", 9);
+        sd_write(&fp, (unsigned char *)" HTTP/1.1", 9);
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //Hostヘッダを生成
+    // adding Host header
     {
-        sd_write(&fp, (unsigned char*)"Host: ", 6);
+        sd_write(&fp, (unsigned char *)"Host: ", 6);
         if (koron == 0) {
             koron = sla;
         }
@@ -1203,30 +1167,30 @@ int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *st
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //Content-Lengthを付けます
+    // adding Content-Length
     {
-        sd_write(&fp, (unsigned char*)"Content-Length: ", 16);
-        itoa(sBody, (char*)wifi_data, 10);
-        //sprintf((char*)wifi_data, "%u", sBody);
-        sd_write(&fp, wifi_data, strlen((char*)wifi_data));
+        sd_write(&fp, (unsigned char *)"Content-Length: ", 16);
+        itoa(sBody, (char *)wifi_data, 10);
+        // sprintf((char*)wifi_data, "%u", sBody);
+        sd_write(&fp, wifi_data, strlen((char *)wifi_data));
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //ヘッダ情報が追加されているとき
+    // when there is header information
     for (int i = 0; i < n; i++) {
         len = strlen(head[i]);
-        //ヘッダの追記
+        // adding header
         sd_write(&fp, head[i], len);
         sd_write_byte(&fp, 0x0D);
         sd_write_byte(&fp, 0x0A);
     }
-    //改行のみの行を追加する
+    // adding CRLF
     sd_write_byte(&fp, 0x0D);
     sd_write_byte(&fp, 0x0A);
     sd_flush(&fp);
     sd_close(&fp);
-    //****** AT+CIPSTARTコマンド ******
-    //wifi_data[]に、ドメインとポート番号を取得
+    // ****** AT+CIPSTART command ******
+    // get domain and port number in wifi_data[]
     for (int i = 0; i < sla; i++) {
         wifi_data[i] = strURL[i];
         if (i == koron) {
@@ -1250,74 +1214,71 @@ int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *st
             esp8266_at_serial_println((const char *)"80");
         }
     }
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //Serial.print("httpServer Connect: ");
-    //Serial.print((const char *)wifi_data);
-    //****** AT+CIPSEND コマンド ******
-    //送信ヘッダのサイズ取得
+    // Serial.print("httpServer Connect: ");
+    // Serial.print((const char *)wifi_data);
+    // ****** AT+CIPSEND command ******
+    // get header size
     if (!sd_open(&fp, headFilename, FA_READ)) {
         return 5;
     }
-    //ファイルサイズ取得
+    // get file size
     sHeader = (int)sd_size(&fp);
     sd_close(&fp);
-    //Serial.print("AT+CIPSEND=4,");
+    // Serial.print("AT+CIPSEND=4,");
     esp8266_at_serial_print((const char *)"AT+CIPSEND=4,");
-    itoa(sHeader + sBody, (char*)wifi_data, 10);
-    //sprintf((char*)wifi_data, "%u", sHeader + sBody);
-    //Serial.println((const char *)wifi_data);
+    itoa(sHeader + sBody, (char *)wifi_data, 10);
+    // sprintf((char*)wifi_data, "%u", sHeader + sBody);
+    // Serial.println((const char *)wifi_data);
     esp8266_at_serial_println((const char *)wifi_data);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-        //DBG_PRINT1("WIFI ERR");
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        // DBG_PRINT1("WIFI ERR");
         return 0;
     }
-    //Serial.print("> Waiting: ");
-    //Serial.print((const char *)wifi_data);
-    //****** 送信データ受付モードになったので、http POSTデータを送信する ******
+    // Serial.print("> Waiting: ");
+    // Serial.print((const char *)wifi_data);
+    // sending http POST data since mode is changed for accepting data
     {
-        //先ずヘッダデータを送信する
+        // sending header first
         if (!sd_open(&fp, headFilename, FA_READ)) {
             return 6;
         }
         wifi_data[1] = 0;
         for (int i = 0; i < sHeader; i++) {
             wifi_data[0] = (unsigned char)sd_read_byte(&fp);
-            //Serial.print((const char *)wifi_data);
+            // Serial.print((const char *)wifi_data);
             esp8266_at_serial_print((const char *)wifi_data);
         }
         sd_close(&fp);
-        //先ずボディデータを送信する
+        // sending body first
         if (!sd_open(&fp, strSFname, FA_READ)) {
             return 7;
         }
         wifi_data[1] = 0;
         for (int i = 0; i < sBody; i++) {
             wifi_data[0] = (unsigned char)sd_read_byte(&fp);
-            //Serial.print((const char *)wifi_data);
+            // Serial.print((const char *)wifi_data);
             esp8266_at_serial_print((const char *)wifi_data);
         }
         sd_close(&fp);
-        //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-                || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-            //DBG_PRINT1("WIFI ERR");
+              || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+            // DBG_PRINT1("WIFI ERR");
             return 0;
         }
-        //Serial.print("Send Finish: ");
-        //Serial.print((const char *)wifi_data);
+        // Serial.print("Send Finish: ");
+        // Serial.print((const char *)wifi_data);
     }
-    //****** 送信終了 ******
-    //****** 受信開始 ******
+    // ****** sending done ******
+    // ****** receiving start ******
     if (sd_exists(tmpFilename)) {
         sd_remove(tmpFilename);
     }
@@ -1329,7 +1290,6 @@ int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *st
     unsigned char recv[2];
     times = millis();
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
@@ -1342,63 +1302,62 @@ int esp8266_at_post_sd(const char *strURL, const char *strSFname, const char *st
                 }
             }
             times = millis();
-            wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
+            wait_msec = 100;
         }
     }
     sd_flush(&fp);
     sd_close(&fp);
-    //****** 受信終了 ******
-    //Serial.println("Recv Finish");
+    // ****** receiving done ******
+    // Serial.println("Recv Finish");
     if (strDFname) {
-        //受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
+        // removing '\r\n+\r\n+IPD,4,****:'
         int ret = cut_garbage_data("\r\n+IPD,4,", tmpFilename,
-                (const char *)strDFname);
+            (const char *)strDFname);
         if (ret != 1) {
             return 7;
         }
     }
-    //****** AT+CIPCLOSE コマンド ******
+    // ****** AT+CIPCLOSE command ******
     esp8266_at_serial_println((const char *)"AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
     return 1;
 }
 #endif
 
-//**************************************************
-// http POSTする: WiFi.httpPost
+// **************************************************
+// http POST: WiFi.httpPost
 //  WiFi.httpPost( URL, Headers, data )
-//　送信のみで、結果を受信しない
+//  only sending, no receiving response
 //  URL: URL
-//  Headers: ヘッダに追記する文字列の配列
-//　Data: POSTデータ
+//  Headers: array of header data
+//  Data: POST data
 //
-//  戻り値は以下のとおり
-//      0: 失敗
-//      1: 成功
-//**************************************************
+//      0: fail
+//      1: success
+// **************************************************
 static char sData[1024];
 int esp8266_at_post(const char *strURL, char *strData, const char *strDFname, int n, char **head,
-        int ssl) {
+    int ssl) {
     int sBody, sHeader;
     int sla, cnt;
     int koron = 0;
     int len;
-#if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     FIL fp;
     const char *tmpFilename = (const char *)"wifitmp.tmp";
-#endif
+    #endif
     sBody = strlen(strData);
     esp8266_at_serial_println((const char *)"AT+CIPMUX=1");
     get_data(WIFI_WAIT_MSEC);
-    //httpsかチェック
+    // check https
     if (ssl) {
-#if defined(DEBUG_ESP8266_POST)
+        #if defined(DEBUG_ESP8266_POST)
         debug_printf("AT+CIPSSLSIZE=4096\r\n");
-#endif
+        #endif
         esp8266_at_serial_println((const char *)"AT+CIPSSLSIZE=4096");
         get_data(WIFI_WAIT_MSEC);
     }
-    //URLからドメインを分割する
+    // get domain from URL
     len = strlen(strURL);
     sla = len;
     for (int i = 0; i < len; i++) {
@@ -1413,8 +1372,8 @@ int esp8266_at_post(const char *strURL, char *strData, const char *strDFname, in
     if (koron == 0) {
         koron = sla;
     }
-    //****** AT+CIPSTARTコマンド ******
-    //wifi_data[]に、ドメインとポート番号を取得
+    // ****** AT+CIPSTART command ******
+    // get domain and port number in wifi_data[]
     for (int i = 0; i < sla; i++) {
         wifi_data[i] = strURL[i];
         if (i == koron) {
@@ -1438,17 +1397,15 @@ int esp8266_at_post(const char *strURL, char *strData, const char *strDFname, in
             esp8266_at_serial_println((const char *)"80");
         }
     }
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-#ifdef DEBUG_ESP8266
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        #ifdef DEBUG_ESP8266
         debug_printf("WIFI ERR 1\r\n");
-#endif
+        #endif
         return 0;
     }
-    //****** AT+CIPSEND コマンド ******
-    //ヘッダの1行目を生成
+    // ****** AT+CIPSEND command ******
     {
         strcpy(sData, "POST /");
         cnt = 6;
@@ -1459,7 +1416,7 @@ int esp8266_at_post(const char *strURL, char *strData, const char *strDFname, in
         sData[cnt] = 0;
         strcat(sData, " HTTP/1.1\r\n");
     }
-    //Hostヘッダを生成
+    // Host header
     {
         strcat(sData, "Host: ");
         cnt = strlen(sData);
@@ -1470,150 +1427,146 @@ int esp8266_at_post(const char *strURL, char *strData, const char *strDFname, in
         sData[cnt] = 0;
         strcat(sData, "\r\n");
     }
-    //Content-Lengthを付けます
+    // adding Content-Length
     {
         strcat(sData, "Content-Length: ");
-        itoa(sBody, (char*)wifi_data, 10);
-        //sprintf((char*)wifi_data, "%d", sBody);
-        strcat(sData, (char*)wifi_data);
+        itoa(sBody, (char *)wifi_data, 10);
+        // sprintf((char*)wifi_data, "%d", sBody);
+        strcat(sData, (char *)wifi_data);
         strcat(sData, "\r\n");
     }
-    //ヘッダ情報を付けます
+    // adding header information
     for (int i = 0; i < n; i++) {
-        //ヘッダの追記
         strcat(sData, head[i]);
         strcat(sData, "\r\n");
     }
-    //改行のみの行を追加する
+    // adding CRLF
     strcat(sData, "\r\n");
-    //送信データサイズ取得
+    // get data size for sending
     sHeader = strlen(sData);
     len = sHeader + sBody;
     esp8266_at_serial_print((const char *)"AT+CIPSEND=4,");
     esp8266_at_serial_printiln(len);
-    //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
     get_data(WIFI_WAIT_MSEC);
     if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-            || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-#ifdef DEBUG_ESP8266
+          || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+        #ifdef DEBUG_ESP8266
         debug_printf("WIFI ERR 2\r\n");
-#endif
+        #endif
         return 0;
     }
-    //****** 送信データ受付モードになったので、http POSTデータを送信する ******
+    // sending http POST data since mode is changed for accepting data
     {
-        //ヘッダを送信する
+        // sending header
         esp8266_at_serial_print((const char *)sData);
-#if defined(DEBUG_ESP8266_POST_HEADER)
+        #if defined(DEBUG_ESP8266_POST_HEADER)
         debug_printf("Header(%d)\r\n%s\r\n", strlen(sData), sData);
-#endif
-        //ボディを送信する
+        #endif
+        // sending body
         esp8266_at_serial_print((const char *)strData);
-#if defined(DEBUG_ESP8266_POST_DATA)
+        #if defined(DEBUG_ESP8266_POST_DATA)
         debug_printf("Data(%d)\r\n%s\r\n", strlen(strData), strData);
-#endif
-        //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読むか、指定されたシリアルポートに出力します
+        #endif
         get_data(WIFI_WAIT_MSEC);
         if (!(wifi_data[strlen((const char *)wifi_data) - 2] == 'K'
-                || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
-#ifdef DEBUG_ESP8266
+              || wifi_data[strlen((const char *)wifi_data) - 3] == 'K')) {
+            #ifdef DEBUG_ESP8266
             debug_printf("WIFI ERR 3\r\n");
-#endif
+            #endif
             return 0;
         }
     }
-    //****** 送信終了 ******
-    //****** 受信開始 ******
-#if MICROPY_HW_ENABLE_SDCARD
+    // ****** sending done ******
+    // ****** receiving start ******
+    #if MICROPY_HW_ENABLE_SDCARD
     if (sd_exists(tmpFilename)) {
         sd_remove(tmpFilename);
     }
     if (!sd_open(&fp, tmpFilename, FA_WRITE | FA_CREATE_NEW)) {
         return 6;
     }
-#endif
+    #endif
     unsigned long times;
     unsigned int wait_msec = WIFI_WAIT_MSEC;
-#if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     unsigned char recv[2];
-#endif
+    #endif
     times = millis();
     while (true) {
-        //wait_msec 待つ
         if (millis() - times > wait_msec) {
             break;
         }
         while ((len = esp8266_at_serial_available()) != 0) {
             for (int i = 0; i < len; i++) {
-#if MICROPY_HW_ENABLE_SDCARD
+                #if MICROPY_HW_ENABLE_SDCARD
                 recv[0] = (unsigned char)esp8266_at_serial_read();
-                sd_write(&fp, (unsigned char*)recv, 1);
-#else
+                sd_write(&fp, (unsigned char *)recv, 1);
+                #else
                 esp8266_at_serial_read();
-#endif
+                #endif
             }
             times = millis();
-            wait_msec = 100;    //データが届き始めたら、100ms待ちに変更する
+            wait_msec = 100;
         }
     }
-#if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     sd_flush(&fp);
     sd_close(&fp);
-#endif
-    //****** 受信終了 ******
-#if MICROPY_HW_ENABLE_SDCARD
+    #endif
+    // ****** receiving done ******
+    #if MICROPY_HW_ENABLE_SDCARD
     if (strDFname) {
-        //受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
+        // removing '\r\n+\r\n+IPD,4,****:'
         int ret = cut_garbage_data("\r\n+IPD,4,", tmpFilename,
-                (const char *)strDFname);
+            (const char *)strDFname);
         if (ret != 1) {
             return 7;
         }
     }
-#endif
-    //****** AT+CIPCLOSE コマンド ******
+    #endif
+    // ****** AT+CIPCLOSE command ******
     esp8266_at_serial_println((const char *)"AT+CIPCLOSE=4");
     get_data(WIFI_WAIT_MSEC);
     return 1;
 }
 
 int esp8266_at_init(void) {
-    //ESP8266からの受信を出力しないに設定
+    // not output data received from ESP8266
     WiFiRecvOutlNum = -1;
-    //CTS用にPIN15をOUTPUTに設定します
-    //pinMode(wrb2sakura(WIFI_CTS), 1);
-    //digitalWrite(wrb2sakura(WIFI_CTS), 1);
-    //WiFiのシリアル3を設定
-    //シリアル通信の初期化をします
+    // set OUTPUT pin15 for CTS
+    // pinMode(wrb2sakura(WIFI_CTS), 1);
+    // digitalWrite(wrb2sakura(WIFI_CTS), 1);
+    // set serial3 for WiFi
+    // initialize serial
     esp8266_at_serial_begin();
     int len;
     int ret;
     int cnt = 0;
 
     while (true) {
-        //受信バッファを空にします
+        // clear receive buffer
         while ((len = esp8266_at_serial_available()) > 0) {
-            //RbSerial[0]->print(len);
+            // RbSerial[0]->print(len);
             for (int i = 0; i < len; i++) {
                 esp8266_at_serial_read();
             }
         }
-        //ECHOオフコマンドを送信する
+        // send ECHO OFF command
         esp8266_at_serial_println((const char *)"ATE0");
-        //OK 0d0a か ERROR 0d0aが来るまで wifi_data[]に読む
         ret = get_data(500);
         if (ret == 1) {
-            //1の時は、WiFiが使用可能
+            // 1: wifi available
             break;
         } else if (ret == 0) {
-            //タイムアウトした場合は WiFiが使えないとする
-            if (cnt >= 3)
+            // wifi unavailable when timeout
+            if (cnt >= 3) {
                 return 0;
+            }
         }
-        //0,1で無いときは256バイト以上が返ってきている
+        // more than 256 bytes when not 0,1
         cnt++;
         if (cnt >= 3) {
-            //3回ATE0を試みてダメだったら、あきらめる。
+            // giving up when ATE0 3 times
             return 0;
         }
     }
@@ -1621,4 +1574,3 @@ int esp8266_at_init(void) {
 }
 
 #endif
-

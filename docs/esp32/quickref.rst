@@ -16,7 +16,7 @@ working with this board it may be useful to get an overview of the microcontroll
    :maxdepth: 1
 
    general.rst
-   tutorial/intro.rst
+   tutorial/index.rst
 
 Installing MicroPython
 ----------------------
@@ -58,7 +58,7 @@ The :mod:`esp32` module::
     import esp32
 
     esp32.hall_sensor()     # read the internal hall sensor
-    esp32.raw_temperature() # read the internal temperature of the MCU, in Farenheit
+    esp32.raw_temperature() # read the internal temperature of the MCU, in Fahrenheit
     esp32.ULP()             # access to the Ultra-Low-Power Co-processor
 
 Note that the temperature sensor in the ESP32 will typically read higher than
@@ -98,14 +98,22 @@ A useful function for connecting to your local WiFi network is::
                 pass
         print('network config:', wlan.ifconfig())
 
-Once the network is established the :mod:`socket <usocket>` module can be used
+Once the network is established the :mod:`socket <socket>` module can be used
 to create and use TCP/UDP sockets as usual, and the ``urequests`` module for
 convenient HTTP requests.
+
+After a call to ``wlan.connect()``, the device will by default retry to connect
+**forever**, even when the authentication failed or no AP is in range.
+``wlan.status()`` will return ``network.STAT_CONNECTING`` in this state until a
+connection succeeds or the interface gets disabled.  This can be changed by
+calling ``wlan.config(reconnects=n)``, where n are the number of desired reconnect
+attempts (0 means it won't retry, -1 will restore the default behaviour of trying
+to reconnect forever).
 
 Delay and timing
 ----------------
 
-Use the :mod:`time <utime>` module::
+Use the :mod:`time <time>` module::
 
     import time
 
@@ -171,6 +179,37 @@ Notes:
 * The pull value of some pins can be set to ``Pin.PULL_HOLD`` to reduce power
   consumption during deepsleep.
 
+There's a higher-level abstraction :ref:`machine.Signal <machine.Signal>`
+which can be used to invert a pin. Useful for illuminating active-low LEDs
+using ``on()`` or ``value(1)``.
+
+UART (serial bus)
+-----------------
+
+See :ref:`machine.UART <machine.UART>`. ::
+
+    from machine import UART
+
+    uart1 = UART(1, baudrate=9600, tx=33, rx=32)
+    uart1.write('hello')  # write 5 bytes
+    uart1.read(5)         # read up to 5 bytes
+
+The ESP32 has three hardware UARTs: UART0, UART1 and UART2.
+They each have default GPIO assigned to them, however depending on your
+ESP32 variant and board, these pins may conflict with embedded flash,
+onboard PSRAM or peripherals.
+
+Any GPIO can be used for hardware UARTs using the GPIO matrix, so to avoid
+conflicts simply provide ``tx`` and ``rx`` pins when constructing. The default
+pins listed below.
+
+=====  =====  =====  =====
+\      UART0  UART1  UART2
+=====  =====  =====  =====
+tx     1      10     17
+rx     3      9      16
+=====  =====  =====  =====
+
 PWM (pulse width modulation)
 ----------------------------
 
@@ -186,13 +225,31 @@ Use the ``machine.PWM`` class::
     from machine import Pin, PWM
 
     pwm0 = PWM(Pin(0))      # create PWM object from a pin
-    pwm0.freq()             # get current frequency
+    pwm0.freq()             # get current frequency (default 5kHz)
     pwm0.freq(1000)         # set frequency
-    pwm0.duty()             # get current duty cycle
+    pwm0.duty()             # get current duty cycle (default 512, 50%)
     pwm0.duty(200)          # set duty cycle
     pwm0.deinit()           # turn off PWM on the pin
 
-    pwm2 = PWM(Pin(2), freq=20000, duty=512) # create and configure in one go
+    pwm2 = PWM(Pin(2), freq=20000, duty=512)  # create and configure in one go
+
+ESP chips have different hardware peripherals:
+
+=====================================================  ========  ========  ========
+Hardware specification                                    ESP32  ESP32-S2  ESP32-C3
+-----------------------------------------------------  --------  --------  --------
+Number of groups (speed modes)                                2         1         1
+Number of timers per group                                    4         4         4
+Number of channels per group                                  8         8         6
+-----------------------------------------------------  --------  --------  --------
+Different of PWM frequencies (groups * timers)                8         4         4
+Total PWM channels (Pins, duties) (groups * channels)        16         8         6
+=====================================================  ========  ========  ========
+
+A maximum number of PWM channels (Pins) are available on the ESP32 - 16 channels,
+but only 8 different PWM frequencies are available, the remaining 8 channels must
+have the same frequency.  On the other hand, 16 independent PWM duty cycles are
+possible at the same frequency.
 
 ADC (analog to digital conversion)
 ----------------------------------
@@ -302,6 +359,7 @@ has the same methods as software SPI above::
 
     from machine import Pin, SPI
 
+    hspi = SPI(1, 10000000)
     hspi = SPI(1, 10000000, sck=Pin(14), mosi=Pin(13), miso=Pin(12))
     vspi = SPI(2, baudrate=80000000, polarity=0, phase=0, bits=8, firstbit=0, sck=Pin(18), mosi=Pin(23), miso=Pin(19))
 
@@ -321,7 +379,7 @@ accessed via the :ref:`machine.SoftI2C <machine.SoftI2C>` class::
     i2c.writeto(0x3a, '12') # write '12' to device with address 0x3a
 
     buf = bytearray(10)     # create a buffer with 10 bytes
-    i2c.writeto(0x3a, buf)  # write the given buffer to the slave
+    i2c.writeto(0x3a, buf)  # write the given buffer to the peripheral
 
 Hardware I2C bus
 ----------------
@@ -345,6 +403,24 @@ has the same methods as software I2C above::
     i2c = I2C(0)
     i2c = I2C(1, scl=Pin(5), sda=Pin(4), freq=400000)
 
+I2S bus
+-------
+
+See :ref:`machine.I2S <machine.I2S>`. ::
+
+    from machine import I2S, Pin
+    
+    i2s = I2S(0, sck=Pin(13), ws=Pin(14), sd=Pin(34), mode=I2S.TX, bits=16, format=I2S.STEREO, rate=44100, ibuf=40000) # create I2S object
+    i2s.write(buf)             # write buffer of audio samples to I2S device
+    
+    i2s = I2S(1, sck=Pin(33), ws=Pin(25), sd=Pin(32), mode=I2S.RX, bits=16, format=I2S.MONO, rate=22050, ibuf=40000) # create I2S object
+    i2s.readinto(buf)          # fill buffer with audio samples from I2S device
+    
+The I2S class is currently available as a Technical Preview.  During the preview period, feedback from 
+users is encouraged.  Based on this feedback, the I2S class API and implementation may be changed.
+
+ESP32 has two I2S buses with id=0 and id=1
+
 Real time clock (RTC)
 ---------------------
 
@@ -355,6 +431,17 @@ See :ref:`machine.RTC <machine.RTC>` ::
     rtc = RTC()
     rtc.datetime((2017, 8, 23, 1, 12, 48, 0, 0)) # set a specific date and time
     rtc.datetime() # get date and time
+
+WDT (Watchdog timer)
+--------------------
+
+See :ref:`machine.WDT <machine.WDT>`. ::
+
+    from machine import WDT
+
+    # enable the WDT with a timeout of 5s (1s is the minimum)
+    wdt = WDT(timeout=5000)
+    wdt.feed()
 
 Deep-sleep mode
 ---------------
@@ -384,6 +471,21 @@ Notes:
   it is an output pin) via::
 
     p1 = Pin(4, Pin.OUT, None)
+
+SD card
+-------
+
+See :ref:`machine.SDCard <machine.SDCard>`. ::
+
+    import machine, os
+
+    # Slot 2 uses pins sck=18, cs=5, miso=19, mosi=23
+    sd = machine.SDCard(slot=2)
+    os.mount(sd, "/sd")  # mount
+
+    os.listdir('/sd')    # list directory contents
+
+    os.umount('/sd')     # eject
 
 RMT
 ---
@@ -429,10 +531,10 @@ Be sure to put a 4.7k pull-up resistor on the data line.  Note that
 the ``convert_temp()`` method must be called each time you want to
 sample the temperature.
 
-NeoPixel driver
----------------
+NeoPixel and APA106 driver
+--------------------------
 
-Use the ``neopixel`` module::
+Use the ``neopixel`` and ``apa106`` modules::
 
     from machine import Pin
     from neopixel import NeoPixel
@@ -442,6 +544,13 @@ Use the ``neopixel`` module::
     np[0] = (255, 255, 255) # set the first pixel to white
     np.write()              # write data to all pixels
     r, g, b = np[0]         # get first pixel colour
+
+
+The APA106 driver extends NeoPixel, but internally uses a different colour order::
+
+    from apa106 import APA106
+    ap = APA106(pin, 8)
+    r, g, b = ap[0]
 
 For low-level driving of a NeoPixel::
 
@@ -454,6 +563,7 @@ For low-level driving of a NeoPixel::
    400kHz) devices by passing ``timing=0`` when constructing the
    ``NeoPixel`` object.
 
+APA102 (DotStar) uses a different driver as it has an additional clock pin.
 
 Capacitive touch
 ----------------

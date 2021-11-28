@@ -41,7 +41,7 @@ static uint8_t adc10_pin[] = {
     PD6,    /* AN6 */
     PD7,    /* AN7 */
 };
-#define ADC10_SIZE  (sizeof(adc10_pin)/sizeof(uint8_t))
+#define ADC10_SIZE  (sizeof(adc10_pin) / sizeof(uint8_t))
 
 static uint8_t adc12_pin[] = {
     P40,    /* AN000 */
@@ -66,7 +66,7 @@ static uint8_t adc12_pin[] = {
     P01,    /* AN019 */
     P02,    /* AN020 */
 };
-#define ADC12_SIZE  (sizeof(adc12_pin)/sizeof(uint8_t))
+#define ADC12_SIZE  (sizeof(adc12_pin) / sizeof(uint8_t))
 
 int32_t rx_adc_get_resolution(uint8_t pin) {
     int i;
@@ -212,7 +212,7 @@ uint16_t rx_adc12_read(uint8_t pin) {
     while (S12AD.ADCSR.BIT.ADST) {
         ;
     }
-    value16 = *((unsigned short*)&S12AD.ADDR0 + off);
+    value16 = *((unsigned short *)&S12AD.ADDR0 + off);
     return (uint16_t)value16;
 }
 

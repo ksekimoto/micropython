@@ -35,9 +35,9 @@ extern "C" {
 #include <stdbool.h>
 
 #ifdef __cplusplus
-extern "C" int _debug_printf(int ch, const char* format, ...);
+extern "C" int _debug_printf(int ch, const char *format, ...);
 #else
-int _debug_printf(int ch, const char* format, ...);
+int _debug_printf(int ch, const char *format, ...);
 #endif
 
 #undef CH_COM
@@ -62,12 +62,12 @@ int _debug_printf(int ch, const char* format, ...);
 #endif
 
 #define BCLK    60000000    /* 48MHz: SPI input clock default */
-//#define CLK_FAST    24000000    /* 24MHz */
-//#define CLK_SLOW    400000      /* 400KHz */
+// #define CLK_FAST    24000000    /* 24MHz */
+// #define CLK_SLOW    400000      /* 400KHz */
 
 struct st_ir {
-    unsigned char IR:1;
-    unsigned char :7;
+    unsigned char IR : 1;
+    unsigned char : 7;
 };
 typedef volatile struct st_ir *vp_ir;
 struct st_ier {
@@ -75,8 +75,8 @@ struct st_ier {
 };
 typedef volatile struct st_ier *vp_ier;
 struct st_ipr {
-    unsigned char IPR:4;
-    unsigned char :4;
+    unsigned char IPR : 4;
+    unsigned char : 4;
 };
 typedef volatile struct st_ipr *vp_ipr;
 typedef volatile struct st_rspi *vp_rspi;

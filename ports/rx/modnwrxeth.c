@@ -34,9 +34,9 @@
 #include "py/objstr.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
-#include "lib/netutils/netutils.h"
+#include "shared/netutils/netutils.h"
 
-#if MICROPY_HW_ETH_RX
+#if MICROPY_HW_ETH_MDC
 
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"
@@ -61,7 +61,7 @@ typedef struct _rx_ether_obj_t {
     uint32_t trace_flags;
     struct netif netif;
     struct dhcp dhcp_struct;
-    void (*poll_callback)(void*);
+    void (*poll_callback)(void *);
     mp_uint_t last_arp;
 } rx_ether_obj_t;
 
@@ -76,22 +76,22 @@ typedef struct _network_lan_obj_t {
 
 STATIC const network_lan_obj_t network_lan_eth0 = { { &network_lan_type }, &rx_ether_obj };
 
-//u32_t sys_now(void) {
+// u32_t sys_now(void) {
 //    return (u32_t)mp_hal_ticks_ms();
-//}
+// }
 
 STATIC void network_lan_poll(void *self_in) {
-#if 0
+    #if 0
     rx_ether_obj_t *self = self_in;
     mp_uint_t t;
 
     ethernetif_input(&self->netif);
     t = mp_hal_ticks_ms();
     if ((t - self->last_arp) > ARP_TMR_INTERVAL) {
-      etharp_tmr();
-      self->last_arp = t;
+        etharp_tmr();
+        self->last_arp = t;
     }
-#endif
+    #endif
 }
 
 /*
@@ -112,7 +112,7 @@ STATIC void network_lan_init(rx_ether_obj_t *self) {
 
     g_netif = &self->netif;
     memset(&self->netif, 0, sizeof(struct netif));
-    self-> netif.linkoutput = low_level_output;
+    self->netif.linkoutput = low_level_output;
 
     netif_add(&self->netif, &ipconfig[0], &ipconfig[1], &ipconfig[2], self, ethernetif_init, ethernet_input);
     netif_set_default(&self->netif);
@@ -168,10 +168,10 @@ STATIC mp_obj_t network_lan_ifconfig(size_t n_args, const mp_obj_t *args) {
         // get
         const ip_addr_t *dns = dns_getserver(0);
         mp_obj_t tuple[4] = {
-            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.ip_addr, NETUTILS_BIG),
-            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.netmask, NETUTILS_BIG),
-            netutils_format_ipv4_addr((uint8_t*)&self->eth->netif.gw, NETUTILS_BIG),
-            netutils_format_ipv4_addr((uint8_t*)dns, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t *)&self->eth->netif.ip_addr, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t *)&self->eth->netif.netmask, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t *)&self->eth->netif.gw, NETUTILS_BIG),
+            netutils_format_ipv4_addr((uint8_t *)dns, NETUTILS_BIG),
         };
         return mp_obj_new_tuple(4, tuple);
     } else if (args[1] == MP_OBJ_NEW_QSTR(MP_QSTR_dhcp)) {
@@ -191,13 +191,13 @@ STATIC mp_obj_t network_lan_ifconfig(size_t n_args, const mp_obj_t *args) {
         // set
         mp_obj_t *items;
         mp_obj_get_array_fixed_n(args[1], 4, &items);
-        netutils_parse_ipv4_addr(items[0], (uint8_t*)&self->eth->netif.ip_addr, NETUTILS_BIG);
-        netutils_parse_ipv4_addr(items[1], (uint8_t*)&self->eth->netif.netmask, NETUTILS_BIG);
-        netutils_parse_ipv4_addr(items[2], (uint8_t*)&self->eth->netif.gw, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[0], (uint8_t *)&self->eth->netif.ip_addr, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[1], (uint8_t *)&self->eth->netif.netmask, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[2], (uint8_t *)&self->eth->netif.gw, NETUTILS_BIG);
         ip_addr_t dns;
-        netutils_parse_ipv4_addr(items[3], (uint8_t*)&dns, NETUTILS_BIG);
+        netutils_parse_ipv4_addr(items[3], (uint8_t *)&dns, NETUTILS_BIG);
         dns_setserver(0, &dns);
-        //ethernetif_update_config(&self->eth->netif);
+        // ethernetif_update_config(&self->eth->netif);
         return mp_const_none;
     }
 }
@@ -216,7 +216,7 @@ const mp_obj_type_t network_lan_type = {
     { &mp_type_type },
     .name = MP_QSTR_LAN,
     .make_new = network_lan_make_new,
-    .locals_dict = (mp_obj_dict_t*)&network_lan_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&network_lan_locals_dict,
 };
 
 #endif

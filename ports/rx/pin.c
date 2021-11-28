@@ -354,7 +354,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid pin pull: %d"), pull);
     }
 
-#if 0
+    #if 0
     // get af (alternate function); alt-arg overrides af-arg
     mp_int_t af = args[4].u_int;
     if (af == -1) {
@@ -363,7 +363,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     if ((mode == GPIO_MODE_AF_PP || mode == GPIO_MODE_AF_OD) && !IS_GPIO_AF(af)) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid pin af: %d"), af);
     }
-#endif
+    #endif
     mp_hal_pin_config(self, mode, pull, -1);
     // if given, set the pin value before initialising to prevent glitches
     if (args[3].u_obj != MP_OBJ_NULL) {
@@ -513,7 +513,7 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_value),   MP_ROM_PTR(&pin_value_obj) },
     { MP_ROM_QSTR(MP_QSTR_off),     MP_ROM_PTR(&pin_off_obj) },
     { MP_ROM_QSTR(MP_QSTR_on),      MP_ROM_PTR(&pin_on_obj) },
-    //{ MP_ROM_QSTR(MP_QSTR_irq),     MP_ROM_PTR(&pin_irq_obj) },
+    // { MP_ROM_QSTR(MP_QSTR_irq),     MP_ROM_PTR(&pin_irq_obj) },
 
     // Legacy names as used by pyb.Pin
     { MP_ROM_QSTR(MP_QSTR_low),     MP_ROM_PTR(&pin_off_obj) },
@@ -555,8 +555,8 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AF_OD),     MP_ROM_INT(GPIO_MODE_AF_OD) },
     { MP_ROM_QSTR(MP_QSTR_PULL_NONE), MP_ROM_INT(GPIO_NOPULL) },
 
-//#include "genhdr/pins_ad_const.h"
-//#include "genhdr/pins_af_const.h"
+// #include "genhdr/pins_ad_const.h"
+// #include "genhdr/pins_af_const.h"
 };
 
 STATIC MP_DEFINE_CONST_DICT(pin_locals_dict, pin_locals_dict_table);
@@ -588,7 +588,7 @@ const mp_obj_type_t pin_type = {
     .make_new = mp_pin_make_new,
     .call = pin_call,
     .protocol = &pin_pin_p,
-    .locals_dict = (mp_obj_dict_t*)&pin_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_locals_dict,
 };
 
 // ====================================================================
@@ -637,7 +637,7 @@ const mp_obj_type_t pin_ad_type = {
     { &mp_type_type },
     .name = MP_QSTR_PinAD,
     .print = pin_ad_obj_print,
-    .locals_dict = (mp_obj_dict_t*)&pin_ad_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_ad_locals_dict,
 };
 
 // ====================================================================
@@ -711,5 +711,5 @@ const mp_obj_type_t pin_af_type = {
     { &mp_type_type },
     .name = MP_QSTR_PinAF,
     .print = pin_af_obj_print,
-    .locals_dict = (mp_obj_dict_t*)&pin_af_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_af_locals_dict,
 };

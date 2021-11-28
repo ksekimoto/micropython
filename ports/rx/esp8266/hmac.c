@@ -24,10 +24,10 @@
  * THE SOFTWARE.
  */
 
-//**************************************************
+// **************************************************
 // hmac-sha1
 // ref: http://www.deadhat.com/wlancrypto/hmac_sha1.c
-//**************************************************
+// **************************************************
 
 /****************************************************************/
 /* 802.11i HMAC-SHA-1 Test Code                                 */
@@ -78,7 +78,7 @@
 /* Performs the NIST SHA-1 algorithm    */
 /****************************************/
 static unsigned long int ft(int t, unsigned long int x, unsigned long int y,
-        unsigned long int z) {
+    unsigned long int z) {
     unsigned long int a, b, c;
     if (t < 20) {
         a = x & y;
@@ -110,8 +110,8 @@ static unsigned long int k(int t) {
     return c;
 }
 
-//static unsigned long int rotr(int bits, unsigned long int a)
-//{
+// static unsigned long int rotr(int bits, unsigned long int a)
+// {
 //  unsigned long int c,d,e,f,g;
 //  c = (0x0001 << bits)-1;
 //  d = ~c;
@@ -119,7 +119,7 @@ static unsigned long int k(int t) {
 //  f = (a & c) << (32 - bits);
 //  g = e | f;
 //  return (g & 0xffffffff );
-//}
+// }
 
 static unsigned long int rotl(int bits, unsigned long int a) {
     unsigned long int c, d, e, f, g;
@@ -128,11 +128,11 @@ static unsigned long int rotl(int bits, unsigned long int a) {
     e = (a & c) << bits;
     f = (a & d) >> (32 - bits);
     g = e | f;
-    return (g & 0xffffffff);
+    return g & 0xffffffff;
 }
 
 static void sha1(unsigned char *message, int message_length,
-        unsigned char *digest) {
+    unsigned char *digest) {
     int i;
     int num_blocks;
     int block_remainder;
@@ -169,10 +169,10 @@ static void sha1(unsigned char *message, int message_length,
     message[message_length] = 0x80;
 
     /* Insert l */
-    message[(num_blocks * 64) - 1] = (unsigned char) (l & 0xff);
-    message[(num_blocks * 64) - 2] = (unsigned char) ((l >> 8) & 0xff);
-    message[(num_blocks * 64) - 3] = (unsigned char) ((l >> 16) & 0xff);
-    message[(num_blocks * 64) - 4] = (unsigned char) ((l >> 24) & 0xff);
+    message[(num_blocks * 64) - 1] = (unsigned char)(l & 0xff);
+    message[(num_blocks * 64) - 2] = (unsigned char)((l >> 8) & 0xff);
+    message[(num_blocks * 64) - 3] = (unsigned char)((l >> 16) & 0xff);
+    message[(num_blocks * 64) - 4] = (unsigned char)((l >> 24) & 0xff);
 
     /* Set initial hash state */
     h[0] = 0x67452301;
@@ -221,26 +221,26 @@ static void sha1(unsigned char *message, int message_length,
         h[4] = (e + h[4]) & 0xffffffff;
     }
 
-    digest[3] = (unsigned char) (h[0] & 0xff);
-    digest[2] = (unsigned char) ((h[0] >> 8) & 0xff);
-    digest[1] = (unsigned char) ((h[0] >> 16) & 0xff);
-    digest[0] = (unsigned char) ((h[0] >> 24) & 0xff);
-    digest[7] = (unsigned char) (h[1] & 0xff);
-    digest[6] = (unsigned char) ((h[1] >> 8) & 0xff);
-    digest[5] = (unsigned char) ((h[1] >> 16) & 0xff);
-    digest[4] = (unsigned char) ((h[1] >> 24) & 0xff);
-    digest[11] = (unsigned char) (h[2] & 0xff);
-    digest[10] = (unsigned char) ((h[2] >> 8) & 0xff);
-    digest[9] = (unsigned char) ((h[2] >> 16) & 0xff);
-    digest[8] = (unsigned char) ((h[2] >> 24) & 0xff);
-    digest[15] = (unsigned char) (h[3] & 0xff);
-    digest[14] = (unsigned char) ((h[3] >> 8) & 0xff);
-    digest[13] = (unsigned char) ((h[3] >> 16) & 0xff);
-    digest[12] = (unsigned char) ((h[3] >> 24) & 0xff);
-    digest[19] = (unsigned char) (h[4] & 0xff);
-    digest[18] = (unsigned char) ((h[4] >> 8) & 0xff);
-    digest[17] = (unsigned char) ((h[4] >> 16) & 0xff);
-    digest[16] = (unsigned char) ((h[4] >> 24) & 0xff);
+    digest[3] = (unsigned char)(h[0] & 0xff);
+    digest[2] = (unsigned char)((h[0] >> 8) & 0xff);
+    digest[1] = (unsigned char)((h[0] >> 16) & 0xff);
+    digest[0] = (unsigned char)((h[0] >> 24) & 0xff);
+    digest[7] = (unsigned char)(h[1] & 0xff);
+    digest[6] = (unsigned char)((h[1] >> 8) & 0xff);
+    digest[5] = (unsigned char)((h[1] >> 16) & 0xff);
+    digest[4] = (unsigned char)((h[1] >> 24) & 0xff);
+    digest[11] = (unsigned char)(h[2] & 0xff);
+    digest[10] = (unsigned char)((h[2] >> 8) & 0xff);
+    digest[9] = (unsigned char)((h[2] >> 16) & 0xff);
+    digest[8] = (unsigned char)((h[2] >> 24) & 0xff);
+    digest[15] = (unsigned char)(h[3] & 0xff);
+    digest[14] = (unsigned char)((h[3] >> 8) & 0xff);
+    digest[13] = (unsigned char)((h[3] >> 16) & 0xff);
+    digest[12] = (unsigned char)((h[3] >> 24) & 0xff);
+    digest[19] = (unsigned char)(h[4] & 0xff);
+    digest[18] = (unsigned char)((h[4] >> 8) & 0xff);
+    digest[17] = (unsigned char)((h[4] >> 16) & 0xff);
+    digest[16] = (unsigned char)((h[4] >> 24) & 0xff);
 }
 
 /******************************************************/
@@ -255,7 +255,7 @@ static unsigned char step8data[64 + 20];
 static unsigned char step5data[MAX_MESSAGE_LENGTH + 128];
 
 void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
-        int data_length, unsigned char *digest) {
+    int data_length, unsigned char *digest) {
     int b = 64; /* blocksize */
     unsigned char ipad = 0x36;
     unsigned char opad = 0x5c;
@@ -264,16 +264,14 @@ void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
     for (i = 0; i < 64; i++) {
         k0[i] = 0x00;
     }
-    if (key_length != b) /* Step 1 */
-    {
+    if (key_length != b) { /* Step 1 */
         /* Step 2 */
         if (key_length > b) {
             sha1(key, key_length, digest);
             for (i = 0; i < 20; i++) {
                 k0[i] = digest[i];
             }
-        } else if (key_length < b) /* Step 3 */
-        {
+        } else if (key_length < b) { /* Step 3 */
             for (i = 0; i < key_length; i++) {
                 k0[i] = key[i];
             }

@@ -38,7 +38,7 @@
 #include "common.h"
 
 #if MICROPY_HW_HAS_ESP8266
-//#define DEBUG_NTP
+// #define DEBUG_NTP
 
 static unsigned char ntp_send[NTP_PACKT_SIZE] = {
     0xe3, 0x00, 0x06, 0xec, 0x00, 0x00, 0x00, 0x00,
@@ -58,24 +58,24 @@ uint32_t ntp(const char *ipaddr, int tf) {
 
     ret = esp8266_at_udpopen(num, ipaddr, NTP_SEND_PORT, NTP_LOCAL_PORT);
     if (ret == 0) {
-#if defined(DEBUG_NTP)
+        #if defined(DEBUG_NTP)
         debug_printf("esp8266_at_udpioen ERR\r\n");
-#endif
+        #endif
         return NTP_ERROR;
     }
     ret = esp8266_at_send(num, (char *)ntp_send, 48);
     if (ret == 0) {
-#if defined(DEBUG_NTP)
+        #if defined(DEBUG_NTP)
         DBG_PRINT1("esp8266_at_send ERR\r\n");
-#endif
+        #endif
         esp8266_at_cclose(num);
         return NTP_ERROR;
     }
     ret = esp8266_at_recv(num, (char *)ntp_recv, &cnt);
     if (ret != 1) {
-#if defined(DEBUG_NTP)
+        #if defined(DEBUG_NTP)
         DBG_PRINT1("esp8266_at_recv ERR\r\n");
-#endif
+        #endif
         esp8266_at_cclose(num);
         return NTP_ERROR;
     }

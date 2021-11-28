@@ -33,11 +33,10 @@ extern "C" {
 
 #include <stdint.h>
 
-static inline uint32_t rx_get_int(void)
-{
+static inline uint32_t rx_get_int(void) {
     uint32_t ipl;
-    __asm__ __volatile__ ("mvfc psw,%0":"=r"(ipl):);
-    return ((ipl & 0x00010000) >> 16);
+    __asm__ __volatile__ ("mvfc psw,%0" : "=r" (ipl) :);
+    return (ipl & 0x00010000) >> 16;
 }
 
 static inline void rx_enable_irq(void) {

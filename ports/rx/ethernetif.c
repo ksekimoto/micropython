@@ -37,7 +37,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 
-#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 #include "lwip/opt.h"
 #include "lwip_inc/lwipopts.h"
@@ -54,7 +54,7 @@
 #include "ethernetif.h"
 
 #if defined(USE_DBG_PRINT)
-//#define DEBUG_ETHERNETIF
+// #define DEBUG_ETHERNETIF
 #endif
 
 extern struct netif *g_netif;
@@ -101,11 +101,11 @@ void  ethernetif_input(struct netif *netif);
  *        for this ethernetif
  */
 static void low_level_init(struct netif *netif) {
-#if defined(DEBUG_ETHERNETIF)
+    #if defined(DEBUG_ETHERNETIF)
     debug_printf("low_level_init\r\n");
-#endif
+    #endif
     uint8_t macaddress[6];
-#if defined(RX65N)
+    #if defined(RX65N)
     uint8_t id[16];
     get_unique_id((uint8_t *)&id);
     macaddress[0] = 0;
@@ -114,15 +114,15 @@ static void low_level_init(struct netif *netif) {
     macaddress[3] = id[13];
     macaddress[4] = id[14];
     macaddress[5] = id[15];
-#else
-#if defined(MICROPY_HW_ETH_MAC_ADDRESS_0)
+    #else
+    #if defined(MICROPY_HW_ETH_MAC_ADDRESS_0)
     macaddress[0] = MICROPY_HW_ETH_MAC_ADDRESS_0;
     macaddress[1] = MICROPY_HW_ETH_MAC_ADDRESS_1;
     macaddress[2] = MICROPY_HW_ETH_MAC_ADDRESS_2;
     macaddress[3] = MICROPY_HW_ETH_MAC_ADDRESS_3;
     macaddress[4] = MICROPY_HW_ETH_MAC_ADDRESS_4;
     macaddress[5] = MICROPY_HW_ETH_MAC_ADDRESS_5;
-#else
+    #else
     uint32_t tick = utick();
     macaddress[0] = 0;
     macaddress[1] = 0;
@@ -130,8 +130,8 @@ static void low_level_init(struct netif *netif) {
     macaddress[3] = (uint8_t)(tick >> 16);
     macaddress[4] = (uint8_t)(tick >> 8);
     macaddress[5] = (uint8_t)(tick);
-#endif
-#endif
+    #endif
+    #endif
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
     memcpy(&netif->hwaddr, &macaddress, ETHARP_HWADDR_LEN);
     netif->mtu = 1500;
@@ -160,22 +160,22 @@ err_t low_level_output(struct netif *netif, struct pbuf *p) {
     le0.txcurrent->status |= (flag | ACT);
     le0.txcurrent = le0.txcurrent->next;
     le0.stat.tx_packets++;
-#if defined(RX63N)
+    #if defined(RX63N)
     if (EDMAC.EDTRR.LONG == 0x00000000) {
         EDMAC.EDTRR.LONG = 0x00000001;
     }
-#endif
-#if defined(RX64M) || defined(RX65N)
+    #endif
+    #if defined(RX64M) || defined(RX65N)
     if (EDMAC0.EDTRR.LONG == 0x00000000) {
         EDMAC0.EDTRR.LONG = 0x00000001;
     }
-#endif
-#if defined(DEBUG_ETHERNETIF)
+    #endif
+    #if defined(DEBUG_ETHERNETIF)
     if (len != tot_len) {
         debug_printf("ETX:Err\r\n");
     }
     debug_printf("ETX:%d\r\n", len);
-#endif
+    #endif
     return ERR_OK;
 }
 
@@ -196,19 +196,19 @@ static struct pbuf *low_level_input(struct netif *netif) {
     int32_t readcount = 0;
     int32_t recvdsize = 0;
 
-#if defined(RX63N)
+    #if defined(RX63N)
     if ((EDMAC.EESR.LONG & 0x00040000) != 0) {
         EDMAC.EESR.LONG |= 0x00040000;
     }
-#endif
-#if defined(RX64M) || defined(RX65N)
+    #endif
+    #if defined(RX64M) || defined(RX65N)
     if ((EDMAC0.EESR.LONG & 0x00040000) != 0) {
         EDMAC0.EESR.LONG |= 0x00040000;
     }
-#endif
+    #endif
     rx_disable_irq();
     while (flag) {
-        //recvd = rx_ether_fifo_read(le0.rxcurrent, (int8_t *)&rx_buf);
+        // recvd = rx_ether_fifo_read(le0.rxcurrent, (int8_t *)&rx_buf);
         readcount++;
         if (readcount >= 2 && recvdsize == 0) {
             break;
@@ -223,18 +223,18 @@ static struct pbuf *low_level_input(struct netif *netif) {
             le0.rxcurrent->status &= ~(RFOVER | RAD | RMAF | RRF | RTLF | RTSF | PRE | CERF);
             le0.rxcurrent->status |= ACT;
             le0.rxcurrent = le0.rxcurrent->next;
-#if defined(RX63N)
+            #if defined(RX63N)
             if (EDMAC.EDRRR.LONG == 0x00000000L) {
                 /* Restart if stopped */
                 EDMAC.EDRRR.LONG = 0x00000001L;
             }
-#endif
-#if defined(RX64M) || defined(RX65N)
+            #endif
+            #if defined(RX64M) || defined(RX65N)
             if (EDMAC0.EDRRR.LONG == 0x00000000L) {
                 /* Restart if stopped */
                 EDMAC0.EDRRR.LONG = 0x00000001L;
             }
-#endif
+            #endif
         } else {
             /* We have a good buffer. */
             if ((le0.rxcurrent->status & FP1) == FP1) {
@@ -259,9 +259,9 @@ static struct pbuf *low_level_input(struct netif *netif) {
             }
             p = pbuf_alloc(PBUF_RAW, recvd, PBUF_RAM);
             if (p == NULL) {
-#if defined(DEBUG_ETHERNETIF)
+                #if defined(DEBUG_ETHERNETIF)
                 debug_printf("ERX: Alloc Err\r\n");
-#endif
+                #endif
                 break;
             }
             memcpy(p->payload, (const void *)(le0.rxcurrent->buf_p), (size_t)recvd);
@@ -277,26 +277,26 @@ static struct pbuf *low_level_input(struct netif *netif) {
             le0.rxcurrent->status &= ~(FP1 | FP0);
             le0.rxcurrent->status |= ACT;
             le0.rxcurrent = le0.rxcurrent->next;
-#if defined(RX63N)
+            #if defined(RX63N)
             if (EDMAC.EDRRR.LONG == 0x00000000L) {
                 /* Restart if stopped */
                 EDMAC.EDRRR.LONG = 0x00000001L;
             }
-#endif
-#if defined(RX64M) || defined(RX65N)
+            #endif
+            #if defined(RX64M) || defined(RX65N)
             if (EDMAC0.EDRRR.LONG == 0x00000000L) {
                 /* Restart if stopped */
                 EDMAC0.EDRRR.LONG = 0x00000001L;
             }
-#endif
+            #endif
         }
     }
     rx_enable_irq();
-#if defined(DEBUG_ETHERNETIF)
+    #if defined(DEBUG_ETHERNETIF)
     if (recvdsize > 0) {
         debug_printf("ERX:%d\r\n", recvdsize);
     }
-#endif
+    #endif
     return p0;
 }
 
@@ -343,10 +343,10 @@ void ethernetif_input_cb(void) {
  *         any other err_t on error
  */
 err_t ethernetif_init(struct netif *netif) {
-#if LWIP_NETIF_HOSTNAME
+    #if LWIP_NETIF_HOSTNAME
     /* Initialize interface hostname */
     netif->hostname = "lwip";
-#endif /* LWIP_NETIF_HOSTNAME */
+    #endif /* LWIP_NETIF_HOSTNAME */
 
     netif->name[0] = IFNAME0;
     netif->name[1] = IFNAME1;
@@ -365,9 +365,9 @@ err_t ethernetif_init(struct netif *netif) {
 }
 
 void ethernetif_set_link(struct netif *netif) {
-#if defined(DEBUG_ETHERNETIF)
+    #if defined(DEBUG_ETHERNETIF)
     debug_printf("ethernetif_set_link\r\n");
-#endif
+    #endif
     uint32_t regvalue = 0;
     /* Read PHY_MISR*/
     phy_read(PHY_MISR, &regvalue);
@@ -380,22 +380,22 @@ void ethernetif_set_link(struct netif *netif) {
         /* Check whether the link is up or down*/
         if ((regvalue & PHY_LINK_STATUS) != (uint16_t)RESET) {
             netif_set_link_up(netif);
-#if defined(DEBUG_ETHERNETIF)
+            #if defined(DEBUG_ETHERNETIF)
             debug_printf("link up\r\n");
-#endif
+            #endif
         } else {
             netif_set_link_down(netif);
-#if defined(DEBUG_ETHERNETIF)
+            #if defined(DEBUG_ETHERNETIF)
             debug_printf("link down\r\n");
-#endif
+            #endif
         }
     }
 }
 
 err_t ethernetif_update_config(struct netif *netif) {
-#if defined(DEBUG_ETHERNETIF)
+    #if defined(DEBUG_ETHERNETIF)
     debug_printf("ethernetif_update_config\r\n");
-#endif
+    #endif
     if (netif_is_link_up(netif)) {
         /* Auto-Negotiation */
         phy_set_link_speed();
@@ -404,9 +404,9 @@ err_t ethernetif_update_config(struct netif *netif) {
     } else {
         /* Stop MAC interface */
         rx_ether_deinit();
-#if defined(DEBUG_ETHERNETIF)
+        #if defined(DEBUG_ETHERNETIF)
         debug_printf("ETH Stop\r\n");
-#endif
+        #endif
     }
     return ERR_OK;
 }

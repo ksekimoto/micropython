@@ -74,12 +74,12 @@
 #include "rx65n_ether.h"
 #include "phy.h"
 
-#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 static ethfifo RX_DESC_SECTION rxdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
 static ethfifo TX_DESC_SECTION txdesc[ETH_BUF_NUM] __attribute__((aligned(32)));
-static int8_t  RX_DESC_SECTION rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
-static int8_t  TX_DESC_SECTION txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
+static int8_t RX_DESC_SECTION rxbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
+static int8_t TX_DESC_SECTION txbuf[ETH_BUF_NUM][ALIGNED_BUFSIZE] __attribute__((aligned(32)));
 
 static RX_ETHER_INPUT_CB rx_ether_input_cb = (RX_ETHER_INPUT_CB)0;
 
@@ -255,24 +255,24 @@ static void rx_phy_reg_write(uint16_t data) {
 
 static uint16_t rx_phy_read(uint16_t phy_addr, uint16_t reg_addr) {
     uint16_t data;
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     rx_phy_preamble();
     rx_phy_reg_set(phy_addr, reg_addr, PHY_READ);
     rx_phy_ta_z0();
     rx_phy_reg_read(&data);
     rx_phy_ta_z0();
-    rx_enable_irq();
-    return (data);
+    rx_enable_irq(state);
+    return data;
 }
 
 static void rx_phy_write(uint16_t phy_addr, uint16_t reg_addr, uint16_t data) {
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     rx_phy_preamble();
     rx_phy_reg_set(phy_addr, reg_addr, PHY_WRITE);
     rx_phy_ta_10();
     rx_phy_reg_write(data);
     rx_phy_ta_z0();
-    rx_enable_irq();
+    rx_enable_irq(state);
 }
 
 #if 0
@@ -315,7 +315,7 @@ static int16_t phy_set_autonegotiate(uint16_t phy_addr) {
     if (count >= PHY_AUTO_NEGOTIATON_WAIT) {
         return R_PHY_ERROR;
     } else {
-        return ((int16_t)rx_phy_read(phy_addr, AN_LINK_PARTNER_ABILITY_REG));
+        return (int16_t)rx_phy_read(phy_addr, AN_LINK_PARTNER_ABILITY_REG);
     }
 }
 #endif
@@ -355,7 +355,7 @@ int32_t rx_ether_fifo_write(ethfifo *p, int8_t buf[], int32_t size) {
         /**
          * Current descriptor is active and ready to transmit or transmitting.
          **/
-        return (-1);
+        return -1;
     }
     for (i = 0; i < size; i++) {
         if (i >= ALIGNED_BUFSIZE) {
@@ -378,13 +378,13 @@ int32_t rx_ether_fifo_read(ethfifo *p, int8_t buf[]) {
          * Current descriptor is active and ready to receive or receiving.
          * This is not an error.
          **/
-        return (-1);
+        return -1;
     } else if ((current->status & FE) != 0) {
         /**
          * Frame error.
          * Must move to new descriptor as E-DMAC now points to next one.
          **/
-        return (-2);
+        return -2;
     } else {
         if ((current->status & FP0) == FP0) {
             /* This is the last descriptor.  Complete frame is received.   */
@@ -404,7 +404,7 @@ int32_t rx_ether_fifo_read(ethfifo *p, int8_t buf[]) {
             buf[i] = current->buf_p[i];
         }
         /* Return data size received */
-        return (temp_size);
+        return temp_size;
     }
 }
 
@@ -422,8 +422,7 @@ bool rx_ether_phy_read(uint32_t phy_addr, uint32_t reg_addr, uint32_t *data, uin
     return true;
 }
 
-void rx_ether_set_link_speed(bool speed, bool fullduplex)
-{
+void rx_ether_set_link_speed(bool speed, bool fullduplex) {
     if (speed) {
         ETHERC0.ECMR.BIT.RTM = 1;        // 100Mbps
     } else {
@@ -487,22 +486,22 @@ void rx_ether_init(uint8_t *hwaddr) {
 }
 
 void rx_ether_start(void) {
-#if defined(HW_INTERRUPT)
+    #if defined(HW_INTERRUPT)
     // Enable interrupt
     // Sets up interrupt when you use interrupt
     EDMAC0.EESIPR.LONG = 0x00040000;
-    //ICU.IER[4].BIT.IEN0 = 1;
-    //ICU.IPR[8].BYTE = PRI_ETH;    // Set priority level
-    IPR(EXDMAC, EXDMAC0I)= PRI_ETH; // IPR_EXDMAC_EXDMAC0I=126,
-    IEN(EXDMAC, EXDMAC0I)= 1;       // IER_EXDMAC_EXDMAC0I=0x0F IEN_EXDMAC_EXDMAC0I IEN6
+    // ICU.IER[4].BIT.IEN0 = 1;
+    // ICU.IPR[8].BYTE = PRI_ETH;    // Set priority level
+    IPR(EXDMAC, EXDMAC0I) = PRI_ETH; // IPR_EXDMAC_EXDMAC0I=126,
+    IEN(EXDMAC, EXDMAC0I) = 1;       // IER_EXDMAC_EXDMAC0I=0x0F IEN_EXDMAC_EXDMAC0I IEN6
     /* Enable interrupts of interest only. */
-    //ETHERC0.ECSIPR.BIT.LCHNGIP = 1;
-    //EDMAC0.EESIPR.BIT.ECIIP    = 1;
+    // ETHERC0.ECSIPR.BIT.LCHNGIP = 1;
+    // EDMAC0.EESIPR.BIT.ECIIP    = 1;
     /* Set Ethernet interrupt level and enable */
     ICU.IPR[IPR_ICU_GROUPAL1].BIT.IPR = 12;
     ICU.IER[IER_ICU_GROUPAL1].BIT.IEN1 = 1;
     ICU.GENAL1.BIT.EN4 = 1;
-#endif
+    #endif
     // Enable receive and transmit
     ETHERC0.ECMR.BIT.RE = 1;
     ETHERC0.ECMR.BIT.TE = 1;

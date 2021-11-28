@@ -46,7 +46,7 @@ static uint8_t adc10_pin[] = {
     PD6,    /* AN6 */
     PD7,    /* AN7 */
 };
-#define ADC10_SIZE  (sizeof(adc10_pin)/sizeof(uint8_t))
+#define ADC10_SIZE  (sizeof(adc10_pin) / sizeof(uint8_t))
 #endif
 
 static uint8_t adc120_pin[] = {
@@ -59,7 +59,7 @@ static uint8_t adc120_pin[] = {
     P46,    /* AN006 */
     P47,    /* AN007 */
 };
-#define ADC120_SIZE  (sizeof(adc120_pin)/sizeof(uint8_t))
+#define ADC120_SIZE  (sizeof(adc120_pin) / sizeof(uint8_t))
 
 static uint8_t adc121_pin[] = {
     PE2,    /* AN100 */
@@ -84,7 +84,7 @@ static uint8_t adc121_pin[] = {
     P01,    /* AN119 */
     P02,    /* AN120 */
 };
-#define ADC121_SIZE  (sizeof(adc121_pin)/sizeof(uint8_t))
+#define ADC121_SIZE  (sizeof(adc121_pin) / sizeof(uint8_t))
 
 bool rx_adc_chk_ad120(uint8_t pin) {
     int i;
@@ -108,14 +108,14 @@ bool rx_adc_chk_ad121(uint8_t pin) {
 
 int32_t rx_adc_get_resolution(uint8_t pin) {
     int res = -1;
-#if defined(RX_ADC10)
+    #if defined(RX_ADC10)
     int i;
     for (i = 0; i < ADC10_SIZE; i++) {
         if (adc10_pin[i] == pin) {
             return 10;
         }
     }
-#endif
+    #endif
     if (rx_adc_chk_ad120(pin) | rx_adc_chk_ad121(pin)) {
         return 12;
     }
@@ -125,13 +125,13 @@ int32_t rx_adc_get_resolution(uint8_t pin) {
 int32_t rx_adc_get_channel(uint8_t pin) {
     int i;
     int ch = -1;
-#if defined(RX_ADC10)
+    #if defined(RX_ADC10)
     for (i = 0; i < ADC10_SIZE; i++) {
         if (adc10_pin[i] == pin) {
             return i;
         }
     }
-#endif
+    #endif
     for (i = 0; i < ADC120_SIZE; i++) {
         if (adc120_pin[i] == pin) {
             return i;
@@ -190,11 +190,11 @@ void rx_adc12_enable(uint8_t pin) {
     _PMR(port) |= mask;
     /* Disable write to PFSWE and PFS*/
     MPC.PWPR.BYTE = 0x80;
-#if defined(RX63N)
+    #if defined(RX63N)
     S12AD.ADCSR.BYTE = 0x0;
     S12AD.ADCER.BIT.ADRFMT = 0;
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     if (rx_adc_chk_ad120(pin)) {
         S12AD.ADCSR.WORD = 0x0;
         S12AD.ADCER.BIT.ADRFMT = 0;
@@ -202,14 +202,14 @@ void rx_adc12_enable(uint8_t pin) {
         S12AD1.ADCSR.WORD = 0x0;
         S12AD1.ADCER.BIT.ADRFMT = 0;
     }
-#endif
+    #endif
 }
 
 bool rx_adc_enable(uint8_t pin) {
     if (rx_adc_get_channel(pin) == -1) {
         return false;
     }
-#if defined(RX_ADC10)
+    #if defined(RX_ADC10)
     int resolution;
     resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
@@ -217,9 +217,9 @@ bool rx_adc_enable(uint8_t pin) {
     } else {
         rx_adc12_enable(pin);
     }
-#else
+    #else
     rx_adc12_enable(pin);
-#endif
+    #endif
     return true;
 }
 
@@ -255,7 +255,7 @@ bool rx_adc_disable(uint8_t pin) {
     if (rx_adc_get_channel(pin) == -1) {
         return false;
     }
-#if defined(RX_ADC10)
+    #if defined(RX_ADC10)
     int resolution;
     resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
@@ -263,9 +263,9 @@ bool rx_adc_disable(uint8_t pin) {
     } else {
         rx_adc12_disable(pin);
     }
-#else
+    #else
     rx_adc12_disable(pin);
-#endif
+    #endif
     return true;
 }
 
@@ -285,46 +285,46 @@ uint16_t rx_adc10_read(uint8_t pin) {
 uint16_t rx_adc12_read(uint8_t pin) {
     uint16_t value16 = 0;
     uint16_t off = (uint8_t)rx_adc_get_channel(pin);
-#if defined(RX63N)
+    #if defined(RX63N)
     S12AD.ADANS0.WORD |= (1 << off);
     S12AD.ADCSR.BIT.ADST = 1;
     while (S12AD.ADCSR.BIT.ADST) {
         ;
     }
-    value16 = *((unsigned short*)&S12AD.ADDR0 + off);
-#endif
-#if defined(RX65N)
+    value16 = *((unsigned short *)&S12AD.ADDR0 + off);
+    #endif
+    #if defined(RX65N)
     if (rx_adc_chk_ad120(pin)) {
         S12AD.ADANSA0.WORD |= (1 << off);
         S12AD.ADCSR.BIT.ADST = 1;
         while (S12AD.ADCSR.BIT.ADST) {
             ;
         }
-        value16 = *((unsigned short*)&S12AD.ADDR0 + off);
+        value16 = *((unsigned short *)&S12AD.ADDR0 + off);
     } else {
         S12AD1.ADANSA0.WORD |= (1 << off);
         S12AD1.ADCSR.BIT.ADST = 1;
         while (S12AD1.ADCSR.BIT.ADST) {
             ;
         }
-        value16 = *((unsigned short*)&S12AD1.ADDR0 + off);
+        value16 = *((unsigned short *)&S12AD1.ADDR0 + off);
     }
-#endif
+    #endif
     return (uint16_t)value16;
 }
 
 
 uint16_t rx_adc_read(uint8_t pin) {
     uint16_t value16;
-#if defined(RX_ADC10)
+    #if defined(RX_ADC10)
     int resolution = rx_adc_get_resolution(pin);
     if (resolution == 10) {
         value16 = rx_adc10_read(pin);
     } else {
         value16 = rx_adc12_read(pin);
     }
-#else
+    #else
     value16 = rx_adc12_read(pin);
-#endif
+    #endif
     return value16;
 }

@@ -16,7 +16,7 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-#USE_DBG_PRINT = 1
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
@@ -40,9 +40,6 @@ USB_MSC = 2
 USB_CDC_MSC = 3
 USB_MODE = 3
 
-# LAN debug
-LAN_NEW = 1
-
 # Include modules
 USE_FONT = 1
 USE_LCDSPI = 1
@@ -55,8 +52,8 @@ include $(BOARD_DIR)/mpconfigboard.mk
 #QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h $(BUILD)/modstm_qstr.h
 QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h $(QSTR_GENERATED_HEADERS)
-QSTR_GLOBAL_DEPENDENCIES = mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
+QSTR_DEFS += qstrdefsport.h $(QSTR_GENERATED_HEADERS)
+QSTR_GLOBAL_DEPENDENCIES += mpconfigboard_common.h $(BOARD_DIR)/mpconfigboard.h $(QSTR_GENERATED_HEADERS)
 
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
@@ -150,12 +147,13 @@ endif
 #######################################################################
 # C flags.
 #######################################################################
-CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=c99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
-CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
-#CFLAGS += -ffunction-sections -fdata-sections -flto -fomit-frame-pointer 
+# CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
+CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
 CFLAGS += -Wno-error=pointer-arith
+CFLAGS += -Wno-format
 #CFLAGS += -Wno-error=incompatible-pointer-types
 #CFLAGS += -Wno-error=tautological-compare
 #CFLAGS += -Wno-error=unused-const-variable
@@ -225,13 +223,13 @@ CFLAGS += -D$(MCU_SERIES_CAP)
 CFLAGS += -DCONFIG_$(MCU_SERIES_CAP)
 CFLAGS += -D__RX_LITTLE_ENDIAN__
 ifeq ($(MCU_SERIES),RX63N)
-CFLAGS += -mcpu=rx600 -mrelax
+CFLAGS += -mcpu=rx600
 endif
 ifeq ($(MCU_SERIES),RX65N)
 ifeq ($(IS_RENESAS_GCC),GNURX)
-CFLAGS += -mcpu=rx64m -fpu -mrelax
+CFLAGS += -mcpu=rx64m -fpu
 else
-CFLAGS += -mcpu=rx600 -Wa,-mcpu=rxv2 -mrelax
+CFLAGS += -mcpu=rx600 -Wa,-mcpu=rxv2
 endif
 endif
 ifeq ($(BOARD),GR_CITRUS)
@@ -335,53 +333,40 @@ LDFLAGS += -nostdlib
 LDFLAGS += -L boards
 LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
-#LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
-#LDFLAGS += --gc-sections
-LDFLAGS += -Wl,-Map=$@.map -Wl,--cref -Wl,--defsym=_estack_reserve=8 -Wl,-static
-LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
+LDFLAGS += --gc-sections
 # print removed sections
 #LDFLAGS += -Wl,--print-gc-sections
 #LDFLAGS += -Wl,--no-undefined
-ifeq ($(IS_RENESAS_GCC),GNURX)
-else
-LDFLAGS += -Wl,--no-ignore-lma
+
+# LIBS =
+LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
+
+# Flags for optional C++ source code
+CXXFLAGS += $(filter-out -Wmissing-prototypes -Wold-style-definition -std=gnu99,$(CFLAGS))
+CXXFLAGS += $(CXXFLAGS_MOD)
+ifneq ($(SRC_CXX)$(SRC_MOD_CXX),)
+LIBSTDCPP_FILE_NAME = "$(shell $(CXX) $(CXXFLAGS) -print-file-name=libstdc++.a)"
+LDFLAGS += -L"$(shell dirname $(LIBSTDCPP_FILE_NAME))"
 endif
 
-LIBS =
-
-
-LIB_SRC_C = $(addprefix lib/,\
+SHARED_SRC_C += $(addprefix shared/,\
 	libc/string0.c \
-	mp-readline/readline.c \
+	netutils/dhcpserver.c \
 	netutils/netutils.c \
 	netutils/trace.c \
-	netutils/dhcpserver.c \
+	readline/readline.c \
+	runtime/gchelper_native.c \
+	runtime/interrupt_char.c \
+	runtime/mpirq.c \
+	runtime/pyexec.c \
+	runtime/stdout_helpers.c \
+	runtime/sys_stdio_mphal.c \
 	timeutils/timeutils.c \
-	utils/gchelper_native.c \
-	utils/pyexec.c \
-	utils/interrupt_char.c \
-	utils/printf.c \
-	utils/sys_stdio_mphal.c \
-	utils/mpirq.c \
 	)
 
-#LIB_SRC_C += $(addprefix lib/, libc/string0.c)
-#LIB_SRC_C += $(addprefix lib/, mp-readline/readline.c)
-#LIB_SRC_C += $(addprefix lib/, netutils/netutils.c)
-#LIB_SRC_C += $(addprefix lib/, oofatfs/ff.c)
-#LIB_SRC_C += $(addprefix lib/, oofatfs/option/unicode.c)
-#LIB_SRC_C += $(addprefix lib/, timeutils/timeutils.c)
-#LIB_SRC_C += $(addprefix lib/, utils/interrupt_char.c)
-#LIB_SRC_C += $(addprefix lib/, utils/printf.c)
-#LIB_SRC_C += $(addprefix lib/, utils/pyexec.c)
-#LIB_SRC_C += $(addprefix lib/, utils/sys_stdio_mphal.c)
-
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	virtpin.c \
-        )
-
 ifeq ($(MICROPY_FLOAT_IMPL),double)
-LIBM_SRC_C = $(addprefix lib/libm_dbl/,\
+LIBM_SRC_C += $(addprefix lib/libm_dbl/,\
 	__cos.c \
 	__expo2.c \
 	__fpclassify.c \
@@ -432,7 +417,7 @@ else
 LIBM_SRC_C += lib/libm_dbl/sqrt.c
 endif
 else
-LIBM_SRC_C = $(addprefix lib/libm/,\
+LIBM_SRC_C += $(addprefix lib/libm/,\
 	math.c \
 	acoshf.c \
 	asinfacosf.c \
@@ -474,29 +459,27 @@ ifeq ($(MICROPY_FLOAT_IMPL),double)
 $(LIBM_O): CFLAGS := $(filter-out -Wdouble-promotion -Wfloat-conversion, $(CFLAGS))
 endif
 
-EXTMOD_SRC_C = $(addprefix extmod/,\
+EXTMOD_SRC_C += $(addprefix extmod/,\
 	modonewire.c \
+	modnetwork.c \
+	modusocket.c \
 	)
 
-DRIVERS_SRC_C = $(addprefix drivers/,\
+DRIVERS_SRC_C += $(addprefix drivers/,\
 	bus/softspi.c \
 	bus/softqspi.c \
 	memory/spiflash.c \
 	dht/dht.c \
 	)
 
-SRC_C = main.c
+SRC_C += main.c
 SRC_C += boardctrl.c
 SRC_C += template/mymodule.c
 SRC_C += accel.c
 SRC_C += adc.c
 SRC_C += bufhelper.c
 SRC_C += dac.c
-ifeq ($(LAN_NEW),1)
 SRC_C += eth.c
-else
-SRC_C += ethernetif.c
-endif
 SRC_C += extint.c
 SRC_C += factoryreset.c
 SRC_C += fatfs_port.c
@@ -506,30 +489,29 @@ SRC_C += gccollect.c
 SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
+# SRC_C += machine_bitstream.c
 SRC_C += machine_i2c.c
 SRC_C += machine_spi.c
 SRC_C += machine_timer.c
 SRC_C += machine_uart.c
 SRC_C += modmachine.c
-SRC_C += modnetwork.c
+#SRC_C += modnetwork.c
 #SRC_C += modnwcc3k.c
 #SRC_C += modnwwiznet5k.c
 ifeq ($(MICROPY_PY_ESP8266),1)
 CFLAGS += -DMICROPY_PY_ESP8266=1
-SRC_C += modnwesp8266.c
+SRC_C += network_esp8266.c
 endif
 SRC_C += modpyb.c
+SRC_C += modrx.c
+SRC_C += modrxreg.c
 SRC_C += moduos.c
-SRC_C += modusocket.c
+#SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
+SRC_C += mpnetworkport.c
 SRC_C += mpthreadport.c
-ifeq ($(LAN_NEW),1)
 SRC_C += network_lan.c
-else
-SRC_C += modnwrxeth.c
-endif
-SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += pendsv.c
 SRC_C += phy.c
@@ -547,14 +529,13 @@ SRC_C += sdcard.c
 SRC_C += servo.c
 SRC_C += softtimer.c
 SRC_C += spi.c
-#SRC_C += spibdev.c
 SRC_C += storage.c
 SRC_C += systick.c
 SRC_C += timer.c
 SRC_C += uart.c
-#SRC_C += uart_core.c
 SRC_C += usb.c
 SRC_C += usrsw.c
+SRC_C += mpy_file.c
 SRC_C += wdt.c
 #SRC_C += $(BUILD)/_frozen_mpy.c
 SRC_C += esp8266/base64encode.c
@@ -630,7 +611,28 @@ SRC_S += setjmp.S
 SRC_S += gchelper.S
 
 ifeq ($(MICROPY_PY_LWIP),1)
+SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
 SRC_MOD += lwip_utils/sntp_client.c
+endif
+
+SRC_CXX += \
+	$(SRC_MOD_CXX)
+
+SRC_O += \
+	$(STARTUP_FILE) \
+	$(SYSTEM_FILE)
+
+ifeq ($(MICROPY_PY_BLUETOOTH),1)
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH=1
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE=1
+endif
+
+ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
+CFLAGS_MOD += -DMICROPY_PY_NETWORK_CYW43=1
+SRC_C += sdio.c
+EXTMOD_SRC_C += extmod/network_cyw43.c
+DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
+LIBS += $(TOP)/drivers/cyw43/libcyw43.a
 endif
 
 ifneq ($(MICROPY_PY_WIZNET5K),0)
@@ -710,12 +712,14 @@ endif
 endif
 
 ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+GIT_SUBMODULES += lib/mynewt-nimble
 CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS=1
 include $(TOP)/extmod/nimble/nimble.mk
 SRC_C += mpnimbleport.c
 endif
 
 ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+GIT_SUBMODULES += lib/btstack
 MICROPY_BLUETOOTH_BTSTACK_H4 ?= 1
 include $(TOP)/extmod/btstack/btstack.mk
 SRC_C += mpbtstackport.c
@@ -735,13 +739,20 @@ SRC_C += lvgl/driver/modstmpe610.c
 SRC_C += lvgl/driver/modxpt2046.c
 endif
 
+#######################################################################
+# object files
+#######################################################################
+
 OBJ += $(PY_O)
-OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(LIBM_O)
+OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_O))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(BUILD)/pins_$(BOARD).o
@@ -749,7 +760,7 @@ OBJ += $(BUILD)/pins_$(BOARD).o
 # This file contains performance critical functions so turn up the optimisation
 # level.  It doesn't add much to the code size and improves performance a bit.
 # Don't use -O3 with this file because gcc tries to optimise memset in terms of itself.
-$(BUILD)/lib/libc/string0.o: COPT += -O2
+$(BUILD)/shared/libc/string0.o: COPT += -O2
 
 # We put several files into the first 16K section with the ISRs.
 # If we compile these using -O0 then it won't fit. So if you really want these
@@ -762,6 +773,10 @@ $(PY_BUILD)/parsenum.o: COPT += -Os
 $(PY_BUILD)/mpprint.o: COPT += -Os
 
 all: $(BUILD)/firmware.elf
+
+#######################################################################
+# build rules
+#######################################################################
 
 ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
 # To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
@@ -784,7 +799,7 @@ endif
 
 $(BUILD)/firmware.elf: $(OBJ) $(LIB_LVGL)
 	$(ECHO) "LINK $@"
-	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
+	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(OBJCOPY) -O binary $(BUILD)/firmware.elf  $(BUILD)/firmware.bin
 	$(Q)$(OBJCOPY) -O srec -I elf32-rx-be-ns $(BUILD)/firmware.elf  $(BUILD)/firmware.mot
 	$(Q)$(SIZE) $@
@@ -805,13 +820,13 @@ GEN_PINS_AF_PY = $(BUILD)/pins_af.py
 INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
 FILE2H = $(TOP)/tools/file2h.py
 
-USB_IDS_FILE = usb.h
+USB_IDS_FILE = mpconfigboard_common.h
 CDCINF_TEMPLATE = pybcdc.inf_template
 GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
 GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_MOD) $(LIB_SRC_C) $(EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SRC_MOD) $(SHARED_SRC_C) $(EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)

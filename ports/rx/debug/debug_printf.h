@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-int debug_printf(const void* format, ...);
+int debug_printf(const void *format, ...);
 
 #ifdef USE_DBG_PRINT
 

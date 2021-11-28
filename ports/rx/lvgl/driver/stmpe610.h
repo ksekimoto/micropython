@@ -170,4 +170,3 @@ extern "C" {
 #endif
 
 #endif /* STMPE610_H */
-

@@ -78,7 +78,7 @@ static const uint8_t sci_tx_pins[] = {
     P23,    /* ch 3 P23 */
     0xff,   /* ch 4 */
     PC3,    /* ch 5 PC3 */
-    P32 ,   /* ch 6 P32 */
+    P32,    /* ch 6 P32 */
     0xff,   /* ch 7 */
     0xff,   /* ch 8 */
     0xff,   /* ch 9 */
@@ -123,18 +123,18 @@ static volatile struct SCI_FIFO rx_fifo[SCI_CH_NUM];
 
 static void delay_us(volatile unsigned int us) {
     us *= 60;
-    while (us-- > 0)
+    while (us-- > 0) {
         ;
+    }
 }
 
-void sci_rx_set_callback(int ch, SCI_CALLBACK callback)
-{
+void sci_rx_set_callback(int ch, SCI_CALLBACK callback) {
     sci_callback[ch] = callback;
 }
 
 void sci_rx_set_int(int ch, int flag) {
     int idx = (214 + ch * 3) / 8;
-    int bit = (6 +  ch * 3) & 7;
+    int bit = (6 + ch * 3) & 7;
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -149,7 +149,7 @@ void sci_rx_int_disable(int ch) {
 
 void sci_tx_set_int(int ch, int flag) {
     int idx = (215 + ch * 3) / 8;
-    int bit = (7 +  ch * 3) & 7;
+    int bit = (7 + ch * 3) & 7;
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -164,7 +164,7 @@ void sci_tx_int_disable(int ch) {
 
 void sci_te_set_int(int ch, int flag) {
     int idx = (216 + ch * 3) / 8;
-    int bit = (0 +  ch * 3) & 7;
+    int bit = (0 + ch * 3) & 7;
     uint8_t mask = (1 << bit);
     ICU.IER[idx].BYTE = (ICU.IER[idx].BYTE & ~mask) | (flag << bit);
 }
@@ -210,12 +210,12 @@ static void sci_isr_rx(int ch) {
 void sci_isr_er(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     sci->RDR;
-    //sci->SSR.BYTE = 0x84;
+    // sci->SSR.BYTE = 0x84;
     while (0 != (sci->SSR.BYTE & 0x38)) {
         sci->RDR;
         sci->SSR.BYTE = (sci->SSR.BYTE & ~0x38) | 0xc0;
         if (0 != (sci->SSR.BYTE & 0x38)) {
-            __asm__ __volatile__("nop");
+            __asm__ __volatile__ ("nop");
         }
     }
 }
@@ -225,7 +225,7 @@ static void sci_isr_tx(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     rx_disable_irq();
     if (!tx_fifo[ch].busy) {
-        //sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
+        // sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
         goto sci_isr_tx_exit;
     }
     if (tx_fifo[ch].len != 0) {
@@ -239,7 +239,7 @@ static void sci_isr_tx(int ch) {
     }
 sci_isr_tx_exit:
     rx_enable_irq();
-#if 0
+    #if 0
     if (tx_fifo[ch].len != 0) {
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buff[i++];
@@ -248,13 +248,13 @@ sci_isr_tx_exit:
     } else {
         tx_fifo[ch].busy = 0;
     }
-#endif
+    #endif
 }
 
 void sci_isr_te(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
     rx_disable_irq();
-    //if (!tx_fifo[ch].busy)
+    // if (!tx_fifo[ch].busy)
     //    goto sci_isr_te_exit;
     sci->SCR.BYTE &= ~0xa4; /* TIE, TE and TEI reset */
     if (tx_fifo[ch].len == 0) {
@@ -262,7 +262,7 @@ void sci_isr_te(int ch) {
     } else {
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
     }
-//sci_isr_te_exit:
+// sci_isr_te_exit:
     rx_enable_irq();
 }
 
@@ -307,9 +307,11 @@ void sci_tx_ch(int ch, uint8_t c) {
     tx_fifo[ch].head = i % tx_fifo[ch].size;
     tx_fifo[ch].len++;
     rx_enable_irq();
-#if 0
+    #if 0
     while (tx_fifo[ch].len == tx_fifo[ch].size) {
-        while ((sci->SSR.BYTE & 0x04) == 0) ;
+        while ((sci->SSR.BYTE & 0x04) == 0) {
+            ;
+        }
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buf[i++];
         tx_fifo[ch].len--;
@@ -326,7 +328,7 @@ void sci_tx_ch(int ch, uint8_t c) {
         sci->TDR = c;
         tx_fifo[ch].busy = 1;
     }
-#endif
+    #endif
 }
 
 int sci_tx_wait(int ch) {
@@ -347,92 +349,92 @@ static void sci_fifo_init(int ch) {
     tx_fifo[ch].len = 0;
     tx_fifo[ch].busy = 0;
     tx_fifo[ch].size = SCI_TX_BUF_SIZE;
-#if defined(SCI_TX_STATIC_BUF)
+    #if defined(SCI_TX_STATIC_BUF)
     tx_fifo[ch].buf = &tx_buf[ch][0];
-#else
+    #else
     tx_fifo[ch].buf = (uint8_t *)malloc(SCI_TX_BUF_SIZE);
-#endif
+    #endif
     rx_fifo[ch].head = 0;
     rx_fifo[ch].tail = 0;
     rx_fifo[ch].len = 0;
     rx_fifo[ch].busy = 0;
     rx_fifo[ch].size = SCI_RX_BUF_SIZE;
-#if defined(SCI_RX_STATIC_BUF)
+    #if defined(SCI_RX_STATIC_BUF)
     rx_fifo[ch].buf = &rx_buf[ch][0];
-#else
+    #else
     rx_fifo[ch].buf = (uint8_t *)malloc(SCI_RX_BUF_SIZE);
-#endif
+    #endif
 }
 
 static void sci_fifo_deinit(int ch) {
-#if !defined(SCI_TX_STATIC_BUF)
+    #if !defined(SCI_TX_STATIC_BUF)
     if (tx_fifo[ch].buf) {
         free(tx_fifo[ch].buf);
     }
-#endif
-#if !defined(SCI_RX_STATIC_BUF)
+    #endif
+    #if !defined(SCI_RX_STATIC_BUF)
     if (rx_fifo[ch].buf) {
         free(rx_fifo[ch].buf);
     }
-#endif
+    #endif
 }
 
 void sci_int_priority(int ch, int priority) {
     switch (ch) {
-    case 0:
-        IPR(SCI0, RXI0) = priority;
-        //IPR(SCI0, TXI0) = priority;
-        break;
-    case 1:
-        IPR(SCI1, RXI1) = priority;
-        //IPR(SCI1, TXI1) = priority;
-        break;
-    case 2:
-        IPR(SCI2, RXI2) = priority;
-        //IPR(SCI2, TXI2) = priority;
-        break;
-    case 3:
-        IPR(SCI3, RXI3) = priority;
-        //IPR(SCI3, TXI3) = tx_priority;
-        break;
-    case 4:
-        IPR(SCI4, RXI4) = priority;
-        //IPR(SCI4, TXI4) = priority;
-        break;
-    case 5:
-        IPR(SCI5, RXI5) = priority;
-        //IPR(SCI5, TXI5) = priority;
-        break;
-    case 6:
-        IPR(SCI6, RXI6) = priority;
-        //IPR(SCI6, TXI6) = tx_priority;
-        break;
-    case 7:
-        IPR(SCI7, RXI7) = priority;
-        //IPR(SCI7, TXI7) = priority;
-        break;
-    case 8:
-        IPR(SCI8, RXI8) = priority;
-        //IPR(SCI8, TXI8) = priority;
-        break;
-    case 9:
-        IPR(SCI9, RXI9) = priority;
-        //IPR(SCI9, TXI9) = priority;
-        break;
-    case 10:
-        IPR(SCI10, RXI10) = priority;
-        //IPR(SCI10, TXI10) = priority;
-        break;
-    case 11:
-        IPR(SCI11, RXI11) = priority;
-        //IPR(SCI11, TXI11) = priority;
-        break;
-    case 12:
-        IPR(SCI12, RXI12) = priority;
-        //IPR(SCI12, TXI12) = priority;
-        break;
-    default:
-        break;
+        case 0:
+            IPR(SCI0, RXI0) = priority;
+            // IPR(SCI0, TXI0) = priority;
+            break;
+        case 1:
+            IPR(SCI1, RXI1) = priority;
+            // IPR(SCI1, TXI1) = priority;
+            break;
+        case 2:
+            IPR(SCI2, RXI2) = priority;
+            // IPR(SCI2, TXI2) = priority;
+            break;
+        case 3:
+            IPR(SCI3, RXI3) = priority;
+            // IPR(SCI3, TXI3) = tx_priority;
+            break;
+        case 4:
+            IPR(SCI4, RXI4) = priority;
+            // IPR(SCI4, TXI4) = priority;
+            break;
+        case 5:
+            IPR(SCI5, RXI5) = priority;
+            // IPR(SCI5, TXI5) = priority;
+            break;
+        case 6:
+            IPR(SCI6, RXI6) = priority;
+            // IPR(SCI6, TXI6) = tx_priority;
+            break;
+        case 7:
+            IPR(SCI7, RXI7) = priority;
+            // IPR(SCI7, TXI7) = priority;
+            break;
+        case 8:
+            IPR(SCI8, RXI8) = priority;
+            // IPR(SCI8, TXI8) = priority;
+            break;
+        case 9:
+            IPR(SCI9, RXI9) = priority;
+            // IPR(SCI9, TXI9) = priority;
+            break;
+        case 10:
+            IPR(SCI10, RXI10) = priority;
+            // IPR(SCI10, TXI10) = priority;
+            break;
+        case 11:
+            IPR(SCI11, RXI11) = priority;
+            // IPR(SCI11, TXI11) = priority;
+            break;
+        case 12:
+            IPR(SCI12, RXI12) = priority;
+            // IPR(SCI12, TXI12) = priority;
+            break;
+        default:
+            break;
     }
 }
 
@@ -450,47 +452,47 @@ void sci_int_disable(int ch) {
 
 void sci_module(int ch, int flag) {
     switch (ch) {
-    case 0:
-        MSTP_SCI0 = flag;
-        break;
-    case 1:
-        MSTP_SCI1 = flag;
-        break;
-    case 2:
-        MSTP_SCI2 = flag;
-        break;
-    case 3:
-        MSTP_SCI3 = flag;
-        break;
-    case 4:
-        MSTP_SCI4 = flag;
-        break;
-    case 5:
-        MSTP_SCI5 = flag;
-        break;
-    case 6:
-        MSTP_SCI6 = flag;
-        break;
-    case 7:
-        MSTP_SCI7 = flag;
-        break;
-    case 8:
-        MSTP_SCI8 = flag;
-        break;
-    case 9:
-        MSTP_SCI9 = flag;
-        break;
-    case 10:
-        MSTP_SCI10 = flag;
-        break;
-    case 11:
-        MSTP_SCI11 = flag;
-        break;
-    case 12:
-        MSTP_SCI12 = flag;
-        break;
-    default:
-        break;
+        case 0:
+            MSTP_SCI0 = flag;
+            break;
+        case 1:
+            MSTP_SCI1 = flag;
+            break;
+        case 2:
+            MSTP_SCI2 = flag;
+            break;
+        case 3:
+            MSTP_SCI3 = flag;
+            break;
+        case 4:
+            MSTP_SCI4 = flag;
+            break;
+        case 5:
+            MSTP_SCI5 = flag;
+            break;
+        case 6:
+            MSTP_SCI6 = flag;
+            break;
+        case 7:
+            MSTP_SCI7 = flag;
+            break;
+        case 8:
+            MSTP_SCI8 = flag;
+            break;
+        case 9:
+            MSTP_SCI9 = flag;
+            break;
+        case 10:
+            MSTP_SCI10 = flag;
+            break;
+        case 11:
+            MSTP_SCI11 = flag;
+            break;
+        case 12:
+            MSTP_SCI12 = flag;
+            break;
+        default:
+            break;
     }
 }
 

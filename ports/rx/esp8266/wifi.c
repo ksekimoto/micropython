@@ -41,13 +41,13 @@
 #if MICROPY_HW_HAS_ESP8266
 
 #ifdef DEBUG_WIFI
-#  define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
-#  define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
-#  define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
+#define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }
+#define DEBUG_PRINT1(a)      { debug_printf("%s", a); }
+#define DEBUG_PRINTLN1(a)    { debug_printf("%s\r\n", a); }
 #else
-#  define DEBUG_PRINT(m,v)      // do nothing
-#  define DEBUG_PRINT1(s)       // do nothing
-#  define DEBUG_PRINTLN1(s)     // do nothing
+#define DEBUG_PRINT(m,v)        // do nothing
+#define DEBUG_PRINT1(s)         // do nothing
+#define DEBUG_PRINTLN1(s)       // do nothing
 #endif
 
 // ===== micropyhton function in module definition
@@ -94,7 +94,7 @@ STATIC mp_obj_t wifi_softap(mp_obj_t ssid, mp_obj_t pass, mp_obj_t ch, mp_obj_t 
     esp8266_at_softap(mp_obj_str_get_str(ssid), mp_obj_str_get_str(pass), mp_obj_get_int(ch), mp_obj_get_int(enc));
     return mp_const_none;
 }
-//STATIC MP_DEFINE_CONST_FUN_OBJ_4(wifi_softap_obj, wifi_softap);
+// STATIC MP_DEFINE_CONST_FUN_OBJ_4(wifi_softap_obj, wifi_softap);
 #endif
 
 STATIC mp_obj_t wifi_connectedip(void) {
@@ -145,7 +145,7 @@ STATIC mp_obj_t wifi_http_get(size_t n_args, const mp_obj_t *args) {
     if (n_args == 2) {
         mp_obj_get_array(args[1], (size_t *)&len, &items);
         if (len > 0) {
-            header = (char **)malloc(len * sizeof(char *));
+            header = (char **)m_malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
@@ -159,7 +159,7 @@ STATIC mp_obj_t wifi_http_get(size_t n_args, const mp_obj_t *args) {
         len,
         0);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -174,7 +174,7 @@ STATIC mp_obj_t wifi_https_get(size_t n_args, const mp_obj_t *args) {
     if (n_args == 2) {
         mp_obj_get_array(args[1], (size_t *)&len, &items);
         if (len > 0) {
-            header = (char **)malloc(len * sizeof(char *));
+            header = (char **)m_malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
@@ -188,7 +188,7 @@ STATIC mp_obj_t wifi_https_get(size_t n_args, const mp_obj_t *args) {
         len,
         1);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -204,7 +204,7 @@ STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
     if (n_args == 3) {
         mp_obj_get_array(args[2], (size_t *)&len, &items);
         if (len > 0) {
-            header = (char **)malloc(len * sizeof(char *));
+            header = (char **)m_malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
@@ -219,7 +219,7 @@ STATIC mp_obj_t wifi_http_get_sd(size_t n_args, const mp_obj_t *args) {
         header,
         0);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -234,7 +234,7 @@ STATIC mp_obj_t wifi_https_get_sd(size_t n_args, const mp_obj_t *args) {
     if (n_args == 3) {
         mp_obj_get_array(args[2], (size_t *)&len, &items);
         if (len > 0) {
-            header = (char **)malloc(len * sizeof(char *));
+            header = (char **)m_malloc(len * sizeof(char *));
             if (header == 0) {
                 return mp_const_none;
             }
@@ -249,7 +249,7 @@ STATIC mp_obj_t wifi_https_get_sd(size_t n_args, const mp_obj_t *args) {
         header,
         1);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -279,7 +279,7 @@ STATIC mp_obj_t wifi_http_post_sd(size_t n_args, const mp_obj_t *args) {
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (char **)malloc(len * sizeof(char *));
+        header = (char **)m_malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
@@ -292,7 +292,7 @@ STATIC mp_obj_t wifi_http_post_sd(size_t n_args, const mp_obj_t *args) {
         mp_obj_str_get_str(args[3]),                    /* dst file */
         len, header, 0);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -311,7 +311,7 @@ STATIC mp_obj_t wifi_https_post_sd(size_t n_args, const mp_obj_t *args) {
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (char **)malloc(len * sizeof(char *));
+        header = (char **)m_malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
@@ -324,7 +324,7 @@ STATIC mp_obj_t wifi_https_post_sd(size_t n_args, const mp_obj_t *args) {
         mp_obj_str_get_str(args[3]),                    /* dst file */
         len, header, 1);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -344,7 +344,7 @@ STATIC mp_obj_t wifi_http_post(size_t n_args, const mp_obj_t *args) {
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (char **)malloc(len * sizeof(char *));
+        header = (char **)m_malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
@@ -357,7 +357,7 @@ STATIC mp_obj_t wifi_http_post(size_t n_args, const mp_obj_t *args) {
         mp_obj_str_get_str(args[3]),
         len, header, 0);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -376,7 +376,7 @@ STATIC mp_obj_t wifi_https_post(size_t n_args, const mp_obj_t *args) {
     int ret;
     mp_obj_get_array(args[1], (size_t *)&len, &items);
     if (len > 0) {
-        header = (char **)malloc(len * sizeof(char *));
+        header = (char **)m_malloc(len * sizeof(char *));
         if (header == 0) {
             return mp_const_none;
         }
@@ -389,7 +389,7 @@ STATIC mp_obj_t wifi_https_post(size_t n_args, const mp_obj_t *args) {
         mp_obj_str_get_str(args[3]),
         len, header, 1);
     if (header != 0) {
-        free(header);
+        m_free(header);
     }
     return mp_obj_new_int(ret);
 }
@@ -456,15 +456,15 @@ STATIC const mp_map_elem_t wifi_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_multiconnect), (mp_obj_t)&wifi_multiconnect_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_get), (mp_obj_t)&wifi_http_get_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_get), (mp_obj_t)&wifi_https_get_obj },
-#if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_get_sd), (mp_obj_t)&wifi_http_get_sd_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_get_sd), (mp_obj_t)&wifi_https_get_sd_obj },
-#endif
+    #endif
     { MP_OBJ_NEW_QSTR(MP_QSTR_udpopen), (mp_obj_t)&wifi_udpopen_obj },
-#if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_post_sd), (mp_obj_t)&wifi_http_post_sd_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_post_sd), (mp_obj_t)&wifi_https_post_sd_obj },
-#endif
+    #endif
     { MP_OBJ_NEW_QSTR(MP_QSTR_http_post), (mp_obj_t)&wifi_http_post_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_https_post), (mp_obj_t)&wifi_https_post_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_cclose), (mp_obj_t)&wifi_cclose_obj },
@@ -472,14 +472,14 @@ STATIC const mp_map_elem_t wifi_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_recv), (mp_obj_t)&wifi_recv_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_ntp), (mp_obj_t)&wifi_ntp_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_ntp_unix), (mp_obj_t)&wifi_ntp_unix_obj },
-    //{ MP_OBJ_NEW_QSTR(MP_QSTR_helloObj), (mp_obj_t)&wifi_helloObj_type },
+    // { MP_OBJ_NEW_QSTR(MP_QSTR_helloObj), (mp_obj_t)&wifi_helloObj_type },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_wifi_globals, wifi_globals_table);
 
 const mp_obj_module_t mp_module_wifi = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_wifi_globals,
+    .globals = (mp_obj_dict_t *)&mp_module_wifi_globals,
 };
 
 #endif

@@ -72,7 +72,7 @@ typedef struct {
 
 typedef union {
     lcdspi_pins_t pins;
-    pin_obj_t  *pina[6];
+    pin_obj_t *pina[6];
 } lcdspi_pins_u;
 
 /*

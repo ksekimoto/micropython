@@ -75,7 +75,7 @@ const byte *mp_decode_uint_skip(const byte *ptr) {
 #endif
 
 STATIC NORETURN void fun_pos_args_mismatch(mp_obj_fun_bc_t *f, size_t expected, size_t given) {
-    #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+    #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
     // generic message, used also for other argument issues
     (void)f;
     (void)expected;
@@ -212,7 +212,7 @@ void mp_setup_code_state(mp_code_state_t *code_state, size_t n_args, size_t n_kw
             }
             // Didn't find name match with positional args
             if ((scope_flags & MP_SCOPE_FLAG_VARKEYWORDS) == 0) {
-                #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+                #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
                 mp_raise_TypeError(MP_ERROR_TEXT("unexpected keyword argument"));
                 #else
                 mp_raise_msg_varg(&mp_type_TypeError,
@@ -304,24 +304,10 @@ void mp_setup_code_state(mp_code_state_t *code_state, size_t n_args, size_t n_kw
 
 // The following table encodes the number of bytes that a specific opcode
 // takes up.  Some opcodes have an extra byte, defined by MP_BC_MASK_EXTRA_BYTE.
-// There are 4 special opcodes that have an extra byte only when
-// MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE is enabled (and they take a qstr):
-//     MP_BC_LOAD_NAME
-//     MP_BC_LOAD_GLOBAL
-//     MP_BC_LOAD_ATTR
-//     MP_BC_STORE_ATTR
 uint mp_opcode_format(const byte *ip, size_t *opcode_size, bool count_var_uint) {
     uint f = MP_BC_FORMAT(*ip);
     const byte *ip_start = ip;
     if (f == MP_BC_FORMAT_QSTR) {
-        if (MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE_DYNAMIC) {
-            if (*ip == MP_BC_LOAD_NAME
-                || *ip == MP_BC_LOAD_GLOBAL
-                || *ip == MP_BC_LOAD_ATTR
-                || *ip == MP_BC_STORE_ATTR) {
-                ip += 1;
-            }
-        }
         ip += 3;
     } else {
         int extra_byte = (*ip & MP_BC_MASK_EXTRA_BYTE) == 0;

@@ -45,7 +45,7 @@ static float period = 3750.0f;
 static float unit_10u = 533.3f;
 
 // TPU5 TGI5B
-void  __attribute__ ((interrupt)) INT_Excep_TPU5_TGI5B(void) {
+void __attribute__ ((interrupt)) INT_Excep_TPU5_TGI5B(void) {
     if (rx_servo_cb) {
         (*rx_servo_cb)();
     }
@@ -85,7 +85,7 @@ void rx_servo_set_pulse(uint8_t pin_idx, uint32_t pulse) {
 
 void rx_servo_start(uint8_t pin_idx) {
     rx_tpu_start(pin_idx);
-    //rx_servo_enable_it();
+    // rx_servo_enable_it();
 }
 
 void rx_servo_stop(uint8_t pin_idx) {
@@ -98,7 +98,7 @@ void rx_servo_init(void) {
     rx_tpu_init();
     rx_tpu_set_default_freq(RX_SERVO_DEFAULT_FREQ);
     uint32_t clkdev = rx_tpu_get_clock_dev(RX_SERVO_CH1, RX_SERVO_DEFAULT_FREQ);
-    period = ((float)PCLK)/(RX_SERVO_DEFAULT_FREQ * ((float)clkdev));
+    period = ((float)PCLK) / (RX_SERVO_DEFAULT_FREQ * ((float)clkdev));
     unit_10u = (float)(PCLK / 100000) / (float)clkdev;
 }
 

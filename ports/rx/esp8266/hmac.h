@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 void hmac_sha1(unsigned char *key, int key_length, unsigned char *data,
-        int data_length, unsigned char *digest);
+    int data_length, unsigned char *digest);
 
 #ifdef __cplusplus
 }

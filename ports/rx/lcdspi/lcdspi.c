@@ -78,7 +78,7 @@
 #define SPI_TRANSFER        rx_spi_transfer
 #endif
 
-//#define TEST_LCDSPI
+// #define TEST_LCDSPI
 #ifdef TEST_LCDSPI
 #include "sLcdSpiTest.h"
 #endif
@@ -87,7 +87,7 @@
 #define DEBUG_LCDSPI
 #endif
 
-//#define LCDSPI_OPTIMIZE
+// #define LCDSPI_OPTIMIZE
 
 #define HIGH    1
 #define LOW     0
@@ -113,20 +113,20 @@ static volatile int g_spi_id = 0;
 
 #if defined(GRCITRUS) || defined(GRSAKURA) || defined(GRROSE)
 #define PIN_NONE    0xff
-static uint8_t _clkPin     = PIN_NONE;
-static uint8_t _doutPin    = PIN_NONE;
-static uint8_t _dinPin     = PIN_NONE;
-static uint8_t _csPin      = PIN_NONE;
-static uint8_t _resetPin   = PIN_NONE;
-static uint8_t _rsPin      = PIN_NONE;
+static uint8_t _clkPin = PIN_NONE;
+static uint8_t _doutPin = PIN_NONE;
+static uint8_t _dinPin = PIN_NONE;
+static uint8_t _csPin = PIN_NONE;
+static uint8_t _resetPin = PIN_NONE;
+static uint8_t _rsPin = PIN_NONE;
 #else
 #define PIN_NONE    0xffff
-static uint32_t _clkPin     = PIN_NONE;
-static uint32_t _doutPin    = PIN_NONE;
-static uint32_t _dinPin     = PIN_NONE;
-static uint32_t _csPin      = PIN_NONE;
-static uint32_t _resetPin   = PIN_NONE;
-static uint32_t _rsPin      = PIN_NONE;
+static uint32_t _clkPin = PIN_NONE;
+static uint32_t _doutPin = PIN_NONE;
+static uint32_t _dinPin = PIN_NONE;
+static uint32_t _csPin = PIN_NONE;
+static uint32_t _resetPin = PIN_NONE;
+static uint32_t _rsPin = PIN_NONE;
 #endif
 
 static lcdspi_pins_t lcdspi_pins_def = {
@@ -272,7 +272,7 @@ static const lcdspi_info_t *lcdspi_info_all[] = {
     &lcdspi_info_NOKIA6100_1,
     &lcdspi_info_T180,
     &lcdspi_info_M022C9340SPI,
-    $lcdspi_info_13LCDSPI,
+    $ lcdspi_info_13LCDSPI,
 };
 #endif
 
@@ -301,19 +301,19 @@ typedef struct _pyb_lcdspi_obj_t {
     mp_uint_t lcdspi_id;
     lcdspi_t *lcdspi;
     lcdspi_screen_t lcdspi_screen;
-    lcdspi_pins_t   lcdspi_pins;
+    lcdspi_pins_t lcdspi_pins;
 } pyb_lcdspi_obj_t;
 
 static void delay_ms(volatile uint32_t n) {
-#if defined(GRMANGO)
+    #if defined(GRMANGO)
     mp_hal_delay_ms(n);
-#else
+    #else
     mdelay(n);
-#endif
+    #endif
 }
 
 static void SPIHW_SetPinMode(void) {
-#if 0
+    #if 0
     MPC.PWPR.BYTE = 0x00u;
     MPC.PWPR.BYTE = 0x40u;
     MPC.PC5PFS.BIT.PSEL = 0x0d;
@@ -322,11 +322,11 @@ static void SPIHW_SetPinMode(void) {
     PORTC.PMR.BIT.B5 = 1;
     PORTC.PMR.BIT.B6 = 1;
     PORTC.PMR.BIT.B7 = 1;
-#endif
+    #endif
 }
 
 static void SPISW_SetPinMode(void) {
-#if 0
+    #if 0
     MPC.PWPR.BYTE = 0x00u;
     MPC.PWPR.BYTE = 0x40u;
     MPC.PC5PFS.BIT.PSEL = 0x00;
@@ -335,52 +335,52 @@ static void SPISW_SetPinMode(void) {
     PORTC.PMR.BIT.B5 = 0;
     PORTC.PMR.BIT.B6 = 0;
     PORTC.PMR.BIT.B7 = 0;
-#endif
+    #endif
 }
 
 void SPISW_Initialize() {
-    _clkPin     = PIN_NONE;
-    _doutPin    = PIN_NONE;
-    _dinPin     = PIN_NONE;
-    _csPin      = PIN_NONE;
-    _resetPin   = PIN_NONE;
-    _rsPin      = PIN_NONE;
-#if defined(MICROPY_HW_LCDSPI_CLK)
+    _clkPin = PIN_NONE;
+    _doutPin = PIN_NONE;
+    _dinPin = PIN_NONE;
+    _csPin = PIN_NONE;
+    _resetPin = PIN_NONE;
+    _rsPin = PIN_NONE;
+    #if defined(MICROPY_HW_LCDSPI_CLK)
     _clkPin = (MICROPY_HW_LCDSPI_CLK)->pin;
-#endif
-#if defined(MICROPY_HW_LCDSPI_MOSI)
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_MOSI)
     _doutPin = (MICROPY_HW_LCDSPI_MOSI)->pin;
-#endif
-#if defined(MICROPY_HW_LCDSPI_MISO)
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_MISO)
     _dinPin = (MICROPY_HW_LCDSPI_MISO)->pin;
-#endif
-#if defined(MICROPY_HW_LCDSPI_CS)
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_CS)
     _csPin = (MICROPY_HW_LCDSPI_CS)->pin;
-#endif
-#if defined(MICROPY_HW_LCDSPI_RESET)
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_RESET)
     _resetPin = (MICROPY_HW_LCDSPI_RESET)->pin;
-#endif
-#if defined(MICROPY_HW_LCDSPI_RS)
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_RS)
     _rsPin = (MICROPY_HW_LCDSPI_RS)->pin;
-#endif
+    #endif
     if (_csPin != PIN_NONE) {
-    GPIO_SET_OUTPUT(_csPin);
+        GPIO_SET_OUTPUT(_csPin);
         GPIO_WRITE(_csPin, LOW);
     }
     if (_resetPin != PIN_NONE) {
-    GPIO_SET_OUTPUT(_resetPin);
+        GPIO_SET_OUTPUT(_resetPin);
     }
     if (_rsPin != PIN_NONE) {
-    GPIO_SET_OUTPUT(_rsPin);
+        GPIO_SET_OUTPUT(_rsPin);
     }
     if (_clkPin != PIN_NONE) {
-    GPIO_SET_OUTPUT(_clkPin);
+        GPIO_SET_OUTPUT(_clkPin);
     }
     if (_doutPin != PIN_NONE) {
-    GPIO_SET_OUTPUT(_doutPin);
+        GPIO_SET_OUTPUT(_doutPin);
     }
     if (_dinPin != PIN_NONE) {
-    GPIO_SET_INPUT(_dinPin);
+        GPIO_SET_INPUT(_dinPin);
     }
 }
 
@@ -393,7 +393,7 @@ void SPISW_Write(uint8_t dat) {
     uint32_t bit_dout = GPIO_BIT(_doutPin);
     uint32_t irq_state = disable_irq();
     while (i-- > 0) {
-#if defined(LCDSPI_OPTIMIZE)
+        #if defined(LCDSPI_OPTIMIZE)
         if (dat & 0x80) {
             bit_set((uint8_t *)_PPODR(port_dout), bit_dout);
         } else {
@@ -402,13 +402,13 @@ void SPISW_Write(uint8_t dat) {
         bit_clr((uint8_t *)_PPODR(port_clk), bit_clk);
         bit_set((uint8_t *)_PPODR(port_clk), bit_clk);
         dat <<= 1;
-#else
+        #else
         uint8_t value = (dat & 0x80) ? 1 : 0;
         GPIO_WRITE(_doutPin, value);
         GPIO_WRITE(_clkPin, LOW);
         GPIO_WRITE(_clkPin, HIGH);
         dat <<= 1;
-#endif
+        #endif
     }
     enable_irq(irq_state);
 }
@@ -430,14 +430,14 @@ void SPISW_Write(uint8_t dat) {
 
 void SPI_Write(uint8_t dat) {
     if (g_spi_id >= 0) {
-#if 0
+        #if 0
         SPIHW_SetPinMode(void)
-#endif
+        #endif
         // ToDo
         SPI_WRITE_BYTE((uint32_t)g_spi_id, dat);
-#if 0
+        #if 0
         SPISW_SetPinMode(void)
-#endif
+        #endif
     } else {
         SPISW_Write(dat);
     }
@@ -542,7 +542,7 @@ static void PCF8833_Reset() {
 }
 
 static void PCF8833_Initialize() {
-    //SPI_Initialize();
+    // SPI_Initialize();
     PCF8833_Reset();
     GPIO_WRITE(_csPin, LOW);
     GPIO_WRITE(_doutPin, LOW);
@@ -575,38 +575,38 @@ static void S1D15G10_Reset() {
 }
 
 static void S1D15G10_Initialize() {
-    //SPI_Initialize();
+    // SPI_Initialize();
     S1D15G10_Reset();
     GPIO_WRITE(_csPin, LOW);
     GPIO_WRITE(_doutPin, LOW);
     GPIO_WRITE(_clkPin, HIGH);
 
     delay_ms(200);
-    SPISW_LCD_cmd8_0(S1D15G10_DISCTL);	// Display Control
-    SPISW_LCD_dat8_0(0x0d);	// 0x00 = 2 divisions, switching period=8 (default)
-    SPISW_LCD_dat8_0(0x20);				// 0x20 = nlines/4 - 1 = 132/4 - 1 = 32)
-    SPISW_LCD_dat8_0(0x00);				// 0x00 = no inversely highlighted lines
-    SPISW_LCD_cmd8_0(S1D15G10_COMSCN);	// common output scan direction
-    SPISW_LCD_dat8_0(0x01);				// 0x01 = Scan 1->80, 160<-81
+    SPISW_LCD_cmd8_0(S1D15G10_DISCTL);  // Display Control
+    SPISW_LCD_dat8_0(0x0d);     // 0x00 = 2 divisions, switching period=8 (default)
+    SPISW_LCD_dat8_0(0x20);                             // 0x20 = nlines/4 - 1 = 132/4 - 1 = 32)
+    SPISW_LCD_dat8_0(0x00);                             // 0x00 = no inversely highlighted lines
+    SPISW_LCD_cmd8_0(S1D15G10_COMSCN);  // common output scan direction
+    SPISW_LCD_dat8_0(0x01);                             // 0x01 = Scan 1->80, 160<-81
     SPISW_LCD_cmd8_0(S1D15G10_OSCON);// oscillators on and get out of sleep mode.
-    SPISW_LCD_cmd8_0(S1D15G10_SLPOUT);	// sleep out
+    SPISW_LCD_cmd8_0(S1D15G10_SLPOUT);  // sleep out
     SPISW_LCD_cmd8_0(S1D15G10_PWRCTR);// reference voltage regulator on, circuit voltage follower on, BOOST ON
-    SPISW_LCD_dat8_0(0xf);	// everything on, no external reference resistors
-    SPISW_LCD_cmd8_0(S1D15G10_DISNOR);	// display mode
-    SPISW_LCD_cmd8_0(S1D15G10_DISINV);	// display mode
-    SPISW_LCD_cmd8_0(S1D15G10_PTLOUT);	// Partial area off
+    SPISW_LCD_dat8_0(0xf);      // everything on, no external reference resistors
+    SPISW_LCD_cmd8_0(S1D15G10_DISNOR);  // display mode
+    SPISW_LCD_cmd8_0(S1D15G10_DISINV);  // display mode
+    SPISW_LCD_cmd8_0(S1D15G10_PTLOUT);  // Partial area off
     SPISW_LCD_cmd8_0(S1D15G10_DATCTL);// The DATCTL command selects the display mode (8-bit or 12-bit).
-    SPISW_LCD_dat8_0(0x00);	// 0x01 = page address inverted, col address normal, address scan in col direction
-    SPISW_LCD_dat8_0(0x00);				// 0x00 = RGB sequence (default value)
-    SPISW_LCD_dat8_0(0x02);	// 0x02 = Grayscale -> 16 (selects 12-bit color, type A)
+    SPISW_LCD_dat8_0(0x00);     // 0x01 = page address inverted, col address normal, address scan in col direction
+    SPISW_LCD_dat8_0(0x00);                             // 0x00 = RGB sequence (default value)
+    SPISW_LCD_dat8_0(0x02);     // 0x02 = Grayscale -> 16 (selects 12-bit color, type A)
     SPISW_LCD_cmd8_0(S1D15G10_VOLCTR);// The contrast is set by the Electronic Volume Command (VOLCTR).
     SPISW_LCD_dat8_0(28);// 32 volume value (adjust this setting for your display 0 .. 63)
-    SPISW_LCD_dat8_0(0);		// 3 resistance ratio (determined by experiment)
-    SPISW_LCD_cmd8_0(S1D15G10_TMPGRD);	// Temprature gradient
-    SPISW_LCD_dat8_0(0);				// default value
+    SPISW_LCD_dat8_0(0);                // 3 resistance ratio (determined by experiment)
+    SPISW_LCD_cmd8_0(S1D15G10_TMPGRD);  // Temprature gradient
+    SPISW_LCD_dat8_0(0);                                // default value
     delay_ms(100);
     SPISW_LCD_dat8_0(0);
-    SPISW_LCD_cmd8_0(S1D15G10_DISON);	// display on
+    SPISW_LCD_cmd8_0(S1D15G10_DISON);   // display on
 }
 
 /* ********************************************************************* */
@@ -623,7 +623,7 @@ static void ST7735_Reset() {
 }
 
 static void ST7735_Initialize() {
-    //SPI_Initialize();
+    // SPI_Initialize();
     ST7735_Reset();
     GPIO_WRITE(_doutPin, LOW);
     GPIO_WRITE(_csPin, HIGH);
@@ -646,7 +646,7 @@ static void ST7735_Initialize() {
     SPISW_LCD_dat8_1(0x01);
     SPISW_LCD_dat8_1(0x2C);
     SPISW_LCD_dat8_1(0x2D);
-    SPISW_LCD_cmd8_1(0xB4);//Column inversion
+    SPISW_LCD_cmd8_1(0xB4);// Column inversion
     SPISW_LCD_dat8_1(0x07);
     SPISW_LCD_cmd8_1(0xC0);
     SPISW_LCD_dat8_1(0xA2);
@@ -664,9 +664,9 @@ static void ST7735_Initialize() {
     SPISW_LCD_dat8_1(0x8A);
     SPISW_LCD_dat8_1(0xEE);
 
-    SPISW_LCD_cmd8_1(0xC5);//VCOM
+    SPISW_LCD_cmd8_1(0xC5);// VCOM
     SPISW_LCD_dat8_1(0x0E);
-    SPISW_LCD_cmd8_1(0x36);//MX, MY, RGB mode
+    SPISW_LCD_cmd8_1(0x36);// MX, MY, RGB mode
     SPISW_LCD_dat8_1(0xC8);
     SPISW_LCD_cmd8_1(0xe0);
     SPISW_LCD_dat8_1(0x02);
@@ -714,9 +714,9 @@ static void ST7735_Initialize() {
     SPISW_LCD_dat8_1(0xA0);
     SPISW_LCD_cmd8_1(0x3A);   // 4k mode
     SPISW_LCD_dat8_1(0x05);
-    //SPISW_LCD_cmd(0x3A); // 65k mode
-    //SPISW_LCD_dat(0x05);
-    SPISW_LCD_cmd8_1(0x29);   //Display on
+    // SPISW_LCD_cmd(0x3A); // 65k mode
+    // SPISW_LCD_dat(0x05);
+    SPISW_LCD_cmd8_1(0x29);   // Display on
 }
 
 /* ********************************************************************* */
@@ -733,7 +733,7 @@ static void ILI9341_Reset() {
 }
 
 static void ILI9341_Initialize() {
-    //SPI_Initialize();
+    // SPI_Initialize();
     ILI9341_Reset();
 
     SPISW_LCD_cmd8_1(0x01); /* software reset */
@@ -858,7 +858,7 @@ static void ILI9340_Reset() {
 }
 
 static void ILI9340_Initialize() {
-    //SPI_Initialize();
+    // SPI_Initialize();
     ILI9340_Reset();
 
     SPISW_LCD_cmd8_1(0xcb); /* power control a */
@@ -962,7 +962,7 @@ static void ILI9340_Initialize() {
     SPISW_LCD_cmd8_1(0x11); /* sleep out */
     delay_ms(120);
 
-    //SPISW_LCD_cmd8_1(0x29);
+    // SPISW_LCD_cmd8_1(0x29);
     SPISW_LCD_cmd8_1(0x2c); /* display on? */
 }
 
@@ -984,7 +984,7 @@ static void ST7789_Reset() {
 static void ST7789_Initialize() {
     ST7789_Reset();
 
-#if 1
+    #if 1
     /* soft reset */
     SPISW_LCD_cmd8_1(0x01);
     delay_ms(50);
@@ -1006,7 +1006,7 @@ static void ST7789_Initialize() {
     /* disp on */
     SPISW_LCD_cmd8_1(0x29);
     delay_ms(500);
-#else
+    #else
     /* soft reset */
     SPI_cmd_data_1(0x01, &data, 0);
     delay_ms(150);
@@ -1028,7 +1028,7 @@ static void ST7789_Initialize() {
     /* disp on */
     SPISW_LCD_cmd8_1(0x29);
     delay_ms(1000);
-#endif
+    #endif
 }
 
 /*
@@ -1036,7 +1036,7 @@ static void ST7789_Initialize() {
  */
 
 static void ILI9340_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
-#if 0
+    #if 0
     uint8_t data[4];
     data[0] = (uint8_t)(x1 >> 8);
     data[1] = (uint8_t)(x1 & 0xff);
@@ -1049,7 +1049,7 @@ static void ILI9340_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) 
     data[3] = (uint8_t)(y2 & 0xff);
     SPI_cmd_data_1(ILI9340_PASET, &data[0], 4);
     SPI_cmd_data_1(ILI9340_RAMWR, &data[0], 0);
-#else
+    #else
     SPISW_LCD_cmd8_1(ILI9340_CASET);
     SPISW_LCD_dat8_1((uint8_t)(x1 >> 8));
     SPISW_LCD_dat8_1((uint8_t)(x1 & 0xff));
@@ -1061,7 +1061,7 @@ static void ILI9340_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) 
     SPISW_LCD_dat8_1((uint8_t)(y2 >> 8));
     SPISW_LCD_dat8_1((uint8_t)(y2 & 0xff));
     SPISW_LCD_cmd8_1(ILI9340_RAMWR);
-#endif
+    #endif
 }
 
 void lcdspi_clear(lcdspi_t *lcdspi) {
@@ -1088,7 +1088,7 @@ void lcdspi_clear(lcdspi_t *lcdspi) {
             SPISW_LCD_dat8_0(0);
         }
     } else {
-    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
+        // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         ILI9340_addrset((uint16_t)0, (uint16_t)0, (uint16_t)(PWX - 1), (uint16_t)(PWY - 1));
         for (y = 0; y < PWY; y++) {
             for (x = 0; x < PWX; x++) {
@@ -1126,7 +1126,7 @@ static void lcdspi_init(lcdspi_t *lcdspi) {
 void lcdspi_deinit(lcdspi_t *lcdspi) {
     if (lcdspi->spi_id >= 0) {
         // ToDo
-        //delete pspi;
+        // delete pspi;
     }
 }
 
@@ -1139,7 +1139,7 @@ void lcdspi_bitbltex565(lcdspi_t *lcdspi, int x, int y, int width, int height, u
     int i, j;
     uint16_t v1, v2;
     uint16_t *pdata = (uint16_t *)data;
-    //SPISW_LCD_cmd(DATCTL);  // The DATCTL command selects the display mode (8-bit or 12-bit).
+    // SPISW_LCD_cmd(DATCTL);  // The DATCTL command selects the display mode (8-bit or 12-bit).
     lcdspi_spi_start_xfer(spi_id, lcdspi);
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         for (j = 0; j < height; j++) {
@@ -1159,7 +1159,7 @@ void lcdspi_bitbltex565(lcdspi_t *lcdspi, int x, int y, int width, int height, u
             }
         }
     } else {
-    // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
+        // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         for (j = 0; j < height; j++) {
             ILI9340_addrset((uint16_t)x, (uint16_t)(y + j), (uint16_t)(x + width), (uint16_t)(y + j + 1));
             for (i = 0; i < width; i += 1) {
@@ -1200,8 +1200,9 @@ void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, int cx, int cy, 
     if (font == (font_t *)NULL) {
         return;
     }
-    if (c >= 0x80)
+    if (c >= 0x80) {
         c = 0;
+    }
     data = (unsigned char *)font_fontData(font, (int)(c & 0x00ff));
     ux = font_fontUnitX(font);
     uy = font_fontUnitY(font);
@@ -1213,7 +1214,7 @@ void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, int cx, int cy, 
             SPISW_LCD_cmd8_0(CASET);
             SPISW_LCD_dat8_0((uint8_t)(cx * ux + text_sx));
             SPISW_LCD_dat8_0((uint8_t)(disp_wx - 1));
-            SPISW_LCD_cmd8_0(PASET);		//y set
+            SPISW_LCD_cmd8_0(PASET);            // y set
             SPISW_LCD_dat8_0((uint8_t)(cy * uy + y + text_sy));
             SPISW_LCD_dat8_0((uint8_t)(disp_wy - 1));
             SPISW_LCD_cmd8_0(RAMWR);
@@ -1234,7 +1235,7 @@ void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, int cx, int cy, 
             }
         }
     } else {
-    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
+        // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         for (y = 0; y < wy; y++) {
             ILI9340_addrset((uint16_t)(cx * ux + text_sx),
                 (uint16_t)(cy * uy + y + text_sy),
@@ -1287,7 +1288,7 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, int cx, int 
             SPISW_LCD_cmd8_0(CASET);
             SPISW_LCD_dat8_0(cx * ux + text_sx);
             SPISW_LCD_dat8_0(disp_wx - 1);
-            SPISW_LCD_cmd8_0(PASET);		//y set
+            SPISW_LCD_cmd8_0(PASET);            // y set
             SPISW_LCD_dat8_0(cy * uy + y + text_sy);
             SPISW_LCD_dat8_0(disp_wy - 1);
             SPISW_LCD_cmd8_0(RAMWR);
@@ -1312,7 +1313,7 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, int cx, int 
             off++;
         }
     } else {
-    //if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7735) {
+        // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7735) {
         for (y = 0; y < wy; y++) {
             ILI9340_addrset((uint16_t)(cx * ux + text_sx),
                 (uint16_t)(cy * uy + y + text_sy),
@@ -1386,7 +1387,7 @@ void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
     int unit_y = font_fontUnitY(screen->font);
     int disp_wx = lcdspi->lcdspi_info->disp_wx;
     int disp_wy = lcdspi->lcdspi_info->disp_wy;
-      if ((char)u == 0xc) {
+    if ((char)u == 0xc) {
         lcdspi_clear(lcdspi);
         cx = 0;
         cy = 0;
@@ -1417,7 +1418,7 @@ void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
 }
 
 void lcdspi_set_font(lcdspi_t *lcdspi, font_t *font) {
-   lcdspi->lcdspi_screen->font = font;
+    lcdspi->lcdspi_screen->font = font;
 }
 
 font_t *lcdspi_get_font(lcdspi_t *lcdspi) {
@@ -1436,8 +1437,7 @@ void lcdspi_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
         self->lcdspi_screen.font->fontName);
 }
 
-unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size)
-{
+unsigned short cnvUtf8ToUnicode(unsigned char *str, int *size) {
     unsigned int u = 0;
     unsigned char c = *str++;
     int len = 0;
@@ -1490,16 +1490,16 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
         vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
     } else {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("Cannot find user mount for %s\n", filename);
-#endif
+        #endif
         return -1;
     }
     res = f_open(&vfs_fat->fatfs, &fp, filename, FA_READ);
     if (res != FR_OK) {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("File can't be opened", filename);
-#endif
+        #endif
         return -1;
     }
     uint32_t readed;
@@ -1510,18 +1510,21 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     depth = BYTEARRAY2_TO_INT((char *)&BmpHeader[0x1c]);
     lineBytes = wx * depth / 8;
     bufSize = lineBytes * bitmapDy;
-#if defined(DEBUG_LCDSPI)
-    debug_printf("wx=", wx); debug_printf("wy=", wy); debug_printf("depth=", depth); debug_printf("bufSize=", bufSize);
-#endif
-    unsigned char *bitmapOneLine = (unsigned char *)malloc(bufSize);
+    #if defined(DEBUG_LCDSPI)
+    debug_printf("wx=", wx);
+    debug_printf("wy=", wy);
+    debug_printf("depth=", depth);
+    debug_printf("bufSize=", bufSize);
+    #endif
+    unsigned char *bitmapOneLine = (unsigned char *)m_malloc(bufSize);
     if (!bitmapOneLine) {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("Memory allocation failed.");
-#endif
+        #endif
         f_close(&fp);
         return -1;
     }
-    f_lseek (&fp, (FSIZE_t)ofs);
+    f_lseek(&fp, (FSIZE_t)ofs);
     if (depth == 16) {
         for (int ty = wy - 1 - bitmapDy; ty >= 0; ty -= bitmapDy) {
             f_read(&fp, (void *)bitmapOneLine, (UINT)bufSize, (UINT *)&readed);
@@ -1542,7 +1545,7 @@ int lcdspi_disp_bmp_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
         }
     }
     if (bitmapOneLine) {
-        free(bitmapOneLine);
+        m_free(bitmapOneLine);
     }
     return 1;
 }
@@ -1553,7 +1556,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     int cx, cy;
     int sx, sy;
     int decoded_width;
-    //int decoded_height;
+    // int decoded_height;
     int dDiv = 2;
     int split_disp = 1;
     int split = 0;
@@ -1570,13 +1573,13 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     jpeg_init(&jpeg);
     jpeg_decode(&jpeg, (char *)filename, split);
     if (jpeg.err != 0) {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("jpeg decode error");
-#endif
+        #endif
         return -1;
     }
     decoded_width = jpeg.decoded_width;
-    //decoded_height = jpeg.decoded_height;
+    // decoded_height = jpeg.decoded_height;
     MCUWidth = jpeg.image_info.m_MCUWidth;
     MCUHeight = jpeg.image_info.m_MCUHeight;
     width = jpeg.image_info.m_width;
@@ -1587,16 +1590,16 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
         // alloc buf for jpeg size
         alloc_size = width * height * sizeof(unsigned short);
     }
-    dispBuf = (unsigned short *)malloc(alloc_size);
+    dispBuf = (unsigned short *)m_malloc(alloc_size);
     if (!dispBuf) {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("dispBuf allocation failed.");
-#endif
+        #endif
         return -1;
     } else {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("dispBuf allocated", alloc_size);
-#endif
+        #endif
     }
     while (jpeg_read(&jpeg)) {
         img = jpeg.pImage;
@@ -1604,7 +1607,7 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
             break;
         }
         sx = jpeg.MCUx * MCUWidth;
-        //sy = jpeg.MCUy * jpeg.MCUHeight() % (_disp_wx / dDiv);
+        // sy = jpeg.MCUy * jpeg.MCUHeight() % (_disp_wx / dDiv);
         sy = jpeg.MCUy * MCUHeight;
         memset(dispBuf, 0, alloc_size);
         for (ty = 0; ty < MCUHeight; ty++) {
@@ -1615,31 +1618,31 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
                     if (jpeg.comps == 1) {
                         if ((cx < _disp_wx) && (cy < _disp_wy / dDiv)) {
                             if (split_disp) {
-#if defined(DEBUG_LCDSPI)
+                                #if defined(DEBUG_LCDSPI)
                                 debug_printf("ofs: %d\r\n", ty * MCUWidth + tx);
-#endif
+                                #endif
                                 dispBuf[ty * MCUWidth + tx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
                             } else {
                                 dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[0] >> 2) << 5)) | ((img[0] >> 3));
                             }
                         }
                     } else {
-                        //if ((cx < _disp_wx) && (cy < _disp_wy/dDiv)) {
+                        // if ((cx < _disp_wx) && (cy < _disp_wy/dDiv)) {
                         if (split_disp) {
-                            //debug_printf("ofs", ty * MCUWidth  + tx);
+                            // debug_printf("ofs", ty * MCUWidth  + tx);
                             dispBuf[ty * MCUWidth + tx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
                         } else {
                             dispBuf[cy * decoded_width + cx] = (((img[0] >> 3) << 11)) | (((img[1] >> 2) << 5)) | ((img[2] >> 3));
                         }
-                        //}
+                        // }
                     }
                 }
                 img += jpeg.comps;
             }
         }
         if (split_disp) {
-            //debug_printf("sx", sx);
-            //debug_printf("sy", sy);
+            // debug_printf("sx", sx);
+            // debug_printf("sy", sy);
             int disp_height;
             if ((jpeg.MCUy + 1) * MCUHeight > height) {
                 disp_height = height - sy;
@@ -1649,19 +1652,19 @@ int lcdspi_disp_jpeg_sd(lcdspi_t *lcdspi, int x, int y, const char *filename) {
             lcdspi_bitbltex565(lcdspi, x + sx, y + sy, MCUWidth, disp_height, (uint16_t *)dispBuf);
         }
     }
-#if defined(DEBUG_LCDSPI)
+    #if defined(DEBUG_LCDSPI)
     debug_printf("err=", jpeg.err);
-#endif
+    #endif
     if (jpeg.err == 0 || jpeg.err == PJPG_NO_MORE_BLOCKS) {
         if (!split_disp) {
             lcdspi_bitbltex565(lcdspi, x, y, width, height, (uint16_t *)dispBuf);
         }
     }
     if (dispBuf) {
-#if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_LCDSPI)
         debug_printf("dispBuf deallocated");
-#endif
-        free(dispBuf);
+        #endif
+        m_free(dispBuf);
     }
     return 1;
 }
@@ -1673,17 +1676,17 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din, ARG_polarity, ARG_phase };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_lcd_id,   MP_ARG_REQUIRED | MP_ARG_INT,   {.u_int = 0} },
-        { MP_QSTR_font_id,  MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 0} },
-        { MP_QSTR_spi_id,   MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = -1} },
-        { MP_QSTR_baud,     MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 4000000} },
-        { MP_QSTR_cs,       MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_clk,      MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_dout,     MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_reset,    MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_rs,       MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_din,      MP_ARG_KW_ONLY  | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
-        { MP_QSTR_polarity, MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 1} },
-        { MP_QSTR_phase,    MP_ARG_KW_ONLY  | MP_ARG_INT,   {.u_int = 0} }
+        { MP_QSTR_font_id,  MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} },
+        { MP_QSTR_spi_id,   MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = -1} },
+        { MP_QSTR_baud,     MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 4000000} },
+        { MP_QSTR_cs,       MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_clk,      MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_dout,     MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_rs,       MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_din,      MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_polarity, MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 1} },
+        { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} }
     };
     // parse args
     mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
@@ -1772,7 +1775,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pyb_lcdspi_clear(mp_obj_t self_in)  {
+STATIC mp_obj_t pyb_lcdspi_clear(mp_obj_t self_in) {
     pyb_lcdspi_obj_t *self = MP_OBJ_TO_PTR(self_in);
     lcdspi_clear(self->lcdspi);
     return mp_const_none;
@@ -1900,7 +1903,7 @@ const mp_obj_type_t pyb_lcdspi_type = {
     .name = MP_QSTR_LCDSPI,
     .print = lcdspi_obj_print,
     .make_new = lcdspi_obj_make_new,
-    .locals_dict = (mp_obj_dict_t*)&lcdspi_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&lcdspi_locals_dict,
 };
 
 #endif

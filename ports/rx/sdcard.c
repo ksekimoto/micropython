@@ -54,34 +54,38 @@
 
 #if MICROPY_HW_ENABLE_SDCARD
 
-/* MMC card type flags (MMC_GET_TYPE) */
-#define CT_MMC      0x01        /* MMC ver 3 */
-#define CT_SD1      0x02        /* SD ver 1 */
-#define CT_SD2      0x04        /* SD ver 2 */
-#define CT_SDC      (CT_SD1|CT_SD2) /* SD */
-#define CT_BLOCK    0x08        /* Block addressing */
+#define SD_SPI_CLOCK_LOW  100000
+#define SD_SPI_CLOCK_HIGH 2000000
 
-/* MMC/SD command */
-#define CMD0    (0)         /* GO_IDLE_STATE */
-#define CMD1    (1)         /* SEND_OP_COND (MMC) */
-#define	ACMD41  (0x80+41)   /* SEND_OP_COND (SDC) */
-#define CMD8    (8)         /* SEND_IF_COND */
-#define CMD9    (9)         /* SEND_CSD */
-#define CMD10   (10)        /* SEND_CID */
-#define CMD12   (12)        /* STOP_TRANSMISSION */
-#define ACMD13  (0x80+13)   /* SD_STATUS (SDC) */
-#define CMD16   (16)        /* SET_BLOCKLEN */
-#define CMD17   (17)        /* READ_SINGLE_BLOCK */
-#define CMD18   (18)        /* READ_MULTIPLE_BLOCK */
-#define CMD23   (23)        /* SET_BLOCK_COUNT (MMC) */
-#define	ACMD23  (0x80+23)   /* SET_WR_BLK_ERASE_COUNT (SDC) */
-#define CMD24   (24)        /* WRITE_BLOCK */
-#define CMD25   (25)        /* WRITE_MULTIPLE_BLOCK */
-#define CMD32   (32)        /* ERASE_ER_BLK_START */
-#define CMD33   (33)        /* ERASE_ER_BLK_END */
-#define CMD38   (38)        /* ERASE */
-#define CMD55   (55)        /* APP_CMD */
-#define CMD58   (58)        /* READ_OCR */
+// MMC card type flags (MMC_GET_TYPE)
+#define CT_MMC   0x01              // MMC ver 3
+#define CT_SD1   0x02              // SD ver 1
+#define CT_SD2   0x04              // SD ver 2
+#define CT_SDC   (CT_SD1 | CT_SD2) // SD
+#define CT_BLOCK 0x08              // Block addressing
+
+// MMC/SD command
+#define CMD0   (0)         // GO_IDLE_STATE
+#define CMD1   (1)         // SEND_OP_COND (MMC)
+#define ACMD41 (0x80 + 41) // SEND_OP_COND (SDC)
+#define CMD8   (8)         // SEND_IF_COND
+#define CMD9   (9)         // SEND_CSD
+#define CMD10  (10)        // SEND_CID
+#define CMD12  (12)        // STOP_TRANSMISSION
+#define ACMD13 (0x80 + 13) // SD_STATUS (SDC)
+#define CMD16  (16)        // SET_BLOCKLEN
+#define CMD17  (17)        // READ_SINGLE_BLOCK
+#define CMD18  (18)        // READ_MULTIPLE_BLOCK
+#define CMD23  (23)        // SET_BLOCK_COUNT (MMC)
+#define ACMD23 (0x80 + 23) // SET_WR_BLK_ERASE_COUNT (SDC)
+#define CMD24  (24)        // WRITE_BLOCK
+#define CMD25  (25)        // WRITE_MULTIPLE_BLOCK
+#define CMD32  (32)        // ERASE_ER_BLK_START
+#define CMD33  (33)        // ERASE_ER_BLK_END
+#define CMD38  (38)        // ERASE
+#define CMD55  (55)        // APP_CMD
+#define CMD58  (58)        // READ_OCR
+
 
 #ifndef MICROPY_HW_SDCARD_SPI_CH
 #define MICROPY_HW_SDCARD_SPI_CH    0           /* channel 0 */
@@ -117,15 +121,15 @@ static uint32_t sd_blocksize = 512;
 static uint8_t sd_card_type;
 
 #define SD_TIMEOUT  1000000
-#define CS_HIGH()	gpio_write(sd_cs, 1)
-#define CS_LOW()	gpio_write(sd_cs, 0)
+#define CS_HIGH()       gpio_write(sd_cs, 1)
+#define CS_LOW()        gpio_write(sd_cs, 0)
 
 inline static uint8_t xchg_spi(uint8_t dat) {
     return rx_spi_write_byte(sd_ch, dat);
 }
 
-/* 1:Ready, 0:Timeout */
-/* Timeout [ms] */
+// 1:Ready, 0:Timeout
+// Timeout [ms]
 static int wait_ready(UINT wt) {
     uint8_t d;
     uint32_t timeout = wt * 1000;
@@ -135,150 +139,122 @@ static int wait_ready(UINT wt) {
     return (d == 0xFF) ? 1 : 0;
 }
 
-/*-----------------------------------------------------------------------*/
-/* Deselect card and release SPI                                         */
-/*-----------------------------------------------------------------------*/
+// -----------------------------------------------------------------------
+// sd_deselect card and release SPI
+// -----------------------------------------------------------------------
 
 static void deselect(void) {
     CS_HIGH();      /* Set CS# high */
     xchg_spi(0xFF); /* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
-/*-----------------------------------------------------------------------*/
-/* Select card and wait for ready                                        */
-/*-----------------------------------------------------------------------*/
+// -----------------------------------------------------------------------
+// sd_select card and wait for ready
+// -----------------------------------------------------------------------
 
-/* 1:OK, 0:Timeout */
+// 1:OK, 0:Timeout
 static int select(void) {
-    CS_LOW();       /* Set CS# low */
-    xchg_spi(0xFF); /* Dummy clock (force DO enabled) */
+    CS_LOW();       // Set CS# low
+    xchg_spi(0xFF); // Dummy clock (force DO enabled)
     if (wait_ready(500)) {
-        return 1;   /* Wait for card ready */
+        return 1; // Wait for card ready
     }
     deselect();
-    return 0;       /* Timeout */
+    return 0; // Timeout
 }
 
-/*-----------------------------------------------------------------------*/
-/* Send a command packet to the MMC                                      */
-/*-----------------------------------------------------------------------*/
-/* Return value: R1 resp (bit7==1:Failed to send) */
-/* Command index */
-/* Argument */
+// -----------------------------------------------------------------------
+// Send a command packet to the MMC
+// -----------------------------------------------------------------------
+// Return value: R1 resp (bit7==1:Failed to send)
+// Command index
+// Argument
 static BYTE sd_cmd(uint8_t cmd, uint32_t arg) {
     uint8_t n, res;
 
-    if (cmd & 0x80) {   /* Send a CMD55 prior to ACMD<n> */
+    if (cmd & 0x80) { // Send a CMD55 prior to ACMD<n>
         cmd &= 0x7F;
         res = sd_cmd(CMD55, 0);
         if (res > 1) {
             return res;
         }
     }
-    /* Select the card and wait for ready except to stop multiple block read */
+    // sd_select the card and wait for ready except to stop multiple block read
     if (cmd != CMD12) {
         deselect();
         if (!select()) {
             return 0xFF;
         }
     }
-    /* Send command packet */
-    xchg_spi(0x40 | cmd);               /* Start + command index */
-    xchg_spi((BYTE)(arg >> 24));        /* Argument[31..24] */
-    xchg_spi((BYTE)(arg >> 16));        /* Argument[23..16] */
-    xchg_spi((BYTE)(arg >> 8));         /* Argument[15..8] */
-    xchg_spi((BYTE)arg);                /* Argument[7..0] */
-    n = 0x01;                           /* Dummy CRC + Stop */
-    if (cmd == CMD0) n = 0x95;          /* Valid CRC for CMD0(0) */
-    if (cmd == CMD8) n = 0x87;          /* Valid CRC for CMD8(0x1AA) */
+    // Send command packet
+    xchg_spi(0x40 | cmd);        // Start + command index
+    xchg_spi((BYTE)(arg >> 24)); // Argument[31..24]
+    xchg_spi((BYTE)(arg >> 16)); // Argument[23..16]
+    xchg_spi((BYTE)(arg >> 8));  // Argument[15..8]
+    xchg_spi((BYTE)arg);         // Argument[7..0]
+    n = 0x01;                    // Dummy CRC + Stop
+    if (cmd == CMD0) {
+        n = 0x95; // Valid CRC for CMD0(0)
+    }
+    if (cmd == CMD8) {
+        n = 0x87; // Valid CRC for CMD8(0x1AA)
+    }
     xchg_spi(n);
-    /* Receive command resp */
-    /* Discard following one byte when CMD12 */
+    // Receive command resp
+    // Discard following one byte when CMD12
     if (cmd == CMD12) {
         xchg_spi(0xFF);
     }
     n = 10;
-    /* Wait for response (10 bytes max) */
+    // Wait for response (10 bytes max)
     do {
         res = xchg_spi(0xFF);
     } while ((res & 0x80) && --n);
-    return res;                         /* Return received response */
+    return res; // Return received response
 }
 
 static void sd_readinto(uint8_t *buf, uint32_t len) {
-    gpio_write(sd_cs ,0);
+    gpio_write(sd_cs,0);
     while (true) {
-        if (rx_spi_write_byte(sd_ch, 0xff) == _TOKEN_DATA)
+        if (rx_spi_write_byte(sd_ch, 0xff) == _TOKEN_DATA) {
             break;
+        }
     }
     rx_spi_transfer8(sd_ch, buf, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);   /* read checksum */
     rx_spi_write_byte(sd_ch, 0xff);   /* read checksum */
-    gpio_write(sd_cs ,1);
+    gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
 
 static void sd_write_buf(uint8_t token, uint8_t *buf, uint32_t len) {
-    gpio_write(sd_cs ,0);
+    gpio_write(sd_cs,0);
     rx_spi_write_byte(sd_ch, token);
     rx_spi_write_bytes8(sd_ch, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);
     rx_spi_write_byte(sd_ch, 0xff);
     if ((rx_spi_write_byte(sd_ch, 0xff) & 0x1f) != 0x05) {
-        gpio_write(sd_cs ,1);
+        gpio_write(sd_cs,1);
         rx_spi_write_byte(sd_ch, 0xff);
         return;
     }
     while (rx_spi_write_byte(sd_ch, 0xff) == 0) {
         ;
     }
-    gpio_write(sd_cs ,1);
+    gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
 
 static void sd_write_token(uint8_t token) {
-    gpio_write(sd_cs ,0);
+    gpio_write(sd_cs,0);
     rx_spi_write_byte(sd_ch, token);
     rx_spi_write_byte(sd_ch, 0xff);
     while (rx_spi_write_byte(sd_ch, 0xff) == 0) {
         ;
     }
-    gpio_write(sd_cs ,1);
+    gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
-
-#if 0
-static void sd_init_card_v1(void) {
-    int count = _CMD_TIMEOUT;
-    while (count != 0) {
-        sd_cmd(CMD55, 0);
-        if (sd_cmd(ACMD41, 0) == 0) {
-            sd_cdv = 512;
-            /* "[SDCard] v1 card" */
-            return;
-        }
-        count--;
-    }
-    return; /* raise OSError("timeout waiting for v1 card") */
-}
-
-static void sd_init_card_v2(void) {
-    int count = _CMD_TIMEOUT;
-    while (count != 0) {
-        udelay(50000);
-        sd_cmd(CMD58, 0);
-        sd_cmd(CMD55, 0);
-        if (sd_cmd(ACMD41, 0x40000000) == 0) {
-            sd_cmd(CMD58, 0);
-            sd_cdv = 1;
-            /* "[SDCard] v2 card" */
-            return;
-        }
-        count--;
-    }
-    return; /* raise OSError("timeout waiting for v2 card") */
-}
-#endif
 
 static void sd_get_sector_count(void) {
     uint32_t csize = 0;
@@ -287,11 +263,11 @@ static void sd_get_sector_count(void) {
     if (sd_cmd(CMD9, 0) == 0) {
         sd_readinto(sd_csd, sizeof sd_csd);
         if ((sd_csd[0] >> 6) == 1) {
-            /* SDC ver 2.00 */
+            // SDC ver 2.00
             csize = sd_csd[9] + ((uint32_t)sd_csd[8] << 8) + ((uint32_t)(sd_csd[7] & 63) << 16) + 1;
             csize = (csize << 10);
         } else {
-            /* SDC ver 1.XX or MMC ver 3 */
+            // SDC ver 1.XX or MMC ver 3
             n = (sd_csd[5] & 15) + ((sd_csd[10] & 128) >> 7) + ((sd_csd[9] & 3) << 1) + 2;
             csize = (sd_csd[8] >> 6) + ((uint32_t)sd_csd[7] << 2) + ((uint32_t)(sd_csd[6] & 3) << 10) + 1;
             csize = (csize << (n - 9));
@@ -303,23 +279,24 @@ static void sd_get_sector_count(void) {
 static void sd_get_sector_block_size(void) {
     uint32_t n;
     if (sd_card_type & CT_SD2) {
-        /* SDC ver 2.00 */
-        if (sd_cmd(ACMD13, 0) == 0) { /* Read SD status */
+        // SDC ver 2.00
+        if (sd_cmd(ACMD13, 0) == 0) {   // Read SD status
             xchg_spi(0xFF);
-            sd_readinto(sd_csd, sizeof sd_csd); /* Read partial block */
+            sd_readinto(sd_csd, sizeof sd_csd); // Read partial block
             for (n = 64 - 16; n; n--) {
-                xchg_spi(0xFF);   /* Purge trailing data */
+                xchg_spi(0xFF); // Purge trailing data
             }
             sd_blocksize = 16UL << (sd_csd[10] >> 4);
         }
     } else {
-        /* SDC ver 1.XX or MMC */
-        if (sd_cmd(CMD9, 0) == 0) {  /* Read CSD */
+        // SDC ver 1.XX or MMC
+        if (sd_cmd(CMD9, 0) == 0) { // Read CSD
             sd_readinto(sd_csd, sizeof sd_csd);
             if (sd_card_type & CT_SD1) {
-                /* SDC ver 1.XX */
+                // SDC ver 1.XX
                 sd_blocksize = (((sd_csd[10] & 63) << 1) + ((uint32_t)(sd_csd[11] & 128) >> 7) + 1) << ((sd_csd[13] >> 6) - 1);
-            } else {                    /* MMC */
+            } else {
+                // MMC
                 sd_blocksize = ((uint32_t)((sd_csd[10] & 124) >> 2) + 1) * (((sd_csd[11] & 3) << 3) + ((sd_csd[11] & 224) >> 5) + 1);
             }
         }
@@ -337,44 +314,46 @@ uint8_t sd_init_card(void) {
         xchg_spi(0xFF);
     }
     ty = 0;
-    if (sd_cmd(CMD0, 0) == 1) {         /* Put the card SPI/Idle state */
-        timeout = 1000000;              /* Initialization timeout = 1 sec */
-        if (sd_cmd(CMD8, 0x1AA) == 1) { /* SDv2? */
+    if (sd_cmd(CMD0, 0) == 1) {         // Put the card SPI/Idle state
+        timeout = 1000000;              // Initialization timeout = 1 sec
+        if (sd_cmd(CMD8, 0x1AA) == 1) {
+            // SDv2?
             sd_cdv = 512;
             for (n = 0; n < 4; n++) {
-                ocr[n] = xchg_spi(0xFF); /* Get 32 bit return value of R7 resp */
+                ocr[n] = xchg_spi(0xFF); // Get 32 bit return value of R7 resp
             }
-            if (ocr[2] == 0x01 && ocr[3] == 0xAA) {     /* Is the card supports vcc of 2.7-3.6V? */
-                /* Wait for end of initialization with ACMD41(HCS) */
+            if (ocr[2] == 0x01 && ocr[3] == 0xAA) { // Is the card supports vcc of 2.7-3.6V?
+                // Wait for end of initialization with ACMD41(HCS)
                 while ((timeout-- > 0) && sd_cmd(ACMD41, 1UL << 30)) {
                     ;
                 }
-                if ((timeout != 0) && sd_cmd(CMD58, 0) == 0) {  /* Check CCS bit in the OCR */
+                if ((timeout != 0) && sd_cmd(CMD58, 0) == 0) { // Check CCS bit in the OCR
                     for (n = 0; n < 4; n++) {
                         ocr[n] = xchg_spi(0xFF);
                     }
-                    ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; /* Card id SDv2 */
+                    ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; // Card id SDv2
                 }
             }
         } else {
-            /* Not SDv2 card */
+            // Not SDv2 card
             sd_cdv = 512;
-            if (sd_cmd(ACMD41, 0) <= 1) {   /* SDv1 or MMC? */
+            if (sd_cmd(ACMD41, 0) <= 1) { // SDv1 or MMC?
                 ty = CT_SD1;
-                cmd = ACMD41;               /* SDv1 (ACMD41(0)) */
+                cmd = ACMD41; // SDv1 (ACMD41(0))
             } else {
                 ty = CT_MMC;
-                cmd = CMD1;                 /* MMCv3 (CMD1(0)) */
+                cmd = CMD1; // MMCv3 (CMD1(0))
             }
-            while ((timeout-- > 0) && sd_cmd(cmd, 0))
-                ;                           /* Wait for end of initialization */
+            while ((timeout-- > 0) && sd_cmd(cmd, 0)) {
+                ; // Wait for end of initialization
+            }
             if ((timeout != 0) || sd_cmd(CMD16, 512) != 0) {
-                /* Set block length: 512 */
+                // Set block length: 512
                 ty = 0;
             }
         }
     }
-    sd_card_type = ty;      /* Card type */
+    sd_card_type = ty; // Card type
     sd_get_sector_count();
     sd_get_sector_block_size();
     deselect();
@@ -385,11 +364,10 @@ uint8_t sd_init_card(void) {
 
 void sdcard_init(void) {
     sd_handle = 0;
-    //sd_ch = MICROPY_HW_SDCARD_SPI_CH;
-    //sd_cs = MICROPY_HW_SDCARD_SPI_CS;
-    //gpio_mode_input(MICROPY_HW_SDCARD_CHK);
     mp_hal_pin_config(MICROPY_HW_SDCARD_SPI_CS, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+    #if defined(MICROPY_HW_SDCARD_DETECT_PIN)
     mp_hal_pin_config(MICROPY_HW_SDCARD_DETECT_PIN, MP_HAL_PIN_MODE_INPUT, MICROPY_HW_SDCARD_DETECT_PULL, 0);
+    #endif
     sd_ch = MICROPY_HW_SDCARD_SPI_CH;
     sd_cs = MICROPY_HW_SDCARD_SPI_CS->pin;
     gpio_mode_output(sd_cs);
@@ -399,7 +377,7 @@ void sdcard_init(void) {
 
 bool sdcard_is_present(void) {
     gpio_mode_input(MICROPY_HW_SDCARD_DETECT_PIN->pin);
-    return (gpio_read(MICROPY_HW_SDCARD_DETECT_PIN->pin) == MICROPY_HW_SDCARD_DETECT_PRESENT);
+    return gpio_read(MICROPY_HW_SDCARD_DETECT_PIN->pin) == MICROPY_HW_SDCARD_DETECT_PRESENT;
 }
 
 bool sdcard_power_on(void) {
@@ -433,14 +411,14 @@ static uint32_t sd_readblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
     if (nblocks == 1) {
         if (sd_cmd(CMD17, block_num * sd_cdv) != 0) {
             gpio_write(sd_cs, 1);
-            /* raise OSError(5) */
+            // raise OSError(5)
             return SD_ERR_EIO;
         }
         sd_readinto(buf, 512);
     } else {
         if (sd_cmd(CMD18, block_num * sd_cdv) != 0) {
             gpio_write(sd_cs, 1);
-            /* raise OSError(5) */
+            // raise OSError(5)
             return SD_ERR_EIO;
         }
         offset = 0;
@@ -450,7 +428,7 @@ static uint32_t sd_readblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
             nblocks--;
         }
         if (sd_cmd(CMD12, 0)) {
-            /* raise OSError(5) */
+            // raise OSError(5)
             return SD_ERR_EIO;
         }
     }
@@ -473,13 +451,13 @@ static uint32_t sd_writeblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
 
     if (nblocks == 1) {
         if (sd_cmd(CMD24, block_num * sd_cdv) != 0) {
-            /* raise OSError(5) */
+            // raise OSError(5)
             return SD_ERR_EIO;
         }
         sd_write_buf(_TOKEN_DATA, buf, 512);
     } else {
         if (sd_cmd(CMD25, block_num * sd_cdv) != 0) {
-            /* raise OSError(5) */
+            // raise OSError(5)
             return SD_ERR_EIO;
         }
         offset = 0;
@@ -602,9 +580,9 @@ STATIC mp_obj_t pyb_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
         case MP_BLOCKDEV_IOCTL_INIT:
-            //if (!sdcard_power_on()) {
+            // if (!sdcard_power_on()) {
             //    return MP_OBJ_NEW_SMALL_INT(-1); // error
-            //}
+            // }
             return MP_OBJ_NEW_SMALL_INT(0); // success
 
         case MP_BLOCKDEV_IOCTL_DEINIT:
@@ -652,7 +630,9 @@ void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->base.type = &mp_fat_vfs_type;
     vfs->blockdev.flags |= MP_BLOCKDEV_FLAG_NATIVE | MP_BLOCKDEV_FLAG_HAVE_IOCTL;
     vfs->fatfs.drv = vfs;
+    #if MICROPY_FATFS_MULTI_PARTITION
     vfs->fatfs.part = part;
+    #endif
     vfs->blockdev.readblocks[0] = MP_OBJ_FROM_PTR(&pyb_sdcard_readblocks_obj);
     vfs->blockdev.readblocks[1] = MP_OBJ_FROM_PTR(&pyb_sdcard_obj);
     vfs->blockdev.readblocks[2] = MP_OBJ_FROM_PTR(sdcard_read_blocks); // native version

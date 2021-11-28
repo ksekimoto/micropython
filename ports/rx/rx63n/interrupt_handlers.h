@@ -377,22 +377,22 @@ void INT_Excep_TPU5_TGI5B(void) __attribute__ ((interrupt));
 void INT_Excep_TPU6_TGI6A(void) __attribute__ ((interrupt));
 
 // MTU0 TGIA0
-//void INT_Excep_MTU0_TGIA0(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU0_TGIA0(void) __attribute__ ((interrupt));
 // TPU6 TGI6B
 void INT_Excep_TPU6_TGI6B(void) __attribute__ ((interrupt));
 
 // MTU0 TGIB0
-//void INT_Excep_MTU0_TGIB0(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU0_TGIB0(void) __attribute__ ((interrupt));
 // TPU6 TGI6C
 void INT_Excep_TPU6_TGI6C(void) __attribute__ ((interrupt));
 
 // MTU0 TGIC0
-//void INT_Excep_MTU0_TGIC0(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU0_TGIC0(void) __attribute__ ((interrupt));
 // TPU6 TGI6D
 void INT_Excep_TPU6_TGI6D(void) __attribute__ ((interrupt));
 
 // MTU0 TGID0
-//void INT_Excep_MTU0_TGID0(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU0_TGID0(void) __attribute__ ((interrupt));
 // MTU0 TGIE0
 void INT_Excep_MTU0_TGIE0(void) __attribute__ ((interrupt));
 
@@ -403,52 +403,52 @@ void INT_Excep_MTU0_TGIF0(void) __attribute__ ((interrupt));
 void INT_Excep_TPU7_TGI7A(void) __attribute__ ((interrupt));
 
 // MTU1 TGIA1
-//void INT_Excep_MTU1_TGIA1(void)
+// void INT_Excep_MTU1_TGIA1(void)
 // TPU7 TGI7B
 void INT_Excep_TPU7_TGI7B(void) __attribute__ ((interrupt));
 
 // MTU1 TGIB1
-//void INT_Excep_MTU1_TGIB1(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU1_TGIB1(void) __attribute__ ((interrupt));
 // TPU8 TGI8A
 void INT_Excep_TPU8_TGI8A(void) __attribute__ ((interrupt));
 
 // MTU2 TGIA2
-//void INT_Excep_MTU2_TGIA2(void);
+// void INT_Excep_MTU2_TGIA2(void);
 // TPU8 TGI8B
 void INT_Excep_TPU8_TGI8B(void) __attribute__ ((interrupt));
 
 // MTU2 TGIB2
-//void INT_Excep_MTU2_TGIB2(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU2_TGIB2(void) __attribute__ ((interrupt));
 // TPU9 TGI9A
 void INT_Excep_TPU9_TGI9A(void) __attribute__ ((interrupt));
 
 // MTU3 TGIA3
-//void INT_Excep_MTU3_TGIA3(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU3_TGIA3(void) __attribute__ ((interrupt));
 // TPU9 TGI9B
 void INT_Excep_TPU9_TGI9B(void) __attribute__ ((interrupt));
 
 // MTU3 TGIB3
-//void INT_Excep_MTU3_TGIB3(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU3_TGIB3(void) __attribute__ ((interrupt));
 // TPU9 TGI9C
 void INT_Excep_TPU9_TGI9C(void) __attribute__ ((interrupt));
 
 // MTU3 TGIC3
-//void INT_Excep_MTU3_TGIC3(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU3_TGIC3(void) __attribute__ ((interrupt));
 // TPU9 TGI9D
 void INT_Excep_TPU9_TGI9D(void) __attribute__ ((interrupt));
 
 // MTU3 TGID3
-//void INT_Excep_MTU3_TGID3(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU3_TGID3(void) __attribute__ ((interrupt));
 // TPU10 TGI10A
 void INT_Excep_TPU10_TGI10A(void) __attribute__ ((interrupt));
 
 // MTU4 TGIA4
-//void INT_Excep_MTU4_TGIA4(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU4_TGIA4(void) __attribute__ ((interrupt));
 // TPU10 TGI10B
 void INT_Excep_TPU10_TGI10B(void) __attribute__ ((interrupt));
 
 // MTU4 TGIB4
-//void INT_Excep_MTU4_TGIB4(void) __attribute__ ((interrupt));
+// void INT_Excep_MTU4_TGIB4(void) __attribute__ ((interrupt));
 // MTU4 TGIC4
 void INT_Excep_MTU4_TGIC4(void) __attribute__ ((interrupt));
 
@@ -718,10 +718,10 @@ void INT_Excep_IEB_IEBINT(void) __attribute__ ((interrupt));
 // vector 254 reserved
 // vector 255 reserved
 
-//;<<VECTOR DATA START (POWER ON RESET)>>
-//;Power On Reset PC
+// ;<<VECTOR DATA START (POWER ON RESET)>>
+// ;Power On Reset PC
 extern void PowerON_Reset_PC(void) __attribute__ ((interrupt));
-//;<<VECTOR DATA END (POWER ON RESET)>>
+// ;<<VECTOR DATA END (POWER ON RESET)>>
 
 #ifdef __cplusplus
 }

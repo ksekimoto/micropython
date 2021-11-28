@@ -29,23 +29,20 @@
 #include "iodefine.h"
 
 #if defined(GRROSE)
-static inline void rx_ethernet_enable(void)
-{
+static inline void rx_ethernet_enable(void) {
     SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
     SYSTEM.MSTPCRB.BIT.MSTPB15 = 0;     /* EtherC, EDMAC */
-    //BSC.BEREN.BIT.TOEN = 1;
+    // BSC.BEREN.BIT.TOEN = 1;
     SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
 }
 
-static inline void rx_ethernet_disable(void)
-{
+static inline void rx_ethernet_disable(void) {
     SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
     SYSTEM.MSTPCRB.BIT.MSTPB15 = 1;     /* EtherC, EDMAC */
     SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
 }
 
-static inline void rx_ethernet_RMII_mode(void)
-{
+static inline void rx_ethernet_RMII_mode(void) {
     /* ==== RMII Pins setting ==== */
     /*
     Pin Functions : Port
@@ -134,7 +131,7 @@ static void clock_init(void) {
         SYSTEM.SOSCCR.BYTE = 0x01;          // Sub clock Oscillator is stopped
         SYSTEM.PLLCR.WORD = 0x0F00;         // PLIDIV = 12MHz(/1), STC = 192MHz(*16)
         SYSTEM.PLLCR2.BYTE = 0x00;          // PLL enable
-        //SYSTEM.PLLWTCR.BYTE = 0x0F;         // 4194304cycle(Default)
+        // SYSTEM.PLLWTCR.BYTE = 0x0F;         // 4194304cycle(Default)
         for (i = 0; i < 600; i++) {
         }
         SYSTEM.SCKCR.LONG = 0x21032222;     // ICK(96MHz)=PLL/2,BCK(24MHz)=PLL/8,FCK,PCK(48MHz)=PLL/4
@@ -155,7 +152,7 @@ static void clock_init(void) {
         SYSTEM.PLLCR.WORD = 0x0F00;
         SYSTEM.MOSCCR.BYTE = 0x00;          // EXTAL ON
         SYSTEM.PLLCR2.BYTE = 0x00;          // PLL ON
-        //SYSTEM.PLLWTCR.BYTE = 0x0F;
+        // SYSTEM.PLLWTCR.BYTE = 0x0F;
         for (i = 0; i < 300; i++) {
         }
         SYSTEM.SCKCR.LONG = 0x21832222;
@@ -171,7 +168,7 @@ static void clock_init(void) {
 }
 
 void bootstrap(void) {
-    //SYSTEM.SCKCR.LONG = 0x21032200;     /* clock init: ICK=PLL/2, BCLK=PLL/8, PCLK=PLL/4 */
+    // SYSTEM.SCKCR.LONG = 0x21032200;     /* clock init: ICK=PLL/2, BCLK=PLL/8, PCLK=PLL/4 */
     clock_init();
     MPC.PWPR.BIT.B0WI = 0;
     MPC.PWPR.BIT.PFSWE = 1;
@@ -250,11 +247,10 @@ Includes   <System Includes> , "Project Includes"
 #define BSP_CFG_PLL_DIV             (1)
 #define BSP_CFG_PLL_MUL             (20.0)
 #define BSP_CFG_ICK_DIV             (2)
-#define BSP_SELECTED_CLOCK_HZ       ((BSP_CFG_XTAL_HZ/BSP_CFG_PLL_DIV) * BSP_CFG_PLL_MUL)
+#define BSP_SELECTED_CLOCK_HZ       ((BSP_CFG_XTAL_HZ / BSP_CFG_PLL_DIV) * BSP_CFG_PLL_MUL)
 #define BSP_ICLK_HZ                 (BSP_SELECTED_CLOCK_HZ / BSP_CFG_ICK_DIV)
 
-static void clock_source_select (void)
-{
+static void clock_source_select(void) {
     volatile uint8_t i;
     volatile uint8_t dummy;
 
@@ -276,14 +272,14 @@ static void clock_source_select (void)
         SYSTEM.MOFCR.BIT.MODRV2 = 1;
     } else if (BSP_CFG_XTAL_HZ > 8000000) {     /* 8 - 16MHz. */
         SYSTEM.MOFCR.BIT.MODRV2 = 2;
-    } else  {                                   /* 8MHz. */
+    } else {                                    /* 8MHz. */
         SYSTEM.MOFCR.BIT.MODRV2 = 3;
     }
 
     SYSTEM.MOSCWTCR.BYTE = BSP_CFG_MOSC_WAIT_TIME;
     SYSTEM.MOSCCR.BYTE = 0x00;
 
-    if (0x00 ==  SYSTEM.MOSCCR.BYTE) {  /* Dummy read */
+    if (0x00 == SYSTEM.MOSCCR.BYTE) {   /* Dummy read */
         __asm("nop");
     }
     while (0 == SYSTEM.OSCOVFSR.BIT.MOOVF) {    /* wait for stable */
@@ -312,8 +308,7 @@ static void clock_source_select (void)
         }
         while (0 != SYSTEM.OSCOVFSR.BIT.SOOVF) {
         }
-    } else
-    {
+    } else {
         SYSTEM.SOSCCR.BYTE = 0x01;
         if (0x01 != SYSTEM.SOSCCR.BYTE) {
             __asm("nop");
@@ -331,11 +326,11 @@ static void clock_source_select (void)
     #endif
     SYSTEM.PLLCR.BIT.STC = ((uint8_t)((float)BSP_CFG_PLL_MUL * 2.0)) - 1;
     SYSTEM.PLLCR2.BYTE = 0x00;
-    while(0 == SYSTEM.OSCOVFSR.BIT.PLOVF) {
+    while (0 == SYSTEM.OSCOVFSR.BIT.PLOVF) {
     }
-#if (BSP_CFG_CLOCK_SOURCE == 0)
+    #if (BSP_CFG_CLOCK_SOURCE == 0)
     SYSTEM.LOCOCR.BYTE = 0x00;
-#endif
+    #endif
     /* RX65N has a ROMWT register which controls the cycle waiting for access to code flash memory.
        It is set as zero coming out of reset.
        When setting ICLK to [50 MHz < ICLK <= 100 MHz], set the ROMWT.ROMWT[1:0] bits to 01b.
@@ -392,22 +387,22 @@ static void clock_init(void) {
     SYSTEM.SCKCR.LONG = temp_clock;
 
     temp_clock = 0;
-    temp_clock |= 0x00000041;	// DIV=5
+    temp_clock |= 0x00000041;   // DIV=5
     SYSTEM.SCKCR2.WORD = (uint16_t)temp_clock;
 
     SYSTEM.SCKCR3.WORD = ((uint16_t)BSP_CFG_CLOCK_SOURCE) << 8; // PLL
-#if (BSP_CFG_CLOCK_SOURCE != 0)
+    #if (BSP_CFG_CLOCK_SOURCE != 0)
     SYSTEM.LOCOCR.BYTE = 0x01;  // LOCO off
-#endif
+    #endif
 
-#if (BSP_CFG_ROM_CACHE_ENABLE == 1)
+    #if (BSP_CFG_ROM_CACHE_ENABLE == 1)
     FLASH.ROMCIV.WORD = 0x0001;
     while (FLASH.ROMCIV.WORD != 0x0000) {
     }
     FLASH.ROMCE.WORD = 0x0001;
     while (FLASH.ROMCE.WORD != 0x0001) {
     }
-#endif
+    #endif
     SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;
     SYSTEM.PRCR.WORD = 0xA500;
 }
@@ -418,10 +413,10 @@ void bootstrap(void) {
     // bsp_interrupt_open();
     /* Initialize register protection functionality. */
     // bsp_register_protect_open();
-#if defined(GRROSE)
+    #if defined(GRROSE)
     rx_ethernet_enable();
     rx_ethernet_RMII_mode();
-#endif
+    #endif
 }
 
 #endif

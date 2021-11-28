@@ -35,13 +35,13 @@ extern "C" {
 #define RTC_PERIOD_SECOND   0x01
 
 typedef struct {
-    unsigned short  year;
-    unsigned char   month;
-    unsigned char   date;
-    unsigned char   weekday;
-    unsigned char   hour;
-    unsigned char   minute;
-    unsigned char   second;
+    unsigned short year;
+    unsigned char month;
+    unsigned char date;
+    unsigned char weekday;
+    unsigned char hour;
+    unsigned char minute;
+    unsigned char second;
 } rtc_t;
 
 typedef void (*rx_rtc_cb_t)(void);

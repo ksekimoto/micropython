@@ -23,17 +23,17 @@ int lvrx_enable = 0;
 /**
  * Flush a buffer to the display. Calls 'lv_flush_ready()' when finished
  */
-void lvrx_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
+void lvrx_flush(struct _disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
     /*Return if the area is out the screen*/
     int32_t x;
     int32_t y;
-    for(y = area->y1; y <= area->y2; y++) {
-        for(x = area->x1; x <= area->x2; x++) {
+    for (y = area->y1; y <= area->y2; y++) {
+        for (x = area->x1; x <= area->x2; x++) {
             /* Put a pixel to the display. For example: */
             /* put_px(x, y, *color_p)*/
-#if 0
+            #if 0
             mbed_set_pixel(x, y, (*color_p).full);
-#endif
+            #endif
             color_p++;
         }
     }
@@ -41,16 +41,16 @@ void lvrx_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_
     /*IMPORTANT! It must be called to tell the system the flush is ready*/
     lv_disp_flush_ready(disp_drv);
 
-#if 0
-    if(area->x2 < 0 || area->y2 < 0 || area->x1 > MONITOR_HOR_RES - 1 || area->y1 > MONITOR_VER_RES - 1) {
+    #if 0
+    if (area->x2 < 0 || area->y2 < 0 || area->x1 > MONITOR_HOR_RES - 1 || area->y1 > MONITOR_VER_RES - 1) {
         lv_disp_flush_ready(disp_drv);
         return;
     }
     int32_t y;
-#if LV_COLOR_DEPTH != 24 && LV_COLOR_DEPTH != 32    /*32 is valid but support 24 for backward compatibility too*/
+    #if LV_COLOR_DEPTH != 24 && LV_COLOR_DEPTH != 32 /*32 is valid but support 24 for backward compatibility too*/
     int32_t x;
-    for(y = area->y1; y <= area->y2; y++) {
-        for(x = area->x1; x <= area->x2; x++) {
+    for (y = area->y1; y <= area->y2; y++) {
+        for (x = area->x1; x <= area->x2; x++) {
             if (tft_fb) {
                 tft_fb[y * MONITOR_HOR_RES + x] = lv_color_to32(*color_p);
             }
@@ -58,18 +58,18 @@ void lvrx_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_
         }
 
     }
-#else
+    #else
     uint32_t w = area->x2 - area->x1 + 1;
-    for(y = area->y1; y <= area->y2; y++) {
+    for (y = area->y1; y <= area->y2; y++) {
         if (tft_fb_ptr) {
             memcpy(&tft_fb_ptr[y * MONITOR_HOR_RES + area->x1], color_p, w * sizeof(lv_color_t));
         }
         color_p += w;
     }
-#endif
+    #endif
     /*IMPORTANT! It must be called to tell the system the flush is ready*/
     lv_disp_flush_ready(disp_drv);
-#endif
+    #endif
 }
 
 STATIC mp_obj_t mp_lv_task_handler(mp_obj_t arg) {
@@ -98,9 +98,9 @@ STATIC mp_obj_t mp_init_lvrx(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
     lvrx_enable = 1;
-#if defined(RX65N)
+    #if defined(RX65N)
     pendsv_schedule_dispatch(PENDSV_DISPATCH_LV, tick_thread);
-#endif
+    #endif
     return mp_const_none;
 }
 
@@ -113,24 +113,24 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(mp_init_lvrx_obj, 0, mp_init_lvrx);
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_deinit_lvrx_obj, mp_deinit_lvrx);
 
 DEFINE_PTR_OBJ(lvrx_flush);
-//DEFINE_PTR_OBJ(lvrx_read);
+// DEFINE_PTR_OBJ(lvrx_read);
 
 STATIC const mp_rom_map_elem_t LVRX_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_lvrx) },
-        { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_lvrx_obj) },
-        { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_deinit_lvrx_obj) },
-        { MP_ROM_QSTR(MP_QSTR_monitor_flush), MP_ROM_PTR(&PTR_OBJ(lvrx_flush))},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_lvrx) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_lvrx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_deinit_lvrx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_monitor_flush), MP_ROM_PTR(&PTR_OBJ(lvrx_flush))},
 //        { MP_ROM_QSTR(MP_QSTR_mouse_read), MP_ROM_PTR(&PTR_OBJ(lvr_read))},
 };
 
-STATIC MP_DEFINE_CONST_DICT (
+STATIC MP_DEFINE_CONST_DICT(
     mp_module_lvrx_globals,
     LVRX_globals_table
-);
+    );
 
 const mp_obj_module_t mp_module_lvrx = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_lvrx_globals
+    .globals = (mp_obj_dict_t *)&mp_module_lvrx_globals
 };
 
 #endif

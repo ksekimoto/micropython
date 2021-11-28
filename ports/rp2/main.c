@@ -30,14 +30,18 @@
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
+#include "py/mphal.h"
 #include "py/stackctrl.h"
-#include "lib/mp-readline/readline.h"
-#include "lib/utils/gchelper.h"
-#include "lib/utils/pyexec.h"
+#include "extmod/modbluetooth.h"
+#include "extmod/modnetwork.h"
+#include "shared/readline/readline.h"
+#include "shared/runtime/gchelper.h"
+#include "shared/runtime/pyexec.h"
 #include "tusb.h"
 #include "uart.h"
 #include "modmachine.h"
 #include "modrp2.h"
+#include "mpbthciport.h"
 #include "genhdr/mpversion.h"
 
 #include "pico/stdlib.h"
@@ -79,7 +83,7 @@ int main(int argc, char **argv) {
         .year = 2021,
         .month = 1,
         .day = 1,
-        .dotw = 5, // 0 is Sunday, so 5 is Friday
+        .dotw = 4, // 0 is Monday, so 4 is Friday
         .hour = 0,
         .min = 0,
         .sec = 0,
@@ -105,6 +109,14 @@ int main(int argc, char **argv) {
         readline_init0();
         machine_pin_init();
         rp2_pio_init();
+        machine_i2s_init0();
+
+        #if MICROPY_PY_BLUETOOTH
+        mp_bluetooth_hci_init();
+        #endif
+        #if MICROPY_PY_NETWORK
+        mod_network_init();
+        #endif
 
         // Execute _boot.py to set up the filesystem.
         pyexec_frozen_module("_boot.py");
@@ -135,8 +147,17 @@ int main(int argc, char **argv) {
 
     soft_reset_exit:
         mp_printf(MP_PYTHON_PRINTER, "MPY: soft reboot\n");
+        #if MICROPY_PY_NETWORK
+        mod_network_deinit();
+        #endif
         rp2_pio_deinit();
+        #if MICROPY_PY_BLUETOOTH
+        mp_bluetooth_deinit();
+        #endif
         machine_pin_deinit();
+        #if MICROPY_PY_THREAD
+        mp_thread_deinit();
+        #endif
         gc_sweep_all();
         mp_deinit();
     }
@@ -168,10 +189,21 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
+#define POLY (0xD5)
+
+uint8_t rosc_random_u8(size_t cycles) {
+    static uint8_t r;
+    for (size_t i = 0; i < cycles; ++i) {
+        r = ((r << 1) | rosc_hw->randombit) ^ (r & 0x80 ? POLY : 0);
+        mp_hal_delay_us_fast(1);
+    }
+    return r;
+}
+
 uint32_t rosc_random_u32(void) {
     uint32_t value = 0;
-    for (size_t i = 0; i < 32; ++i) {
-        value = value << 1 | rosc_hw->randombit;
+    for (size_t i = 0; i < 4; ++i) {
+        value = value << 8 | rosc_random_u8(32);
     }
     return value;
 }
@@ -212,4 +244,3 @@ const char rp2_help_text[] =
     "For further help on a specific object, type help(obj)\n"
     "For a list of available modules, type help('modules')\n"
 ;
-

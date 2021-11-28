@@ -27,11 +27,11 @@
 
 static char hex_to_num(char ch) {
     if (('0' <= ch) && (ch <= '9')) {
-        return (ch - '0');
+        return ch - '0';
     } else if (('A' <= ch) && (ch <= 'F')) {
-        return (ch - 'A' + 10);
+        return ch - 'A' + 10;
     } else if (('a' <= ch) && (ch <= 'f')) {
-        return (ch - 'a' + 10);
+        return ch - 'a' + 10;
     }
     return ch;
 }
@@ -43,21 +43,23 @@ static char num_to_hex(char num) {
 
 static int _isalnum(char ch) {
     if ((('0' <= ch) && (ch <= '9')) || (('A' <= ch) && (ch <= 'Z'))
-            || (('a' <= ch) && (ch <= 'z')))
+        || (('a' <= ch) && (ch <= 'z'))) {
         return 1;
-    else
+    } else {
         return 0;
+    }
 }
 
 char *url_encode(const char *str, char *dst, int size) {
     char *pstr = (char *)str;
     char *pbuf = dst;
-    if (size == 0)
+    if (size == 0) {
         return dst;
+    }
     size--;
     while (size && (*pstr)) {
         if (_isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
-                || *pstr == '~') {
+            || *pstr == '~') {
             *pbuf++ = *pstr;    /* copy one character */
             size--;
         } else if (*pstr == ' ') {
@@ -66,12 +68,14 @@ char *url_encode(const char *str, char *dst, int size) {
         } else {
             *pbuf++ = '%';      /* replace with '%' */
             size--;
-            if (size == 0)
+            if (size == 0) {
                 break;          /* num(upper nibble) to hex */
+            }
             *pbuf++ = num_to_hex(*pstr >> 4);
             size--;
-            if (size == 0)
+            if (size == 0) {
                 break;          /* num(lower nibble) to hex */
+            }
             *pbuf++ = num_to_hex(*pstr & 0xf);
             size--;
         }
@@ -86,7 +90,7 @@ int get_url_encode_size(const char *str) {
     char *pstr = (char *)str;
     while (*pstr) {
         if (_isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
-                || *pstr == '~') {
+            || *pstr == '~') {
             size++;     /* copy one character */
         } else if (*pstr == ' ') {
             size++;     /* replace with '+' */
@@ -97,15 +101,16 @@ int get_url_encode_size(const char *str) {
         }
         pstr++;
     }
-    //size++;           /* doesnot include '\0' */
+    // size++;           /* doesnot include '\0' */
     return size;
 }
 
 char *url_decode(const char *str, char *dst, int size) {
     char *pstr = (char *)str;
     char *pbuf = dst;
-    if (size == 0)
+    if (size == 0) {
         return dst;
+    }
     size--;
     while (size && (*pstr)) {
         if (*pstr == '%') {

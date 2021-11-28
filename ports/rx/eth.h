@@ -27,6 +27,9 @@
 #ifndef MICROPY_INCLUDED_RX_ETH_H
 #define MICROPY_INCLUDED_RX_ETH_H
 
+#include "lwip/netif.h"
+#include "lwip/dhcp.h"
+
 typedef struct _eth_t {
     uint32_t trace_flags;
     struct netif netif;
@@ -40,6 +43,7 @@ struct netif *eth_netif(eth_t *self);
 int eth_link_status(eth_t *self);
 int eth_start(eth_t *self);
 int eth_stop(eth_t *self);
+void eth_low_power_mode(eth_t *self, bool enable);
 
 void ethernetif_input_cb(void);
 

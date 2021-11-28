@@ -30,11 +30,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "driver/timer.h"
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "mphalport.h"
+
+#include "driver/timer.h"
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 1)
+#include "hal/timer_ll.h"
+#define HAVE_TIMER_LL (1)
+#endif
 
 #define TIMER_INTR_SEL TIMER_INTR_LEVEL
 #define TIMER_DIVIDER  8
@@ -127,6 +132,30 @@ STATIC void machine_timer_isr(void *self_in) {
     machine_timer_obj_t *self = self_in;
     timg_dev_t *device = self->group ? &(TIMERG1) : &(TIMERG0);
 
+    #if HAVE_TIMER_LL
+
+    #if CONFIG_IDF_TARGET_ESP32 && ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+    device->hw_timer[self->index].update = 1;
+    #else
+    #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
+    #if CONFIG_IDF_TARGET_ESP32S3
+    device->hw_timer[self->index].update.tn_update = 1;
+    #else
+    device->hw_timer[self->index].update.tx_update = 1;
+    #endif
+    #else
+    device->hw_timer[self->index].update.update = 1;
+    #endif
+    #endif
+    timer_ll_clear_intr_status(device, self->index);
+    #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+    timer_ll_set_alarm_enable(device, self->index, self->repeat);
+    #else
+    timer_ll_set_alarm_value(device, self->index, self->repeat);
+    #endif
+
+    #else
+
     device->hw_timer[self->index].update = 1;
     if (self->index) {
         device->int_clr_timers.t1 = 1;
@@ -134,6 +163,8 @@ STATIC void machine_timer_isr(void *self_in) {
         device->int_clr_timers.t0 = 1;
     }
     device->hw_timer[self->index].config.alarm_en = self->repeat;
+
+    #endif
 
     mp_sched_schedule(self->callback, self);
     mp_hal_wake_main_task_from_isr();
@@ -210,7 +241,7 @@ STATIC mp_obj_t machine_timer_deinit(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(machine_timer_deinit_obj, machine_timer_deinit);
 
-STATIC mp_obj_t machine_timer_init(mp_uint_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+STATIC mp_obj_t machine_timer_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     return machine_timer_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(machine_timer_init_obj, 1, machine_timer_init);

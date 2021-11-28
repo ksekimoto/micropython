@@ -31,8 +31,7 @@
 #include "rx65n_utils.h"
 
 __attribute__((weak)) int32_t
-__popcountsi2(int32_t a)
-{
+__popcountsi2(int32_t a) {
     uint32_t x = (uint32_t)a;
     x = x - ((x >> 1) & 0x55555555);
     /* Every 2 bits holds the sum of every pair of bits */
@@ -47,8 +46,7 @@ __popcountsi2(int32_t a)
 }
 
 __attribute__((weak)) int32_t
-__ctzsi2(int32_t a)
-{
+__ctzsi2(int32_t a) {
     uint32_t x = (uint32_t)a;
     int32_t t = ((x & 0x0000FFFF) == 0) << 4;  /* if (x has no small bits) t = 16 else 0 */
     x >>= t;           /* x = [0 - 0xFFFF] + higher garbage bits */
@@ -85,8 +83,7 @@ __ctzsi2(int32_t a)
 }
 
 __attribute__((weak)) int32_t
-__clzsi2(int32_t a)
-{
+__clzsi2(int32_t a) {
     uint32_t x = (uint32_t)a;
     int32_t t = ((x & 0xFFFF0000) == 0) << 4;  /* if (x is small) t = 16 else 0 */
     x >>= 16 - t;      /* x = [0 - 0xFFFF] */

@@ -38,7 +38,7 @@ void __attribute__ ((interrupt)) INT_Excep_USB0_USBI0(void) {
     if (USB0.SYSCFG.BIT.DCFM == 0) {/* Function controller is selected */
         USBHALInterruptHandler();
     } else if (USB0.SYSCFG.BIT.DCFM == 1) {/* Host controller is selected */
-        //InterruptHandler_USBHost();
+        // InterruptHandler_USBHost();
     }
 }
 #endif
@@ -47,12 +47,12 @@ void __attribute__ ((interrupt)) INT_Excep_USB0_USBI0(void) {
 
 #else
 
-#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 void __attribute__ ((interrupt)) INT_Excep_ETHER_EINT(void) {
     rx_ether_input_callback();
 }
 
-#endif // MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+#endif // MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 #endif // GRCITRUS

@@ -69,8 +69,15 @@ STATIC mp_map_elem_t *dict_iter_next(mp_obj_dict_t *dict, size_t *cur) {
 STATIC void dict_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     mp_obj_dict_t *self = MP_OBJ_TO_PTR(self_in);
     bool first = true;
+    const char *item_separator = ", ";
+    const char *key_separator = ": ";
     if (!(MICROPY_PY_UJSON && kind == PRINT_JSON)) {
         kind = PRINT_REPR;
+    } else {
+        #if MICROPY_PY_UJSON_SEPARATORS
+        item_separator = MP_PRINT_GET_EXT(print)->item_separator;
+        key_separator = MP_PRINT_GET_EXT(print)->key_separator;
+        #endif
     }
     if (MICROPY_PY_COLLECTIONS_ORDEREDDICT && self->base.type != &mp_type_dict && kind != PRINT_JSON) {
         mp_printf(print, "%q(", self->base.type->name);
@@ -80,7 +87,7 @@ STATIC void dict_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     mp_map_elem_t *next = NULL;
     while ((next = dict_iter_next(self, &cur)) != NULL) {
         if (!first) {
-            mp_print_str(print, ", ");
+            mp_print_str(print, item_separator);
         }
         first = false;
         bool add_quote = MICROPY_PY_UJSON && kind == PRINT_JSON && !mp_obj_is_str_or_bytes(next->key);
@@ -91,7 +98,7 @@ STATIC void dict_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         if (add_quote) {
             mp_print_str(print, "\"");
         }
-        mp_print_str(print, ": ");
+        mp_print_str(print, key_separator);
         mp_obj_print_helper(print, next->value, kind);
     }
     mp_print_str(print, "}");
@@ -190,7 +197,7 @@ mp_obj_t mp_obj_dict_get(mp_obj_t self_in, mp_obj_t index) {
     mp_obj_dict_t *self = MP_OBJ_TO_PTR(self_in);
     mp_map_elem_t *elem = mp_map_lookup(&self->map, index, MP_MAP_LOOKUP);
     if (elem == NULL) {
-        nlr_raise(mp_obj_new_exception_arg1(&mp_type_KeyError, index));
+        mp_raise_type_arg(&mp_type_KeyError, index);
     } else {
         return elem->value;
     }
@@ -206,7 +213,7 @@ STATIC mp_obj_t dict_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {
         mp_obj_dict_t *self = MP_OBJ_TO_PTR(self_in);
         mp_map_elem_t *elem = mp_map_lookup(&self->map, index, MP_MAP_LOOKUP);
         if (elem == NULL) {
-            nlr_raise(mp_obj_new_exception_arg1(&mp_type_KeyError, index));
+            mp_raise_type_arg(&mp_type_KeyError, index);
         } else {
             return elem->value;
         }
@@ -295,7 +302,7 @@ STATIC mp_obj_t dict_get_helper(size_t n_args, const mp_obj_t *args, mp_map_look
     if (elem == NULL || elem->value == MP_OBJ_NULL) {
         if (n_args == 2) {
             if (lookup_kind == MP_MAP_LOOKUP_REMOVE_IF_FOUND) {
-                nlr_raise(mp_obj_new_exception_arg1(&mp_type_KeyError, args[1]));
+                mp_raise_type_arg(&mp_type_KeyError, args[1]);
             } else {
                 value = mp_const_none;
             }
@@ -408,8 +415,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(dict_update_obj, 1, dict_update);
 /******************************************************************************/
 /* dict views                                                                 */
 
-STATIC const mp_obj_type_t dict_view_type;
-STATIC const mp_obj_type_t dict_view_it_type;
+STATIC const mp_obj_type_t mp_type_dict_view;
+STATIC const mp_obj_type_t mp_type_dict_view_it;
 
 typedef enum _mp_dict_view_kind_t {
     MP_DICT_VIEW_ITEMS,
@@ -433,7 +440,7 @@ typedef struct _mp_obj_dict_view_t {
 } mp_obj_dict_view_t;
 
 STATIC mp_obj_t dict_view_it_iternext(mp_obj_t self_in) {
-    mp_check_self(mp_obj_is_type(self_in, &dict_view_it_type));
+    mp_check_self(mp_obj_is_type(self_in, &mp_type_dict_view_it));
     mp_obj_dict_view_it_t *self = MP_OBJ_TO_PTR(self_in);
     mp_map_elem_t *next = dict_iter_next(MP_OBJ_TO_PTR(self->dict), &self->cur);
 
@@ -454,7 +461,7 @@ STATIC mp_obj_t dict_view_it_iternext(mp_obj_t self_in) {
     }
 }
 
-STATIC const mp_obj_type_t dict_view_it_type = {
+STATIC const mp_obj_type_t mp_type_dict_view_it = {
     { &mp_type_type },
     .name = MP_QSTR_iterator,
     .getiter = mp_identity_getiter,
@@ -463,10 +470,10 @@ STATIC const mp_obj_type_t dict_view_it_type = {
 
 STATIC mp_obj_t dict_view_getiter(mp_obj_t view_in, mp_obj_iter_buf_t *iter_buf) {
     assert(sizeof(mp_obj_dict_view_it_t) <= sizeof(mp_obj_iter_buf_t));
-    mp_check_self(mp_obj_is_type(view_in, &dict_view_type));
+    mp_check_self(mp_obj_is_type(view_in, &mp_type_dict_view));
     mp_obj_dict_view_t *view = MP_OBJ_TO_PTR(view_in);
     mp_obj_dict_view_it_t *o = (mp_obj_dict_view_it_t *)iter_buf;
-    o->base.type = &dict_view_it_type;
+    o->base.type = &mp_type_dict_view_it;
     o->kind = view->kind;
     o->dict = view->dict;
     o->cur = 0;
@@ -475,7 +482,7 @@ STATIC mp_obj_t dict_view_getiter(mp_obj_t view_in, mp_obj_iter_buf_t *iter_buf)
 
 STATIC void dict_view_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     (void)kind;
-    mp_check_self(mp_obj_is_type(self_in, &dict_view_type));
+    mp_check_self(mp_obj_is_type(self_in, &mp_type_dict_view));
     mp_obj_dict_view_t *self = MP_OBJ_TO_PTR(self_in);
     bool first = true;
     mp_print_str(print, mp_dict_view_names[self->kind]);
@@ -505,7 +512,7 @@ STATIC mp_obj_t dict_view_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t
     return dict_binary_op(op, o->dict, rhs_in);
 }
 
-STATIC const mp_obj_type_t dict_view_type = {
+STATIC const mp_obj_type_t mp_type_dict_view = {
     { &mp_type_type },
     .name = MP_QSTR_dict_view,
     .print = dict_view_print,
@@ -515,7 +522,7 @@ STATIC const mp_obj_type_t dict_view_type = {
 
 STATIC mp_obj_t mp_obj_new_dict_view(mp_obj_t dict, mp_dict_view_kind_t kind) {
     mp_obj_dict_view_t *o = m_new_obj(mp_obj_dict_view_t);
-    o->base.type = &dict_view_type;
+    o->base.type = &mp_type_dict_view;
     o->dict = dict;
     o->kind = kind;
     return MP_OBJ_FROM_PTR(o);
@@ -548,7 +555,7 @@ STATIC mp_obj_t dict_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
     assert(sizeof(mp_obj_dict_view_it_t) <= sizeof(mp_obj_iter_buf_t));
     mp_check_self(mp_obj_is_dict_or_ordereddict(self_in));
     mp_obj_dict_view_it_t *o = (mp_obj_dict_view_it_t *)iter_buf;
-    o->base.type = &dict_view_it_type;
+    o->base.type = &mp_type_dict_view_it;
     o->kind = MP_DICT_VIEW_KEYS;
     o->dict = self_in;
     o->cur = 0;

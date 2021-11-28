@@ -96,7 +96,7 @@ STATIC const uint8_t adc_cr_to_bits_table[] = {16, 14, 12, 10, 8, 8, 8, 8};
 STATIC const uint8_t adc_cr_to_bits_table[] = {12, 10, 8, 6};
 #endif
 
-STATIC void adc_config(ADC_TypeDef *adc, uint32_t bits) {
+void adc_config(ADC_TypeDef *adc, uint32_t bits) {
     // Configure ADC clock source and enable ADC clock
     #if defined(STM32L4) || defined(STM32WB)
     __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_SYSCLK);
@@ -130,6 +130,8 @@ STATIC void adc_config(ADC_TypeDef *adc, uint32_t bits) {
     adc->CFGR2 = 2 << ADC_CFGR2_CKMODE_Pos; // PCLK/4 (synchronous clock mode)
     #elif defined(STM32F4) || defined(STM32F7) || defined(STM32L4)
     ADCx_COMMON->CCR = 0; // ADCPR=PCLK/2
+    #elif defined(STM32H7A3xx) || defined(STM32H7A3xxQ) || defined(STM32H7B3xx) || defined(STM32H7B3xxQ)
+    ADC12_COMMON->CCR = 3 << ADC_CCR_CKMODE_Pos;
     #elif defined(STM32H7)
     ADC12_COMMON->CCR = 3 << ADC_CCR_CKMODE_Pos;
     ADC3_COMMON->CCR = 3 << ADC_CCR_CKMODE_Pos;
@@ -290,8 +292,9 @@ STATIC void adc_config_channel(ADC_TypeDef *adc, uint32_t channel, uint32_t samp
     *smpr = (*smpr & ~(7 << (channel * 3))) | sample_time << (channel * 3); // select sample time
 
     #elif defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
-
-    #if defined(STM32H7)
+    #if defined(STM32H7A3xx) || defined(STM32H7A3xxQ) || defined(STM32H7B3xx) || defined(STM32H7B3xxQ)
+    ADC_Common_TypeDef *adc_common = ADC12_COMMON;
+    #elif defined(STM32H7)
     adc->PCSEL |= 1 << channel;
     ADC_Common_TypeDef *adc_common = adc == ADC3 ? ADC3_COMMON : ADC12_COMMON;
     #elif defined(STM32L4)
@@ -331,7 +334,7 @@ STATIC uint32_t adc_read_channel(ADC_TypeDef *adc) {
     return value;
 }
 
-STATIC uint32_t adc_config_and_read_u16(ADC_TypeDef *adc, uint32_t channel, uint32_t sample_time) {
+uint32_t adc_config_and_read_u16(ADC_TypeDef *adc, uint32_t channel, uint32_t sample_time) {
     if (channel == ADC_CHANNEL_VREF) {
         return 0xffff;
     }
@@ -356,6 +359,8 @@ STATIC uint32_t adc_config_and_read_u16(ADC_TypeDef *adc, uint32_t channel, uint
 
 /******************************************************************************/
 // MicroPython bindings for machine.ADC
+
+#if !BUILDING_MBOOT
 
 const mp_obj_type_t machine_adc_type;
 
@@ -411,7 +416,7 @@ STATIC mp_obj_t machine_adc_make_new(const mp_obj_type_t *type, size_t n_args, s
         } else if (pin->adc_num & PIN_ADC2) {
             adc = ADC2;
         #endif
-        #if defined(ADC2)
+        #if defined(ADC3)
         } else if (pin->adc_num & PIN_ADC3) {
             adc = ADC3;
         #endif
@@ -462,3 +467,5 @@ const mp_obj_type_t machine_adc_type = {
     .make_new = machine_adc_make_new,
     .locals_dict = (mp_obj_dict_t *)&machine_adc_locals_dict,
 };
+
+#endif

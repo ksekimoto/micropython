@@ -32,17 +32,17 @@ extern "C" {
 #include <stdio.h>
 #include <stddef.h>
 
-struct block{
- size_t size;
- int free;
- struct block *next;
+struct block {
+    size_t size;
+    int free;
+    struct block *next;
 };
 
 void tinymalloc_init(void *memory, size_t size);
 void split(struct block *fitting_slot,size_t size);
 void *tinymalloc(size_t noOfBytes);
 void merge();
-void tinyfree(void* ptr);
+void tinyfree(void *ptr);
 
 #ifdef  __cplusplus
 }

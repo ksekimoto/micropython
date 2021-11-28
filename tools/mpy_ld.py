@@ -48,7 +48,6 @@ MP_CODE_NATIVE_VIPER = 4
 MP_SCOPE_FLAG_VIPERRELOC = 0x10
 MP_SCOPE_FLAG_VIPERRODATA = 0x20
 MP_SCOPE_FLAG_VIPERBSS = 0x40
-MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE = 1
 MICROPY_PY_BUILTINS_STR_UNICODE = 2
 MP_SMALL_INT_BITS = 31
 QSTR_WINDOW_SIZE = 32
@@ -73,6 +72,7 @@ R_XTENSA_SLOT0_OP = 20
 R_ARM_BASE_PREL = 25  # aka R_ARM_GOTPC
 R_ARM_GOT_BREL = 26  # aka R_ARM_GOT32
 R_ARM_THM_JUMP24 = 30
+R_X86_64_GOTPCREL = 9
 R_X86_64_REX_GOTPCRELX = 42
 R_386_GOT32X = 43
 
@@ -117,9 +117,7 @@ class ArchData:
 ARCH_DATA = {
     "x86": ArchData(
         "EM_386",
-        MP_NATIVE_ARCH_X86 << 2
-        | MICROPY_PY_BUILTINS_STR_UNICODE
-        | MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE,
+        MP_NATIVE_ARCH_X86 << 2 | MICROPY_PY_BUILTINS_STR_UNICODE,
         2,
         4,
         (R_386_PC32, R_386_GOT32, R_386_GOT32X),
@@ -127,12 +125,10 @@ ARCH_DATA = {
     ),
     "x64": ArchData(
         "EM_X86_64",
-        MP_NATIVE_ARCH_X64 << 2
-        | MICROPY_PY_BUILTINS_STR_UNICODE
-        | MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE,
+        MP_NATIVE_ARCH_X64 << 2 | MICROPY_PY_BUILTINS_STR_UNICODE,
         2,
         8,
-        (R_X86_64_REX_GOTPCRELX,),
+        (R_X86_64_GOTPCREL, R_X86_64_REX_GOTPCRELX),
         asm_jump_x86,
     ),
     "armv7m": ArchData(
@@ -536,7 +532,10 @@ def do_relocation_text(env, text_addr, r):
         # Relcation pointing to GOT
         reloc = addr = env.got_entries[s.name].offset
 
-    elif env.arch.name == "EM_X86_64" and r_info_type == R_X86_64_REX_GOTPCRELX:
+    elif env.arch.name == "EM_X86_64" and r_info_type in (
+        R_X86_64_GOTPCREL,
+        R_X86_64_REX_GOTPCRELX,
+    ):
         # Relcation pointing to GOT
         got_entry = env.got_entries[s.name]
         addr = env.got_section.addr + got_entry.offset

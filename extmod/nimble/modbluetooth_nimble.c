@@ -48,6 +48,11 @@
 #include "nimble/host/src/ble_l2cap_priv.h"
 #endif
 
+#if MICROPY_PY_BLUETOOTH_ENABLE_HCI_CMD || MICROPY_BLUETOOTH_USE_ZEPHYR_STATIC_ADDRESS
+// For ble_hs_hci_cmd_tx
+#include "nimble/host/src/ble_hs_hci_priv.h"
+#endif
+
 #ifndef MICROPY_PY_BLUETOOTH_DEFAULT_GAP_NAME
 #define MICROPY_PY_BLUETOOTH_DEFAULT_GAP_NAME "MPY NIMBLE"
 #endif
@@ -74,6 +79,69 @@ STATIC int8_t ble_hs_err_to_errno_table[] = {
     [BLE_HS_EBUSY] = MP_EBUSY,
     [BLE_HS_EBADDATA] = MP_EINVAL,
 };
+
+STATIC int ble_hs_err_to_errno(int err);
+
+STATIC ble_uuid_t *create_nimble_uuid(const mp_obj_bluetooth_uuid_t *uuid, ble_uuid_any_t *storage);
+STATIC void reverse_addr_byte_order(uint8_t *addr_out, const uint8_t *addr_in);
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
+STATIC mp_obj_bluetooth_uuid_t create_mp_uuid(const ble_uuid_any_t *uuid);
+STATIC ble_addr_t create_nimble_addr(uint8_t addr_type, const uint8_t *addr);
+#endif
+
+STATIC void reset_cb(int reason);
+
+STATIC bool has_public_address(void);
+STATIC void set_random_address(bool nrpa);
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
+STATIC int load_irk(void);
+#endif
+
+STATIC void sync_cb(void);
+
+#if !MICROPY_BLUETOOTH_NIMBLE_BINDINGS_ONLY
+STATIC void ble_hs_shutdown_stop_cb(int status, void *arg);
+#endif
+
+// Successfully registered service/char/desc handles.
+STATIC void gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
+
+// Events about a connected central (we're in peripheral role).
+STATIC int central_gap_event_cb(struct ble_gap_event *event, void *arg);
+#if MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
+// Events about a connected peripheral (we're in central role).
+STATIC int peripheral_gap_event_cb(struct ble_gap_event *event, void *arg);
+#endif
+// Used by both of the above.
+STATIC int commmon_gap_event_cb(struct ble_gap_event *event, void *arg);
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
+// Scan results.
+STATIC int gap_scan_cb(struct ble_gap_event *event, void *arg);
+#endif
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_GATT_CLIENT
+// Data available (either due to notify/indicate or successful read).
+STATIC void gattc_on_data_available(uint8_t event, uint16_t conn_handle, uint16_t value_handle, const struct os_mbuf *om);
+
+// Client discovery callbacks.
+STATIC int ble_gattc_service_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_svc *service, void *arg);
+STATIC int ble_gattc_characteristic_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_chr *characteristic, void *arg);
+STATIC int ble_gattc_descriptor_cb(uint16_t conn_handle, const struct ble_gatt_error *error, uint16_t characteristic_val_handle, const struct ble_gatt_dsc *descriptor, void *arg);
+
+// Client read/write handlers.
+STATIC int ble_gattc_attr_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg);
+STATIC int ble_gattc_attr_write_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg);
+#endif
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
+// Bonding store.
+STATIC int ble_secret_store_read(int obj_type, const union ble_store_key *key, union ble_store_value *value);
+STATIC int ble_secret_store_write(int obj_type, const union ble_store_value *val);
+STATIC int ble_secret_store_delete(int obj_type, const union ble_store_key *key);
+#endif
 
 STATIC int ble_hs_err_to_errno(int err) {
     DEBUG_printf("ble_hs_err_to_errno: %d\n", err);
@@ -178,6 +246,14 @@ STATIC void set_random_address(bool nrpa) {
         addr = create_nimble_addr(BLE_ADDR_RANDOM, hal_mac_addr);
         // Mark it as STATIC (not RPA or NRPA).
         addr.val[5] |= 0xc0;
+    } else
+    #elif MICROPY_BLUETOOTH_USE_ZEPHYR_STATIC_ADDRESS
+    if (!nrpa) {
+        DEBUG_printf("set_random_address: Generating static address from Zephyr controller\n");
+        uint8_t buf[23];
+        rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_VENDOR, 0x09), NULL, 0, buf, sizeof(buf));
+        assert(rc == 0);
+        memcpy(addr.val, buf + 1, 6);
     } else
     #endif
     {
@@ -321,8 +397,54 @@ STATIC void gatts_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
     }
 }
 
-STATIC int gap_event_cb(struct ble_gap_event *event, void *arg) {
-    DEBUG_printf("gap_event_cb: type=%d\n", event->type);
+STATIC int commmon_gap_event_cb(struct ble_gap_event *event, void *arg) {
+    struct ble_gap_conn_desc desc;
+
+    switch (event->type) {
+        #if MICROPY_PY_BLUETOOTH_ENABLE_GATT_CLIENT
+        case BLE_GAP_EVENT_NOTIFY_RX: {
+            uint16_t ev = event->notify_rx.indication == 0 ? MP_BLUETOOTH_IRQ_GATTC_NOTIFY : MP_BLUETOOTH_IRQ_GATTC_INDICATE;
+            gattc_on_data_available(ev, event->notify_rx.conn_handle, event->notify_rx.attr_handle, event->notify_rx.om);
+            return 0;
+        }
+        #endif // MICROPY_PY_BLUETOOTH_ENABLE_GATT_CLIENT
+
+        case BLE_GAP_EVENT_CONN_UPDATE: {
+            DEBUG_printf("commmon_gap_event_cb: connection update: status=%d\n", event->conn_update.status);
+            if (ble_gap_conn_find(event->conn_update.conn_handle, &desc) == 0) {
+                mp_bluetooth_gap_on_connection_update(event->conn_update.conn_handle, desc.conn_itvl, desc.conn_latency, desc.supervision_timeout, event->conn_update.status == 0 ? 0 : 1);
+            }
+            return 0;
+        }
+
+        case BLE_GAP_EVENT_MTU: {
+            if (event->mtu.channel_id == BLE_L2CAP_CID_ATT) {
+                DEBUG_printf("commmon_gap_event_cb: mtu update: conn_handle=%d cid=%d mtu=%d\n", event->mtu.conn_handle, event->mtu.channel_id, event->mtu.value);
+                mp_bluetooth_gatts_on_mtu_exchanged(event->mtu.conn_handle, event->mtu.value);
+            }
+            return 0;
+        }
+
+        case BLE_GAP_EVENT_ENC_CHANGE: {
+            DEBUG_printf("commmon_gap_event_cb: enc change: status=%d\n", event->enc_change.status);
+            #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
+            if (ble_gap_conn_find(event->enc_change.conn_handle, &desc) == 0) {
+                mp_bluetooth_gatts_on_encryption_update(event->conn_update.conn_handle,
+                    desc.sec_state.encrypted, desc.sec_state.authenticated,
+                    desc.sec_state.bonded, desc.sec_state.key_size);
+            }
+            #endif
+            return 0;
+        }
+
+        default:
+            DEBUG_printf("commmon_gap_event_cb: unknown type %d\n", event->type);
+            return 0;
+    }
+}
+
+STATIC int central_gap_event_cb(struct ble_gap_event *event, void *arg) {
+    DEBUG_printf("central_gap_event_cb: type=%d\n", event->type);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -331,7 +453,7 @@ STATIC int gap_event_cb(struct ble_gap_event *event, void *arg) {
 
     switch (event->type) {
         case BLE_GAP_EVENT_CONNECT:
-            DEBUG_printf("gap_event_cb: connect: status=%d\n", event->connect.status);
+            DEBUG_printf("central_gap_event_cb: connect: status=%d\n", event->connect.status);
             if (event->connect.status == 0) {
                 // Connection established.
                 ble_gap_conn_find(event->connect.conn_handle, &desc);
@@ -341,60 +463,32 @@ STATIC int gap_event_cb(struct ble_gap_event *event, void *arg) {
                 // Connection failed.
                 mp_bluetooth_gap_on_connected_disconnected(MP_BLUETOOTH_IRQ_CENTRAL_DISCONNECT, event->connect.conn_handle, 0xff, addr);
             }
-            break;
+            return 0;
 
         case BLE_GAP_EVENT_DISCONNECT:
             // Disconnect.
-            DEBUG_printf("gap_event_cb: disconnect: reason=%d\n", event->disconnect.reason);
+            DEBUG_printf("central_gap_event_cb: disconnect: reason=%d\n", event->disconnect.reason);
             reverse_addr_byte_order(addr, event->disconnect.conn.peer_id_addr.val);
             mp_bluetooth_gap_on_connected_disconnected(MP_BLUETOOTH_IRQ_CENTRAL_DISCONNECT, event->disconnect.conn.conn_handle, event->disconnect.conn.peer_id_addr.type, addr);
-            break;
+            return 0;
 
         case BLE_GAP_EVENT_NOTIFY_TX: {
-            DEBUG_printf("gap_event_cb: notify_tx: %d %d\n", event->notify_tx.indication, event->notify_tx.status);
+            DEBUG_printf("central_gap_event_cb: notify_tx: %d %d\n", event->notify_tx.indication, event->notify_tx.status);
             // This event corresponds to either a sent notify/indicate (status == 0), or an indication confirmation (status != 0).
             if (event->notify_tx.indication && event->notify_tx.status != 0) {
                 // Map "done/ack" to 0, otherwise pass the status directly.
                 mp_bluetooth_gatts_on_indicate_complete(event->notify_tx.conn_handle, event->notify_tx.attr_handle, event->notify_tx.status == BLE_HS_EDONE ? 0 : event->notify_tx.status);
             }
-            break;
-        }
-
-        case BLE_GAP_EVENT_MTU: {
-            if (event->mtu.channel_id == BLE_L2CAP_CID_ATT) {
-                DEBUG_printf("gap_event_cb: mtu update: conn_handle=%d cid=%d mtu=%d\n", event->mtu.conn_handle, event->mtu.channel_id, event->mtu.value);
-                mp_bluetooth_gatts_on_mtu_exchanged(event->mtu.conn_handle, event->mtu.value);
-            }
-            break;
+            return 0;
         }
 
         case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
-            DEBUG_printf("gap_event_cb: phy update: %d\n", event->phy_updated.tx_phy);
-            break;
-
-        case BLE_GAP_EVENT_CONN_UPDATE: {
-            DEBUG_printf("gap_event_cb: connection update: status=%d\n", event->conn_update.status);
-            if (ble_gap_conn_find(event->conn_update.conn_handle, &desc) == 0) {
-                mp_bluetooth_gap_on_connection_update(event->conn_update.conn_handle, desc.conn_itvl, desc.conn_latency, desc.supervision_timeout, event->conn_update.status == 0 ? 0 : 1);
-            }
-            break;
-        }
-
-        case BLE_GAP_EVENT_ENC_CHANGE: {
-            DEBUG_printf("gap_event_cb: enc change: status=%d\n", event->enc_change.status);
-            #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
-            if (ble_gap_conn_find(event->enc_change.conn_handle, &desc) == 0) {
-                mp_bluetooth_gatts_on_encryption_update(event->conn_update.conn_handle,
-                    desc.sec_state.encrypted, desc.sec_state.authenticated,
-                    desc.sec_state.bonded, desc.sec_state.key_size);
-            }
-            #endif
-            break;
-        }
+            DEBUG_printf("central_gap_event_cb: phy update: %d\n", event->phy_updated.tx_phy);
+            return 0;
 
         case BLE_GAP_EVENT_REPEAT_PAIRING: {
             // We recognized this peer but the peer doesn't recognize us.
-            DEBUG_printf("gap_event_cb: repeat pairing: conn_handle=%d\n", event->repeat_pairing.conn_handle);
+            DEBUG_printf("central_gap_event_cb: repeat pairing: conn_handle=%d\n", event->repeat_pairing.conn_handle);
 
             // TODO: Consider returning BLE_GAP_REPEAT_PAIRING_IGNORE (and
             // possibly an API to configure this).
@@ -410,7 +504,7 @@ STATIC int gap_event_cb(struct ble_gap_event *event, void *arg) {
         }
 
         case BLE_GAP_EVENT_PASSKEY_ACTION: {
-            DEBUG_printf("gap_event_cb: passkey action: conn_handle=%d action=%d num=" UINT_FMT "\n", event->passkey.conn_handle, event->passkey.params.action, (mp_uint_t)event->passkey.params.numcmp);
+            DEBUG_printf("central_gap_event_cb: passkey action: conn_handle=%d action=%d num=" UINT_FMT "\n", event->passkey.conn_handle, event->passkey.params.action, (mp_uint_t)event->passkey.params.numcmp);
 
             #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
             mp_bluetooth_gap_on_passkey_action(event->passkey.conn_handle, event->passkey.params.action, event->passkey.params.numcmp);
@@ -419,11 +513,13 @@ STATIC int gap_event_cb(struct ble_gap_event *event, void *arg) {
             return 0;
         }
 
-        default:
-            DEBUG_printf("gap_event_cb: unknown type %d\n", event->type);
-            break;
+        case BLE_GAP_EVENT_SUBSCRIBE: {
+            DEBUG_printf("central_gap_event_cb: subscribe: handle=%d, reason=%d notify=%d indicate=%d \n", event->subscribe.attr_handle, event->subscribe.reason, event->subscribe.cur_notify, event->subscribe.cur_indicate);
+            return 0;
+        }
     }
-    return 0;
+
+    return commmon_gap_event_cb(event, arg);
 }
 
 #if !MICROPY_BLUETOOTH_NIMBLE_BINDINGS_ONLY
@@ -507,6 +603,12 @@ int mp_bluetooth_init(void) {
     ble_hs_cfg.sync_cb = sync_cb;
     ble_hs_cfg.gatts_register_cb = gatts_register_cb;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
+
+    #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
+    ble_hs_cfg.store_read_cb = ble_secret_store_read;
+    ble_hs_cfg.store_write_cb = ble_secret_store_write;
+    ble_hs_cfg.store_delete_cb = ble_secret_store_delete;
+    #endif // MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
 
     MP_STATE_PORT(bluetooth_nimble_root_pointers) = m_new0(mp_bluetooth_nimble_root_pointers_t, 1);
     mp_bluetooth_gatts_db_create(&MP_STATE_PORT(bluetooth_nimble_root_pointers)->gatts_db);
@@ -725,7 +827,7 @@ int mp_bluetooth_gap_advertise_start(bool connectable, int32_t interval_us, cons
         .channel_map = 7, // all 3 channels.
     };
 
-    ret = ble_gap_adv_start(nimble_address_mode, NULL, BLE_HS_FOREVER, &adv_params, gap_event_cb, NULL);
+    ret = ble_gap_adv_start(nimble_address_mode, NULL, BLE_HS_FOREVER, &adv_params, central_gap_event_cb, NULL);
     if (ret == 0) {
         return 0;
     }
@@ -913,11 +1015,15 @@ int mp_bluetooth_gatts_read(uint16_t value_handle, uint8_t **value, size_t *valu
     return mp_bluetooth_gatts_db_read(MP_STATE_PORT(bluetooth_nimble_root_pointers)->gatts_db, value_handle, value, value_len);
 }
 
-int mp_bluetooth_gatts_write(uint16_t value_handle, const uint8_t *value, size_t value_len) {
+int mp_bluetooth_gatts_write(uint16_t value_handle, const uint8_t *value, size_t value_len, bool send_update) {
     if (!mp_bluetooth_is_active()) {
         return ERRNO_BLUETOOTH_NOT_ACTIVE;
     }
-    return mp_bluetooth_gatts_db_write(MP_STATE_PORT(bluetooth_nimble_root_pointers)->gatts_db, value_handle, value, value_len);
+    int err = mp_bluetooth_gatts_db_write(MP_STATE_PORT(bluetooth_nimble_root_pointers)->gatts_db, value_handle, value, value_len);
+    if (err == 0 && send_update) {
+        ble_gatts_chr_updated(value_handle);
+    }
+    return err;
 }
 
 // TODO: Could use ble_gatts_chr_updated to send to all subscribed centrals.
@@ -939,7 +1045,6 @@ int mp_bluetooth_gatts_notify_send(uint16_t conn_handle, uint16_t value_handle, 
     if (om == NULL) {
         return MP_ENOMEM;
     }
-    // TODO: check that notify_custom takes ownership of om, if not os_mbuf_free_chain(om).
     return ble_hs_err_to_errno(ble_gattc_notify_custom(conn_handle, value_handle, om));
 }
 
@@ -1011,38 +1116,6 @@ int mp_bluetooth_gap_passkey(uint16_t conn_handle, uint8_t action, mp_int_t pass
 #endif // MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
 
 #if MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
-
-STATIC void gattc_on_data_available(uint8_t event, uint16_t conn_handle, uint16_t value_handle, const struct os_mbuf *om) {
-    // When the HCI data for an ATT payload arrives, the L2CAP channel will
-    // buffer it into its receive buffer. We set BLE_L2CAP_JOIN_RX_FRAGS=1 in
-    // syscfg.h so it should be rare that the mbuf is fragmented, but we do need
-    // to be able to handle it. We pass all the fragments up to modbluetooth.c
-    // which will create a temporary buffer on the MicroPython heap if necessary
-    // to re-assemble them.
-
-    // Count how many links are in the mbuf chain.
-    size_t n = 0;
-    const struct os_mbuf *elem = om;
-    while (elem) {
-        n += 1;
-        elem = SLIST_NEXT(elem, om_next);
-    }
-
-    // Grab data pointers and lengths for each of the links.
-    const uint8_t **data = mp_local_alloc(sizeof(uint8_t *) * n);
-    uint16_t *data_len = mp_local_alloc(sizeof(uint16_t) * n);
-    for (size_t i = 0; i < n; ++i) {
-        data[i] = OS_MBUF_DATA(om, const uint8_t *);
-        data_len[i] = om->om_len;
-        om = SLIST_NEXT(om, om_next);
-    }
-
-    // Pass all the fragments together.
-    mp_bluetooth_gattc_on_data_available(event, conn_handle, value_handle, data, data_len, n);
-
-    mp_local_free(data_len);
-    mp_local_free(data);
-}
 
 STATIC int gap_scan_cb(struct ble_gap_event *event, void *arg) {
     DEBUG_printf("gap_scan_cb: event=%d type=%d\n", event->type, event->type == BLE_GAP_EVENT_DISC ? event->disc.event_type : -1);
@@ -1122,59 +1195,20 @@ STATIC int peripheral_gap_event_cb(struct ble_gap_event *event, void *arg) {
                 // Connection failed.
                 mp_bluetooth_gap_on_connected_disconnected(MP_BLUETOOTH_IRQ_PERIPHERAL_DISCONNECT, event->connect.conn_handle, 0xff, addr);
             }
-            break;
+            return 0;
 
         case BLE_GAP_EVENT_DISCONNECT:
             // Disconnect.
             DEBUG_printf("peripheral_gap_event_cb: reason=%d\n", event->disconnect.reason);
             reverse_addr_byte_order(addr, event->disconnect.conn.peer_id_addr.val);
             mp_bluetooth_gap_on_connected_disconnected(MP_BLUETOOTH_IRQ_PERIPHERAL_DISCONNECT, event->disconnect.conn.conn_handle, event->disconnect.conn.peer_id_addr.type, addr);
-
-            break;
-
-        case BLE_GAP_EVENT_NOTIFY_RX: {
-            uint16_t ev = event->notify_rx.indication == 0 ? MP_BLUETOOTH_IRQ_GATTC_NOTIFY : MP_BLUETOOTH_IRQ_GATTC_INDICATE;
-            gattc_on_data_available(ev, event->notify_rx.conn_handle, event->notify_rx.attr_handle, event->notify_rx.om);
-            break;
-        }
-
-        case BLE_GAP_EVENT_CONN_UPDATE: {
-            DEBUG_printf("peripheral_gap_event_cb: connection update: status=%d\n", event->conn_update.status);
-            if (ble_gap_conn_find(event->conn_update.conn_handle, &desc) == 0) {
-                mp_bluetooth_gap_on_connection_update(event->conn_update.conn_handle, desc.conn_itvl, desc.conn_latency, desc.supervision_timeout, event->conn_update.status == 0 ? 0 : 1);
-            }
-            break;
-        }
-
-        case BLE_GAP_EVENT_MTU: {
-            if (event->mtu.channel_id == BLE_L2CAP_CID_ATT) {
-                DEBUG_printf("peripheral_gap_event_cb: mtu update: conn_handle=%d cid=%d mtu=%d\n", event->mtu.conn_handle, event->mtu.channel_id, event->mtu.value);
-                mp_bluetooth_gatts_on_mtu_exchanged(event->mtu.conn_handle, event->mtu.value);
-            }
-            break;
-        }
-
-        case BLE_GAP_EVENT_ENC_CHANGE: {
-            DEBUG_printf("peripheral_gap_event_cb: enc change: status=%d\n", event->enc_change.status);
-            #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
-            if (ble_gap_conn_find(event->enc_change.conn_handle, &desc) == 0) {
-                mp_bluetooth_gatts_on_encryption_update(event->conn_update.conn_handle,
-                    desc.sec_state.encrypted, desc.sec_state.authenticated,
-                    desc.sec_state.bonded, desc.sec_state.key_size);
-            }
-            #endif
-            break;
-        }
-
-        default:
-            DEBUG_printf("peripheral_gap_event_cb: unknown type %d\n", event->type);
-            break;
+            return 0;
     }
 
-    return 0;
+    return commmon_gap_event_cb(event, arg);
 }
 
-int mp_bluetooth_gap_peripheral_connect(uint8_t addr_type, const uint8_t *addr, int32_t duration_ms) {
+int mp_bluetooth_gap_peripheral_connect(uint8_t addr_type, const uint8_t *addr, int32_t duration_ms, int32_t min_conn_interval_us, int32_t max_conn_interval_us) {
     DEBUG_printf("mp_bluetooth_gap_peripheral_connect\n");
     if (!mp_bluetooth_is_active()) {
         return ERRNO_BLUETOOTH_NOT_ACTIVE;
@@ -1183,12 +1217,14 @@ int mp_bluetooth_gap_peripheral_connect(uint8_t addr_type, const uint8_t *addr, 
         mp_bluetooth_gap_scan_stop();
     }
 
-    // TODO: This is the same as ble_gap_conn_params_dflt (i.e. passing NULL).
-    STATIC const struct ble_gap_conn_params params = {
+    uint16_t conn_interval_min = min_conn_interval_us ? min_conn_interval_us / BLE_HCI_CONN_ITVL : BLE_GAP_INITIAL_CONN_ITVL_MIN;
+    uint16_t conn_interval_max = max_conn_interval_us ? max_conn_interval_us / BLE_HCI_CONN_ITVL : BLE_GAP_INITIAL_CONN_ITVL_MAX;
+
+    const struct ble_gap_conn_params params = {
         .scan_itvl = 0x0010,
         .scan_window = 0x0010,
-        .itvl_min = BLE_GAP_INITIAL_CONN_ITVL_MIN,
-        .itvl_max = BLE_GAP_INITIAL_CONN_ITVL_MAX,
+        .itvl_min = conn_interval_min,
+        .itvl_max = conn_interval_max,
         .latency = BLE_GAP_INITIAL_CONN_LATENCY,
         .supervision_timeout = BLE_GAP_INITIAL_SUPERVISION_TIMEOUT,
         .min_ce_len = BLE_GAP_INITIAL_CONN_MIN_CE_LEN,
@@ -1200,8 +1236,8 @@ int mp_bluetooth_gap_peripheral_connect(uint8_t addr_type, const uint8_t *addr, 
     return ble_hs_err_to_errno(err);
 }
 
-STATIC int peripheral_discover_service_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_svc *service, void *arg) {
-    DEBUG_printf("peripheral_discover_service_cb: conn_handle=%d status=%d start_handle=%d\n", conn_handle, error->status, service ? service->start_handle : -1);
+STATIC int ble_gattc_service_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_svc *service, void *arg) {
+    DEBUG_printf("ble_gattc_service_cb: conn_handle=%d status=%d start_handle=%d\n", conn_handle, error->status, service ? service->start_handle : -1);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -1214,6 +1250,42 @@ STATIC int peripheral_discover_service_cb(uint16_t conn_handle, const struct ble
     return 0;
 }
 
+#endif // MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_GATT_CLIENT
+
+STATIC void gattc_on_data_available(uint8_t event, uint16_t conn_handle, uint16_t value_handle, const struct os_mbuf *om) {
+    // When the HCI data for an ATT payload arrives, the L2CAP channel will
+    // buffer it into its receive buffer. We set BLE_L2CAP_JOIN_RX_FRAGS=1 in
+    // syscfg.h so it should be rare that the mbuf is fragmented, but we do need
+    // to be able to handle it. We pass all the fragments up to modbluetooth.c
+    // which will create a temporary buffer on the MicroPython heap if necessary
+    // to re-assemble them.
+
+    // Count how many links are in the mbuf chain.
+    size_t n = 0;
+    const struct os_mbuf *elem = om;
+    while (elem) {
+        n += 1;
+        elem = SLIST_NEXT(elem, om_next);
+    }
+
+    // Grab data pointers and lengths for each of the links.
+    const uint8_t **data = mp_local_alloc(sizeof(uint8_t *) * n);
+    uint16_t *data_len = mp_local_alloc(sizeof(uint16_t) * n);
+    for (size_t i = 0; i < n; ++i) {
+        data[i] = OS_MBUF_DATA(om, const uint8_t *);
+        data_len[i] = om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    // Pass all the fragments together.
+    mp_bluetooth_gattc_on_data_available(event, conn_handle, value_handle, data, data_len, n);
+
+    mp_local_free(data_len);
+    mp_local_free(data);
+}
+
 int mp_bluetooth_gattc_discover_primary_services(uint16_t conn_handle, const mp_obj_bluetooth_uuid_t *uuid) {
     if (!mp_bluetooth_is_active()) {
         return ERRNO_BLUETOOTH_NOT_ACTIVE;
@@ -1222,15 +1294,15 @@ int mp_bluetooth_gattc_discover_primary_services(uint16_t conn_handle, const mp_
     if (uuid) {
         ble_uuid_any_t nimble_uuid;
         create_nimble_uuid(uuid, &nimble_uuid);
-        err = ble_gattc_disc_svc_by_uuid(conn_handle, &nimble_uuid.u, &peripheral_discover_service_cb, NULL);
+        err = ble_gattc_disc_svc_by_uuid(conn_handle, &nimble_uuid.u, &ble_gattc_service_cb, NULL);
     } else {
-        err = ble_gattc_disc_all_svcs(conn_handle, &peripheral_discover_service_cb, NULL);
+        err = ble_gattc_disc_all_svcs(conn_handle, &ble_gattc_service_cb, NULL);
     }
     return ble_hs_err_to_errno(err);
 }
 
-STATIC int ble_gatt_characteristic_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_chr *characteristic, void *arg) {
-    DEBUG_printf("ble_gatt_characteristic_cb: conn_handle=%d status=%d def_handle=%d val_handle=%d\n", conn_handle, error->status, characteristic ? characteristic->def_handle : -1, characteristic ? characteristic->val_handle : -1);
+STATIC int ble_gattc_characteristic_cb(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_chr *characteristic, void *arg) {
+    DEBUG_printf("ble_gattc_characteristic_cb: conn_handle=%d status=%d def_handle=%d val_handle=%d\n", conn_handle, error->status, characteristic ? characteristic->def_handle : -1, characteristic ? characteristic->val_handle : -1);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -1251,15 +1323,15 @@ int mp_bluetooth_gattc_discover_characteristics(uint16_t conn_handle, uint16_t s
     if (uuid) {
         ble_uuid_any_t nimble_uuid;
         create_nimble_uuid(uuid, &nimble_uuid);
-        err = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle, &nimble_uuid.u, &ble_gatt_characteristic_cb, NULL);
+        err = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle, &nimble_uuid.u, &ble_gattc_characteristic_cb, NULL);
     } else {
-        err = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle, &ble_gatt_characteristic_cb, NULL);
+        err = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle, &ble_gattc_characteristic_cb, NULL);
     }
     return ble_hs_err_to_errno(err);
 }
 
-STATIC int ble_gatt_descriptor_cb(uint16_t conn_handle, const struct ble_gatt_error *error, uint16_t characteristic_val_handle, const struct ble_gatt_dsc *descriptor, void *arg) {
-    DEBUG_printf("ble_gatt_descriptor_cb: conn_handle=%d status=%d chr_handle=%d dsc_handle=%d\n", conn_handle, error->status, characteristic_val_handle, descriptor ? descriptor->handle : -1);
+STATIC int ble_gattc_descriptor_cb(uint16_t conn_handle, const struct ble_gatt_error *error, uint16_t characteristic_val_handle, const struct ble_gatt_dsc *descriptor, void *arg) {
+    DEBUG_printf("ble_gattc_descriptor_cb: conn_handle=%d status=%d chr_handle=%d dsc_handle=%d\n", conn_handle, error->status, characteristic_val_handle, descriptor ? descriptor->handle : -1);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -1276,13 +1348,13 @@ int mp_bluetooth_gattc_discover_descriptors(uint16_t conn_handle, uint16_t start
     if (!mp_bluetooth_is_active()) {
         return ERRNO_BLUETOOTH_NOT_ACTIVE;
     }
-    int err = ble_gattc_disc_all_dscs(conn_handle, start_handle, end_handle, &ble_gatt_descriptor_cb, NULL);
+    int err = ble_gattc_disc_all_dscs(conn_handle, start_handle, end_handle, &ble_gattc_descriptor_cb, NULL);
     return ble_hs_err_to_errno(err);
 }
 
-STATIC int ble_gatt_attr_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
+STATIC int ble_gattc_attr_read_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
     uint16_t handle = attr ? attr->handle : (error ? error->att_handle : 0xffff);
-    DEBUG_printf("ble_gatt_attr_read_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
+    DEBUG_printf("ble_gattc_attr_read_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -1298,13 +1370,13 @@ int mp_bluetooth_gattc_read(uint16_t conn_handle, uint16_t value_handle) {
     if (!mp_bluetooth_is_active()) {
         return ERRNO_BLUETOOTH_NOT_ACTIVE;
     }
-    int err = ble_gattc_read(conn_handle, value_handle, &ble_gatt_attr_read_cb, NULL);
+    int err = ble_gattc_read(conn_handle, value_handle, &ble_gattc_attr_read_cb, NULL);
     return ble_hs_err_to_errno(err);
 }
 
-STATIC int ble_gatt_attr_write_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
+STATIC int ble_gattc_attr_write_cb(uint16_t conn_handle, const struct ble_gatt_error *error, struct ble_gatt_attr *attr, void *arg) {
     uint16_t handle = attr ? attr->handle : (error ? error->att_handle : 0xffff);
-    DEBUG_printf("ble_gatt_attr_write_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
+    DEBUG_printf("ble_gattc_attr_write_cb: conn_handle=%d status=%d handle=%d\n", conn_handle, error->status, handle);
     if (!mp_bluetooth_is_active()) {
         return 0;
     }
@@ -1321,7 +1393,7 @@ int mp_bluetooth_gattc_write(uint16_t conn_handle, uint16_t value_handle, const 
     if (mode == MP_BLUETOOTH_WRITE_MODE_NO_RESPONSE) {
         err = ble_gattc_write_no_rsp_flat(conn_handle, value_handle, value, *value_len);
     } else if (mode == MP_BLUETOOTH_WRITE_MODE_WITH_RESPONSE) {
-        err = ble_gattc_write_flat(conn_handle, value_handle, value, *value_len, &ble_gatt_attr_write_cb, NULL);
+        err = ble_gattc_write_flat(conn_handle, value_handle, value, *value_len, &ble_gattc_attr_write_cb, NULL);
     } else {
         err = BLE_HS_EINVAL;
     }
@@ -1335,7 +1407,19 @@ int mp_bluetooth_gattc_exchange_mtu(uint16_t conn_handle) {
     return ble_hs_err_to_errno(ble_gattc_exchange_mtu(conn_handle, NULL, NULL));
 }
 
-#endif // MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
+#endif // MICROPY_PY_BLUETOOTH_ENABLE_GATT_CLIENT
+
+#if MICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS
+STATIC void unstall_l2cap_channel(void);
+#endif
+
+void mp_bluetooth_nimble_sent_hci_packet(void) {
+    #if MICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS
+    if (os_msys_num_free() >= os_msys_count() * 3 / 4) {
+        unstall_l2cap_channel();
+    }
+    #endif
+}
 
 #if MICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS
 
@@ -1358,9 +1442,15 @@ typedef struct _mp_bluetooth_nimble_l2cap_channel_t {
     struct os_mempool sdu_mempool;
     struct os_mbuf *rx_pending;
     bool irq_in_progress;
+    bool mem_stalled;
     uint16_t mtu;
     os_membuf_t sdu_mem[];
 } mp_bluetooth_nimble_l2cap_channel_t;
+
+STATIC void destroy_l2cap_channel();
+STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg);
+STATIC mp_bluetooth_nimble_l2cap_channel_t *get_l2cap_channel_for_conn_cid(uint16_t conn_handle, uint16_t cid);
+STATIC int create_l2cap_channel(uint16_t mtu, mp_bluetooth_nimble_l2cap_channel_t **out);
 
 STATIC void destroy_l2cap_channel() {
     // Only free the l2cap channel if we're the one that initiated the connection.
@@ -1368,6 +1458,19 @@ STATIC void destroy_l2cap_channel() {
     if (!MP_STATE_PORT(bluetooth_nimble_root_pointers)->l2cap_listening) {
         MP_STATE_PORT(bluetooth_nimble_root_pointers)->l2cap_chan = NULL;
     }
+}
+
+STATIC void unstall_l2cap_channel(void) {
+    // Whenever we send an HCI packet and the sys mempool is now less than 1/4 full,
+    // we can unstall the L2CAP channel if it was marked as "mem_stalled" by
+    // mp_bluetooth_l2cap_send. (This happens if the pool is half-empty).
+    mp_bluetooth_nimble_l2cap_channel_t *chan = MP_STATE_PORT(bluetooth_nimble_root_pointers)->l2cap_chan;
+    if (!chan || !chan->mem_stalled) {
+        return;
+    }
+    DEBUG_printf("unstall_l2cap_channel: count %d, free: %d\n", os_msys_count(), os_msys_num_free());
+    chan->mem_stalled = false;
+    mp_bluetooth_on_l2cap_send_ready(chan->chan->conn_handle, chan->chan->scid, 0);
 }
 
 STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
@@ -1382,9 +1485,9 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
 
             ble_l2cap_get_chan_info(event->connect.chan, &info);
             if (event->connect.status == 0) {
-                mp_bluetooth_gattc_on_l2cap_connect(event->connect.conn_handle, info.scid, info.psm, info.our_coc_mtu, info.peer_coc_mtu);
+                mp_bluetooth_on_l2cap_connect(event->connect.conn_handle, info.scid, info.psm, info.our_coc_mtu, info.peer_coc_mtu);
             } else {
-                mp_bluetooth_gattc_on_l2cap_disconnect(event->connect.conn_handle, info.scid, info.psm, event->connect.status);
+                mp_bluetooth_on_l2cap_disconnect(event->connect.conn_handle, info.scid, info.psm, event->connect.status);
                 destroy_l2cap_channel();
             }
             break;
@@ -1392,7 +1495,7 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
         case BLE_L2CAP_EVENT_COC_DISCONNECTED: {
             DEBUG_printf("l2cap_channel_event: disconnect: conn_handle=%d\n", event->disconnect.conn_handle);
             ble_l2cap_get_chan_info(event->disconnect.chan, &info);
-            mp_bluetooth_gattc_on_l2cap_disconnect(event->disconnect.conn_handle, info.scid, info.psm, 0);
+            mp_bluetooth_on_l2cap_disconnect(event->disconnect.conn_handle, info.scid, info.psm, 0);
             destroy_l2cap_channel();
             break;
         }
@@ -1400,7 +1503,7 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
             DEBUG_printf("l2cap_channel_event: accept: conn_handle=%d peer_sdu_size=%d\n", event->accept.conn_handle, event->accept.peer_sdu_size);
             chan->chan = event->accept.chan;
             ble_l2cap_get_chan_info(event->accept.chan, &info);
-            int ret = mp_bluetooth_gattc_on_l2cap_accept(event->accept.conn_handle, info.scid, info.psm, info.our_coc_mtu, info.peer_coc_mtu);
+            int ret = mp_bluetooth_on_l2cap_accept(event->accept.conn_handle, info.scid, info.psm, info.our_coc_mtu, info.peer_coc_mtu);
             if (ret != 0) {
                 return ret;
             }
@@ -1448,7 +1551,7 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
             // Don't allow granting more credits until after the IRQ is handled.
             chan->irq_in_progress = true;
 
-            mp_bluetooth_gattc_on_l2cap_recv(event->receive.conn_handle, info.scid);
+            mp_bluetooth_on_l2cap_recv(event->receive.conn_handle, info.scid);
             chan->irq_in_progress = false;
 
             // If all data has been consumed by the IRQ handler, then now allow
@@ -1465,9 +1568,13 @@ STATIC int l2cap_channel_event(struct ble_l2cap_event *event, void *arg) {
         }
         case BLE_L2CAP_EVENT_COC_TX_UNSTALLED: {
             DEBUG_printf("l2cap_channel_event: tx_unstalled: conn_handle=%d status=%d\n", event->tx_unstalled.conn_handle, event->tx_unstalled.status);
-            ble_l2cap_get_chan_info(event->receive.chan, &info);
-            // Map status to {0,1} (i.e. "sent everything", or "partial send").
-            mp_bluetooth_gattc_on_l2cap_send_ready(event->tx_unstalled.conn_handle, info.scid, event->tx_unstalled.status == 0 ? 0 : 1);
+            assert(event->tx_unstalled.conn_handle == chan->chan->conn_handle);
+            // Don't unstall if we're still waiting for room in the sys pool.
+            if (!chan->mem_stalled) {
+                ble_l2cap_get_chan_info(event->receive.chan, &info);
+                // Map status to {0,1} (i.e. "sent everything", or "partial send").
+                mp_bluetooth_on_l2cap_send_ready(event->tx_unstalled.conn_handle, info.scid, event->tx_unstalled.status == 0 ? 0 : 1);
+            }
             break;
         }
         case BLE_L2CAP_EVENT_COC_RECONFIG_COMPLETED: {
@@ -1615,14 +1722,29 @@ int mp_bluetooth_l2cap_send(uint16_t conn_handle, uint16_t cid, const uint8_t *b
         return MP_ENOMEM;
     }
 
+    *stalled = false;
+
     err = ble_l2cap_send(chan->chan, sdu_tx);
     if (err == BLE_HS_ESTALLED) {
         // Stalled means that this one will still send but any future ones
         // will fail until we receive an unstalled event.
+        DEBUG_printf("mp_bluetooth_l2cap_send: credit stall\n");
         *stalled = true;
         err = 0;
     } else {
-        *stalled = false;
+        if (err) {
+            // Anything except stalled means it won't attempt to send,
+            // so free the mbuf (we're failing the op entirely).
+            os_mbuf_free_chain(sdu_tx);
+        }
+    }
+
+    if (os_msys_num_free() <= os_msys_count() / 2) {
+        // If the sys mempool is less than half-full, then back off sending more
+        // on this channel.
+        DEBUG_printf("mp_bluetooth_l2cap_send: forcing mem stall: count %d, free: %d\n", os_msys_count(), os_msys_num_free());
+        chan->mem_stalled = true;
+        *stalled = true;
     }
 
     // Other error codes such as BLE_HS_EBUSY (we're stalled) or BLE_HS_EBADDATA (bigger than MTU).
@@ -1688,9 +1810,6 @@ int mp_bluetooth_l2cap_recvinto(uint16_t conn_handle, uint16_t cid, uint8_t *buf
 
 #if MICROPY_PY_BLUETOOTH_ENABLE_HCI_CMD
 
-// For ble_hs_hci_cmd_tx
-#include "nimble/host/src/ble_hs_hci_priv.h"
-
 int mp_bluetooth_hci_cmd(uint16_t ogf, uint16_t ocf, const uint8_t *req, size_t req_len, uint8_t *resp, size_t resp_len, uint8_t *status) {
     int rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(ogf, ocf), req, req_len, resp, resp_len);
     if (rc < BLE_HS_ERR_HCI_BASE || rc >= BLE_HS_ERR_HCI_BASE + 0x100) {
@@ -1707,8 +1826,8 @@ int mp_bluetooth_hci_cmd(uint16_t ogf, uint16_t ocf, const uint8_t *req, size_t 
 
 #if MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING
 
-STATIC int ble_store_ram_read(int obj_type, const union ble_store_key *key, union ble_store_value *value) {
-    DEBUG_printf("ble_store_ram_read: %d\n", obj_type);
+STATIC int ble_secret_store_read(int obj_type, const union ble_store_key *key, union ble_store_value *value) {
+    DEBUG_printf("ble_secret_store_read: %d\n", obj_type);
     const uint8_t *key_data;
     size_t key_data_len;
 
@@ -1742,7 +1861,7 @@ STATIC int ble_store_ram_read(int obj_type, const union ble_store_key *key, unio
         }
         case BLE_STORE_OBJ_TYPE_CCCD: {
             // TODO: Implement CCCD persistence.
-            DEBUG_printf("ble_store_ram_read: CCCD not supported.\n");
+            DEBUG_printf("ble_secret_store_read: CCCD not supported.\n");
             return -1;
         }
         default:
@@ -1752,18 +1871,18 @@ STATIC int ble_store_ram_read(int obj_type, const union ble_store_key *key, unio
     const uint8_t *value_data;
     size_t value_data_len;
     if (!mp_bluetooth_gap_on_get_secret(obj_type, key->sec.idx, key_data, key_data_len, &value_data, &value_data_len)) {
-        DEBUG_printf("ble_store_ram_read: Key not found: type=%d, index=%u, key=0x%p, len=" UINT_FMT "\n", obj_type, key->sec.idx, key_data, key_data_len);
+        DEBUG_printf("ble_secret_store_read: Key not found: type=%d, index=%u, key=0x%p, len=" UINT_FMT "\n", obj_type, key->sec.idx, key_data, key_data_len);
         return BLE_HS_ENOENT;
     }
 
     if (value_data_len != sizeof(struct ble_store_value_sec)) {
-        DEBUG_printf("ble_store_ram_read: Invalid key data: actual=" UINT_FMT " expected=" UINT_FMT "\n", value_data_len, sizeof(struct ble_store_value_sec));
+        DEBUG_printf("ble_secret_store_read: Invalid key data: actual=" UINT_FMT " expected=" UINT_FMT "\n", value_data_len, sizeof(struct ble_store_value_sec));
         return BLE_HS_ENOENT;
     }
 
     memcpy((uint8_t *)&value->sec, value_data, sizeof(struct ble_store_value_sec));
 
-    DEBUG_printf("ble_store_ram_read: found secret\n");
+    DEBUG_printf("ble_secret_store_read: found secret\n");
 
     if (obj_type == BLE_STORE_OBJ_TYPE_OUR_SEC) {
         // TODO: Verify ediv_rand matches.
@@ -1772,8 +1891,8 @@ STATIC int ble_store_ram_read(int obj_type, const union ble_store_key *key, unio
     return 0;
 }
 
-STATIC int ble_store_ram_write(int obj_type, const union ble_store_value *val) {
-    DEBUG_printf("ble_store_ram_write: %d\n", obj_type);
+STATIC int ble_secret_store_write(int obj_type, const union ble_store_value *val) {
+    DEBUG_printf("ble_secret_store_write: %d\n", obj_type);
     switch (obj_type) {
         case BLE_STORE_OBJ_TYPE_PEER_SEC:
         case BLE_STORE_OBJ_TYPE_OUR_SEC: {
@@ -1791,13 +1910,13 @@ STATIC int ble_store_ram_write(int obj_type, const union ble_store_value *val) {
                 return BLE_HS_ESTORE_CAP;
             }
 
-            DEBUG_printf("ble_store_ram_write: wrote secret\n");
+            DEBUG_printf("ble_secret_store_write: wrote secret\n");
 
             return 0;
         }
         case BLE_STORE_OBJ_TYPE_CCCD: {
             // TODO: Implement CCCD persistence.
-            DEBUG_printf("ble_store_ram_write: CCCD not supported.\n");
+            DEBUG_printf("ble_secret_store_write: CCCD not supported.\n");
             // Just pretend we wrote it.
             return 0;
         }
@@ -1806,8 +1925,8 @@ STATIC int ble_store_ram_write(int obj_type, const union ble_store_value *val) {
     }
 }
 
-STATIC int ble_store_ram_delete(int obj_type, const union ble_store_key *key) {
-    DEBUG_printf("ble_store_ram_delete: %d\n", obj_type);
+STATIC int ble_secret_store_delete(int obj_type, const union ble_store_key *key) {
+    DEBUG_printf("ble_secret_store_delete: %d\n", obj_type);
     switch (obj_type) {
         case BLE_STORE_OBJ_TYPE_PEER_SEC:
         case BLE_STORE_OBJ_TYPE_OUR_SEC: {
@@ -1821,28 +1940,19 @@ STATIC int ble_store_ram_delete(int obj_type, const union ble_store_key *key) {
                 return BLE_HS_ENOENT;
             }
 
-            DEBUG_printf("ble_store_ram_delete: deleted secret\n");
+            DEBUG_printf("ble_secret_store_delete: deleted secret\n");
 
             return 0;
         }
         case BLE_STORE_OBJ_TYPE_CCCD: {
             // TODO: Implement CCCD persistence.
-            DEBUG_printf("ble_store_ram_delete: CCCD not supported.\n");
+            DEBUG_printf("ble_secret_store_delete: CCCD not supported.\n");
             // Just pretend it wasn't there.
             return BLE_HS_ENOENT;
         }
         default:
             return BLE_HS_ENOTSUP;
     }
-}
-
-// nimble_port_init always calls ble_store_ram_init. We provide this alternative
-// implementation rather than the one in nimble/store/ram/src/ble_store_ram.c.
-// TODO: Consider re-implementing nimble_port_init instead.
-void ble_store_ram_init(void) {
-    ble_hs_cfg.store_read_cb = ble_store_ram_read;
-    ble_hs_cfg.store_write_cb = ble_store_ram_write;
-    ble_hs_cfg.store_delete_cb = ble_store_ram_delete;
 }
 
 #endif // MICROPY_PY_BLUETOOTH_ENABLE_PAIRING_BONDING

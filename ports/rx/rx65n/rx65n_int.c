@@ -33,8 +33,8 @@
 #include "usb_hal.h"
 
 #if (defined(RX64M) || defined(RX65N))
-//extern void sci_isr_te(int ch);
-//extern void sci_isr_er(int ch);
+// extern void sci_isr_te(int ch);
+// extern void sci_isr_er(int ch);
 
 void set_int_state_groupbl0(int flag) {
     IEN(ICU, GROUPBL0) = 0;
@@ -174,18 +174,15 @@ void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL0(void) {
 // ICU GROUPAL1
 // vec: 113
 void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL1(void) {
-#if MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+    #if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
     if (1 == ICU.GRPAL1.BIT.IS4) {
         rx_ether_input_callback();
     }
-#endif // MICROPY_HW_ETH_RX && MICROPY_PY_LWIP
+    #endif // MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 }
 
-void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB110(void)
-{
+void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB110(void) {
     USBHALInterruptHandler();
     ICU.PIBR7.BYTE |= 0x40;
 }
 #endif
-
-

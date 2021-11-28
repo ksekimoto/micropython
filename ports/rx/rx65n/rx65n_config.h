@@ -43,14 +43,16 @@ extern "C" {
 #define PRI_TIM1    (2)     // 1ms for pendsv
 #define PRI_TIM2    (12)
 #define PRI_TIM3    (12)
-//#define PRI_USB     (14)  defined in usb_hal.h
+// #define PRI_USB     (14)  defined in usb_hal.h
 
 #if defined(USE_DBG_PRINT)
 #if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
 #endif
-#define DEBUG_TXSTR(s)  sci_tx_str(DEBUG_CH, (unsigned char *)s)
-#define DEBUG_TXCH(c)   sci_tx_ch(DEBUG_CH, c)
+// #define DEBUG_TXSTR(s)  sci_tx_str(DEBUG_CH, (unsigned char *)s)
+// #define DEBUG_TXCH(c)   sci_tx_ch(DEBUG_CH, c)
+#define DEBUG_TXSTR(S)  printf("%s", S)
+#define DEBUG_TXCH(C)   printf("%c", C)
 #else
 #define DEBUG_TXSTR(s)
 #define DEBUG_TXCH(c)

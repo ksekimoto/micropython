@@ -53,7 +53,7 @@ typedef struct _UNICODE_FONT_TBL {
 } UNICODE_FONT_TBL;
 
 #define CUNIFONT_TBL_SIZE (0x100)
-#define CUNIFONT_ARY_SIZE (0x10000/(CUNIFONT_TBL_SIZE))
+#define CUNIFONT_ARY_SIZE (0x10000 / (CUNIFONT_TBL_SIZE))
 
 typedef struct _FONT_TBL {
     int font_type;

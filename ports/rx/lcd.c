@@ -337,7 +337,7 @@ STATIC mp_obj_t pyb_lcd_command(mp_obj_t self_in, mp_obj_t instr_data_in, mp_obj
 
     // send the data
     for (uint i = 0; i < bufinfo.len; i++) {
-        lcd_out(self, instr_data, ((byte*)bufinfo.buf)[i]);
+        lcd_out(self, instr_data, ((byte *)bufinfo.buf)[i]);
     }
 
     return mp_const_none;
@@ -461,7 +461,7 @@ STATIC mp_obj_t pyb_lcd_text(size_t n_args, const mp_obj_t *args) {
     // loop over chars
     for (const char *top = data + len; data < top; data++) {
         // get char and make sure its in range of font
-        uint chr = *(byte*)data;
+        uint chr = *(byte *)data;
         if (chr < 32 || chr > 127) {
             chr = 127;
         }
@@ -530,7 +530,7 @@ const mp_obj_type_t pyb_lcd_type = {
     { &mp_type_type },
     .name = MP_QSTR_LCD,
     .make_new = pyb_lcd_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_lcd_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_lcd_locals_dict,
 };
 
 #endif // MICROPY_HW_HAS_LCD

@@ -33,25 +33,25 @@ bool sd_exists(const char *fn) {
     FRESULT res;
     FILINFO fno;
     res = f_stat(fatfs_sd, fn, &fno);
-    return (res == FR_OK);
+    return res == FR_OK;
 }
 
 bool sd_remove(const char *fn) {
     FRESULT res;
     res = f_unlink(fatfs_sd, fn);
-    return (res == FR_OK);
+    return res == FR_OK;
 }
 
 bool sd_open(FIL *fp, const char *fn, uint8_t mode) {
     FRESULT res;
     res = f_open(fatfs_sd, fp, fn, mode);
-    return (res == FR_OK);
+    return res == FR_OK;
 }
 
 int sd_read_byte(FIL *fp) {
     unsigned char c;
     unsigned int len = 0;
-    f_read(fp, (void *)&c, (unsigned int) 1, (unsigned int *)&len);
+    f_read(fp, (void *)&c, (unsigned int)1, (unsigned int *)&len);
     if (len == 0) {
         return -1;
     }
@@ -60,19 +60,19 @@ int sd_read_byte(FIL *fp) {
 
 int sd_read(FIL *fp, void *buf, unsigned int size) {
     unsigned int len;
-    f_read(fp, buf, size, (unsigned int *) &len);
+    f_read(fp, buf, size, (unsigned int *)&len);
     return len;
 }
 
 int sd_write_byte(FIL *fp, unsigned char c) {
     unsigned int len;
-    f_write(fp, (void *)&c, (unsigned int) 1, (unsigned int *)&len);
+    f_write(fp, (void *)&c, (unsigned int)1, (unsigned int *)&len);
     return len;
 }
 
 int sd_write(FIL *fp, const void *buf, unsigned int size) {
     unsigned int len;
-    f_write(fp, (void *)buf, (unsigned int) size, (unsigned int *)&len);
+    f_write(fp, (void *)buf, (unsigned int)size, (unsigned int *)&len);
     return len;
 }
 
@@ -93,6 +93,3 @@ void sd_close(FIL *fp) {
     f_close(fp);
 }
 #endif
-
-
-

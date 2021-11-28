@@ -22,10 +22,8 @@
  ***************************************************************************/
 /**
  * @file  RTC.cpp
- * @brief RX63Nマイコン内蔵の時計機能（RTC：リアル・タイム・クロック）を使うためのライブラリです。
- *
- * RTCクラスはこのライブラリをC++でカプセル化して使いやすくしたものです。
- *
+ * @brief RTC library for RX63N
+ * *
  * Modified 27th May 2014 by Yuuki Okamiya from RL78duino.cpp
  */
 
@@ -67,8 +65,7 @@ static inline uint8_t int_to_bcd(int num) {
     return ((num / 10) << 4) | (num % 10);
 }
 
-static inline int bcd_to_int(uint8_t bcd)
-{
+static inline int bcd_to_int(uint8_t bcd) {
     return ((bcd >> 4) * 10) + (bcd & 0x0F);
 }
 
@@ -103,13 +100,17 @@ int rx_rtc_get_weekday(void) {
 void rx_rtc_alarm_on() {
     /* Enable alarm and periodic interrupts*/
     RTC.RCR1.BIT.AIE = 1;
-    while (!RTC.RCR1.BIT.AIE) { ; }
+    while (!RTC.RCR1.BIT.AIE) {
+        ;
+    }
 }
 
 void rx_rtc_alarm_off() {
     /* Disable alarm and periodic interrupts*/
     RTC.RCR1.BIT.AIE = 0;
-    while (RTC.RCR1.BIT.AIE) { ; }
+    while (RTC.RCR1.BIT.AIE) {
+        ;
+    }
 }
 
 
@@ -132,9 +133,9 @@ void rx_rtc_set_alarm_time(int hour, int min, int week_flag) {
     /* Enable alarm and interrupts*/
     rx_rtc_alarm_on();
     /* Enable RTC Alarm interrupts */
-    IPR(RTC, ALM)= 3u;
-    IEN(RTC, ALM)= 1u;
-    IR(RTC, ALM)= 0u;
+    IPR(RTC, ALM) = 3u;
+    IEN(RTC, ALM) = 1u;
+    IR(RTC, ALM) = 0u;
 }
 
 /*
@@ -150,31 +151,49 @@ void rx_rtc_correct(int adj, int aadjp) {
     int tmp_int;
     if (adj == 0) {
         RTC.RADJ.BYTE = 0x00;
-        while (RTC.RADJ.BYTE != 0x00) { ; }
+        while (RTC.RADJ.BYTE != 0x00) {
+            ;
+        }
     } else if (adj > 0) {
         RTC.RADJ.BYTE = 0x00;
-        while (RTC.RADJ.BYTE != 0x00) { ; }
+        while (RTC.RADJ.BYTE != 0x00) {
+            ;
+        }
         /* enable adjustment */
         RTC.RCR2.BIT.AADJE = 1;
-        while (RTC.RCR2.BIT.AADJE != 1) { ; }
+        while (RTC.RCR2.BIT.AADJE != 1) {
+            ;
+        }
         RTC.RCR2.BIT.AADJP =
             aadjp == RTC_PERIOD_MINUTE ? RTC_PERIOD_MINUTE : RTC_PERIOD_SECOND;
-        while (RTC.RCR2.BIT.AADJP != 1) { ; }
+        while (RTC.RCR2.BIT.AADJP != 1) {
+            ;
+        }
         tmp_int = 0x40 | (0x3F & adj);  /* 0x40 + */
         RTC.RADJ.BYTE = tmp_int;
-        while (RTC.RADJ.BYTE != tmp_int) { ; }
+        while (RTC.RADJ.BYTE != tmp_int) {
+            ;
+        }
     } else {
         RTC.RADJ.BYTE = 0x00;
-        while (RTC.RADJ.BYTE != 0x00) { ; }
+        while (RTC.RADJ.BYTE != 0x00) {
+            ;
+        }
         /* enable adjustment */
         RTC.RCR2.BIT.AADJE = 1;
-        while (RTC.RCR2.BIT.AADJE != 1) { ; }
+        while (RTC.RCR2.BIT.AADJE != 1) {
+            ;
+        }
         RTC.RCR2.BIT.AADJP =
             aadjp == RTC_PERIOD_MINUTE ? RTC_PERIOD_MINUTE : RTC_PERIOD_SECOND;
-        while (RTC.RCR2.BIT.AADJP != 1) { ; }
+        while (RTC.RCR2.BIT.AADJP != 1) {
+            ;
+        }
         tmp_int = 0x80 | (0x3F & abs(adj)); /* 0x80 - */
         RTC.RADJ.BYTE = tmp_int;
-        while (RTC.RADJ.BYTE != tmp_int) { ; }
+        while (RTC.RADJ.BYTE != tmp_int) {
+            ;
+        }
     }
 }
 
@@ -182,7 +201,9 @@ void rx_rtc_set_time(rtc_t *time) {
     /* Write 0 to RTC start bit */
     RTC.RCR2.BIT.START = 0x0;
     /* Wait for start bit to clear */
-    while (0 != RTC.RCR2.BIT.START) { ; }
+    while (0 != RTC.RCR2.BIT.START) {
+        ;
+    }
     /* Alarm enable bits are undefined after a reset,
      disable non-required alarm features */
     RTC.RWKAR.BIT.ENB = 0;
@@ -201,12 +222,14 @@ void rx_rtc_set_time(rtc_t *time) {
     /* Start the clock */
     RTC.RCR2.BIT.START = 0x1;
     /* Wait until the start bit is set to 1 */
-    while (1 != RTC.RCR2.BIT.START) { ; }
+    while (1 != RTC.RCR2.BIT.START) {
+        ;
+    }
 }
 
 void rx_rtc_get_time(rtc_t *time) {
-#if defined(RX63N)
-    IEN(RTC, CUP)= 0;
+    #if defined(RX63N)
+    IEN(RTC, CUP) = 0;
     RTC.RCR1.BIT.CIE = 1;
     do {
         IR(RTC, CUP) = 0;
@@ -219,8 +242,8 @@ void rx_rtc_get_time(rtc_t *time) {
         time->weekday = bcd_to_int(RTC.RWKCNT.BYTE);
     } while (IR(RTC, CUP));
     RTC.RCR1.BIT.CIE = 0;
-#endif
-#if defined(RX65N)
+    #endif
+    #if defined(RX65N)
     // ToDo: implement interrupt configuration
     RTC.RCR1.BIT.CIE = 1;
     time->year = bcd_to_int(RTC.RYRCNT.WORD) + 2000;
@@ -231,7 +254,7 @@ void rx_rtc_get_time(rtc_t *time) {
     time->second = bcd_to_int(RTC.RSECCNT.BYTE);
     time->weekday = bcd_to_int(RTC.RWKCNT.BYTE);
     RTC.RCR1.BIT.CIE = 0;
-#endif
+    #endif
 }
 
 static void wait(volatile int count) {
@@ -249,11 +272,15 @@ void rx_rtc_init(void) {
         /* Disable the sub-clock oscillator */
         SYSTEM.SOSCCR.BIT.SOSTP = 1;
         /* Wait for register modification to complete */
-        while (1 != SYSTEM.SOSCCR.BIT.SOSTP) { ; }
+        while (1 != SYSTEM.SOSCCR.BIT.SOSTP) {
+            ;
+        }
         /* Disable the input from the sub-clock */
         RTC.RCR3.BYTE = 0x0C;
         /* Wait for the register modification to complete */
-        while (0 != RTC.RCR3.BIT.RTCEN) { ; }
+        while (0 != RTC.RCR3.BIT.RTCEN) {
+            ;
+        }
         /* Wait for at least 5 cycles of sub-clock */
         wait(0x1000);
         /* Start sub-clock */
@@ -267,7 +294,9 @@ void rx_rtc_init(void) {
         /* Start sub-clock */
         SYSTEM.SOSCCR.BIT.SOSTP = 0;
         /* Wait for the register modification to complete */
-        while (0 != SYSTEM.SOSCCR.BIT.SOSTP) { ; }
+        while (0 != SYSTEM.SOSCCR.BIT.SOSTP) {
+            ;
+        }
     }
     /* Set RTC clock input from sub-clock, and supply to RTC module */
     RTC.RCR4.BIT.RCKSEL = 0;
@@ -278,17 +307,23 @@ void rx_rtc_init(void) {
     /* Stop the clock */
     RTC.RCR2.BIT.START = 0x0;
     /* Wait for start bit to clear */
-    while (0 != RTC.RCR2.BIT.START) { ; }
+    while (0 != RTC.RCR2.BIT.START) {
+        ;
+    }
     /* Reset the RTC unit */
     RTC.RCR2.BIT.RESET = 1;
     /* Wait until reset is complete */
-    while (RTC.RCR2.BIT.RESET) { ; }
+    while (RTC.RCR2.BIT.RESET) {
+        ;
+    }
     /* call back */
     rx_rtc_func = NULL;
     /* Start the clock */
     RTC.RCR2.BIT.START = 0x1;
     /* Wait until the start bit is set to 1 */
-    while (1 != RTC.RCR2.BIT.START) { ; }
+    while (1 != RTC.RCR2.BIT.START) {
+        ;
+    }
 }
 
 void rx_rtc_deinit(void) {

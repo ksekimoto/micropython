@@ -42,6 +42,7 @@
 #define MICROPY_HW_FLASH_STORAGE_BASE (PICO_FLASH_SIZE_BYTES - MICROPY_HW_FLASH_STORAGE_BYTES)
 #endif
 
+static_assert(MICROPY_HW_FLASH_STORAGE_BYTES <= PICO_FLASH_SIZE_BYTES, "MICROPY_HW_FLASH_STORAGE_BYTES too big");
 static_assert(MICROPY_HW_FLASH_STORAGE_BASE + MICROPY_HW_FLASH_STORAGE_BYTES <= PICO_FLASH_SIZE_BYTES, "MICROPY_HW_FLASH_STORAGE_BYTES too big");
 
 typedef struct _rp2_flash_obj_t {
@@ -94,12 +95,20 @@ STATIC mp_obj_t rp2_flash_writeblocks(size_t n_args, const mp_obj_t *args) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(args[2], &bufinfo, MP_BUFFER_READ);
     if (n_args == 3) {
+        // Flash erase/program must run in an atomic section because the XIP bit gets disabled.
+        mp_uint_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
         flash_range_erase(self->flash_base + offset, bufinfo.len);
+        MICROPY_END_ATOMIC_SECTION(atomic_state);
+        MICROPY_EVENT_POLL_HOOK
         // TODO check return value
     } else {
         offset += mp_obj_get_int(args[3]);
     }
+    // Flash erase/program must run in an atomic section because the XIP bit gets disabled.
+    mp_uint_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
     flash_range_program(self->flash_base + offset, bufinfo.buf, bufinfo.len);
+    MICROPY_END_ATOMIC_SECTION(atomic_state);
+    MICROPY_EVENT_POLL_HOOK
     // TODO check return value
     return mp_const_none;
 }
@@ -121,7 +130,10 @@ STATIC mp_obj_t rp2_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
             return MP_OBJ_NEW_SMALL_INT(BLOCK_SIZE_BYTES);
         case MP_BLOCKDEV_IOCTL_BLOCK_ERASE: {
             uint32_t offset = mp_obj_get_int(arg_in) * BLOCK_SIZE_BYTES;
+            // Flash erase/program must run in an atomic section because the XIP bit gets disabled.
+            mp_uint_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
             flash_range_erase(self->flash_base + offset, BLOCK_SIZE_BYTES);
+            MICROPY_END_ATOMIC_SECTION(atomic_state);
             // TODO check return value
             return MP_OBJ_NEW_SMALL_INT(0);
         }

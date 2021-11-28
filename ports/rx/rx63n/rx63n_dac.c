@@ -58,8 +58,7 @@ void rx_dac_write(uint8_t pin_idx, uint16_t value) {
     }
 }
 
-static void rx_dac_enable(uint8_t pin_idx)
-{
+static void rx_dac_enable(uint8_t pin_idx) {
     uint8_t port = GPIO_PORT(pin_idx);
     uint8_t mask = GPIO_MASK(pin_idx);
     MPC.PWPR.BIT.B0WI = 0;  /* Enable write to PFSWE */

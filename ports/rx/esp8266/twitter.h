@@ -38,10 +38,10 @@ extern "C" {
 #define TWITTER_API_UPLOAD      "https://upload.twitter.com/1.1/media/upload.json"
 
 typedef struct {
-	const char *_cons_key;
-	const char *_cons_sec;
-	const char *_accs_key;
-	const char *_accs_sec;
+    const char *_cons_key;
+    const char *_cons_sec;
+    const char *_accs_key;
+    const char *_accs_sec;
 } twitter_t;
 
 void twitter_api_init();

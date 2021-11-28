@@ -42,44 +42,44 @@ static uint32_t bounce_period[IRQ_NUM] = {0};
 static uint32_t bounce_start[IRQ_NUM] = {0};
 
 static const uint8_t pin_idx[] = {
-        P00,    /* P00 0 */
-        P01,    /* P01 1 */
-        P02,    /* P02 2 */
-        P03,    /* P03 3 */
-        P05,    /* P05 5 */
-        P07,    /* P07 7 */
-        P10,    /* P10 8 */
-        P11,    /* P11 9　*/
-        P12,    /* P12 10 */
-        P13,    /* P13 11 */
-        P14,    /* P14 12 */
-        P15,    /* P15 13 */
-        P16,    /* P16 14 */
-        P17,    /* P17 15 */
-        P20,    /* P20 16 */
-        P21,    /* P21 17 */
-        P34,    /* P34 28 */
-        P55,    /* P55 45 */
-        P67,    /* P67 55 */
-        PA1,    /* PA1 81 */
-        PB0,    /* PB0 88 */
-        PC0,    /* PC0 96 */
-        PC1,    /* PC1 97 */
-        PC6,    /* PC6 102 */
-        PC7,    /* PC7 103 */
-        PD0,    /* PD0 104 */
-        PD1,    /* PD1 105 */
-        PD2,    /* PD2 106 */
-        PD3,    /* PD3 107 */
-        PD4,    /* PD4 108 */
-        PD5,    /* PD5 109 */
-        PD6,    /* PD6 110 */
-        PD7,    /* PD7 111 */
-        PE5,    /* PE5 117 */
-        PE6,    /* PE6 118 */
-        PE7,    /* PE7 119 */
-        PF5,    /* PF5 125 */
-        0xff,   /* end */
+    P00,        /* P00 0 */
+    P01,        /* P01 1 */
+    P02,        /* P02 2 */
+    P03,        /* P03 3 */
+    P05,        /* P05 5 */
+    P07,        /* P07 7 */
+    P10,        /* P10 8 */
+    P11,        /* P11 9　*/
+    P12,        /* P12 10 */
+    P13,        /* P13 11 */
+    P14,        /* P14 12 */
+    P15,        /* P15 13 */
+    P16,        /* P16 14 */
+    P17,        /* P17 15 */
+    P20,        /* P20 16 */
+    P21,        /* P21 17 */
+    P34,        /* P34 28 */
+    P55,        /* P55 45 */
+    P67,        /* P67 55 */
+    PA1,        /* PA1 81 */
+    PB0,        /* PB0 88 */
+    PC0,        /* PC0 96 */
+    PC1,        /* PC1 97 */
+    PC6,        /* PC6 102 */
+    PC7,        /* PC7 103 */
+    PD0,        /* PD0 104 */
+    PD1,        /* PD1 105 */
+    PD2,        /* PD2 106 */
+    PD3,        /* PD3 107 */
+    PD4,        /* PD4 108 */
+    PD5,        /* PD5 109 */
+    PD6,        /* PD6 110 */
+    PD7,        /* PD7 111 */
+    PE5,        /* PE5 117 */
+    PE6,        /* PE6 118 */
+    PE7,        /* PE7 119 */
+    PF5,        /* PF5 125 */
+    0xff,       /* end */
 
 };
 
@@ -174,15 +174,17 @@ void exti_disable(uint32_t pin) {
 }
 
 void exti_set_callback(uint32_t irq_no, EXTI_FUNC func, void *param) {
-    if (irq_no >= IRQ_NUM)
+    if (irq_no >= IRQ_NUM) {
         return;
+    }
     exti_func[irq_no] = func;
     exti_param[irq_no] = param;
 }
 
 static void exti_callback(uint32_t irq_no) {
-    if (irq_no >= IRQ_NUM)
+    if (irq_no >= IRQ_NUM) {
         return;
+    }
     if (bounce_flag[irq_no]) {
         if ((mtick() - bounce_start[irq_no]) > bounce_period[irq_no]) {
             bounce_flag[irq_no] = false;
@@ -208,7 +210,7 @@ static void exti_callback(uint32_t irq_no) {
  */
 
 void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
-        uint32_t irq_priority) {
+    uint32_t irq_priority) {
     uint8_t mask2 = 1 << (irq_no & 7);
     uint16_t mask3 = 3 << ((irq_no & 7) * 2);
     cond = (cond & 0x3) << 2;
@@ -220,7 +222,7 @@ void _exti_register(uint32_t pin, uint32_t irq_no, uint32_t cond, uint32_t pull,
     gpio_config(pin, GPIO_MODE_INPUT, pull, 0);
     /* IRQx input: set ISEL bit */
     _MPC(pin) |= 0x40;
-    //MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
+    // MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
     SYSTEM.PRCR.WORD = 0xA500;
     /* interrupt condition (level or edge) */
     RX_IRQCR(irq_no) = (RX_IRQCR(irq_no) & ~0x0c) | (cond << 2);
@@ -243,7 +245,7 @@ void exti_register(uint32_t pin, uint32_t cond, uint32_t pull) {
     uint32_t irq_no = (uint32_t)exti_find_pin_irq((uint8_t)pin);
     if (irq_no != 0xff) {
         _exti_register(pin, irq_no, cond, pull,
-                (uint32_t)EXTI_DEFAULT_PRIORITY);
+            (uint32_t)EXTI_DEFAULT_PRIORITY);
     }
 }
 
@@ -344,4 +346,3 @@ void INT_Excep_ICU_IRQ14(void) {
 void INT_Excep_ICU_IRQ15(void) {
     exti_callback(15);
 }
-

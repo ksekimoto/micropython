@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2021 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "py/mphal.h"
+#include "pendsv.h"
 #include "pin.h"
 #include "extint.h"
 #include "common.h"
@@ -140,7 +141,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     } else if ((mode == GPIO_MODE_IT_FALLING) || (mode != GPIO_MODE_EVT_FALLING)) {
         cond = 1;
     } else if ((mode != GPIO_MODE_IT_RISING_FALLING) || (mode != GPIO_MODE_EVT_RISING_FALLING)) {
-        cond  = 3;
+        cond = 3;
     } else {
         cond = 0;
     }
@@ -149,9 +150,9 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid ExtInt Pull: %d"), pull);
     }
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
-    //if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
+    // if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
     //    mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("ExtInt vector %d is already in use"), irq_no);
-    //}
+    // }
     exti_disable(pin_idx);
     *cb = callback_obj;
     irq_param[irq_no] = (uint)irq_no;
@@ -255,7 +256,7 @@ const mp_obj_type_t extint_type = {
     .name = MP_QSTR_ExtInt,
     .print = extint_obj_print,
     .make_new = extint_make_new,
-    .locals_dict = (mp_obj_dict_t*)&extint_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&extint_locals_dict,
 };
 
 void extint_init0(void) {
@@ -263,5 +264,5 @@ void extint_init0(void) {
     exti_deinit();
     for (int i = 0; i < PYB_EXTI_NUM_VECTORS; i++) {
         MP_STATE_PORT(pyb_extint_callback)[i] = mp_const_none;
-   }
+    }
 }

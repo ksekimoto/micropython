@@ -36,7 +36,7 @@ extern "C" {
 
 typedef unsigned char CHIP_WORD;
 
-#define FLASH_SECTION   __attribute__((section ("FLASH_OP")))
+#define FLASH_SECTION   __attribute__((section("FLASH_OP")))
 
 void *lmemset(void *dst, int c, size_t len) FLASH_SECTION;
 void *lmemcpy(void *dst, const void *src, size_t len) FLASH_SECTION;

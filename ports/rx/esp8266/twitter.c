@@ -46,23 +46,23 @@
 #if MICROPY_PY_PYB_TWITTER
 
 #define DEBUG_TWITTER
-//#define DEBUG_TWITTER_NO_WIFI
-//#define DEBUG_TWITTER_AUTH_STR
-//#define DEBUG_TWITTER_STATUSES_UPDATE
-//#define DEBUG_UPLOAD
-//#define DEBUG_HTTP_POST
-//#define DEBUG_TWITTER_PARAMS
-//#define DEBUG_TWITTER_PARAMS_SORT
-//#define DEBUG_PARAMS
-//#define CHECK_AUTH_STRING
-//#define DUMP_RESPONSE
-//#define SKIP_STATUSES_UPLOAD
+// #define DEBUG_TWITTER_NO_WIFI
+// #define DEBUG_TWITTER_AUTH_STR
+// #define DEBUG_TWITTER_STATUSES_UPDATE
+// #define DEBUG_UPLOAD
+// #define DEBUG_HTTP_POST
+// #define DEBUG_TWITTER_PARAMS
+// #define DEBUG_TWITTER_PARAMS_SORT
+// #define DEBUG_PARAMS
+// #define CHECK_AUTH_STRING
+// #define DUMP_RESPONSE
+// #define SKIP_STATUSES_UPLOAD
 
 #ifndef NULL
 #define NULL 0
 #endif
 
-#define NTP_URL	"ntp.nict.go.jp"
+#define NTP_URL "ntp.nict.go.jp"
 #define STR_AUTHORIZATION   "Authorization: "
 
 #define MAX_MESSAGE_LENGTH 2048
@@ -90,7 +90,7 @@ static char body[BODY_MAX];
 #if 0
 #define BOUNDARY_MAX   20
 #define UPLOAD_HEADER_MAX   128
-#define MEDIA_BUF_MAX   100*1024
+#define MEDIA_BUF_MAX   100 * 1024
 
 static char boundary_buf[BOUNDARY_MAX];
 static char upload_header_buf[UPLOAD_HEADER_MAX];
@@ -113,8 +113,9 @@ PARAM req_params[] = {
     { (char *)"oauth_timestamp", (char *)"" },
     { (char *)"oauth_token", (char *)"" },
     { (char *)"oauth_version", (char *)OAUTH_VERSION },
-    { (char *)NULL, (char *)NULL }, };
-#define REQ_PARAMS_SIZE (sizeof(req_params)/sizeof(PARAM))
+    { (char *)NULL, (char *)NULL },
+};
+#define REQ_PARAMS_SIZE (sizeof(req_params) / sizeof(PARAM))
 
 PARAM statuses_oauth_params1[] = {
     { (char *)"oauth_consumer_key", (char *)"" },
@@ -125,8 +126,9 @@ PARAM statuses_oauth_params1[] = {
     { (char *)"oauth_version", (char *)OAUTH_VERSION },
     { (char *)"status", (char *)"" },
     { (char *)"oauth_signature", (char *)"" },
-    { (char *)NULL, (char *)NULL }, };
-#define STATUSES_OAUTH_PARAMS1_SIZE (sizeof(statuses_oauth_params1)/sizeof(PARAM))
+    { (char *)NULL, (char *)NULL },
+};
+#define STATUSES_OAUTH_PARAMS1_SIZE (sizeof(statuses_oauth_params1) / sizeof(PARAM))
 
 PARAM statuses_oauth_params2[] = {
     { (char *)"media_ids", (char *)"" },
@@ -138,8 +140,9 @@ PARAM statuses_oauth_params2[] = {
     { (char *)"oauth_version", (char *)OAUTH_VERSION },
     { (char *)"status", (char *)"" },
     { (char *)"oauth_signature", (char *)"" },
-    { (char *)NULL, (char *)NULL }, };
-#define STATUSES_OAUTH_PARAMS2_SIZE (sizeof(statuses_oauth_params2)/sizeof(PARAM))
+    { (char *)NULL, (char *)NULL },
+};
+#define STATUSES_OAUTH_PARAMS2_SIZE (sizeof(statuses_oauth_params2) / sizeof(PARAM))
 
 PARAM upload_oauth_params[] = {
     { (char *)"oauth_consumer_key", (char *)"" },
@@ -149,8 +152,9 @@ PARAM upload_oauth_params[] = {
     { (char *)"oauth_token", (char *)"" },
     { (char *)"oauth_version", (char *)OAUTH_VERSION },
     { (char *)"oauth_signature", (char *)"" },
-    { (char *)NULL, (char *)NULL }, };
-#define UPLOAD_OAUTH_PARAMS_SIZE (sizeof(upload_oauth_params)/sizeof(PARAM))
+    { (char *)NULL, (char *)NULL },
+};
+#define UPLOAD_OAUTH_PARAMS_SIZE (sizeof(upload_oauth_params) / sizeof(PARAM))
 
 static PARAM *param_get_by_key(PARAM *p, char *k) {
     while (p->key != NULL) {
@@ -193,7 +197,7 @@ void param_sort(PARAM *p, int left, int right) {
     }
     pivot = (left + right) / 2;
     item = p[pivot];
-    //printf ("Sorting %d:%d: midpoint %d, '%s'\n", left, right, pivot, key);
+    // printf ("Sorting %d:%d: midpoint %d, '%s'\n", left, right, pivot, key);
     param_swap(p, left, pivot);
     i = left + 1;
     j = right;
@@ -248,39 +252,39 @@ static char *url_encode_static_buf(char *str) {
     if (get_url_encode_size(str) < ENCODE_BUF_MAX) {
         url_encode(str, encode_buf, ENCODE_BUF_MAX);
     } else {
-#ifdef DEBUG_TWITTER
+        #ifdef DEBUG_TWITTER
         debug_printf("ERR: encode buf short!\r\n");
-#endif
+        #endif
     }
     return encode_buf;
 }
 
 static char *urlenccpy(char *dst, char *src) {
     int enc_size = get_url_encode_size(src) + 1;
-    char *enc = (char *)malloc(enc_size);
+    char *enc = (char *)m_malloc(enc_size);
     if (enc) {
         url_encode(src, enc, enc_size);
         strcpy(dst, enc);
-        free(enc);
+        m_free(enc);
     } else {
-#ifdef DEBUG_TWITTER
-        debug_printf("ERR: malloc failed!\r\n");
-#endif
+        #ifdef DEBUG_TWITTER
+        debug_printf("ERR: m_malloc failed!\r\n");
+        #endif
     }
     return dst;
 }
 
 static char *urlenccat(char *dst, char *src) {
     int enc_size = get_url_encode_size(src) + 1;
-    char *enc = (char *)malloc(enc_size);
+    char *enc = (char *)m_malloc(enc_size);
     if (enc) {
         url_encode(src, enc, enc_size);
         strcat(dst, enc);
-        free(enc);
+        m_free(enc);
     } else {
-#ifdef DEBUG_TWITTER
-        debug_printf("ERR: malloc failed!\r\n");
-#endif
+        #ifdef DEBUG_TWITTER
+        debug_printf("ERR: m_malloc failed!\r\n");
+        #endif
     }
     return dst;
 }
@@ -291,14 +295,14 @@ static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2
     int sig_key_len;
     int sig_data_len;
     int sig_str_len;
-#ifdef DEBUG_TWITTER
+    #ifdef DEBUG_TWITTER
     int calc_sig_key_len =
         get_url_encode_size(sec1) + get_url_encode_size(sec2) + 1;
     int calc_param_len = get_param_url_encode_size(params);
     int calc_sig_data_len =
         get_url_encode_size(req_method) + get_url_encode_size(req_url) + 1 +
         calc_param_len + 1;
-#endif
+    #endif
     /* sig key */
     url_encode(sec1, encode_buf, ENCODE_BUF_MAX);
     strcpy(sig_key, encode_buf);
@@ -323,16 +327,16 @@ static void create_signature(char *sig_str, int sig_size, char *sec1, char *sec2
     strcat(sig_data, encode_buf);
     strcat(sig_data, "&");
     url_encode(param_buf, encode_buf, ENCODE_BUF_MAX);
-#ifdef DEBUG_TWITTER
+    #ifdef DEBUG_TWITTER
     debug_printf("param_len act:%d calc:%d\r\n", strlen(encode_buf), calc_param_len);
-#endif
+    #endif
     strcat(sig_data, encode_buf);
     sig_key_len = strlen(sig_key);
     sig_data_len = strlen(sig_data);
-#ifdef DEBUG_TWITTER
+    #ifdef DEBUG_TWITTER
     debug_printf("sig_key_len act:%d calc:%d\r\n", sig_key_len, calc_sig_key_len);
     debug_printf("sig_data_len act:%d calc:%d\r\n", sig_data_len, calc_sig_data_len);
-#endif
+    #endif
     hmac_sha1((unsigned char *)sig_key,
         sig_key_len,
         (unsigned char *)sig_data,
@@ -361,21 +365,21 @@ static void create_oauth_params(char *oauth_str, PARAM *params) {
 static void _statuses_update(const char *ckey, const char *csec, const char *akey, const char *asec,
     const char *str, const char *media_id_string) {
     char timestamp_str[11];
-#if defined (DEBUG_TWITTER_NO_WIFI)
+    #if defined(DEBUG_TWITTER_NO_WIFI)
     unsigned int timestamp = 1542801184;
-#else
+    #else
     unsigned int timestamp = (unsigned int)ntp(NTP_URL, 1);
-#endif
-    //timestamp -= 2208988800;
-    //sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    #endif
+    // timestamp -= 2208988800;
+    // sprintf(timestamp_str, "%u", (unsigned int)timestamp);
     itoa((unsigned int)timestamp, timestamp_str, 10);
     param_set_value((PARAM *)req_params, (char *)"oauth_consumer_key", (char *)ckey);
     param_set_value((PARAM *)req_params, (char *)"oauth_nonce", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_timestamp", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_token", (char *)akey);
-#if defined(DEBUG_TWITTER_PARAMS)
+    #if defined(DEBUG_TWITTER_PARAMS)
     print_param_value((PARAM *)req_params);
-#endif
+    #endif
     create_signature((char *)sig_str,
         SIG_STR_MAX,
         (char *)csec,
@@ -383,9 +387,9 @@ static void _statuses_update(const char *ckey, const char *csec, const char *ake
         (char *)"POST",
         (char *)TWITTER_API_UPDATE,
         req_params);
-#ifdef DEBUG_TWITTER
+    #ifdef DEBUG_TWITTER
     debug_printf("sig_str: %s\r\n", sig_str);
-#endif
+    #endif
     if ((media_id_string != NULL) && (strlen(media_id_string) > 0)) {
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"oauth_consumer_key", (char *)ckey);
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"oauth_nonce", (char *)timestamp_str);
@@ -394,15 +398,15 @@ static void _statuses_update(const char *ckey, const char *csec, const char *ake
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"oauth_signature", (char *)sig_str);
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"media_ids", (char *)media_id_string);
         param_set_value((PARAM *)statuses_oauth_params2, (char *)"status", (char *)str);
-#if defined(DEBUG_TWITTER_PARAMS_SORT)
+        #if defined(DEBUG_TWITTER_PARAMS_SORT)
         #if defined(DEBUG_TWITTER_PARAMS)
         print_param_value((PARAM *)statuses_oauth_params2);
-#endif
-        param_sort(statuses_oauth_params2, 0, STATUSES_OAUTH_PARAMS2_SIZE-1 );
-#if defined(DEBUG_TWITTER_PARAMS)
+        #endif
+        param_sort(statuses_oauth_params2, 0, STATUSES_OAUTH_PARAMS2_SIZE - 1);
+        #if defined(DEBUG_TWITTER_PARAMS)
         print_param_value((PARAM *)statuses_oauth_params2);
-#endif
-#endif
+        #endif
+        #endif
         create_oauth_params((char *)auth_str, (PARAM *)statuses_oauth_params2);
     } else {
         param_set_value((PARAM *)statuses_oauth_params1, (char *)"oauth_consumer_key", (char *)ckey);
@@ -411,22 +415,22 @@ static void _statuses_update(const char *ckey, const char *csec, const char *ake
         param_set_value((PARAM *)statuses_oauth_params1, (char *)"oauth_token", (char *)akey);
         param_set_value((PARAM *)statuses_oauth_params1, (char *)"oauth_signature", (char *)sig_str);
         param_set_value((PARAM *)statuses_oauth_params1, (char *)"status", (char *)str);
-#if defined(DEBUG_TWITTER_PARAMS_SORT)
-#if defined(DEBUG_TWITTER_PARAMS)
+        #if defined(DEBUG_TWITTER_PARAMS_SORT)
+        #if defined(DEBUG_TWITTER_PARAMS)
         debug_printf("Before sort\r\n");
         print_param_value((PARAM *)statuses_oauth_params1);
-#endif
-        param_sort(statuses_oauth_params1, 0, STATUSES_OAUTH_PARAMS1_SIZE-1 );
-#if defined(DEBUG_TWITTER_PARAMS)
+        #endif
+        param_sort(statuses_oauth_params1, 0, STATUSES_OAUTH_PARAMS1_SIZE - 1);
+        #if defined(DEBUG_TWITTER_PARAMS)
         debug_printf("After sort\r\n");
         print_param_value((PARAM *)statuses_oauth_params1);
-#endif
-#endif
+        #endif
+        #endif
         create_oauth_params((char *)auth_str, (PARAM *)statuses_oauth_params1);
     }
-#if defined(DEBUG_TWITTER_AUTH_STR)
+    #if defined(DEBUG_TWITTER_AUTH_STR)
     debug_printf("auth_str:%s\r\n", auth_str);
-#endif
+    #endif
 }
 
 #ifdef DEBUG_PARAMS
@@ -434,9 +438,9 @@ static void _statuses_update(const char *ckey, const char *csec, const char *ake
 // signature = mu4s4b2t4T0HsjD0z0J749fMGPA=
 static void test_create_signature(void) {
     PARAM param[] = {{(char *)"name", (char *)"BBB"},
-        {(char *)"text", (char *)"CCC"},
-        {(char *)"title", (char *)"AAA"},
-        {(char *)NULL, (char *)NULL}};
+                     {(char *)"text", (char *)"CCC"},
+                     {(char *)"title", (char *)"AAA"},
+                     {(char *)NULL, (char *)NULL}};
     create_signature((char *)sig_str,
         SIG_STR_MAX,
         (char *)"bbbbbb",
@@ -449,16 +453,16 @@ static void test_create_signature(void) {
 
 static void test_create_oauth_params(void) {
     PARAM param[] = {{(char *)"name", (char *)"BBB"},
-        {(char *)"text", (char *)"CCC"},
-        {(char *)"title", (char *)"AAA"},
-        {(char *)NULL, (char *)NULL}};
+                     {(char *)"text", (char *)"CCC"},
+                     {(char *)"title", (char *)"AAA"},
+                     {(char *)NULL, (char *)NULL}};
     create_oauth_params((char *)auth_str, (PARAM *)param);
     debug_printf("auth_str:%s\r\n", auth_str);
 }
 #endif
 
 #ifdef DUMP_RESPONSE
-static void dump_response(HttpResponse* res) {
+static void dump_response(HttpResponse *res) {
     mbedtls_printf("Status: %d - %s\n", res->get_status_code(), res->get_status_message().c_str());
 
     mbedtls_printf("Headers:\n");
@@ -470,10 +474,10 @@ static void dump_response(HttpResponse* res) {
 #endif
 
 void twitter_api_init() {
-#ifdef DEBUG_PARAMS
+    #ifdef DEBUG_PARAMS
     test_create_signature();
     test_create_oauth_params();
-#endif
+    #endif
 }
 
 void twitter_api_deinit() {
@@ -494,28 +498,28 @@ void twitter_api_statuses_update(const char *str, const char *media_id_string) {
     head[0] = (char *)"User-Agent: gr-citurs";
     head[1] = (char *)"Content-Type: application/x-www-form-urlencoded";
     size = strlen((char *)STR_AUTHORIZATION) + strlen(auth_str) + 1;
-    head[2] = (char *)malloc(size);
+    head[2] = (char *)m_malloc(size);
     if (!(head[2])) {
         return;
     }
     strcpy(head[2], (char *)STR_AUTHORIZATION);
     strcat(head[2], auth_str);
-#ifdef DEBUG_TWITTER
+    #ifdef DEBUG_TWITTER
     debug_printf("Header[2]: %s\r\n", head[2]);
-#endif
+    #endif
     strcpy(body, "status=");
     url_encode(str, encode_buf, ENCODE_BUF_MAX);
     strcat(body, encode_buf);
     strcat(body, "\r\n");
-#if defined (DEBUG_TWITTER_NO_WIFI)
-#else
+    #if defined(DEBUG_TWITTER_NO_WIFI)
+    #else
     esp8266_post(TWITTER_API_UPDATE_STR, body, "RESPONSE.TXT", 3, head, 1);
-#endif
-#ifdef DEBUG_TWITTER_STATUSES_UPDATE
+    #endif
+    #ifdef DEBUG_TWITTER_STATUSES_UPDATE
     debug_printf("statuses_update:ret=%d\r\n", ret);
-#endif
+    #endif
     if (head[2]) {
-        free((void * )head[2]);
+        m_free((void *)head[2]);
     }
 }
 
@@ -528,29 +532,29 @@ static void create_boundary(void) {
 
 static void _upload(NetworkInterface *iface, char *ckey, char *csec, char *akey, char *asec, char *buf, int size) {
     char timestamp_str[11];
-    NTPClient ntp( iface);
+    NTPClient ntp(iface);
     unsigned int timestamp = (unsigned int)ntp.get_timestamp();
-    //timestamp -= 2208988800;
-    //sprintf(timestamp_str, "%u", (unsigned int)timestamp);
+    // timestamp -= 2208988800;
+    // sprintf(timestamp_str, "%u", (unsigned int)timestamp);
     itoa((unsigned int)timestamp, timestamp_str, 10);
     param_set_value((PARAM *)req_params, (char *)"oauth_consumer_key", (char *)ckey);
     param_set_value((PARAM *)req_params, (char *)"oauth_nonce", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_timestamp", (char *)timestamp_str);
     param_set_value((PARAM *)req_params, (char *)"oauth_token", (char *)akey);
-    //print_param_value((PARAM *)req_params);
+    // print_param_value((PARAM *)req_params);
     create_signature((char *)sig_str, SIG_STR_MAX,
         (char *)csec, (char *)asec, (char *)"POST", (char *)TWITTER_API_UPLOAD, req_params);
-    //printf("sig_str: %s\n", sig_str);
+    // printf("sig_str: %s\n", sig_str);
     param_set_value((PARAM *)upload_oauth_params, (char *)"oauth_consumer_key", (char *)ckey);
     param_set_value((PARAM *)upload_oauth_params, (char *)"oauth_nonce", (char *)timestamp_str);
     param_set_value((PARAM *)upload_oauth_params, (char *)"oauth_timestamp", (char *)timestamp_str);
     param_set_value((PARAM *)upload_oauth_params, (char *)"oauth_token", (char *)akey);
     param_set_value((PARAM *)upload_oauth_params, (char *)"oauth_signature", (char *)sig_str);
-    //print_param_value((PARAM *)oauth_params);
+    // print_param_value((PARAM *)oauth_params);
     create_oauth_params((char *)auth_str, (PARAM *)upload_oauth_params);
-#ifdef CHECK_AUTH_STRING
+    #ifdef CHECK_AUTH_STRING
     printf("auth_str: %s\r\n", auth_str);
-#endif
+    #endif
     create_boundary();
     sprintf(upload_body_top, "--%s\r\n", boundary_buf);
     strcat(upload_body_top, "Content-Disposition: form-data; name=\"media_data\"; \r\n\r\n");
@@ -575,14 +579,13 @@ static void get_media_id_string(char *body, char *media_id_string) {
     }
 }
 
-void Twitter::upload(char *media_id_string, char *buf, int size)
-{
+void Twitter::upload(char *media_id_string, char *buf, int size) {
     int idx;
     int encode_len;
 
-#ifdef DEBUG_UPLOAD
+    #ifdef DEBUG_UPLOAD
     printf("\n----- Twitter image upload start -----\n");
-#endif
+    #endif
     _upload(_iface, _cons_key, _cons_sec, _accs_key, _accs_sec, buf, size);
 
     idx = strlen(upload_body_top);
@@ -591,39 +594,38 @@ void Twitter::upload(char *media_id_string, char *buf, int size)
     idx += encode_len;
     strcpy((char *)&media_buf[idx], upload_body_end);
     idx += strlen(upload_body_end);
-#ifdef DEBUG_UPLOAD
+    #ifdef DEBUG_UPLOAD
     printf("body size: %d\r\n", idx);
-    //printf("body: %s\r\n", media_buf);
-#endif
-    HttpsRequest* post_req = new HttpsRequest(_iface, SSL_CA_PEM, HTTP_POST, TWITTER_API_UPLOAD);
-#ifdef DEBUG_HTTP_POST
+    // printf("body: %s\r\n", media_buf);
+    #endif
+    HttpsRequest *post_req = new HttpsRequest(_iface, SSL_CA_PEM, HTTP_POST, TWITTER_API_UPLOAD);
+    #ifdef DEBUG_HTTP_POST
     post_req->set_debug(true);
-#endif
+    #endif
     post_req->set_header("User-Agent", "gr-peach");
     post_req->set_header("Content-Type", upload_header_buf);
     post_req->set_header("Authorization", auth_str);
-    HttpResponse* post_res = post_req->send((const void *)media_buf, idx);
+    HttpResponse *post_res = post_req->send((const void *)media_buf, idx);
     if (!post_res) {
         printf("HttpRequest failed (error code %d)\n", post_req->get_error());
         return;
     }
-#ifdef DUMP_RESPONSE
+    #ifdef DUMP_RESPONSE
     dump_response(post_res);
-#endif
+    #endif
     get_media_id_string((char *)post_res->get_body_as_string().c_str(), (char *)media_id_string);
-#ifdef DEBUG_UPLOAD
+    #ifdef DEBUG_UPLOAD
     printf("media_id_string: %s\r\n", media_id_string);
     printf("\n----- Twitter image upload end -----\n");
-#endif
+    #endif
     delete post_req;
 }
 
-void Twitter::upload_and_statuses_update(char *str, char *media_id_string, char *buf, int size)
-{
+void Twitter::upload_and_statuses_update(char *str, char *media_id_string, char *buf, int size) {
     upload(media_id_string, buf, size);
-#ifndef SKIP_STATUSES_UPLOAD
+    #ifndef SKIP_STATUSES_UPLOAD
     statuses_update(str, media_id_string);
-#endif
+    #endif
 }
 #endif
 
@@ -663,6 +665,6 @@ STATIC MP_DEFINE_CONST_DICT(mp_module_twitter_globals, twitter_globals_table);
 
 const mp_obj_module_t mp_module_twitter = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_twitter_globals,
+    .globals = (mp_obj_dict_t *)&mp_module_twitter_globals,
 };
 #endif

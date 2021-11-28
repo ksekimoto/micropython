@@ -51,28 +51,28 @@ static inline uint32_t adc_get_internal_channel(uint32_t channel) {
     return channel;
 }
 
-//STATIC bool is_adcx_channel(int channel) {
+// STATIC bool is_adcx_channel(int channel) {
 //    return true;
-//}
+// }
 
-//STATIC void adc_wait_for_eoc_or_timeout(int32_t timeout) {
-//}
+// STATIC void adc_wait_for_eoc_or_timeout(int32_t timeout) {
+// }
 
-//STATIC void adcx_clock_enable(void) {
-//}
+// STATIC void adcx_clock_enable(void) {
+// }
 
-//STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
-//}
+// STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
+// }
 
-//STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
-//}
+// STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
+// }
 
-//STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
-//}
+// STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
+// }
 
-//STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
+// STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
 //    return 1;
-//}
+// }
 
 STATIC uint32_t adc_config_and_read_channel(ADC_HandleTypeDef *adcHandle, uint32_t channel) {
     return 1;
@@ -147,7 +147,7 @@ const mp_obj_type_t pyb_adc_type = {
     .name = MP_QSTR_ADC,
     .print = adc_print,
     .make_new = adc_make_new,
-    .locals_dict = (mp_obj_dict_t*)&adc_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&adc_locals_dict,
 };
 
 /******************************************************************************/
@@ -200,7 +200,7 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
     mp_int_t res = mp_obj_get_int(args[0]);
     uint32_t en_mask = 0xffffffff;
     if (n_args > 1) {
-        en_mask =  mp_obj_get_int(args[1]);
+        en_mask = mp_obj_get_int(args[1]);
     }
     adc_init_all(o, res, en_mask);
 
@@ -221,7 +221,7 @@ STATIC mp_obj_t adc_all_read_core_temp(mp_obj_t self_in) {
     float data = adc_read_core_temp_float(&self->handle);
     return mp_obj_new_float(data);
     #else
-    int data  = adc_read_core_temp(&self->handle);
+    int data = adc_read_core_temp(&self->handle);
     return mp_obj_new_int(data);
     #endif
 }
@@ -237,7 +237,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_vbat_obj, adc_all_read_core_v
 
 STATIC mp_obj_t adc_all_read_core_vref(mp_obj_t self_in) {
     pyb_adc_all_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    float data  = adc_read_core_vref(&self->handle);
+    float data = adc_read_core_vref(&self->handle);
     return mp_obj_new_float(data);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_vref_obj, adc_all_read_core_vref);
@@ -253,11 +253,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_vref_obj, adc_all_read_vref);
 STATIC const mp_rom_map_elem_t adc_all_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read_channel), MP_ROM_PTR(&adc_all_read_channel_obj) },
     { MP_ROM_QSTR(MP_QSTR_read_core_temp), MP_ROM_PTR(&adc_all_read_core_temp_obj) },
-#if MICROPY_PY_BUILTINS_FLOAT
+    #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_read_core_vbat), MP_ROM_PTR(&adc_all_read_core_vbat_obj) },
     { MP_ROM_QSTR(MP_QSTR_read_core_vref), MP_ROM_PTR(&adc_all_read_core_vref_obj) },
     { MP_ROM_QSTR(MP_QSTR_read_vref), MP_ROM_PTR(&adc_all_read_vref_obj) },
-#endif
+    #endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(adc_all_locals_dict, adc_all_locals_dict_table);
@@ -266,7 +266,7 @@ const mp_obj_type_t pyb_adc_all_type = {
     { &mp_type_type },
     .name = MP_QSTR_ADCAll,
     .make_new = adc_all_make_new,
-    .locals_dict = (mp_obj_dict_t*)&adc_all_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&adc_all_locals_dict,
 };
 
 #endif // MICROPY_HW_ENABLE_ADC

@@ -80,14 +80,14 @@
 #define PCF8833_RDID2 0xDB      // read ID2
 #define PCF8833_RDID3 0xDC      // read ID3
 
-#define PCF8833_PWX		132
-#define PCF8833_PWY		132
-#define PCF8833_SX		2
-#define PCF8833_SY		4
-#define PCF8833_WX		128
-#define PCF8833_WY		128
-#define PCF8833_BITSPERPIXEL	12
-#define PCF8833_FCOL	0xFFFFFF
-#define PCF8833_BCOL	0x000000
+#define PCF8833_PWX             132
+#define PCF8833_PWY             132
+#define PCF8833_SX              2
+#define PCF8833_SY              4
+#define PCF8833_WX              128
+#define PCF8833_WY              128
+#define PCF8833_BITSPERPIXEL    12
+#define PCF8833_FCOL    0xFFFFFF
+#define PCF8833_BCOL    0x000000
 
 #endif /* LCD_PCF8833_H_ */

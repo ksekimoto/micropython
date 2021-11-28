@@ -30,12 +30,12 @@
 extern "C" {
 #endif
 
-//#define MOD_NETWORK_IPADDR_BUF_SIZE (4)
-//#define MOD_NETWORK_AF_INET (2)
-//#define MOD_NETWORK_AF_INET6 (10)
-//#define MOD_NETWORK_SOCK_STREAM (1)
-//#define MOD_NETWORK_SOCK_DGRAM (2)
-//#define MOD_NETWORK_SOCK_RAW (3)
+// #define MOD_NETWORK_IPADDR_BUF_SIZE (4)
+// #define MOD_NETWORK_AF_INET (2)
+// #define MOD_NETWORK_AF_INET6 (10)
+// #define MOD_NETWORK_SOCK_STREAM (1)
+// #define MOD_NETWORK_SOCK_DGRAM (2)
+// #define MOD_NETWORK_SOCK_RAW (3)
 
 #define WLAN_SEC_UNSEC (0)
 #define WLAN_SEC_WEP   (1)
@@ -78,7 +78,7 @@ typedef struct esp8266_addr {
 } esp8266_addr_t;
 
 typedef struct esp8266_socket_address {
-    //char *_ip_address;
+    // char *_ip_address;
     esp8266_addr_t _addr;
     uint16_t _port;
 } esp8266_socket_address_t;
@@ -101,7 +101,7 @@ typedef struct socket_info {
 
 typedef struct driver_info {
     bool open;
-    int  proto;
+    int proto;
     char *tcp_data;
     int32_t tcp_data_avbl;
     int32_t tcp_data_rcvd;
@@ -151,11 +151,11 @@ int esp8266_socket_sendto(void *handle, const esp8266_socket_address_t *addr, co
 int esp8266_socket_recvfrom(void *handle, esp8266_socket_address_t *addr, void *data, unsigned size);
 int esp8266_setsockopt(int handle, int level, int optname, const void *optval, unsigned optlen);
 
-//bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive);
-//bool esp8266_open_udp(int id, const char *addr, int port, int local_port);
-//bool esp8266_send(int id, const void *data, uint32_t amount);
-//int32_t esp8266_recv_tcp(int id, const void *data, uint32_t amount);
-//int32_t esp8266_recv_udp(int id, const void *data, uint32_t amount);
+// bool esp8266_open_tcp(int id, const char *addr, int port, int keepalive);
+// bool esp8266_open_udp(int id, const char *addr, int port, int local_port);
+// bool esp8266_send(int id, const void *data, uint32_t amount);
+// int32_t esp8266_recv_tcp(int id, const void *data, uint32_t amount);
+// int32_t esp8266_recv_udp(int id, const void *data, uint32_t amount);
 
 #ifdef  __cplusplus
 }

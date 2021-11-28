@@ -965,10 +965,10 @@ void INT_Excep_PERIA_INTA254(void) __attribute__ ((interrupt));
 #pragma interrupt (Excep_PERIA_INTA255(vect=255))
 void INT_Excep_PERIA_INTA255(void) __attribute__ ((interrupt));
 
-//;<<VECTOR DATA START (POWER ON RESET)>>
-//;Power On Reset PC
-extern void PowerON_Reset(void) __attribute__ ((interrupt));                                                                                                                
-//;<<VECTOR DATA END (POWER ON RESET)>>
+// ;<<VECTOR DATA START (POWER ON RESET)>>
+// ;Power On Reset PC
+extern void PowerON_Reset(void) __attribute__ ((interrupt));
+// ;<<VECTOR DATA END (POWER ON RESET)>>
 
 #ifdef __cplusplus
 }

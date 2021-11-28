@@ -42,6 +42,11 @@ user.props
 # Generated rst files
 ######################
 genrst/
+
+# MacOS desktop metadata files
+######################
+.DS_Store
+
 /ports/rx/build-GR_CITRUS
 /ports/rx/build-GR_SAKURA
 /ports/rx/build-GR_SAKURA_DD

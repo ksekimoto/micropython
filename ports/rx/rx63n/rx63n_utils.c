@@ -29,5 +29,3 @@
 #include "common.h"
 #include "iodefine.h"
 #include "rx63n_utils.h"
-
-
