@@ -42,14 +42,15 @@
 #define NULL 0
 #endif
 
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "iodefine.h"
-#include "rx63n_adc.h"
 #include "rx63n_config.h"
+#include "rx63n_adc.h"
 #include "rx63n_dac.h"
-#include "rx63n_ether.h"
 #include "rx63n_exti.h"
+#include "rx63n_ether.h"
 #include "rx63n_flash.h"
 #include "rx63n_gpio.h"
 #include "rx63n_i2c.h"

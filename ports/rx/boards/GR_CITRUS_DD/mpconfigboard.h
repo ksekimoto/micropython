@@ -11,6 +11,7 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_ETH_MDC          (0)
+#define MICROPY_HW_ESP8266          (1)
 
 // UART config
 #define MICROPY_HW_UART0_TX         (pin_P20)
@@ -73,10 +74,12 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
+#if MICROPY_HW_ESP8266
 #define MICROPY_HW_HAS_ESP8266      (0)
 #define MICROPY_HW_ESP8266_UART_CH      6
 #define MICROPY_HW_ESP8266_UART_BAUD    115200
 #define MICROPY_HW_ESP8266_EN           (pin_P50)
+#endif
 
 #define MICROPY_PY_PYB_TWITTER      (0)
 #define MICROPY_PY_PYB_FONT         (1)

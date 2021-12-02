@@ -255,24 +255,24 @@ static void rx_phy_reg_write(uint16_t data) {
 
 static uint16_t rx_phy_read(uint16_t phy_addr, uint16_t reg_addr) {
     uint16_t data;
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     rx_phy_preamble();
     rx_phy_reg_set(phy_addr, reg_addr, PHY_READ);
     rx_phy_ta_z0();
     rx_phy_reg_read(&data);
     rx_phy_ta_z0();
-    rx_enable_irq();
+    rx_enable_irq(state);
     return data;
 }
 
 static void rx_phy_write(uint16_t phy_addr, uint16_t reg_addr, uint16_t data) {
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     rx_phy_preamble();
     rx_phy_reg_set(phy_addr, reg_addr, PHY_WRITE);
     rx_phy_ta_10();
     rx_phy_reg_write(data);
     rx_phy_ta_z0();
-    rx_enable_irq();
+    rx_enable_irq(state);
 }
 
 #if 0

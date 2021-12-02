@@ -46,6 +46,8 @@
 #include "pin.h"
 #include "spi.h"
 
+#if MICROPY_HW_ESP8266
+
 #include "esp8266_driver.h"
 
 // #define DEBUG_MODNWESP8266
@@ -679,3 +681,5 @@ const mod_network_nic_type_t mod_network_nic_type_esp8266 = {
     .settimeout = mod_esp8266_socket_settimeout,
     .ioctl = mod_esp8266_socket_ioctl,
 };
+
+#endif

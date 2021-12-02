@@ -223,7 +223,7 @@ void sci_isr_er(int ch) {
 static void sci_isr_tx(int ch) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     if (!tx_fifo[ch].busy) {
         // sci->SCR.BYTE &= ~0xa0; /* TIE and TE reset */
         goto sci_isr_tx_exit;
@@ -238,7 +238,7 @@ static void sci_isr_tx(int ch) {
         sci->SCR.BYTE |= 0x04; /* TEI set */
     }
 sci_isr_tx_exit:
-    rx_enable_irq();
+    rx_enable_irq(state);
     #if 0
     if (tx_fifo[ch].len != 0) {
         i = tx_fifo[ch].tail;
@@ -253,7 +253,7 @@ sci_isr_tx_exit:
 
 void sci_isr_te(int ch) {
     volatile struct st_sci0 *sci = SCI[ch];
-    rx_disable_irq();
+    // rx_disable_irq();
     // if (!tx_fifo[ch].busy)
     //    goto sci_isr_te_exit;
     sci->SCR.BYTE &= ~0xa4; /* TIE, TE and TEI reset */
@@ -263,7 +263,7 @@ void sci_isr_te(int ch) {
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
     }
 // sci_isr_te_exit:
-    rx_enable_irq();
+    // rx_enable_irq();
 }
 
 uint8_t sci_rx_ch(int ch) {
@@ -290,14 +290,14 @@ void sci_tx_ch(int ch, uint8_t c) {
     int i;
     volatile struct st_sci0 *sci = SCI[ch];
     while (tx_fifo[ch].len == tx_fifo[ch].size) {
-        rx_disable_irq();
+        uint32_t state = rx_disable_irq();
         i = tx_fifo[ch].tail;
         sci->TDR = tx_fifo[ch].buf[i++];
         tx_fifo[ch].len--;
         tx_fifo[ch].tail = i % tx_fifo[ch].size;
-        rx_enable_irq();
+        rx_enable_irq(state);
     }
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     if (!tx_fifo[ch].busy) {
         tx_fifo[ch].busy = 1;
         sci->SCR.BYTE |= 0xa0;  /* TIE and TE set */
@@ -306,7 +306,7 @@ void sci_tx_ch(int ch, uint8_t c) {
     tx_fifo[ch].buf[i++] = c;
     tx_fifo[ch].head = i % tx_fifo[ch].size;
     tx_fifo[ch].len++;
-    rx_enable_irq();
+    rx_enable_irq(state);
     #if 0
     while (tx_fifo[ch].len == tx_fifo[ch].size) {
         while ((sci->SSR.BYTE & 0x04) == 0) {
@@ -531,7 +531,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     if (!sci_init_flag[ch]) {
         sci_fifo_init(ch);
         sci_callback[ch] = 0;
-        rx_disable_irq();
+        uint32_t state = rx_disable_irq();
         SYSTEM.PRCR.WORD = 0xA502;
         MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
         MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
@@ -575,7 +575,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
         sci->SCR.BYTE = 0xd0;
         sci_int_priority(ch, SCI_DEFAULT_PRIORITY);
         sci_int_enable(ch);
-        rx_enable_irq();
+        rx_enable_irq(state);
         sci_init_flag[ch] = true;
     }
 }

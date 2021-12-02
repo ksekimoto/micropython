@@ -83,7 +83,9 @@ typedef struct _mod_network_socket_obj_t {
     int32_t timeout;
     void *state;
     #endif
+    #if MICROPY_HW_ESP8266
     mp_uint_t handle;
+    #endif
 } mod_network_socket_obj_t;
 #endif
 #else
@@ -104,6 +106,9 @@ typedef struct _mod_network_nic_type_t {
     int (*accept)(struct _mod_network_socket_obj_t *socket, struct _mod_network_socket_obj_t *socket2, byte *ip, mp_uint_t *port, int *_errno);
     int (*connect)(struct _mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno);
     mp_uint_t (*send)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
+    #if MICROPY_HW_ESP8266
+    mp_uint_t (*sendall)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
+    #endif
     mp_uint_t (*recv)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, int *_errno);
     mp_uint_t (*sendto)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, byte *ip, mp_uint_t port, int *_errno);
     mp_uint_t (*recvfrom)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, byte *ip, mp_uint_t *port, int *_errno);
@@ -125,6 +130,9 @@ typedef struct _mod_network_socket_obj_t {
     // Extended socket state for NICs/ports that need it.
     int32_t timeout;
     void *state;
+    #endif
+    #if MICROPY_HW_ESP8266
+    mp_uint_t handle;
     #endif
 } mod_network_socket_obj_t;
 

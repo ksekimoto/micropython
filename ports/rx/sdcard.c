@@ -143,9 +143,9 @@ static int wait_ready(UINT wt) {
 // sd_deselect card and release SPI
 // -----------------------------------------------------------------------
 
-static void deselect(void) {
-    CS_HIGH();      /* Set CS# high */
-    xchg_spi(0xFF); /* Dummy clock (force DO hi-z for multiple slave SPI) */
+static void sd_deselect(void) {
+    CS_HIGH();      // Set CS# high
+    xchg_spi(0xFF); // Dummy clock (force DO hi-z for multiple slave SPI)
 }
 
 // -----------------------------------------------------------------------
@@ -153,13 +153,13 @@ static void deselect(void) {
 // -----------------------------------------------------------------------
 
 // 1:OK, 0:Timeout
-static int select(void) {
+static int sd_select(void) {
     CS_LOW();       // Set CS# low
     xchg_spi(0xFF); // Dummy clock (force DO enabled)
     if (wait_ready(500)) {
         return 1; // Wait for card ready
     }
-    deselect();
+    sd_deselect();
     return 0; // Timeout
 }
 
@@ -181,8 +181,8 @@ static BYTE sd_cmd(uint8_t cmd, uint32_t arg) {
     }
     // sd_select the card and wait for ready except to stop multiple block read
     if (cmd != CMD12) {
-        deselect();
-        if (!select()) {
+        sd_deselect();
+        if (!sd_select()) {
             return 0xFF;
         }
     }
@@ -214,9 +214,13 @@ static BYTE sd_cmd(uint8_t cmd, uint32_t arg) {
 }
 
 static void sd_readinto(uint8_t *buf, uint32_t len) {
+    uint32_t timeout = 10000;
     gpio_write(sd_cs,0);
     while (true) {
         if (rx_spi_write_byte(sd_ch, 0xff) == _TOKEN_DATA) {
+            break;
+        }
+        if (timeout-- == 0) {
             break;
         }
     }
@@ -356,7 +360,7 @@ uint8_t sd_init_card(void) {
     sd_card_type = ty; // Card type
     sd_get_sector_count();
     sd_get_sector_block_size();
-    deselect();
+    sd_deselect();
 
     rx_spi_init(sd_ch, sd_cs, 4000000, 8, 0);
     return 0;

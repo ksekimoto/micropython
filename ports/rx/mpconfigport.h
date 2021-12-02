@@ -304,7 +304,7 @@ extern void lv_deinit(void);
 #define ONEWIRE_BUILTIN_MODULE
 #endif
 
-#if defined(MICROPY_HW_ETH_MDC)
+#if MICROPY_HW_ETH_MDC
 extern const struct _mp_obj_type_t network_lan_type;
 #define MICROPY_HW_NIC_ETH                  { MP_ROM_QSTR(MP_QSTR_LAN), MP_ROM_PTR(&network_lan_type) },
 #else
@@ -332,7 +332,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_cc3k;
 #define MICROPY_HW_NIC_CC3K
 #endif
 
-#if defined(MICROPY_HW_ESP8266)
+#if MICROPY_HW_ESP8266
 extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
 #define MICROPY_HW_NIC_ESP8266              { MP_ROM_QSTR(MP_QSTR_WLAN), MP_ROM_PTR(&mod_network_nic_type_esp8266) },
 #else

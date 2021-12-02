@@ -34,11 +34,10 @@
 // #include "mpu.h"
 #include "eth.h"
 
-#if defined(MICROPY_HW_ETH_MDC)
+#if MICROPY_HW_ETH_MDC
 
 #include "common.h"
 #include "phy.h"
-#include "modmachine.h"
 
 #include "lwip/etharp.h"
 #include "lwip/dns.h"
@@ -68,6 +67,12 @@
 #define PHY_AUTONEGOTIATION     0x1000
 #define PHY_LINK_INTERRUPT      0x2000
 #define RESET   1
+
+typedef struct _eth_t {
+    uint32_t trace_flags;
+    struct netif netif;
+    struct dhcp dhcp_struct;
+} eth_t;
 
 void ethernetif_input_cb(void);
 extern struct ei_device le0;

@@ -31,7 +31,7 @@
 
 // #define NET_OLD
 
-#if defined(MICROPY_HW_ETH_MDC)
+#if MICROPY_HW_ETH_MDC
 
 #include "lwip/netif.h"
 

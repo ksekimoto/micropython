@@ -716,7 +716,7 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
         sci_fifo_init(ch);
         sci_callback[ch] = 0;
     }
-    rx_disable_irq();
+    uint32_t state = rx_disable_irq();
     SYSTEM.PRCR.WORD = 0xA502;
     MPC.PWPR.BIT.B0WI = 0; /* Enable write to PFSWE */
     MPC.PWPR.BIT.PFSWE = 1; /* Enable write to PFS */
@@ -735,7 +735,6 @@ void sci_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits, int 
     _PMR(rx_port) |= rx_mask;
     // MPC.PWPR.BYTE = 0x80;     /* Disable write to PFSWE and PFS*/
     SYSTEM.PRCR.WORD = 0xA500;
-    uint32_t state = rx_disable_irq();
     sci->SCR.BYTE = 0;
     if (bits == 7) {
         smr |= 0x40;
