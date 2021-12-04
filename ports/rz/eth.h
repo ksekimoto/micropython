@@ -26,11 +26,7 @@
 #ifndef MICROPY_INCLUDED_RZ_ETH_H
 #define MICROPY_INCLUDED_RZ_ETH_H
 
-typedef struct _eth_t {
-    uint32_t trace_flags;
-    struct netif netif;
-    struct dhcp dhcp_struct;
-} eth_t;
+typedef struct _eth_t eth_t;
 extern eth_t eth_instance;
 
 void eth_init(eth_t *self, int mac_idx);
@@ -39,7 +35,6 @@ struct netif *eth_netif(eth_t *self);
 int eth_link_status(eth_t *self);
 int eth_start(eth_t *self);
 int eth_stop(eth_t *self);
-
-void ethernetif_input_cb(void);
+void eth_low_power_mode(eth_t *self, bool enable);
 
 #endif // MICROPY_INCLUDED_RZ_ETH_H

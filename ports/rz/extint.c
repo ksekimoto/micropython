@@ -34,7 +34,7 @@
 #include "py/mphal.h"
 #include "pin.h"
 #include "extint.h"
-#include "rza2m_exti.h"
+#include "rz_exti.h"
 
 /// \moduleref pyb
 /// \class ExtInt - configure I/O pins to interrupt on external events
@@ -96,7 +96,7 @@ static uint irq_param[EXTI_NUM_VECTORS];
 
 void exti_callback(void *param) {
     uint irq_no = *((uint *)param);
-    exti_irq_clear(irq_no);
+    rz_exti_irq_clear(irq_no);
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
     if (*cb != mp_const_none) {
         mp_sched_lock();
@@ -110,7 +110,7 @@ void exti_callback(void *param) {
         } else {
             // Uncaught exception; disable the callback so it doesn't run again.
             *cb = mp_const_none;
-            exti_disable(irq_no);
+            rz_exti_disable(irq_no);
             printf("Uncaught exception in ExtInt interrupt handler line %u\n", (unsigned int)irq_no);
             mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));
         }
@@ -130,8 +130,8 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
         return 0xff;
     }
     pin = pin_find(pin_obj);
-    pin_idx = pin->pin;
-    irq_no = (uint)exti_find_pin_irq((uint8_t)pin_idx);
+    pin_idx = pin->id;
+    irq_no = (uint)rz_exti_find_pin_irq((uint8_t)pin_idx);
     if (irq_no == 0xff) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("ExtInt can't be assigned for %q"), pin->name);
     }
@@ -140,7 +140,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     } else if ((mode == GPIO_MODE_IT_FALLING) || (mode != GPIO_MODE_EVT_FALLING)) {
         cond = 1;
     } else if ((mode != GPIO_MODE_IT_RISING_FALLING) || (mode != GPIO_MODE_EVT_RISING_FALLING)) {
-        cond  = 3;
+        cond = 3;
     } else {
         cond = 0;
     }
@@ -149,16 +149,16 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid ExtInt Pull: %d"), pull);
     }
     mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[irq_no];
-    //if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
+    // if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
     //    mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("ExtInt vector %d is already in use"), irq_no);
-    //}
-    exti_disable(pin_idx);
+    // }
+    rz_exti_disable(pin_idx);
     *cb = callback_obj;
     irq_param[irq_no] = (uint)irq_no;
-    exti_set_callback(irq_no, (EXTI_FUNC)exti_callback, (void *)&irq_param[irq_no]);
+    rz_exti_set_callback(irq_no, (EXTI_FUNC)exti_callback, (void *)&irq_param[irq_no]);
     if (*cb != mp_const_none) {
         pyb_extint_callback_arg[irq_no] = MP_OBJ_FROM_PTR(pin);
-        exti_register((uint32_t)pin_idx, (uint32_t)cond, (uint32_t)pull);
+        rz_exti_register((uint32_t)pin_idx, (uint32_t)cond, (uint32_t)pull);
     }
     return irq_no;
 }
@@ -175,7 +175,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_irq_no_obj, extint_obj_irq_no);
 /// Enable a disabled interrupt.
 STATIC mp_obj_t extint_obj_enable(mp_obj_t self_in) {
     extint_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    exti_enable(self->pin_idx);
+    rz_exti_enable(self->pin_idx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_enable_obj, extint_obj_enable);
@@ -185,7 +185,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_enable_obj, extint_obj_enable);
 /// This could be useful for debouncing.
 STATIC mp_obj_t extint_obj_disable(mp_obj_t self_in) {
     extint_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    exti_disable(self->pin_idx);
+    rz_exti_disable(self->pin_idx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(extint_obj_disable_obj, extint_obj_disable);
@@ -223,7 +223,7 @@ STATIC mp_obj_t extint_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     extint_obj_t *self = m_new_obj(extint_obj_t);
     pin_obj_t *pin = vals[0].u_obj;
     self->base.type = type;
-    self->pin_idx = pin->pin;
+    self->pin_idx = pin->id;
     self->irq_no = extint_register(vals[0].u_obj, vals[1].u_int, vals[2].u_int, vals[3].u_obj, false);
 
     return MP_OBJ_FROM_PTR(self);
@@ -255,13 +255,13 @@ const mp_obj_type_t extint_type = {
     .name = MP_QSTR_ExtInt,
     .print = extint_obj_print,
     .make_new = extint_make_new,
-    .locals_dict = (mp_obj_dict_t*)&extint_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&extint_locals_dict,
 };
 
 void extint_init0(void) {
-    exti_init();
-    exti_deinit();
+    rz_exti_init();
+    rz_exti_deinit();
     for (int i = 0; i < PYB_EXTI_NUM_VECTORS; i++) {
         MP_STATE_PORT(pyb_extint_callback)[i] = mp_const_none;
-   }
+    }
 }

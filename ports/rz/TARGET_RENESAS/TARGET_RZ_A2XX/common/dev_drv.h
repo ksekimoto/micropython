@@ -18,8 +18,23 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2016 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2016-2020 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
+/* Copyright (c) 2016-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /******************************************************************************
 * File Name    : dev_drv.h
 * $Rev: 127 $
@@ -51,8 +66,7 @@ Macro definitions
 #define DEVDRV_FLAG_ON      (1)     /* Flag ON  */
 
 /* ==== Channels ==== */
-typedef enum devdrv_ch
-{
+typedef enum devdrv_ch {
     DEVDRV_CH_0,            /* Channel 0  */
     DEVDRV_CH_1,            /* Channel 1  */
     DEVDRV_CH_2,            /* Channel 2  */

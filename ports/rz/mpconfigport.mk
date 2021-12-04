@@ -1,4 +1,4 @@
-# Enable/disable extra modules
+# Enable/disable extra modules and features
 
 # wiznet5k module for ethernet support; valid values are:
 #   0    : no Wiznet support

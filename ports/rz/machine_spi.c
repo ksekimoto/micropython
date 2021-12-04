@@ -65,6 +65,9 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     // get static peripheral object
     int spi_id = spi_find_index(args[ARG_id].u_obj);
+    if ((spi_id < 1) || (spi_id > 3)) {
+        mp_raise_ValueError(MP_ERROR_TEXT("spi id is between 1 and 3"));
+    }
     const machine_hard_spi_obj_t *self = &machine_hard_spi_obj[spi_id - 1];
 
     // here we would check the sck/mosi/miso pins and configure them, but it's not implemented

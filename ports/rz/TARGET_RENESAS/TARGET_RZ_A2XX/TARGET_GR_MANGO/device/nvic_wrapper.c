@@ -18,8 +18,23 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2012 - 2015 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2012 - 2020 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
+/* Copyright (c) 2012-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /**************************************************************************//**
 * @file         nvic_wrapper.c
 * $Rev:  $
@@ -89,10 +104,10 @@ void NVIC_DisableIRQ(IRQn_Type IRQn)
 uint32_t NVIC_GetPendingIRQ(IRQn_Type IRQn)
 {
     uint32_t pending;
-    
+
     pending = GIC_GetIRQStatus(IRQn);
     pending = (pending & 0x00000001);
-    
+
     return pending;
 }
 
@@ -112,10 +127,10 @@ void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
 uint32_t NVIC_GetActive(IRQn_Type IRQn)
 {
     uint32_t active;
-    
+
     active = GIC_GetIRQStatus(IRQn);
     active = ((active >> 1) & 0x00000001);
-    
+
     return active;
 }
 
@@ -129,14 +144,14 @@ void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 uint32_t NVIC_GetPriority(IRQn_Type IRQn)
 {
     uint32_t priority_field;
-    
+
     priority_field = GIC_GetPriority(IRQn);
     priority_field = (priority_field >> 3);
     return priority_field;
 }
 
 
-uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority)
+uint32_t NVIC_EncodePriority(uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority)
 {
     uint32_t PriorityGroupTmp = (PriorityGroup & 0x07);          /* only values 0..7 are used          */
     uint32_t PreemptPriorityBits;
@@ -146,13 +161,13 @@ uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t PreemptPriority, 
     SubPriorityBits     = ((PriorityGroupTmp + PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + PRIO_BITS;
 
     return (
-             ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
-             ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)))
+               ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
+               ((SubPriority     & ((1 << (SubPriorityBits)) - 1)))
            );
 }
 
 
-void NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGroup, uint32_t* pPreemptPriority, uint32_t* pSubPriority)
+void NVIC_DecodePriority(uint32_t Priority, uint32_t PriorityGroup, uint32_t *pPreemptPriority, uint32_t *pSubPriority)
 {
     uint32_t PriorityGroupTmp = (PriorityGroup & 0x07);          /* only values 0..7 are used          */
     uint32_t PreemptPriorityBits;
@@ -162,7 +177,7 @@ void NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGroup, uint32_t* p
     SubPriorityBits     = ((PriorityGroupTmp + PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + PRIO_BITS;
 
     *pPreemptPriority = (Priority >> SubPriorityBits) & ((1 << (PreemptPriorityBits)) - 1);
-    *pSubPriority     = (Priority                   ) & ((1 << (SubPriorityBits    )) - 1);
+    *pSubPriority     = (Priority) & ((1 << (SubPriorityBits)) - 1);
 }
 
 void NVIC_SystemReset(void)
@@ -170,16 +185,16 @@ void NVIC_SystemReset(void)
     uint16_t reg;
     uint16_t dummy_read;
     /* Use Watch Dog Timer to system reset */
-    
+
     /* Set WT/IT bit of WTCSR to 1 = Watch Dog */
     /* CLK = 000, 1xP0phi(=33.3333MHz) = 7.7us */
     reg = (WDT_WTCSR_WRITE | 0x0058);
     WDT.WTCSR.WORD = reg;
-    
+
     /* Clear Count reg */
     reg = (WDT_WTCNT_WRITE | 0x0000);
     WDT.WTCNT.WORD = reg;
-    
+
     /* Clear WOVF flag */
     dummy_read = WDT.WRCSR.WORD;
     reg = (WDT_WRCSR_WOVF_WRITE | (dummy_read & 0x0000));
@@ -187,12 +202,12 @@ void NVIC_SystemReset(void)
     /* Enable Internal Reset */
     reg = (WDT_WRCSR_RSTE_WRITE | 0x005F);
     WDT.WRCSR.WORD = reg;
-    
+
     /* Watch Dog start */
     reg = (WDT_WTCSR_WRITE | 0x0078);
     WDT.WTCSR.WORD = reg;
-    
-    while(1);                      /* wait Internal Reset */
+
+    while (1);                     /* wait Internal Reset */
 }
 
 /* ##################################    SysTick function  ############################################ */
@@ -205,7 +220,7 @@ uint32_t SysTick_Config(uint32_t ticks)
 
 
 /* ##################################### Debug In/Output function ########################################### */
-uint32_t ITM_SendChar (uint32_t ch)
+uint32_t ITM_SendChar(uint32_t ch)
 {
     /* Not support this function */
     /* Use mbed Serial */
@@ -213,7 +228,7 @@ uint32_t ITM_SendChar (uint32_t ch)
 }
 
 
-int32_t ITM_ReceiveChar (void)
+int32_t ITM_ReceiveChar(void)
 {
     /* Not support this function */
     /* Use mbed Serial */
@@ -221,7 +236,7 @@ int32_t ITM_ReceiveChar (void)
 }
 
 
-int32_t ITM_CheckChar (void)
+int32_t ITM_CheckChar(void)
 {
     /* Not support this function */
     /* Use mbed Serial */

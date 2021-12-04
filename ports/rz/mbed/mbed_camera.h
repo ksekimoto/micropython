@@ -3,8 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
- * Copyright (c) 2020 Kentaro Sekimoto
+ * Copyright (c) 2021 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,35 +24,68 @@
  * THE SOFTWARE.
  */
 
-#ifndef PORTS_RZ_MBED_MBED_CAMERA_LCD_H_
-#define PORTS_RZ_MBED_MBED_CAMERA_LCD_H_
+#ifndef PORTS_RZ_MBED_MBED_CAMERA_H_
+#define PORTS_RZ_MBED_MBED_CAMERA_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void mbed_ticker_thread(void *thread, uint32_t ms);
-void mbed_camera_init(void);
-void mbed_camera_deinit(void);
-void mbed_start_video_camera(uint8_t *buf, uint32_t vformat);
-void mbed_start_lcd_display(uint8_t *buf, uint32_t gformat);
-void mbed_lcd_init(void);
-void mbed_lcd_deinit(void);
-uint8_t *mbed_get_camera_fb_ptr(void);
-uint32_t mbed_get_camera_fb_size(void);
-uint8_t *mbed_get_lcd_fb_ptr(void);
-uint32_t mbed_get_lcd_fb_size(void);
-void mbed_set_pixel(int x, int y, uint16_t color);
-int mbed_get_lcd_hw(void);
-int mbed_get_lcd_vw(void);
-int mbed_get_lcd_pic_size(void);
-int mbed_get_camera_hw(void);
-int mbed_get_camera_vw(void);
-int mbed_jpeg_encode(const char *vbuf, uint32_t wx, uint32_t wy, char **jpeg_buf, uint32_t *encode_size, uint32_t format);
-int mbed_jpeg_decode(const char *vbuf, uint32_t wx, uint32_t wy, char *jpeg_buf, uint32_t decode_size, uint32_t format);
+#define CAMERA_BUF_ALIGN    0x80
+
+#define DEF_CAMERA_WIDTH    (640)
+#define DEF_CAMERA_HEIGHT   (480)
+
+#define CAMERA_DV   0
+#define CAMERA_MIPI 1
+
+#define CAMERA_RAS_PI_DEF           0x2000
+#define CAMERA_RAS_PI_WIDE_ANGLE    0x2001
+#define CAMERA_RAS_PI_832X480       0x2002
+
+#define VFORMAT_YCBCR422 0
+#define VFORMAT_RGB565   1
+#define VFORMAT_RGB888   2
+#define VFORMAT_RAW8     3
+
+#define CFORMAT_RGB888   0
+#define CFORMAT_RGB666   1
+#define CFORMAT_RGB565   2
+#define CFORMAT_BT656    3
+#define CFORMAT_BT601    4
+#define CFORMAT_YCBCR422 5
+#define CFORMAT_YCBCR444 6
+#define CFORMAT_RAW8     7
+
+typedef struct _camera_t {
+    uint16_t camera_id;
+    uint16_t module;
+    uint16_t cformat;
+    uint16_t hw;
+    uint16_t vw;
+    uint16_t depth;
+    uint16_t stride;
+    uint16_t vformat;
+    uint16_t swa;
+    uint16_t input_ch;
+    uint8_t *buf;
+    uint32_t reset_level;
+} camera_t;
+
+bool mbed_start_video_camera(camera_t *camera);
+void mbed_camera_init_params(camera_t *camera);
+bool mbed_camera_init(camera_t *camera);
+uint16_t camera_get_ov_product_id(uint8_t addr, uint32_t reset_level);
+
+bool camera_type1_reg_tbl_write(uint8_t addr, const uint8_t *tbl, size_t size);
+bool camera_type1_reg_write(uint8_t addr, uint8_t reg, uint8_t v);
+bool camera_type1_reg_read(uint8_t addr, uint8_t reg, uint8_t *v);
+bool camera_type2_reg_tbl_write(uint8_t addr, const uint8_t *tbl, size_t size);
+bool camera_type2_reg_write(uint8_t addr, uint16_t reg, uint8_t v);
+bool camera_type2_reg_read(uint8_t addr, uint16_t reg, uint8_t *v);
 
 #ifdef __cplusplus
 };
 #endif
 
-#endif /* PORTS_RZ_MBED_MBED_CAMERA_LCD_H_ */
+#endif /* PORTS_RZ_MBED_MBED_CAMERA_H_ */

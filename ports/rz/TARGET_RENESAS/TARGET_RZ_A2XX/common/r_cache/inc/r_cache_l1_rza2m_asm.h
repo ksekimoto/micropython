@@ -18,8 +18,23 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2018-2020 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
+/* Copyright (c) 2018-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /*******************************************************************************
 * File Name    : r_cache_l1_rza2m_asm.h
 * Version      : 1.0
@@ -50,77 +65,92 @@ extern "C"
 
 #if(1) /* Mbed */
 
-__STATIC_FORCEINLINE void r_cache_l1_cache_init(void) {
-  // Do nothing
+__STATIC_FORCEINLINE void r_cache_l1_cache_init(void)
+{
+    // Do nothing
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_i_inv_all(void) {
-  __set_ICIALLU(0);
-  __DSB();     //ensure completion of the invalidation
-  __ISB();     //ensure instruction fetch path sees new I cache state
+__STATIC_FORCEINLINE void r_cache_l1_i_inv_all(void)
+{
+    __set_ICIALLU(0);
+    __DSB();     //ensure completion of the invalidation
+    __ISB();     //ensure instruction fetch path sees new I cache state
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_cache_operation(uint32_t operation) {
-  L1C_CleanInvalidateCache(operation);
+__STATIC_FORCEINLINE void r_cache_l1_d_cache_operation(uint32_t operation)
+{
+    L1C_CleanInvalidateCache(operation);
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_inv_mva(uint32_t line_addr) {
-  __set_DCIMVAC(line_addr);
-  __DMB();     //ensure the ordering of data cache maintenance operations and their effects
+__STATIC_FORCEINLINE void r_cache_l1_d_inv_mva(uint32_t line_addr)
+{
+    __set_DCIMVAC(line_addr);
+    __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_clean_mva(uint32_t line_addr) {
-  __set_DCCMVAC(line_addr);
-  __DMB();     //ensure the ordering of data cache maintenance operations and their effects
+__STATIC_FORCEINLINE void r_cache_l1_d_clean_mva(uint32_t line_addr)
+{
+    __set_DCCMVAC(line_addr);
+    __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_clean_inv_mva(uint32_t line_addr) {
-  __set_DCCIMVAC(line_addr);
-  __DMB();     //ensure the ordering of data cache maintenance operations and their effects
+__STATIC_FORCEINLINE void r_cache_l1_d_clean_inv_mva(uint32_t line_addr)
+{
+    __set_DCCIMVAC(line_addr);
+    __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_i_enable(void) {
-  __set_SCTLR( __get_SCTLR() | SCTLR_I_Msk);
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_i_enable(void)
+{
+    __set_SCTLR(__get_SCTLR() | SCTLR_I_Msk);
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_i_disable(void) {
-  __set_SCTLR( __get_SCTLR() & (~SCTLR_I_Msk));
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_i_disable(void)
+{
+    __set_SCTLR(__get_SCTLR() & (~SCTLR_I_Msk));
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_enable(void) {
-  __set_SCTLR( __get_SCTLR() | SCTLR_C_Msk);
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_d_enable(void)
+{
+    __set_SCTLR(__get_SCTLR() | SCTLR_C_Msk);
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_d_disable(void) {
-  __set_SCTLR( __get_SCTLR() & (~SCTLR_C_Msk));
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_d_disable(void)
+{
+    __set_SCTLR(__get_SCTLR() & (~SCTLR_C_Msk));
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_btac_enable(void) {
-  __set_SCTLR( __get_SCTLR() | SCTLR_Z_Msk);
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_btac_enable(void)
+{
+    __set_SCTLR(__get_SCTLR() | SCTLR_Z_Msk);
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_btac_disable(void) {
-  __set_SCTLR( __get_SCTLR() & (~SCTLR_Z_Msk));
-  __ISB();
+__STATIC_FORCEINLINE void r_cache_l1_btac_disable(void)
+{
+    __set_SCTLR(__get_SCTLR() & (~SCTLR_Z_Msk));
+    __ISB();
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_btac_inv(void) {
-  __set_BPIALL(0);
-  __DSB();     //ensure completion of the invalidation
-  __ISB();     //ensure instruction fetch path sees new state
+__STATIC_FORCEINLINE void r_cache_l1_btac_inv(void)
+{
+    __set_BPIALL(0);
+    __DSB();     //ensure completion of the invalidation
+    __ISB();     //ensure instruction fetch path sees new state
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_prefetch_enable(void) {
-  __set_ACTRL( __get_ACTRL() | ACTLR_L1PE_Msk);
+__STATIC_FORCEINLINE void r_cache_l1_prefetch_enable(void)
+{
+    __set_ACTRL(__get_ACTRL() | ACTLR_L1PE_Msk);
 }
 
-__STATIC_FORCEINLINE void r_cache_l1_prefetch_disable(void) {
-  __set_ACTRL( __get_ACTRL() & (~ACTLR_L1PE_Msk));
+__STATIC_FORCEINLINE void r_cache_l1_prefetch_disable(void)
+{
+    __set_ACTRL(__get_ACTRL() & (~ACTLR_L1PE_Msk));
 }
 #else
 extern void r_cache_l1_cache_init(void);

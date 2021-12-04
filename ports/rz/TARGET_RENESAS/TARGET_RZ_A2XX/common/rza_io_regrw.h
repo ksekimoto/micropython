@@ -14,12 +14,27 @@
  * following link:
  * http://www.renesas.com/disclaimer
  *
- * Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.
+ * Copyright (C) 2018-2020 Renesas Electronics Corporation. All rights reserved.
  *********************************************************************************************************************/
 /**********************************************************************************************************************
  * File Name    : rza_io_regrw.h
  * Description  : Low level register read/write header
  *********************************************************************************************************************/
+/* Copyright (c) 2018-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /******************************************************************************
 Includes   <System Includes> , "Project Includes"
@@ -58,7 +73,7 @@ extern "C"
  *                       If no one need to keep previous value or shift, use
  *                       IOREG_NONMASK_ACCESS instead.
  *****************************************************************************/
-extern void     RZA_IO_RegWrite_8 (volatile uint8_t  * ioreg, uint8_t  write_value, uint8_t  shift, uint32_t mask);
+extern void     RZA_IO_RegWrite_8(volatile uint8_t   *ioreg, uint8_t  write_value, uint8_t  shift, uint32_t mask);
 
 /******************************************************************************
  * @fn            RZA_IO_RegWrite_16
@@ -71,7 +86,7 @@ extern void     RZA_IO_RegWrite_8 (volatile uint8_t  * ioreg, uint8_t  write_val
  *                       If no one need to keep previous value or shift, use
  *                       IOREG_NONMASK_ACCESS instead.
  *****************************************************************************/
-extern void     RZA_IO_RegWrite_16(volatile uint16_t * ioreg, uint16_t write_value, uint16_t shift, uint32_t mask);
+extern void     RZA_IO_RegWrite_16(volatile uint16_t *ioreg, uint16_t write_value, uint16_t shift, uint32_t mask);
 
 /******************************************************************************
  * @fn            RZA_IO_RegWrite_32
@@ -84,7 +99,7 @@ extern void     RZA_IO_RegWrite_16(volatile uint16_t * ioreg, uint16_t write_val
  *                       If no one need to keep previous value or shift, use
  *                       IOREG_NONMASK_ACCESS instead.
  *****************************************************************************/
-extern void     RZA_IO_RegWrite_32(volatile unsigned long * ioreg, uint32_t write_value, uint32_t shift, uint32_t mask);
+extern void     RZA_IO_RegWrite_32(volatile unsigned long *ioreg, uint32_t write_value, uint32_t shift, uint32_t mask);
 
 /******************************************************************************
  * @fn            RZA_IO_RegRead_8
@@ -97,7 +112,7 @@ extern void     RZA_IO_RegWrite_32(volatile unsigned long * ioreg, uint32_t writ
  *                       IOREG_NONMASK_ACCESS instead.
  * @retval        read value from register
  *****************************************************************************/
-extern uint8_t  RZA_IO_RegRead_8  (volatile uint8_t  * ioreg, uint8_t  shift, uint32_t mask);
+extern uint8_t  RZA_IO_RegRead_8(volatile uint8_t   *ioreg, uint8_t  shift, uint32_t mask);
 
 /******************************************************************************
  * @fn            RZA_IO_RegRead_16
@@ -110,7 +125,7 @@ extern uint8_t  RZA_IO_RegRead_8  (volatile uint8_t  * ioreg, uint8_t  shift, ui
  *                       IOREG_NONMASK_ACCESS instead.
  * @retval        read value from register
  *****************************************************************************/
-extern uint16_t RZA_IO_RegRead_16 (volatile uint16_t * ioreg, uint16_t shift, uint32_t mask);
+extern uint16_t RZA_IO_RegRead_16(volatile uint16_t *ioreg, uint16_t shift, uint32_t mask);
 
 /******************************************************************************
  * @fn            RZA_IO_RegRead_32
@@ -123,7 +138,7 @@ extern uint16_t RZA_IO_RegRead_16 (volatile uint16_t * ioreg, uint16_t shift, ui
  *                       IOREG_NONMASK_ACCESS instead.
  * @retval        read value from register
  *****************************************************************************/
-extern uint32_t RZA_IO_RegRead_32 (volatile unsigned long * ioreg, uint32_t shift, uint32_t mask);
+extern uint32_t RZA_IO_RegRead_32(volatile unsigned long *ioreg, uint32_t shift, uint32_t mask);
 
 #ifdef __cplusplus
 }

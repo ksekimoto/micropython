@@ -495,9 +495,6 @@ SRC_C += machine_spi.c
 SRC_C += machine_timer.c
 SRC_C += machine_uart.c
 SRC_C += modmachine.c
-#SRC_C += modnetwork.c
-#SRC_C += modnwcc3k.c
-#SRC_C += modnwwiznet5k.c
 ifeq ($(MICROPY_PY_ESP8266),1)
 CFLAGS += -DMICROPY_PY_ESP8266=1
 SRC_C += network_esp8266.c

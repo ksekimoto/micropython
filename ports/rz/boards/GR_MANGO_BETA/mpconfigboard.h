@@ -17,14 +17,14 @@
 #define MICROPY_HW_ENABLE_RNG       (1)
 
 // UART config
-#define MICROPY_HW_UART0_RX         (pin_P41)
-#define MICROPY_HW_UART0_TX         (pin_P42)
-#define MICROPY_HW_UART0_SCK        (pin_P40)
-#define MICROPY_HW_UART0_RTS        (pin_P43)
-#define MICROPY_HW_UART0_CTS        (pin_P44)
-#define MICROPY_HW_UART4_RX         (pin_P91)
-#define MICROPY_HW_UART4_TX         (pin_P90)
-#define MICROPY_HW_UART_REPL        PYB_UART_4  // SCI4 (P90:TXD4, P91:RXD4)
+#define MICROPY_HW_UART1_RX         (pin_P41)
+#define MICROPY_HW_UART1_TX         (pin_P42)
+#define MICROPY_HW_UART1_SCK        (pin_P40)
+#define MICROPY_HW_UART1_RTS        (pin_P43)
+#define MICROPY_HW_UART1_CTS        (pin_P44)
+#define MICROPY_HW_UART5_RX         (pin_P91)
+#define MICROPY_HW_UART5_TX         (pin_P90)
+#define MICROPY_HW_UART_REPL        PYB_UART_5  // SCI4 (P90:TXD4, P91:RXD4)
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
@@ -98,8 +98,8 @@
 #define MICROPY_HW_LCDSPI_RESET (pin_P45)   // GPIO27 Header13
 #define MICROPY_HW_LCDSPI_RS    (pin_PH6)   // GPIO25 Header22
 
-#define PYB_SERVO_NUM       (1)
-#define BOARD_SERVO1_PIN    (pin_PH0)
+//#define PYB_SERVO_NUM       (1)
+//#define BOARD_SERVO1_PIN    (pin_PH0)
 
 #define MICROPY_PY_PYB_CAMERA_DV    (1)
 #define MICROPY_PY_PYB_CAMERA_MIPI  (1)

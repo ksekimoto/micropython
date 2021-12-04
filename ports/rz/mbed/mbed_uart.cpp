@@ -30,7 +30,7 @@
 #include "mbed_uart.h"
 #include "mpconfigport.h"
 
-//#define MBED_TX_INT_ENABLE
+// #define MBED_TX_INT_ENABLE
 
 #define SCI_CH_NUM 5
 #define SCI_RX_BUF_SIZE    1024
@@ -106,7 +106,7 @@ uint8_t mbed_uart_rx_ch(int ch) {
 }
 
 void mbed_uart_tx_ch(int ch, uint8_t c) {
-#if defined(MBED_TX_INT_ENABLE)
+    #if defined(MBED_TX_INT_ENABLE)
     MBED_UART_TX_BUF *tx_buf = &mbed_uart_tx_buf[ch];
     if (tx_buf->is_sending) {
         tx_buf->write_buf[tx_buf->write_buf_tail] = c;
@@ -114,9 +114,9 @@ void mbed_uart_tx_ch(int ch, uint8_t c) {
     } else {
         tx_buf->is_sending = true;
     }
-#else
+    #else
     mbed_uart[ch]->putc((int)c);
-#endif
+    #endif
 }
 
 int mbed_uart_rx_any(int ch) {
@@ -141,9 +141,9 @@ void mbed_uart_tx_int(int ch) {
     if (tx_buf->write_buf_tail != tx_buf->write_buf_head) {
         mbed_uart[ch]->putc((int)tx_buf->write_buf[tx_buf->write_buf_head]);
         tx_buf->write_buf_head = (tx_buf->write_buf_head + 1) % tx_buf->write_buf_len;
-   } else {
-       tx_buf->is_sending = false;
-   }
+    } else {
+        tx_buf->is_sending = false;
+    }
 }
 
 void mbed_uart_tx_int0(void) {
@@ -176,17 +176,18 @@ MBED_UART_CB mbed_uart_tx_ints[SCI_CH_NUM] = {
 #endif
 
 void mbed_uart_rx_int(int ch) {
-    //mp_uint_t irq_state = disable_irq();
+    // mp_uint_t irq_state = disable_irq();
     MBED_UART_RX_BUF *rx_buf = &mbed_uart_rx_buf[ch];
     uint16_t next_head = (rx_buf->read_buf_head + 1) % rx_buf->read_buf_len;
     uint8_t data = (uint8_t)mbed_uart[ch]->getc();
     if (mbed_uart_kbd_interrupt[ch]) {
-        if (mbed_uart_kbd_interrupt[ch]((int)data))
+        if (mbed_uart_kbd_interrupt[ch]((int)data)) {
             return;
+        }
     }
     rx_buf->read_buf[rx_buf->read_buf_head] = data;
     rx_buf->read_buf_head = next_head;
-    //enable_irq(irq_state);
+    // enable_irq(irq_state);
 }
 
 void mbed_uart_rx_int0(void) {
@@ -237,9 +238,9 @@ void mbed_uart_init_with_pins(int ch, int tx_pin, int rx_pin, int baud, int bits
     mbed_uart[ch] = new Serial((PinName)tx_pin, (PinName)rx_pin, baud);
     mbed_uart[ch]->format(bits, _parity, stop);
     mbed_uart[ch]->attach(mbed_uart_rx_ints[ch], Serial::RxIrq);
-#if defined(MBED_TX_INT_ENABLE)
+    #if defined(MBED_TX_INT_ENABLE)
     mbed_uart[ch]->attach(mbed_uart_tx_ints[ch], Serial::TxIrq);
-#endif
+    #endif
 }
 
 void mbed_uart_init(int ch, int baud, int bits, int parity, int stop, int flow) {

@@ -62,14 +62,14 @@ void sdcard_init_vfs(struct _fs_user_mount_t *vfs, int part);
 #define sdcard_read_blocks              mbed_sdcard_read_blocks
 #define sdcard_write_blocks             mbed_sdcard_write_blocks
 #else
-#include "rza2m_sd.h"
-#define sdcard_init                     rza2m_sdcard_init
-#define sdcard_is_present               rza2m_sdcard_is_present
-#define sdcard_power_on                 rza2m_sdcard_power_on
-#define sdcard_power_off                rza2m_sdcard_power_off
-#define sdcard_get_capacity_in_bytes    rza2m_sdcard_get_capacity_in_bytes
-#define sdcard_read_blocks              rza2m_sdcard_read_blocks
-#define sdcard_write_blocks             rza2m_sdcard_write_blocks
+#include "rz_sd.h"
+#define sdcard_init                     rz_sdcard_init
+#define sdcard_is_present               rz_sdcard_is_present
+#define sdcard_power_on                 rz_sdcard_power_on
+#define sdcard_power_off                rz_sdcard_power_off
+#define sdcard_get_capacity_in_bytes    rz_sdcard_get_capacity_in_bytes
+#define sdcard_read_blocks              rz_sdcard_read_blocks
+#define sdcard_write_blocks             rz_sdcard_write_blocks
 #endif
 
 #endif // MICROPY_INCLUDED_RX_SDCARD_H

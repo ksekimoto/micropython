@@ -96,14 +96,6 @@ int mp_interrupt_channel;
 STATIC pyb_thread_t pyb_thread_main;
 #endif
 
-#if MICROPY_HW_ENABLE_STORAGE
-// STATIC fs_user_mount_t fs_user_mount_flash;
-#endif
-
-#if MICROPY_HW_ENABLE_SDCARD
-FATFS *fatfs_sd = (FATFS *)0;
-#endif
-
 #if defined(MICROPY_HW_UART_REPL)
 #ifndef MICROPY_HW_UART_REPL_RXBUF
 #define MICROPY_HW_UART_REPL_RXBUF (260)
@@ -415,7 +407,7 @@ void rx_main(uint32_t reset_mode) {
     uart_init(&pyb_uart_repl_obj, MICROPY_HW_UART_REPL_BAUD, UART_WORDLENGTH_8B, UART_PARITY_NONE, UART_STOPBITS_1, 0);
     uart_set_rxbuf(&pyb_uart_repl_obj, sizeof(pyb_uart_repl_rxbuf), pyb_uart_repl_rxbuf);
     uart_attach_to_repl(&pyb_uart_repl_obj, true);
-    MP_STATE_PORT(pyb_uart_obj_all)[MICROPY_HW_UART_REPL] = &pyb_uart_repl_obj;
+    MP_STATE_PORT(pyb_uart_obj_all)[MICROPY_HW_UART_REPL - 1] = &pyb_uart_repl_obj;
     #endif
 
     boardctrl_state_t state;

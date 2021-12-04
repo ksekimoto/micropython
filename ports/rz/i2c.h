@@ -26,7 +26,7 @@
 #ifndef MICROPY_INCLUDED_RZ_I2C_H
 #define MICROPY_INCLUDED_RZ_I2C_H
 
-//#include "dma.h"
+// #include "dma.h"
 
 #define MICROPY_HW_MAX_I2C 4
 // use this for OwnAddress1 to configure I2C in master mode
@@ -48,9 +48,9 @@ typedef struct {
 typedef struct _pyb_i2c_obj_t {
     mp_obj_base_t base;
     I2C_HandleTypeDef *i2c;
-    //const dma_descr_t *tx_dma_descr;
-    //const dma_descr_t *rx_dma_descr;
-    //bool *use_dma;
+    // const dma_descr_t *tx_dma_descr;
+    // const dma_descr_t *rx_dma_descr;
+    // bool *use_dma;
 } pyb_i2c_obj_t;
 
 extern I2C_HandleTypeDef I2CHandle0;

@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2015 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +52,7 @@ void rtc_init(void)
     RTC_BCNT1.RCR4.BIT.RCKSEL = 0;
     RTC_BCNT1.RCR3.BIT.RTCEN  = 1;
 #elif defined(USE_EXTAL_CLK)
+    PMG.RTCXTALSEL.BIT.RTC1XT = 1;
     RTC_BCNT1.RCR4.BIT.RCKSEL = 1;
     RTC_BCNT1.RCR3.BIT.RTCEN  = 0;
 #endif
@@ -93,7 +95,7 @@ void rtc_init(void)
 
 /*
  * Release the RTC based on a time structure.
- * @note This function does not stop the RTC from counting 
+ * @note This function does not stop the RTC from counting
  * [in]
  * None.
  * [out]
@@ -101,6 +103,9 @@ void rtc_init(void)
  */
 void rtc_free(void)
 {
+#if defined(USE_EXTAL_CLK)
+    PMG.RTCXTALSEL.BIT.RTC1XT = 0;
+#endif
 }
 
 
@@ -141,10 +146,10 @@ time_t rtc_read(void)
             RTC_BCNT1.RSR.BIT.CF = 0;
 
             // Read RTC register
-            t = (RTC_BCNT1.BCNT0.BYTE <<  0)
-              | (RTC_BCNT1.BCNT1.BYTE <<  8)
-              | (RTC_BCNT1.BCNT2.BYTE << 16)
-              | (RTC_BCNT1.BCNT3.BYTE << 24);
+            t = ((time_t)RTC_BCNT1.BCNT0.BYTE <<  0)
+                | ((time_t)RTC_BCNT1.BCNT1.BYTE <<  8)
+                | ((time_t)RTC_BCNT1.BCNT2.BYTE << 16)
+                | ((time_t)RTC_BCNT1.BCNT3.BYTE << 24);
         } while (RTC_BCNT1.RSR.BIT.CF != 0);
     } else {
         // Error

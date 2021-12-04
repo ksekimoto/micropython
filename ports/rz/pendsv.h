@@ -26,7 +26,9 @@
 #ifndef MICROPY_INCLUDED_RZ_PENDSV_H
 #define MICROPY_INCLUDED_RZ_PENDSV_H
 
-#define PENDSV_ENABLE
+// #define PENDSV_ENABLE
+
+#include "boardctrl.h"
 
 enum {
     PENDSV_DISPATCH_SOFT_TIMER,
@@ -39,17 +41,14 @@ enum {
     #if MICROPY_PY_BLUETOOTH && !MICROPY_PY_BLUETOOTH_USE_SYNC_EVENTS
     PENDSV_DISPATCH_BLUETOOTH_HCI,
     #endif
+    MICROPY_BOARD_PENDSV_ENTRIES
     #if MICROPY_PY_LVGL
     PENDSV_DISPATCH_LV,
     #endif
     PENDSV_DISPATCH_MAX
 };
 
-#if defined(PENDSV_ENABLE)
 #define PENDSV_DISPATCH_NUM_SLOTS PENDSV_DISPATCH_MAX
-#else
-#define PENDSV_DISPATCH_NUM_SLOTS 0
-#endif
 
 typedef void (*pendsv_dispatch_t)(void);
 

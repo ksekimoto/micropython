@@ -19,19 +19,19 @@
 }
 #endif
 
-#define PIN_AD(p_name, p_pin, ad_bit, ad_channel) \
+#define PIN_AD(p_name, p_id, ad_bit, ad_channel) \
 { \
     { &pin_type }, \
     .name = MP_QSTR_ ## p_name, \
-    .pin = p_pin, \
+    .id = p_id, \
     .bit = ad_bit, \
     .channel = ad_channel \
 }
 
-#define PIN(p_name, p_pin, p_ad) \
+#define PIN(p_name, p_id, p_ad) \
 { \
     { &pin_type }, \
     .name = MP_QSTR_ ## p_name, \
-    .pin = p_pin, \
+    .id = p_id, \
     .ad = p_ad, \
 }

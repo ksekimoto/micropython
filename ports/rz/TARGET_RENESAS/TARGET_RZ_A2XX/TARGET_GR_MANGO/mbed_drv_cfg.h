@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2017 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@
 #define OCTAFLASH_BASE             (0x50000000UL) /**< Flash Base Address */
 #define OCTAFLASH_SIZE             (0x01000000UL) /**< Available Flash Memory */
 #define OCTAFLASH_PAGE_SIZE        256            /**< Flash Memory page size (interleaving off) */
-                                                  /**< Maximum size per one writing is 256 byte and minimum size per one writing is 1 byte */
+/**< Maximum size per one writing is 256 byte and minimum size per one writing is 1 byte */
 #define OCTAFLASH_SECTOR_SIZE      4096           /**< Flash Memory sector size (interleaving off) */
 
 #define FLASH_BASE                 OCTAFLASH_BASE /**< Flash Base Address */

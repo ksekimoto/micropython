@@ -18,8 +18,23 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2012 - 2015 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2012 - 2020 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
+/* Copyright (c) 2012-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /**************************************************************************//**
 * @file         nvic_wrapper.h
 * $Rev:  $
@@ -67,15 +82,15 @@ void     NVIC_ClearPendingIRQ(IRQn_Type IRQn);
 uint32_t NVIC_GetActive(IRQn_Type IRQn);
 void     NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority);
 uint32_t NVIC_GetPriority(IRQn_Type IRQn);
-uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority);
-void     NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGroup, uint32_t* pPreemptPriority, uint32_t* pSubPriority);
+uint32_t NVIC_EncodePriority(uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority);
+void     NVIC_DecodePriority(uint32_t Priority, uint32_t PriorityGroup, uint32_t *pPreemptPriority, uint32_t *pSubPriority);
 void     NVIC_SystemReset(void);
 /* SysTick function */
 uint32_t SysTick_Config(uint32_t ticks);
 /* Debug In/Output function */
-uint32_t ITM_SendChar (uint32_t ch);
-int32_t  ITM_ReceiveChar (void);
-int32_t  ITM_CheckChar (void);
+uint32_t ITM_SendChar(uint32_t ch);
+int32_t  ITM_ReceiveChar(void);
+int32_t  ITM_CheckChar(void);
 
 #ifdef __cplusplus
 }

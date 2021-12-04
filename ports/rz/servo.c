@@ -31,8 +31,8 @@
 #include "pin.h"
 #include "timer.h"
 #include "servo.h"
-#include "rza2m_mtu.h"
-#include "rza2m_servo.h"
+#include "rz_mtu.h"
+#include "rz_servo.h"
 
 #if MICROPY_HW_ENABLE_SERVO
 
@@ -80,24 +80,24 @@ void servo_init(void) {
     }
 
     // assign servo objects to specific pins (must be some permutation of PA0-PA3)
-#if defined(BOARD_SERVO1_PIN)
+    #if defined(BOARD_SERVO1_PIN)
     pyb_servo_obj[0].pin = BOARD_SERVO1_PIN;
-#endif
-#if defined(BOARD_SERVO2_PIN)
+    #endif
+    #if defined(BOARD_SERVO2_PIN)
     pyb_servo_obj[1].pin = BOARD_SERVO2_PIN;
-#endif
-#if defined(BOARD_SERVO3_PIN)
+    #endif
+    #if defined(BOARD_SERVO3_PIN)
     pyb_servo_obj[2].pin = BOARD_SERVO3_PIN;
-#endif
-#if defined(BOARD_SERVO4_PIN)
+    #endif
+    #if defined(BOARD_SERVO4_PIN)
     pyb_servo_obj[3].pin = BOARD_SERVO4_PIN;
-#endif
-#if defined(BOARD_SERVO5_PIN)
+    #endif
+    #if defined(BOARD_SERVO5_PIN)
     pyb_servo_obj[4].pin = BOARD_SERVO5_PIN;
-#endif
-#if defined(BOARD_SERVO6_PIN)
+    #endif
+    #if defined(BOARD_SERVO6_PIN)
     pyb_servo_obj[5].pin = BOARD_SERVO6_PIN;
-#endif
+    #endif
 }
 
 void servo_deinit(void) {
@@ -127,7 +127,7 @@ void servo_timer_irq_callback(void) {
                 need_it = true;
             }
             // set the pulse width
-            rz_servo_set_pulse(s->pin->pin, s->pulse_cur);
+            rz_servo_set_pulse(s->pin->id, s->pulse_cur);
         }
     }
     if (need_it) {
@@ -138,12 +138,12 @@ void servo_timer_irq_callback(void) {
 }
 
 STATIC void servo_init_channel(pyb_servo_obj_t *s) {
-    //static const uint8_t channel_table[PYB_SERVO_NUM] = {0, 1};
-    //uint8_t tpu_channel = rz_tpu_get_tpu_channel(s->pin->pin);
-    rz_servo_set_pulse(s->pin->pin, s->pulse_cur);
-#if RZ_TODO
-    rz_tpu_pin_init(s->pin->pin);
-#endif
+    // static const uint8_t channel_table[PYB_SERVO_NUM] = {0, 1};
+    // uint8_t tpu_channel = rz_tpu_get_tpu_channel(s->pin->id);
+    rz_servo_set_pulse(s->pin->id, s->pulse_cur);
+    #if RZ_TODO
+    rz_tpu_pin_init(s->pin->id);
+    #endif
 }
 
 /******************************************************************************/
@@ -152,19 +152,25 @@ STATIC void servo_init_channel(pyb_servo_obj_t *s) {
 STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
     int p = mp_obj_get_int(port);
     int v = mp_obj_get_int(value);
-    if (v < 50) { v = 50; }
-    if (v > 250) { v = 250; }
+    if (v < 50) {
+        v = 50;
+    }
+    if (v > 250) {
+        v = 250;
+    }
     switch (p) {
-#if defined(BOARD_SERVO1_PIN)
-        case 1: ;
-            rz_servo_set_pulse(pyb_servo_obj[0].pin->pin, v);
+        #if defined(BOARD_SERVO1_PIN)
+        case 1:
+            ;
+            rz_servo_set_pulse(pyb_servo_obj[0].pin->id, v);
             break;
-#endif
-#if defined(BOARD_SERVO2_PIN)
-        case 2: ;
-            rz_servo_set_pulse(pyb_servo_obj[1].pin->pin, v);
+        #endif
+        #if defined(BOARD_SERVO2_PIN)
+        case 2:
+            ;
+            rz_servo_set_pulse(pyb_servo_obj[1].pin->id, v);
             break;
-#endif
+        #endif
     }
     return mp_const_none;
 }
@@ -172,15 +178,15 @@ STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
 MP_DEFINE_CONST_FUN_OBJ_2(pyb_servo_set_obj, pyb_servo_set);
 
 STATIC mp_obj_t pyb_pwm_set(mp_obj_t period, mp_obj_t pulse) {
-    //int pe = mp_obj_get_int(period);
+    // int pe = mp_obj_get_int(period);
     int pu = mp_obj_get_int(pulse);
     // Not used?
-#if defined(BOARD_SERVO1_PIN)
-    rz_servo_set_pulse(pyb_servo_obj[0].pin->pin, pu);
-#endif
-#if defined(BOARD_SERVO2_PIN)
-    rz_servo_set_pulse(pyb_servo_obj[1].pin->pin, pu);
-#endif
+    #if defined(BOARD_SERVO1_PIN)
+    rz_servo_set_pulse(pyb_servo_obj[0].pin->id, pu);
+    #endif
+    #if defined(BOARD_SERVO2_PIN)
+    rz_servo_set_pulse(pyb_servo_obj[1].pin->id, pu);
+    #endif
     return mp_const_none;
 }
 
@@ -275,11 +281,11 @@ STATIC mp_obj_t pyb_servo_angle(size_t n_args, const mp_obj_t *args) {
         // get angle
         return mp_obj_new_int((self->pulse_cur - self->pulse_centre) * 90 / self->pulse_angle_90);
     } else {
-#if MICROPY_PY_BUILTINS_FLOAT
+        #if MICROPY_PY_BUILTINS_FLOAT
         self->pulse_dest = self->pulse_centre + (int16_t)((mp_float_t)self->pulse_angle_90 * mp_obj_get_float(args[1]) / MICROPY_FLOAT_CONST(90.0));
-#else
+        #else
         self->pulse_dest = self->pulse_centre + self->pulse_angle_90 * mp_obj_get_int(args[1]) / 90;
-#endif
+        #endif
         if (n_args == 2) {
             // set angle immediately
             self->time_left = 0;
@@ -288,7 +294,7 @@ STATIC mp_obj_t pyb_servo_angle(size_t n_args, const mp_obj_t *args) {
             self->time_left = mp_obj_get_int(args[2]) / 20;
             self->pulse_accum = 0;
         }
-        rz_servo_start(self->pin->pin);
+        rz_servo_start(self->pin->id);
         servo_timer_irq_callback();
         return mp_const_none;
     }
@@ -306,11 +312,11 @@ STATIC mp_obj_t pyb_servo_speed(size_t n_args, const mp_obj_t *args) {
         // get speed
         return mp_obj_new_int((self->pulse_cur - self->pulse_centre) * 100 / self->pulse_speed_100);
     } else {
-#if MICROPY_PY_BUILTINS_FLOAT
+        #if MICROPY_PY_BUILTINS_FLOAT
         self->pulse_dest = self->pulse_centre + (int16_t)((mp_float_t)self->pulse_speed_100 * mp_obj_get_float(args[1]) / MICROPY_FLOAT_CONST(100.0));
-#else
+        #else
         self->pulse_dest = self->pulse_centre + self->pulse_speed_100 * mp_obj_get_int(args[1]) / 100;
-#endif
+        #endif
         if (n_args == 2) {
             // set speed immediately
             self->time_left = 0;
@@ -340,7 +346,7 @@ const mp_obj_type_t pyb_servo_type = {
     .name = MP_QSTR_Servo,
     .print = pyb_servo_print,
     .make_new = pyb_servo_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_servo_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pyb_servo_locals_dict,
 };
 
 #endif // MICROPY_HW_ENABLE_SERVO

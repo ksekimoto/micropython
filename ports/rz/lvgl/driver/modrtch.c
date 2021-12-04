@@ -39,14 +39,14 @@
 #include <stdlib.h>
 #include "lv_mpy.h"
 #include "lvgl/src/lv_hal/lv_hal_indev.h"
-#include "lvgl/src/lv_core/lv_disp.h"  
+#include "lvgl/src/lv_core/lv_disp.h"
 
 #if 0
 #include "esp_log.h"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-// Constants 
+// Constants
 //////////////////////////////////////////////////////////////////////////////
 
 static const char TAG[] = "[RTCH]";
@@ -54,7 +54,7 @@ static const char TAG[] = "[RTCH]";
 #define INVALID_MEASUREMENT INT32_MIN
 
 #if 0
-#define RTCH_TASK_STACK_SIZE (4*1024)
+#define RTCH_TASK_STACK_SIZE (4 * 1024)
 #define RTCH_TASK_PRIORITY (ESP_TASK_PRIO_MIN + 2)
 #endif
 
@@ -75,22 +75,22 @@ static const char TAG[] = "[RTCH]";
 #endif
 
 #ifndef CONCAT3
-#define _CONCAT3(a,b,c) a ## b ## c
+#define _CONCAT3(a,b,c) a##b##c
 #define CONCAT3(a,b,c) _CONCAT3(a,b,c)
 #endif
 
 #define GPIO_TO_ADC_ELEMENT(x) [x] = CONCAT3(ADC1_GPIO, x, _CHANNEL)
 static const int gpio_to_adc[] = {
-#if 0
-        GPIO_TO_ADC_ELEMENT(36),
-        GPIO_TO_ADC_ELEMENT(37),
-        GPIO_TO_ADC_ELEMENT(38),
-        GPIO_TO_ADC_ELEMENT(39),
-        GPIO_TO_ADC_ELEMENT(32),
-        GPIO_TO_ADC_ELEMENT(33),
-        GPIO_TO_ADC_ELEMENT(34),
-        GPIO_TO_ADC_ELEMENT(35),
-#endif
+    #if 0
+    GPIO_TO_ADC_ELEMENT(36),
+    GPIO_TO_ADC_ELEMENT(37),
+    GPIO_TO_ADC_ELEMENT(38),
+    GPIO_TO_ADC_ELEMENT(39),
+    GPIO_TO_ADC_ELEMENT(32),
+    GPIO_TO_ADC_ELEMENT(33),
+    GPIO_TO_ADC_ELEMENT(34),
+    GPIO_TO_ADC_ELEMENT(35),
+    #endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -123,10 +123,10 @@ typedef struct _rtch_t
     uint32_t touch_samples_threshold; // max distance between touch sample measurements for a valid touch reading
 
     rtch_info_t rtch_info;
-#if 0
+    #if 0
     xTaskHandle rtch_task_handle;
     SemaphoreHandle_t rtch_info_mutex;
-#endif
+    #endif
 } rtch_t;
 
 
@@ -134,27 +134,25 @@ typedef struct _rtch_t
 // This means we can have only one active touch driver instance, pointed by this global.
 STATIC rtch_t *g_rtch = NULL;
 
-STATIC bool touch_read(lv_indev_drv_t * indev_drv, lv_indev_data_t *data)
-{
+STATIC bool touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
     rtch_info_t *touch_info = &g_rtch->rtch_info;
 //    xSemaphoreTake(g_rtch->rtch_info_mutex, portMAX_DELAY);
-    data->point = (lv_point_t){touch_info->x, touch_info->y};
+    data->point = (lv_point_t) {touch_info->x, touch_info->y};
     data->state = touch_info->touched? LV_INDEV_STATE_PR: LV_INDEV_STATE_REL;
 //    xSemaphoreGive(g_rtch->rtch_info_mutex);
     return false;
 }
 
-STATIC mp_obj_t mp_activate_rtch(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_activate_rtch(mp_obj_t self_in) {
     rtch_t *self = MP_OBJ_TO_PTR(self_in);
     g_rtch = self;
     return mp_const_none;
 }
 
 STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args);
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args);
 
 STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in);
 STATIC mp_obj_t mp_rtch_deinit(mp_obj_t self_in);
@@ -179,34 +177,33 @@ STATIC MP_DEFINE_CONST_DICT(rtch_locals_dict, rtch_locals_dict_table);
 STATIC const mp_obj_type_t rtch_type = {
     { &mp_type_type },
     .name = MP_QSTR_rtch,
-    //.print = rtch_print,
+    // .print = rtch_print,
     .make_new = rtch_make_new,
-    .locals_dict = (mp_obj_dict_t*)&rtch_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&rtch_locals_dict,
 };
 
 STATIC const mp_rom_map_elem_t rtch_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_rtch) },
-        { MP_ROM_QSTR(MP_QSTR_touch), (mp_obj_t)&rtch_type},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_rtch) },
+    { MP_ROM_QSTR(MP_QSTR_touch), (mp_obj_t)&rtch_type},
 };
-         
 
-STATIC MP_DEFINE_CONST_DICT (
+
+STATIC MP_DEFINE_CONST_DICT(
     mp_module_rtch_globals,
     rtch_globals_table
-);
+    );
 
 const mp_obj_module_t mp_module_rtch = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_rtch_globals
+    .globals = (mp_obj_dict_t *)&mp_module_rtch_globals
 };
 
 
 STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args)
-{
-    enum{
+    size_t n_args,
+    size_t n_kw,
+    const mp_obj_t *all_args) {
+    enum {
         ARG_xp,  // X+
         ARG_yp,  // Y+
         ARG_xm,  // X-
@@ -222,25 +219,25 @@ STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
         ARG_cal_y1,
         ARG_touch_samples, // number of samples to take on every touch measurement
         ARG_touch_samples_threshold, // max distance between touch sample measurements for a valid touch reading
-     };
+    };
 
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_xp, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},  
-        { MP_QSTR_yp, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},  
-        { MP_QSTR_xm, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},  
-        { MP_QSTR_ym, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},  
-        { MP_QSTR_touch_rail, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, 
-        { MP_QSTR_touch_sense, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, 
+        { MP_QSTR_xp, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_yp, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_xm, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_ym, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_touch_rail, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_touch_sense, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
 
-        { MP_QSTR_screen_width, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_screen_height, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_cal_x0, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=400}},
-        { MP_QSTR_cal_y0, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=200}},
-        { MP_QSTR_cal_x1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=3500}},
-        { MP_QSTR_cal_y1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=3470}},
-        { MP_QSTR_touch_samples, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=9}}, 
-        { MP_QSTR_touch_samples_threshold, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=500}}, 
-   };
+        { MP_QSTR_screen_width, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_screen_height, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_cal_x0, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 400}},
+        { MP_QSTR_cal_y0, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 200}},
+        { MP_QSTR_cal_x1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 3500}},
+        { MP_QSTR_cal_y1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 3470}},
+        { MP_QSTR_touch_samples, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 9}},
+        { MP_QSTR_touch_samples_threshold, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 500}},
+    };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -254,9 +251,13 @@ STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
     self->touch_sense = args[ARG_touch_sense].u_int;
 
     self->screen_width = args[ARG_screen_width].u_int;
-    if (self->screen_width == -1) self->screen_width = LV_HOR_RES;
+    if (self->screen_width == -1) {
+        self->screen_width = LV_HOR_RES;
+    }
     self->screen_height = args[ARG_screen_height].u_int;
-    if (self->screen_height == -1) self->screen_height = LV_VER_RES;
+    if (self->screen_height == -1) {
+        self->screen_height = LV_VER_RES;
+    }
     self->cal_x0 = args[ARG_cal_x0].u_int;
     self->cal_y0 = args[ARG_cal_y0].u_int;
     self->cal_x1 = args[ARG_cal_x1].u_int;
@@ -264,15 +265,14 @@ STATIC mp_obj_t rtch_make_new(const mp_obj_type_t *type,
     self->touch_samples = args[ARG_touch_samples].u_int;
     self->touch_samples_threshold = args[ARG_touch_samples_threshold].u_int;
 
-    self->rtch_info = (rtch_info_t){0};
+    self->rtch_info = (rtch_info_t) {0};
 //    self->rtch_task_handle = NULL;
 //    self->rtch_info_mutex = NULL;
 
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t calibrate(size_t n_args, const mp_obj_t *args)
-{
+STATIC mp_obj_t calibrate(size_t n_args, const mp_obj_t *args) {
     (void)n_args; // unused, we know it's 5
     rtch_t *self = MP_OBJ_TO_PTR(args[0]);
     self->cal_x0 = mp_obj_get_int(args[1]);
@@ -287,49 +287,47 @@ STATIC mp_obj_t calibrate(size_t n_args, const mp_obj_t *args)
 //////////////////////////////////////////////////////////////////////////////
 
 
-STATIC void rtch_task(void* arg);
+STATIC void rtch_task(void *arg);
 
-STATIC void enable_touch_sense(rtch_t *self)
-{
+STATIC void enable_touch_sense(rtch_t *self) {
     // Configure all touch pins to high impedance (input)
 
-#if 0
-    gpio_config(&(gpio_config_t){
+    #if 0
+    gpio_config(&(gpio_config_t) {
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask =
-            (1ULL<<self->xp) |
-            (1ULL<<self->yp) |
-            (1ULL<<self->xm) |
-            (1ULL<<self->ym)
+            (1ULL << self->xp) |
+            (1ULL << self->yp) |
+            (1ULL << self->xm) |
+            (1ULL << self->ym)
     });
 
     // Enable touch rail
 
-    gpio_config(&(gpio_config_t){
+    gpio_config(&(gpio_config_t) {
         .mode = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = (1ULL<<self->touch_rail),
+        .pin_bit_mask = (1ULL << self->touch_rail),
     });
     gpio_set_level(self->touch_rail, 0);
 
     // Configure touch sense and configure interrupt
 
-    gpio_config(&(gpio_config_t){
+    gpio_config(&(gpio_config_t) {
         .intr_type = GPIO_PIN_INTR_POSEDGE,
         .mode = GPIO_MODE_INPUT,
         .pull_down_en = 1,
-        .pin_bit_mask = (1ULL<<self->touch_sense),
+        .pin_bit_mask = (1ULL << self->touch_sense),
     });
 
     // Wait for touch rail to stabilize
 
     vTaskDelay(RTCH_TOUCH_WAIT_MS / portTICK_RATE_MS);
-#endif
+    #endif
 }
 
-STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in) {
     rtch_t *self = MP_OBJ_TO_PTR(self_in);
-#if 0
+    #if 0
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
     esp_log_level_set("gpio", ESP_LOG_DEBUG);
     esp_log_level_set("RTC_MODULE", ESP_LOG_DEBUG);
@@ -337,7 +335,7 @@ STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in)
     self->rtch_info_mutex = xSemaphoreCreateMutex();
 
     adc_power_on();
-#endif
+    #endif
     enable_touch_sense(self);
 
     // Install Interrupt
@@ -345,23 +343,22 @@ STATIC mp_obj_t mp_rtch_init(mp_obj_t self_in)
 
     mp_activate_rtch(self_in);
 
-#if 0
+    #if 0
     BaseType_t xReturned = xTaskCreate(rtch_task, "RTCH Task", RTCH_TASK_STACK_SIZE, self, RTCH_TASK_PRIORITY, &self->rtch_task_handle);
-    if (xReturned != pdPASS){
+    if (xReturned != pdPASS) {
         ESP_LOGE(TAG, "Failed createing RTCH task!");
         vTaskDelete(self->rtch_task_handle);
         nlr_raise(
-                mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed creating RTCH task"));
+            mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed creating RTCH task"));
     }
 
     ESP_LOGD(TAG, "RTCH Initialized");
-#endif
+    #endif
     return mp_const_none;
 }
 
-STATIC mp_obj_t mp_rtch_deinit(mp_obj_t self_in)
-{
-#if 0
+STATIC mp_obj_t mp_rtch_deinit(mp_obj_t self_in) {
+    #if 0
     rtch_t *self = MP_OBJ_TO_PTR(self_in);
     vTaskDelete(self->rtch_task_handle);
     adc_power_off();
@@ -369,35 +366,33 @@ STATIC mp_obj_t mp_rtch_deinit(mp_obj_t self_in)
 
     // Configure all touch pins to high impedance (input)
 
-    gpio_config(&(gpio_config_t){
+    gpio_config(&(gpio_config_t) {
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask =
-            (1ULL<<self->xp) |
-            (1ULL<<self->yp) |
-            (1ULL<<self->xm) |
-            (1ULL<<self->ym) | 
-            (1ULL<<self->touch_rail) |
-            (1ULL<<self->touch_sense)
+            (1ULL << self->xp) |
+            (1ULL << self->yp) |
+            (1ULL << self->xm) |
+            (1ULL << self->ym) |
+            (1ULL << self->touch_rail) |
+            (1ULL << self->touch_sense)
     });
-#endif
+    #endif
     return mp_const_none;
 }
 
-STATIC int compare_int(const void *_a, const void *_b)
-{
-    int *a = (int*)_a;
-    int *b = (int*)_b;
+STATIC int compare_int(const void *_a, const void *_b) {
+    int *a = (int *)_a;
+    int *b = (int *)_b;
     return *a - *b;
 }
 
 STATIC int measure_axis(
-        rtch_t *self,
-        uint32_t plus,
-        uint32_t minus,
-        uint32_t measure,
-        uint32_t ignore)
-{
-#if 0
+    rtch_t *self,
+    uint32_t plus,
+    uint32_t minus,
+    uint32_t measure,
+    uint32_t ignore) {
+    #if 0
     // Set GPIOs:
 
     // - Disable touch rail
@@ -413,9 +408,9 @@ STATIC int measure_axis(
     gpio_set_pull_mode(measure, GPIO_FLOATING);
 
     // - Set "plus" to 1, "minus" to 0
-    gpio_config(&(gpio_config_t){
+    gpio_config(&(gpio_config_t) {
         .mode = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = (1ULL<<plus) | (1ULL<<minus)
+        .pin_bit_mask = (1ULL << plus) | (1ULL << minus)
     });
     gpio_set_level(plus, 1);
     gpio_set_level(minus, 0);
@@ -429,27 +424,27 @@ STATIC int measure_axis(
     adc1_config_channel_atten(adc_channel,ADC_ATTEN_DB_11);
 
     vTaskDelay(RTCH_INIT_ADC_WAIT_MS / portTICK_RATE_MS);
-#endif
+    #endif
     // Collect ADC samples and sort them
 
     static int samples[RTCH_MAX_TOUCH_SAMPLES];
     int sample_count = self->touch_samples;
-    for (int i=0; i<sample_count; i++)
+    for (int i = 0; i < sample_count; i++)
     {
-        //vTaskDelay(RTCH_SAMPLE_WAIT_MS / portTICK_RATE_MS);
-        //samples[i] = adc1_get_raw(adc_channel);
+        // vTaskDelay(RTCH_SAMPLE_WAIT_MS / portTICK_RATE_MS);
+        // samples[i] = adc1_get_raw(adc_channel);
     }
-    //qsort(samples, sample_count, sizeof(samples[0]), compare_int);
+    // qsort(samples, sample_count, sizeof(samples[0]), compare_int);
 
     // Make sure samples are close to each other
 
     int prevSample = INVALID_MEASUREMENT;
-    for (int i=0; i<sample_count; i++)
+    for (int i = 0; i < sample_count; i++)
     {
-        //ESP_LOGD(TAG, "RAW Sample %d: [%d]", i, samples[i]);
+        // ESP_LOGD(TAG, "RAW Sample %d: [%d]", i, samples[i]);
         int sample = samples[i];
         if (prevSample != INVALID_MEASUREMENT &&
-                abs(sample - prevSample) > self->touch_samples_threshold) {
+            abs(sample - prevSample) > self->touch_samples_threshold) {
             return INVALID_MEASUREMENT;
         }
         prevSample = sample;
@@ -461,9 +456,8 @@ STATIC int measure_axis(
 }
 
 #if 0
-STATIC void IRAM_ATTR rtch_isr_handler(void* arg)
-{
-    rtch_t *self = (rtch_t*)arg;
+STATIC void IRAM_ATTR rtch_isr_handler(void *arg) {
+    rtch_t *self = (rtch_t *)arg;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     // Disable gpio interrupt
@@ -473,26 +467,27 @@ STATIC void IRAM_ATTR rtch_isr_handler(void* arg)
     // Notify the task
 
     xTaskNotifyFromISR(
-            self->rtch_task_handle,
-            0,
-            eNoAction,
-            &xHigherPriorityTaskWoken);
+        self->rtch_task_handle,
+        0,
+        eNoAction,
+        &xHigherPriorityTaskWoken);
 
-    if (xHigherPriorityTaskWoken) portYIELD_FROM_ISR();
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
 }
 
 
-STATIC void rtch_task(void* arg)
-{
-    rtch_t *self = (rtch_t*)arg;
+STATIC void rtch_task(void *arg) {
+    rtch_t *self = (rtch_t *)arg;
 
     ESP_LOGD(TAG, "rtch_task started.");
 
-    for( ;; )
+    for ( ;;)
     {
         // Enable Interrupt
 
-        //gpio_intr_enable(self->touch_sense);
+        // gpio_intr_enable(self->touch_sense);
         gpio_isr_handler_add(self->touch_sense, rtch_isr_handler, self);
 
         // Wait for interrupt
@@ -500,43 +495,40 @@ STATIC void rtch_task(void* arg)
         ESP_LOGD(TAG, "Waiting for interrupt...");
 
         xTaskNotifyWait(
-                0x00,      /* Don't clear any notification bits on entry. */
-                0x00,      /* Don't clear any notification bits on exit. */
-                NULL,      /* Notified value ignored. */
-                portMAX_DELAY );  /* Block indefinitely. */
+            0x00,          /* Don't clear any notification bits on entry. */
+            0x00,          /* Don't clear any notification bits on exit. */
+            NULL,          /* Notified value ignored. */
+            portMAX_DELAY);       /* Block indefinitely. */
 
         ESP_LOGD(TAG, "Touched!");
 
         // Touch detected. Loop until untouched
 
-        while(gpio_get_level(self->touch_sense))
-        {
+        while (gpio_get_level(self->touch_sense)) {
             ESP_LOGD(TAG, "Measuring...");
 
             // measure X and Y
             int x = measure_axis(
-                    self,
-                    self->xp,
-                    self->xm,
-                    self->yp,
-                    self->ym);
+                self,
+                self->xp,
+                self->xm,
+                self->yp,
+                self->ym);
 
             int y = measure_axis(
-                    self,
-                    self->yp,
-                    self->ym,
-                    self->xp,
-                    self->xm);
+                self,
+                self->yp,
+                self->ym,
+                self->xp,
+                self->xm);
 
             ESP_LOGD(TAG, "RAW: [%d, %d]", x, y);
 
             // If measurements valid, calculate calibrated X and Y
-            if (x != INVALID_MEASUREMENT && y != INVALID_MEASUREMENT)
-            {
+            if (x != INVALID_MEASUREMENT && y != INVALID_MEASUREMENT) {
                 x = ((x - self->cal_x0) * self->screen_width) / (self->cal_x1 - self->cal_x0);
                 y = ((y - self->cal_y0) * self->screen_height) / (self->cal_y1 - self->cal_y0);
-                if (1) // (x >= 0 && y >= 0 && x < self->screen_width && y < self->screen_height)
-                {
+                if (1) { // (x >= 0 && y >= 0 && x < self->screen_width && y < self->screen_height)
                     ESP_LOGD(TAG, "[%d, %d]", x, y);
 
                     // Update touch info

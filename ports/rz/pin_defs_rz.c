@@ -34,7 +34,7 @@
 
 /* ToDo */
 uint32_t pin_get_mode(const pin_obj_t *pin) {
-    return _gpio_get_mode(pin->pin);
+    return rz_gpio_get_mode(pin->id);
 }
 
 // Returns the pin pullup/pulldown. The value returned by this macro should
@@ -42,13 +42,12 @@ uint32_t pin_get_mode(const pin_obj_t *pin) {
 
 /* ToDo */
 uint32_t pin_get_pull(const pin_obj_t *pin) {
-    return (uint32_t)_gpio_get_pull(pin->pin);
+    return (uint32_t)rz_gpio_get_pull(pin->id);
 }
 
 // Returns the af (alternate function) index currently set for a pin.
 
 /* ToDo */
 uint32_t pin_get_af(const pin_obj_t *pin) {
-    return (uint32_t)_gpio_get_af(pin->pin);
+    return (uint32_t)rz_gpio_get_af(pin->id);
 }
-

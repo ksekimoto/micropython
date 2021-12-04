@@ -28,41 +28,8 @@
 #ifndef PORTS_RZ_USB_H_
 #define PORTS_RZ_USB_H_
 
-//#include "usb_common.h"
-//#include "usbdescriptors.h"
-
-#define PYB_USB_FLAG_USB_MODE_CALLED    (0x0002)
-
-// Windows needs a different PID to distinguish different device configurations
-#ifdef GRMANGO
-#define USBD_VID            (0x045B)
-#define USBD_PID_CDC_MSC    (0x0234)
-#define USBD_PID_CDC_HID    (0x0234)
-#define USBD_PID_CDC        (0x0234)
-#define USBD_PID_MSC        (0x0234)
-#define USBD_PID_CDC2_MSC   (0x0234)
-#elif defined(GRSAKURA)
-#define USBD_VID            (0x045B)
-#define USBD_PID_CDC_MSC    (0x0234)
-#define USBD_PID_CDC_HID    (0x0234)
-#define USBD_PID_CDC        (0x0234)
-#define USBD_PID_MSC        (0x0234)
-#define USBD_PID_CDC2_MSC   (0x0234)
-#elif defined(GRCITRUS)
-#define USBD_VID            (0x2A50)
-#define USBD_PID_CDC_MSC    (0x0277)
-#define USBD_PID_CDC_HID    (0x0277)
-#define USBD_PID_CDC        (0x0277)
-#define USBD_PID_MSC        (0x0277)
-#define USBD_PID_CDC2_MSC   (0x0277)
-#elif defined(GRROSE)
-#define USBD_VID            (0x045B)
-#define USBD_PID_CDC_MSC    (0x025A)
-#define USBD_PID_CDC_HID    (0x025A)
-#define USBD_PID_CDC        (0x025A)
-#define USBD_PID_MSC        (0x025A)
-#define USBD_PID_CDC2_MSC   (0x025A)
-#endif
+// #include "usb_common.h"
+// #include "usbdescriptors.h"
 
 // These can be or'd together (but not all combinations may be available)
 #define USBD_MODE_IFACE_MASK    (0x7f)
@@ -84,11 +51,21 @@
 #define USBD_MODE_MSC       9
 #define USBD_MODE_MSC_HID   10
 
+#define PYB_USB_FLAG_USB_MODE_CALLED    (0x0002)
+
 typedef enum {
     PYB_USB_STORAGE_MEDIUM_NONE = 0,
     PYB_USB_STORAGE_MEDIUM_FLASH,
     PYB_USB_STORAGE_MEDIUM_SDCARD,
 } pyb_usb_storage_medium_t;
+
+typedef enum {
+    USB_PHY_FS_ID = 0,
+    USB_PHY_HS_ID = 1,
+} USB_PHY_ID;
+
+typedef struct _pyb_usb_vcp_obj_t pyb_usb_vcp_obj_t;
+
 extern mp_uint_t pyb_usb_flags;
 extern pyb_usb_storage_medium_t pyb_usb_storage_medium;
 extern const struct _mp_rom_obj_tuple_t pyb_usb_hid_mouse_obj;
@@ -109,7 +86,7 @@ void usb_init(void);
 #define HID_DATA_FS_MAX_PACKET_SIZE  64
 
 typedef struct _usbd_hid_itf_t {
-    //usbd_hid_state_t base; // state for the base HID layer
+    // usbd_hid_state_t base; // state for the base HID layer
     uint8_t buffer[2][HID_DATA_FS_MAX_PACKET_SIZE]; // pair of buffers to read individual packets into
     int8_t current_read_buffer; // which buffer to read from
     uint32_t last_read_len; // length of last read

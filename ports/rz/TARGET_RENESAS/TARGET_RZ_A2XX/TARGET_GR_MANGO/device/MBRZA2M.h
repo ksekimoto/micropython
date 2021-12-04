@@ -1,4 +1,4 @@
-/* Copyright (c) 2018 Renesas Electronics Corporation.
+/* Copyright (c) 2018-2020 Renesas Electronics Corporation.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

@@ -34,7 +34,7 @@
 #include "extmod/virtpin.h"
 #include "pin.h"
 #include "extint.h"
-#include "rza2m_gpio.h"
+#include "rz_gpio.h"
 
 /// \moduleref pyb
 /// \class Pin - control I/O pins
@@ -354,7 +354,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid pin pull: %d"), pull);
     }
 
-#if 0
+    #if 0
     // get af (alternate function); alt-arg overrides af-arg
     mp_int_t af = args[4].u_int;
     if (af == -1) {
@@ -363,7 +363,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
     if ((mode == GPIO_MODE_AF_PP || mode == GPIO_MODE_AF_OD) && !IS_GPIO_AF(af)) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid pin af: %d"), af);
     }
-#endif
+    #endif
     mp_hal_pin_config(self, mode, pull, -1);
     // if given, set the pin value before initialising to prevent glitches
     if (args[3].u_obj != MP_OBJ_NULL) {
@@ -412,18 +412,18 @@ STATIC mp_obj_t pin_irq(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         { MP_QSTR_trigger, MP_ARG_INT, {.u_int = GPIO_MODE_IT_RISING | GPIO_MODE_IT_FALLING} },
         { MP_QSTR_hard, MP_ARG_BOOL, {.u_bool = false} },
     };
-#if RZ_TODO
+    #if RZ_TODO
     pin_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-#endif
+    #endif
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     if (n_args > 1 || kw_args->used != 0) {
         // configure irq
-#if RZ_TODO
+        #if RZ_TODO
         extint_register_pin(self, args[ARG_trigger].u_int,
             args[ARG_hard].u_bool, args[ARG_handler].u_obj);
-#endif
+        #endif
     }
 
     // TODO should return an IRQ object
@@ -462,7 +462,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_names_obj, pin_names);
 /// Get the pin port.
 STATIC mp_obj_t pin_port(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin / 16);
+    return MP_OBJ_NEW_SMALL_INT(self->id / 16);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 
@@ -470,7 +470,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 /// Get the pin bit.
 STATIC mp_obj_t pin_bit(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin & 7);
+    return MP_OBJ_NEW_SMALL_INT(self->id & 7);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_bit_obj, pin_bit);
 
@@ -478,7 +478,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_bit_obj, pin_bit);
 /// Get the pin number.
 STATIC mp_obj_t pin_pin(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin);
+    return MP_OBJ_NEW_SMALL_INT(self->id);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_pin_obj, pin_pin);
 
@@ -557,8 +557,8 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AF_OD),     MP_ROM_INT(GPIO_MODE_AF_OD) },
     { MP_ROM_QSTR(MP_QSTR_PULL_NONE), MP_ROM_INT(GPIO_NOPULL) },
 
-//#include "genhdr/pins_ad_const.h"
-//#include "genhdr/pins_af_const.h"
+// #include "genhdr/pins_ad_const.h"
+// #include "genhdr/pins_af_const.h"
 };
 
 STATIC MP_DEFINE_CONST_DICT(pin_locals_dict, pin_locals_dict_table);
@@ -590,7 +590,7 @@ const mp_obj_type_t pin_type = {
     .make_new = mp_pin_make_new,
     .call = pin_call,
     .protocol = &pin_pin_p,
-    .locals_dict = (mp_obj_dict_t*)&pin_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_locals_dict,
 };
 
 // ====================================================================
@@ -639,7 +639,7 @@ const mp_obj_type_t pin_ad_type = {
     { &mp_type_type },
     .name = MP_QSTR_PinAD,
     .print = pin_ad_obj_print,
-    .locals_dict = (mp_obj_dict_t*)&pin_ad_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_ad_locals_dict,
 };
 
 // ====================================================================
@@ -713,5 +713,5 @@ const mp_obj_type_t pin_af_type = {
     { &mp_type_type },
     .name = MP_QSTR_PinAF,
     .print = pin_af_obj_print,
-    .locals_dict = (mp_obj_dict_t*)&pin_af_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pin_af_locals_dict,
 };

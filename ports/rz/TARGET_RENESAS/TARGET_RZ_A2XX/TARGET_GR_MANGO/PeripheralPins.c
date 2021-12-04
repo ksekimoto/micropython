@@ -1,6 +1,7 @@
 
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2015 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "PeripheralPins.h"
 
 //#define ISEL_BIT    (0x40)  // use interrupt
 
 /************IRQ***************/
 enum {
-    IRQ0,IRQ1,
-    IRQ2,IRQ3,
-    IRQ4,IRQ5,
-    IRQ6,IRQ7,
+    IRQ0, IRQ1,
+    IRQ2, IRQ3,
+    IRQ4, IRQ5,
+    IRQ6, IRQ7,
 } IRQNo;
 
 const PinMap PinMap_IRQ[] = {

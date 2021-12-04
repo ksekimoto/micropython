@@ -46,7 +46,7 @@ bool flash_erase(uint32_t flash_dest, uint32_t num_word32) {
     if (num_word32 == 0) {
         return true;
     }
-    bool ret = mbed_internal_flash_eraseblock((unsigned char*)flash_dest);
+    bool ret = mbed_internal_flash_eraseblock((unsigned char *)flash_dest);
     return ret;
 }
 

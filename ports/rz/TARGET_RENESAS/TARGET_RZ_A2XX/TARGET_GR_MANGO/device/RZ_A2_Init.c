@@ -18,8 +18,23 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2012 - 2014 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2012 - 2020 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
+/* Copyright (c) 2012-2020 Renesas Electronics Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /**************************************************************************//**
 * @file         RZ_A2_Init.c
 * $Rev: 624 $
@@ -98,15 +113,15 @@ void RZ_A2_InitClock(void)
 
     /* ==== CPG Settings ==== */
     CPG.FRQCR.WORD  = 0x1012u;  /* PLL(x88), I:G:B:P1:P0 = 22:11:5.5:2.75:1.375 */
-                                /* CKIO:Output at time usually,                 */
-                                /* Output when bus right is opened,             */
-                                /* output at standby"L"                         */
-                                /* Clockin  = 24MHz,                            */
-                                /* I  Clock = 528MHz,                           */
-                                /* G  Clock = 264MHz                            */
-                                /* B  Clock = 132MHz,                           */
-                                /* P1 Clock = 66MHz,                            */
-                                /* P0 Clock = 33MHz                             */
+    /* CKIO:Output at time usually,                 */
+    /* Output when bus right is opened,             */
+    /* output at standby"L"                         */
+    /* Clockin  = 24MHz,                            */
+    /* I  Clock = 528MHz,                           */
+    /* G  Clock = 264MHz                            */
+    /* B  Clock = 132MHz,                           */
+    /* P1 Clock = 66MHz,                            */
+    /* P0 Clock = 33MHz                             */
 
     return;
 }

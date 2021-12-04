@@ -34,14 +34,15 @@
 #include "extmod/misc.h"
 #include "usb.h"
 #include "uart.h"
-//#include "usb_entry.h"
+// #include "usb_entry.h"
+#include "modmachine.h"
 
 typedef enum
 {
-  HAL_OK       = 0x00,
-  HAL_ERROR    = 0x01,
-  HAL_BUSY     = 0x02,
-  HAL_TIMEOUT  = 0x03
+    HAL_OK       = 0x00,
+    HAL_ERROR    = 0x01,
+    HAL_BUSY     = 0x02,
+    HAL_TIMEOUT  = 0x03
 } HAL_StatusTypeDef;
 
 // this table converts from HAL_StatusTypeDef to POSIX errno
@@ -76,20 +77,20 @@ void _mp_hal_stdout_tx_strn(const char *str, int len);
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
         flash_cache_commit();
-#if 0
-#ifdef USE_HOST_MODE
+        #if 0
+        #ifdef USE_HOST_MODE
         pyb_usb_host_process();
         int c = pyb_usb_host_get_keyboard();
         if (c != 0) {
             return c;
         }
-#endif
-#endif
+        #endif
+        #endif
         #if MICROPY_HW_ENABLE_RZ_USB
-        //byte c;
-        //if ((c = usbcdc_read()) != 0) {
+        // byte c;
+        // if ((c = usbcdc_read()) != 0) {
         //    return c;
-        //}
+        // }
         #endif
         if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
             return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
@@ -102,52 +103,29 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
     }
 }
 
-void mp_hal_stdout_tx_str(const char *str) {
-    mp_hal_stdout_tx_strn(str, strlen(str));
-}
-
 MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
-#if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
+    #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);
-#endif
-    //#if MICROPY_HW_ENABLE_RZ_USB
-    //uint8_t *p = (uint8_t *)str;
-    //while (len--) {
+    #endif
+    // #if MICROPY_HW_ENABLE_RZ_USB
+    // uint8_t *p = (uint8_t *)str;
+    // while (len--) {
     //    usbcdc_write(*p++);
-    //}
-    //#endif
+    // }
+    // #endif
 
     mp_uos_dupterm_tx_strn(str, len);
 }
 
-// Efficiently convert "\n" to "\r\n"
-void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
-    const char *last = str;
-    while (len--) {
-        if (*str == '\n') {
-            if (str > last) {
-                mp_hal_stdout_tx_strn(last, str - last);
-            }
-            mp_hal_stdout_tx_strn("\r\n", 2);
-            ++str;
-            last = str;
-        } else {
-            ++str;
-        }
-    }
-    if (str > last) {
-        mp_hal_stdout_tx_strn(last, str - last);
-    }
-}
 
 void mp_hal_ticks_cpu_enable(void) {
 }
 
 void mp_hal_pin_config(mp_hal_pin_obj_t pin_obj, uint32_t mode, uint32_t pull, uint32_t alt) {
-    _gpio_config(pin_obj->pin, mode, pull, alt);
+    rz_gpio_config(pin_obj->id, mode, pull, alt);
 }
 
 bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint8_t fn, uint8_t unit) {
@@ -162,12 +140,13 @@ bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, u
 void mp_hal_pin_config_speed(mp_hal_pin_obj_t pin_obj, uint32_t speed) {
 }
 
-#if RZ_TODO
 /*******************************************************************************/
 // MAC address
 
 // Generate a random locally administered MAC address (LAA)
 void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
+    #if 0
+    // STM32
     uint8_t *id = (uint8_t *)MP_HAL_UNIQUE_ID_ADDRESS;
     buf[0] = 0x02; // LAA range
     buf[1] = (id[11] << 4) | (id[10] & 0xf);
@@ -175,6 +154,35 @@ void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
     buf[3] = (id[7] << 4) | (id[6] & 0xf);
     buf[4] = id[2];
     buf[5] = (id[0] << 2) | idx;
+    #else
+    #if defined(RX65N)
+    uint8_t id[16];
+    get_unique_id((uint8_t *)&id);
+    buf[0] = 0x02;
+    buf[1] = id[11];
+    buf[2] = id[12];
+    buf[3] = id[13];
+    buf[4] = id[14];
+    buf[5] = id[15];
+    #else
+    #if defined(MICROPY_HW_ETH_MAC_ADDRESS_0)
+    buf[0] = MICROPY_HW_ETH_MAC_ADDRESS_0;
+    buf[1] = MICROPY_HW_ETH_MAC_ADDRESS_1;
+    buf[2] = MICROPY_HW_ETH_MAC_ADDRESS_2;
+    buf[3] = MICROPY_HW_ETH_MAC_ADDRESS_3;
+    buf[4] = MICROPY_HW_ETH_MAC_ADDRESS_4;
+    buf[5] = MICROPY_HW_ETH_MAC_ADDRESS_5;
+    #else
+    uint32_t tick = utick();
+    buf[0] = 0;
+    buf[1] = 0;
+    buf[2] = (uint8_t)(tick >> 24);
+    buf[3] = (uint8_t)(tick >> 16);
+    buf[4] = (uint8_t)(tick >> 8);
+    buf[5] = (uint8_t)(tick);
+    #endif
+    #endif
+    #endif
 }
 
 // A board can override this if needed
@@ -190,4 +198,3 @@ void mp_hal_get_mac_ascii(int idx, size_t chr_off, size_t chr_len, char *dest) {
         *dest++ = hexchr[mac[chr_off >> 1] >> (4 * (1 - (chr_off & 1))) & 0xf];
     }
 }
-#endif

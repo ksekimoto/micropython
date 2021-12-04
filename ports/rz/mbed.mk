@@ -2,8 +2,9 @@
 # MBED library build
 #######################################################################
 BUILD_MBED = $(BUILD)_mbed
-LIB_MBED_HAL = libs/libmbedhal.a
-LIB_MBED = libs/libmbed.a
+BUILD_MBED_LIB = $(BUILD_MBED)_lib
+LIB_MBED_HAL = $(BUILD_MBED_LIB)/libmbedhal.a
+LIB_MBED = $(BUILD_MBED_LIB)/libmbed.a
 
 #######################################################################
 # MBED Include
@@ -23,10 +24,15 @@ INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine
 INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iobitmasks
 INC_MBED_HAL += -ITARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/device/inc/iodefine/iodefines
 INC_MBED_HAL += -I$(TOP)/lib/mbed-os
-INC_MBED_HAL += -I$(TOP)/lib/mbed-os/hal
-INC_MBED_HAL += -I$(TOP)/lib/mbed-os/drivers
-INC_MBED_HAL += -I$(TOP)/lib/mbed-os/platform
-INC_MBED_HAL += -I$(TOP)/lib/mbed-os/cmsis/TARGET_CORTEX_A
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/hal/include
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/hal/include/hal
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/drivers/include
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/drivers/include/drivers
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/drivers/include/drivers/internal
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/platform/include
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/platform/include/platform
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/platform/include/platform/internal
+INC_MBED_HAL += -I$(TOP)/lib/mbed-os/cmsis/CMSIS_5/CMSIS/TARGET_CORTEX_A/Include
 endif
 
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
@@ -64,7 +70,8 @@ CFLAGS_MBED += -std=gnu99 -nostdlib
 CFLAGS_MBED += -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 
 
 CPPFLAGS_MBED += $(C_CPP_COMMON)
-CPPFLAGS_MBED += -std=gnu++98 -fno-rtti -Wvla -c 
+#CPPFLAGS_MBED += -std=gnu++98 -fno-rtti -Wvla -c 
+CPPFLAGS_MBED += -std=gnu++14 -fno-rtti -Wvla -c 
 CPPFLAGS_MBED += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0
 CPPFLAGS_MBED += -DMBED_DEBUG -DMBED_TRAP_ERRORS_ENABLED=1 
 
@@ -106,6 +113,16 @@ CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_STDIO_CONVERT_TTY_NEWLINE=0
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_STDIO_FLUSH_AT_EXIT=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_PLATFORM_USE_MPU=1
+ifeq ($(RTOS_LARGE_PARAM), 1)
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE=1024
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_DEBUG_EXTRA=0
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_TICKLESS_EXTRA=512
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_MAIN_THREAD_STACK_SIZE=8192
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_PRESENT=1
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_THREAD_STACK_SIZE=8192
+CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_TIMER_THREAD_STACK_SIZE=1536
+CFLAGS_MBED_COMMON += -DMBED_CONF_TARGET_BOOT_STACK_SIZE=0x800
+else
 CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE=512
 CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_DEBUG_EXTRA=0
 CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_TICKLESS_EXTRA=256
@@ -114,6 +131,10 @@ CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_PRESENT=1
 CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_THREAD_STACK_SIZE=4096
 CFLAGS_MBED_COMMON += -DMBED_CONF_RTOS_TIMER_THREAD_STACK_SIZE=768
 CFLAGS_MBED_COMMON += -DMBED_CONF_TARGET_BOOT_STACK_SIZE=0x400
+endif
+CFLAGS_MBED_COMMON += -DMBED_CONF_TARGET_DEFAULT_ADC_VREF=3.3
+CFLAGS_MBED_COMMON += -DMBED_CRC_TABLE_SIZE=16
+CFLAGS_MBED_COMMON += -DMBED_CONF_TARGET_DEEP_SLEEP_LATENCY=0
 CFLAGS_MBED_COMMON += -D_RTE_
 #CFLAGS_COMMON += -include lib/mbed-os/mbed_config.h
 #ifeq ($(MBED_OS_USE), 1)
@@ -205,6 +226,7 @@ SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/serial_api.c
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/sleep.c
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/spi_api.c
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/us_ticker.c
+SRC_MBED_HAL_CPP += TARGET_RENESAS/$(TARGET)/USBPhy_RZ_A2.cpp
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/common/rza_io_regrw.c
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/common/r_cache/src/lld/r_cache_lld_rza2m.c
 SRC_MBED_HAL_C += TARGET_RENESAS/$(TARGET)/$(TARGET_BOARD)/PeripheralPins.c
@@ -221,43 +243,51 @@ ifeq ($(MBED_OS), 1)
 #######################################################################
 # mbed-os cmsis
 #######################################################################
-SRC_MBED_C += lib/mbed-os/cmsis/TARGET_CORTEX_A/irq_ctrl_gic.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/TARGET_CORTEX_A/Source/irq_ctrl_gic.c
 #######################################################################
 # mbed-os dirvers
 #######################################################################
-SRC_MBED_CPP += lib/mbed-os/drivers/AnalogIn.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/BusIn.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/BusInOut.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/BusOut.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/CAN.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/Ethernet.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/FlashIAP.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/I2C.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/I2CSlave.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/InterruptIn.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/InterruptManager.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/MbedCRC.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/QSPI.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/RawSerial.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/Serial.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/SerialBase.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/SPI.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/SPISlave.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/TableCRC.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/Ticker.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/Timeout.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/Timer.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/TimerEvent.cpp
-SRC_MBED_CPP += lib/mbed-os/drivers/UARTSerial.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/AnalogIn.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/AnalogOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/BufferedSerial.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/BusIn.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/BusInOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/BusOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/CAN.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/DigitalIn.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/DigitalInOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/DigitalOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/FlashIAP.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/I2C.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/I2CSlave.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/InterruptIn.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/MbedCRC.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/PortIn.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/PortInOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/PortOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/PwmOut.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/QSPI.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/ResetReason.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/SerialBase.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/SerialWireOutput.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/SFDP.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/SPI.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/SPISlave.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/Ticker.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/Timeout.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/Timer.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/TimerEvent.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/UnbufferedSerial.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/Watchdog.cpp
 #######################################################################
 # mbed-os events
 #######################################################################
 ifeq ($(MBED_OS_EVENTS), 1)
-SRC_MBED_CPP += lib/mbed-os/events/EventQueue.cpp
-SRC_MBED_CPP += lib/mbed-os/events/mbed_shared_queues.cpp
-SRC_MBED_CPP += lib/mbed-os/events/equeue/equeue_mbed.cpp
-SRC_MBED_C += lib/mbed-os/events/equeue/equeue_posix.c
-SRC_MBED_C += lib/mbed-os/events/equeue/equeue.c
+SRC_MBED_CPP += lib/mbed-os/events/source/EventQueue.cpp
+SRC_MBED_CPP += lib/mbed-os/events/source/mbed_shared_queues.cpp
+SRC_MBED_CPP += lib/mbed-os/events/source/equeue_mbed.cpp
+SRC_MBED_C += lib/mbed-os/events/source/equeue_posix.c
+SRC_MBED_C += lib/mbed-os/events/source/equeue.c
 endif
 #######################################################################
 # mbed-os features
@@ -470,110 +500,119 @@ endif
 #######################################################################
 # mbed-os hal
 #######################################################################
-SRC_MBED_CPP += lib/mbed-os/hal/LowPowerTickerWrapper.cpp
-SRC_MBED_C += lib/mbed-os/hal/mbed_critical_section_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_flash_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_gpio.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_itm_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_lp_ticker_api.c
-SRC_MBED_CPP += lib/mbed-os/hal/mbed_lp_ticker_wrapper.cpp
-SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_common.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_pinmap_default.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_ticker_api.c
-SRC_MBED_C += lib/mbed-os/hal/mbed_us_ticker_api.c
-SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v7m.c
-SRC_MBED_C += lib/mbed-os/hal/mpu/mbed_mpu_v8m.c
+SRC_MBED_CPP += lib/mbed-os/hal/source/LowPowerTickerWrapper.cpp
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_critical_section_api.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_flash_api.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_gpio.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_gpio_irq.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_itm_api.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_lp_ticker_api.c
+SRC_MBED_CPP += lib/mbed-os/hal/source/mbed_lp_ticker_wrapper.cpp
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_pinmap_common.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_pinmap_default.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_ticker_api.c
+SRC_MBED_C += lib/mbed-os/hal/source/mbed_us_ticker_api.c
+SRC_MBED_CPP += lib/mbed-os/hal/source/static_pinmap.cpp
+SRC_MBED_C += lib/mbed-os/hal/source/mpu/mbed_mpu_v7m.c
+SRC_MBED_C += lib/mbed-os/hal/source/mpu/mbed_mpu_v8m.c
 #SRC_MBED_C += lib/mbed-os/hal/TARGET_FLASH_CMSIS_ALGO/flash_common_algo.c
 #######################################################################
 # mbed-os platform (29 files)
 #######################################################################
-SRC_MBED_CPP += lib/mbed-os/platform/ATCmdParser.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/CallChain.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/CThunkBase.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/FileBase.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/FileHandle.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/FilePath.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/FileSystemHandle.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/LocalFileSystem.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_alloc_wrappers.cpp
-SRC_MBED_C += lib/mbed-os/platform/mbed_application.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_assert.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_board.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_critical.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_error.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_error_hist.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_interface.c
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_mem_trace.cpp
-SRC_MBED_C += lib/mbed-os/platform/mbed_mktime.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_mpu_mgmt.c
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_poll.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_retarget.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_rtc_time.cpp
-SRC_MBED_C += lib/mbed-os/platform/mbed_sdk_boot.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_semihost_api.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_sleep_manager.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_stats.c
-SRC_MBED_C += lib/mbed-os/platform/mbed_wait_api_no_rtos.c
-SRC_MBED_CPP += lib/mbed-os/platform/mbed_wait_api_rtos.cpp
-SRC_MBED_CPP += lib/mbed-os/platform/Stream.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/ATCmdParser.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/CriticalSectionLock.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/CThunkBase.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/DeepSleepLock.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/FileBase.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/FileHandle.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/FilePath.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/FileSystemHandle.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/LocalFileSystem.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_alloc_wrappers.cpp
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_application.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_assert.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_atomic_impl.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_board.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_critical.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_error.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_error_hist.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_interface.c
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_mem_trace.cpp
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_mktime.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_mpu_mgmt.c
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_os_timer.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_poll.cpp
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_power_mgmt.c
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_retarget.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_rtc_time.cpp
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_sdk_boot.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_semihost_api.c
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_stats.c
+SRC_MBED_CPP += lib/mbed-os/platform/source/mbed_thread.cpp
+SRC_MBED_C += lib/mbed-os/platform/source/mbed_wait_api_no_rtos.c
+SRC_MBED_CPP += lib/mbed-os/platform/source/Stream.cpp
+SRC_MBED_CPP += lib/mbed-os/platform/source/SysTimer.cpp
 #######################################################################
 # mbed-os rtos
 #######################################################################
-SRC_MBED_CPP += lib/mbed-os/rtos/ConditionVariable.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/EventFlags.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/Kernel.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/Mutex.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/RtosTimer.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/Semaphore.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/ThisThread.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/Thread.cpp
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_boot.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtos_rtx.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtx_handlers.c
-SRC_MBED_CPP += lib/mbed-os/rtos/TARGET_CORTEX/mbed_rtx_idle.cpp
-SRC_MBED_CPP += lib/mbed-os/rtos/TARGET_CORTEX/SysTimer.cpp
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx4/cmsis_os1.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/RTX_Config.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Config/TARGET_CORTEX_A/handlers.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_delay.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evflags.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_evr.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_kernel.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_lib.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_memory.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mempool.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_msgqueue.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_mutex.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_semaphore.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_system.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_thread.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/rtx_timer.c
-SRC_MBED_S += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_systick.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/rtx5/Source/os_tick_ptim.c
-SRC_MBED_C += lib/mbed-os/rtos/TARGET_CORTEX/TOOLCHAIN_GCC_ARM/mbed_boot_gcc_arm.c
+ifeq ($(MBED_OS_NO_RTOS), 1)
+else
+SRC_MBED_CPP += lib/mbed-os/rtos/source/ConditionVariable.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/EventFlags.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/Kernel.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/Mutex.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/Semaphore.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/ThisThread.cpp
+SRC_MBED_CPP += lib/mbed-os/rtos/source/Thread.cpp
+SRC_MBED_C += lib/mbed-os/cmsis/device/rtos/source/mbed_boot.c
+SRC_MBED_C += lib/mbed-os/cmsis/device/rtos/source/mbed_rtos_rtx.c
+SRC_MBED_C += lib/mbed-os/cmsis/device/rtos/source/mbed_rtx_handlers.c
+SRC_MBED_CPP += lib/mbed-os/cmsis/device/rtos/source/mbed_rtx_idle.cpp
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Library/cmsis_os1.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Config/RTX_Config.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Config/TARGET_CORTEX_A/handlers.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_delay.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_evflags.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_evr.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_kernel.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_lib.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_memory.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_mempool.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_msgqueue.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_mutex.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_semaphore.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_system.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_thread.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/rtx_timer.c
+SRC_MBED_S += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/RTX/Source/TOOLCHAIN_GCC/TARGET_CORTEX_A/irq_ca.S
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/Source/os_systick.c
+SRC_MBED_C += lib/mbed-os/cmsis/CMSIS_5/CMSIS/RTOS2/Source/os_tick_ptim.c
+SRC_MBED_C += lib/mbed-os/cmsis/device/rtos/TOOLCHAIN_GCC_ARM/mbed_boot_gcc_arm.c
+endif
 #######################################################################
 # mbed-os usb
 #######################################################################
-SRC_MBED_CPP += lib/mbed-os/usb/device/hal/mbed_usb_phy.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/targets/TARGET_RENESAS/$(TARGET)/USBPhy_RZ_A2.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBAudio/USBAudio.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBDevice/EndpointResolver.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBDevice/USBDevice.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBHID/USBHID.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBHID/USBKeyboard.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBHID/USBMouse.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBHID/USBMouseKeyboard.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBMIDI/USBMIDI.cpp
-#SRC_MBED_CPP += lib/mbed-os/usb/device/USBMSD/USBMSD.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBSerial/USBSerial.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/USBSerial/USBCDC.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/AsyncOp.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/ByteBuffer.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/LinkedListBase.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/OperationListBase.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/events/PolledQueue.cpp
-SRC_MBED_CPP += lib/mbed-os/usb/device/utilities/events/TaskBase.cpp
+#SRC_MBED_CPP += lib/mbed-os/usb/device/hal/mbed_usb_phy.cpp
+#SRC_MBED_CPP += lib/mbed-os/usb/device/targets/TARGET_RENESAS/$(TARGET)/USBPhy_RZ_A2.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/AsyncOp.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/ByteBuffer.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/EndpointResolver.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/LinkedListBase.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/OperationListBase.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/PolledQueue.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/TaskBase.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBAudio.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBCDC.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBCDC_ECM.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBDevice.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBHID.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBKeyboard.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBMIDI.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBMouse.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBMouseKeyboard.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBMIDI.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBMSD.cpp
+SRC_MBED_CPP += lib/mbed-os/drivers/source/usb/USBSerial.cpp
 endif
 
 ifeq ($(MBED_GR_LIBS), 1)
@@ -590,6 +629,7 @@ endif
 ifeq ($(MBED_GR_LIBS_components_AUDIO), 1)
 endif
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
+SRC_MBED_CPP += lib/mbed-gr-libs/components/CAMERA/sccb.cpp
 endif
 ifeq ($(MBED_GR_LIBS_components_LCD), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/components/LCD/Display_shield_config/LcdCfg_Display_shield.cpp
@@ -621,47 +661,61 @@ endif
 ifeq ($(MBED_GR_LIBS_DRP_FOR_MBED), 1)
 SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/src/r_dk2_core.c
 SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/src/r_dk2_if.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_affine/r_drp_affine.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_argb2grayscale/r_drp_argb2grayscale.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2grayscale/r_drp_bayer2grayscale.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb/r_drp_bayer2rgb.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb_color_correction/r_drp_bayer2rgb_color_correction.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive/r_drp_binarization_adaptive.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive_bit/r_drp_binarization_adaptive_bit.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_fixed/r_drp_binarization_fixed.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_calculate/r_drp_canny_calculate.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_hysterisis/r_drp_canny_hysterisis.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_circle_fitting/r_drp_circle_fitting.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_corner_harris/r_drp_corner_harris.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping/r_drp_cropping.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping_rgb/r_drp_cropping_rgb.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_dilate/r_drp_dilate.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_erode/r_drp_erode.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_find_contours/r_drp_find_contours.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gamma_correction/r_drp_gamma_correction.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gaussian_blur/r_drp_gaussian_blur.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram/r_drp_histogram.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization/r_drp_histogram_normalization.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization_rgb/r_drp_histogram_normalization_rgb.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_image_rotate/r_drp_image_rotate.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_laplacian/r_drp_laplacian.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_median_blur/r_drp_median_blur.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_delete/r_drp_minutiae_delete.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_extract/r_drp_minutiae_extract.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_prewitt/r_drp_prewitt.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon/r_drp_reed_solomon.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon_gf8/r_drp_reed_solomon_gf8.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear/r_drp_resize_bilinear.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed/r_drp_resize_bilinear_fixed.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed_rgb/r_drp_resize_bilinear_fixed_rgb.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_nearest/r_drp_resize_nearest.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2grayscale_3.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2grayscale_6.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2yuv_3.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp/r_drp_simple_isp_bayer2yuv_6.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_sobel/r_drp_sobel.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_thinning/r_drp_thinning.c
-SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_unsharp_masking/r_drp_unsharp_masking.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_affine.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_argb2grayscale.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2grayscale.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_bayer2rgb_color_correction.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_adaptive_bit.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_binarization_fixed.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_calculate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_canny_hysterisis.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_circle_fitting.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_corner_harris.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_cropping_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_dilate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_erode.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_find_contours.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gamma_correction.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_gaussian_blur.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_histogram_normalization_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_image_merging.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_image_rotate.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_laplacian.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_median_blur.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_delete.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_minutiae_extract.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_prewitt.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_reed_solomon_gf8.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_remap.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_bilinear_fixed_rgb.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_resize_nearest.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2grayscale_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2grayscale_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2rgb_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2yuv_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2yuv_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2yuv_planar_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bayer2yuv_planar_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_bg_subtraction_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_colcal_3dnr_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_distortion_correction_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_grayscale_3.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_grayscale_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_obj_det_color_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_obj_det_sobel_4.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_obj_det_sobel_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_simple_isp_scal_normaliz_b32_6.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_sobel.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_thinning.c
+SRC_MBED_C += lib/mbed-gr-libs/drp-for-mbed/$(TARGET)/r_drp/drp_lib/r_drp_unsharp_masking.c
 endif
 ifeq ($(MBED_GR_LIBS_EasyAttach_CameraAndLCD), 1)
 SRC_MBED_CPP += lib/mbed-gr-libs/EasyAttach_CameraAndLCD/EasyAttach_CameraAndLCD.cpp
@@ -805,6 +859,8 @@ endif
 ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
 SRC_MBED_CPP += mbed/mbed_camera.cpp
+SRC_MBED_CPP += mbed/mbed_lcd.cpp
+SRC_MBED_CPP += mbed/mbed_jpeg.cpp
 endif
 endif
 
@@ -908,11 +964,10 @@ AR_MBED_FLAGS = rcs
 
 $(LIB_MBED): $(OBJ_MBED) $(OBJ_MBED_HAL)
 	$(ECHO) "LIB $@"
-	$(MKDIR) -p libs
+	$(MKDIR) -p $(BUILD_MBED_LIB)
 	$(Q)$(AR) $(AR_MBED_FLAGS) $(LIB_MBED) $^
 	
 
 clean-mbed:
 	$(RM) -rf $(BUILD_MBED)
-#	$(RM) -f $(LIB_MBED)
 	

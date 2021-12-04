@@ -32,13 +32,13 @@
 
 #if defined(USE_DBG_PRINT)
 #if defined(DEBUG_CH)
-int debug_printf(const void* format, ...) {
+int debug_printf(const void *format, ...) {
     char buf[DEBUG_PRINTF_BUF_SIZE];
     int len;
     va_list arg_ptr;
     va_start(arg_ptr, format);
-    len = vxsnprintf(buf, (size_t)(DEBUG_PRINTF_BUF_SIZE-1), format, arg_ptr);
-    DEBUG_TXSTR((unsigned char*)buf);
+    len = vxsnprintf(buf, (size_t)(DEBUG_PRINTF_BUF_SIZE - 1), format, arg_ptr);
+    DEBUG_TXSTR((unsigned char *)buf);
     va_end(arg_ptr);
     return len;
 }
@@ -46,6 +46,6 @@ int debug_printf(const void* format, ...) {
 #error "DEBUG_CH is not defined"
 #endif
 #else
-//int debug_printf(const void* format, ...) {
-//}
+// int debug_printf(const void* format, ...) {
+// }
 #endif

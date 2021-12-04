@@ -1,7 +1,8 @@
 // The 'features' section in 'target.json' is now used to create the device's hardware preprocessor switches.
 // Check the 'features' section of the target description in 'targets.json' for more details.
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +19,6 @@
 #ifndef MBED_DEVICE_H
 #define MBED_DEVICE_H
 
-/* ->Take measures about optimization problems of web compiler */
-   /* Web compiler has problem that inlining code may not be generated correctly */
-   /* when "-O3 -Otime" was specified. */
-#if defined(__CC_ARM) && (__ARMCC_VERSION <= 5040027)
-#pragma Ospace
-#endif
-/* <-Take measures about optimization problems of web compiler */
 
 
 

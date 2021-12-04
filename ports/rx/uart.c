@@ -63,26 +63,6 @@ static void set_kbd_interrupt(uint32_t ch, void *keyex) {
 
 #endif
 
-#if 0
-static void uart_rx_cb(uint32_t ch, int d) {
-    pyb_uart_obj_t *self = MP_STATE_PORT(pyb_uart_obj_all)[ch];
-    if (self == NULL) {
-        // UART object has not been set, so we can't do anything, not
-        // even disable the IRQ.  This should never happen.
-        return;
-    }
-    #if MICROPY_KBD_EXCEPTION
-    if (keyex_cb[ch]) {
-        (*keyex_cb[ch])(d);
-    }
-    #endif
-    // Check the flags to see if the user handler should be called
-    if (self->mp_irq_trigger) {
-        mp_irq_handler(self->mp_irq_obj);
-    }
-}
-#endif
-
 void uart_init0(void) {
 }
 

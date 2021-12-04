@@ -52,8 +52,8 @@ extern uint32_t irq_stats[IRQ_STATS_MAX];
 
 static inline mp_uint_t query_irq(void) {
     uint32_t state;
-    __asm__ __volatile__ (  "MRS %0,APSR\n\t"
-                            "AND %0,%0,#0x80" : "=r" (state) : : );
+    __asm__ __volatile__ ("MRS %0,APSR\n\t"
+        "AND %0,%0,#0x80" : "=r" (state) : :);
     return state;
 }
 

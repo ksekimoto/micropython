@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +21,14 @@
 
 PinName gpio_multi_guard = (PinName)NC; /* If set pin name here, setting of the "pin" is just one time */
 
-void pin_function(PinName pin, int function) {
+void pin_function(PinName pin, int function)
+{
     uint32_t reg_group = PINGROUP(pin);
     uint32_t bitmask = (1 << PINNO(pin));
 
-    if (reg_group > GPIO_GROUP_MAX) return;
+    if (reg_group > GPIO_GROUP_MAX) {
+        return;
+    }
 
     if (gpio_multi_guard == pin) {
         gpio_multi_guard = (PinName)NC;
@@ -43,6 +47,7 @@ void pin_function(PinName pin, int function) {
     }
 }
 
-void pin_mode(PinName pin, PinMode mode) {
+void pin_mode(PinName pin, PinMode mode)
+{
 //    if (pin == (PinName)NC) { return; }
 }

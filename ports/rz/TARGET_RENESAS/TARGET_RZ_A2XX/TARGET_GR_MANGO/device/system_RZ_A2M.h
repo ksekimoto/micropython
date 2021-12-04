@@ -8,7 +8,7 @@
  *
  ******************************************************************************/
 /*
- * Copyright (c) 2009-2017 ARM Limited. All rights reserved.
+ * Copyright (c) 2009-2020 ARM Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,7 +43,7 @@ typedef void(*IRQHandler)();         /*!< Type Definition for Interrupt Handlers
 
    Initialize the System and update the SystemCoreClock variable.
  */
-extern void SystemInit (void);
+extern void SystemInit(void);
 
 
 /**
@@ -51,7 +51,7 @@ extern void SystemInit (void);
 
    Updates the SystemCoreClock with current core Clock retrieved from cpu registers.
  */
-extern void SystemCoreClockUpdate (void);
+extern void SystemCoreClockUpdate(void);
 
 /**
   \brief  Interrupt Handler Register.

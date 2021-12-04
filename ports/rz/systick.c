@@ -38,7 +38,7 @@
 #include "hal/us_ticker_api.h"
 #include "mbed_timer.h"
 
-//static volatile uint32_t uwTick;
+// static volatile uint32_t uwTick;
 
 systick_dispatch_t systick_dispatch_table[SYSTICK_DISPATCH_NUM_SLOTS];
 
@@ -46,13 +46,13 @@ void SysTick_Handler(void) {
     // Instead of calling HAL_IncTick we do the increment here of the counter.
     // This is purely for efficiency, since SysTick is called 1000 times per
     // second at the highest interrupt priority.
-    uint32_t uw_tick =  mp_hal_ticks_ms() + 1;
-    //uwTick = uw_tick;
+    uint32_t uw_tick = mp_hal_ticks_ms() + 1;
+    // uwTick = uw_tick;
 
     // Read the systick control regster. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
     // work properly.
-    //SysTick->CTRL;
+    // SysTick->CTRL;
 
     // Dispatch to any registered handlers in a cycle
     systick_dispatch_t f = systick_dispatch_table[uw_tick & (SYSTICK_DISPATCH_NUM_SLOTS - 1)];
@@ -69,7 +69,7 @@ void SysTick_Handler(void) {
     if (pyb_thread_enabled) {
         if (pyb_thread_cur->timeslice == 0) {
             if (pyb_thread_cur->run_next != pyb_thread_cur) {
-                //SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+                // SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
             }
         } else {
             --pyb_thread_cur->timeslice;
@@ -78,6 +78,9 @@ void SysTick_Handler(void) {
     #endif
 }
 
+// We provide our own version of HAL_Delay that calls __WFI while waiting,
+// and works when interrupts are disabled.  This function is intended to be
+// used only by the ST HAL functions.
 void HAL_Delay(uint32_t Delay) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
@@ -93,17 +96,19 @@ void HAL_Delay(uint32_t Delay) {
     }
 }
 
+// Core delay function that does an efficient sleep and may switch thread context.
+// If IRQs are enabled then we must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = mp_hal_ticks_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (mp_hal_ticks_ms() - start < Delay) {
+        do {
             // This macro will execute the necessary idle behaviour.  It may
             // raise an exception, switch threads or enter sleep mode (waiting for
             // (at least) the SysTick interrupt).
             MICROPY_EVENT_POLL_HOOK
-        }
+        } while (mp_hal_ticks_ms() - start < Delay);
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
@@ -134,10 +139,7 @@ void mp_hal_delay_us(mp_uint_t usec) {
 }
 
 bool systick_has_passed(uint32_t start_tick, uint32_t delay_ms) {
-    const ticker_data_t *const ticker = get_us_ticker_data();
-    uint32_t start = ticker_read(ticker);
-    delay_ms *= 1000;
-    return ticker_read(ticker) - start >= delay_ms;
+    return (long)mtick() - (long)start_tick >= (long)delay_ms;
 }
 
 // waits until at least delay_ms milliseconds have passed from the sampling of

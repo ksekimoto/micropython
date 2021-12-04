@@ -48,3 +48,6 @@
 [submodule "lib/mbed-gr-libs"]
 	path = lib/mbed-gr-libs
 	url = https://github.com/ksekimoto/mbed-gr-libs.git
+[submodule "lib/mbed-os"]
+	path = lib/mbed-os
+	url = https://github.com/ARMmbed/mbed-os.git

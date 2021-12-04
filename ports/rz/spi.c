@@ -36,7 +36,7 @@
 #include "spi.h"
 #include "mbed_spi.h"
 
-//#define MBED_SPI_WRAPPER
+// #define MBED_SPI_WRAPPER
 
 #if defined(MBED_SPI_WRAPPER)
 #include "mbed_spi.h"
@@ -48,7 +48,7 @@
 #define MBED_SPI_INIT           mbed_spi_init
 #define MBED_SPI_DEINIT         mbed_spi_deinit
 #else
-#include "rza2m_spi.h"
+#include "rz_spi.h"
 #define MBED_SPI_SET_BITS       rz_spi_set_bits
 #define MBED_SPI_SET_CLK        rz_spi_set_clk
 #define MBED_SPI_SET_FIRSTBIT   rz_spi_set_firstbit
@@ -142,43 +142,43 @@ void spi_set_params(const mspi_t *spi_obj, uint32_t prescale, int32_t baudrate,
 // TODO allow to take a list of pins to use
 void _spi_init(const mspi_t *self, bool enable_nss_pin) {
     // ToDo: implement using pins definition
-    //const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
+    // const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
     if (0) {
     #if defined(MICROPY_HW_SPI1_SCK)
     } else if (self->ch == 0) {
-        //#if defined(MICROPY_HW_SPI1_NSS)
-        //pins[0] = MICROPY_HW_SPI1_NSS;
-        //#endif
-        //pins[1] = MICROPY_HW_SPI1_SCK;
-        //#if defined(MICROPY_HW_SPI1_MISO)
-        //pins[2] = MICROPY_HW_SPI1_MISO;
-        //#endif
-        //pins[3] = MICROPY_HW_SPI1_MOSI;
+        // #if defined(MICROPY_HW_SPI1_NSS)
+        // pins[0] = MICROPY_HW_SPI1_NSS;
+        // #endif
+        // pins[1] = MICROPY_HW_SPI1_SCK;
+        // #if defined(MICROPY_HW_SPI1_MISO)
+        // pins[2] = MICROPY_HW_SPI1_MISO;
+        // #endif
+        // pins[3] = MICROPY_HW_SPI1_MOSI;
         MBED_SPI_INIT(self->ch, 0, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
     } else if (self->ch == 1) {
-        //#if defined(MICROPY_HW_SPI2_NSS)
-        //pins[0] = MICROPY_HW_SPI2_NSS;
-        //#endif
-        //pins[1] = MICROPY_HW_SPI2_SCK;
-        //#if defined(MICROPY_HW_SPI2_MISO)
-        //pins[2] = MICROPY_HW_SPI2_MISO;
-        //#endif
-        //pins[3] = MICROPY_HW_SPI2_MOSI;
+        // #if defined(MICROPY_HW_SPI2_NSS)
+        // pins[0] = MICROPY_HW_SPI2_NSS;
+        // #endif
+        // pins[1] = MICROPY_HW_SPI2_SCK;
+        // #if defined(MICROPY_HW_SPI2_MISO)
+        // pins[2] = MICROPY_HW_SPI2_MISO;
+        // #endif
+        // pins[3] = MICROPY_HW_SPI2_MOSI;
         MBED_SPI_INIT(self->ch, 0, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI3_SCK)
     } else if (self->ch == 2) {
-        //#if defined(MICROPY_HW_SPI0_NSS)
-        //pins[0] = MICROPY_HW_SPI3_NSS;
-        //#endif
-        //pins[1] = MICROPY_HW_SPI3_SCK;
-        //#if defined(MICROPY_HW_SPI3_MISO)
-        //pins[2] = MICROPY_HW_SPI3_MISO;
-        //#endif
-        //pins[3] = MICROPY_HW_SPI3_MOSI;
+        // #if defined(MICROPY_HW_SPI0_NSS)
+        // pins[0] = MICROPY_HW_SPI3_NSS;
+        // #endif
+        // pins[1] = MICROPY_HW_SPI3_SCK;
+        // #if defined(MICROPY_HW_SPI3_MISO)
+        // pins[2] = MICROPY_HW_SPI3_MISO;
+        // #endif
+        // pins[3] = MICROPY_HW_SPI3_MOSI;
         MBED_SPI_INIT(self->ch, 0, 4000000, 8, 0);
     #endif
     } else {

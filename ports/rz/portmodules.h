@@ -27,6 +27,7 @@
 #define MICROPY_INCLUDED_RZ_PORTMODULES_H
 
 extern const mp_obj_module_t pyb_module;
+extern const mp_obj_module_t rz_module;
 extern const mp_obj_module_t mp_module_uos;
 extern const mp_obj_module_t mp_module_utime;
 extern const mp_obj_module_t mp_module_usocket;

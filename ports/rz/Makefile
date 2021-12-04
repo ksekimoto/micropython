@@ -7,9 +7,6 @@ CROSS ?= 1
 # enable debug_printf
 USE_DBG_PRINT = 0
 
-# LAN debug
-LAN_NEW = 0
-
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
 #MICROPY_DEBUG_PRINTERS = 1
@@ -98,6 +95,12 @@ FROZEN_MANIFEST ?= boards/manifest.py
 include $(TOP)/py/py.mk
 
 GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+ifeq ($(MBED_OS), 1)
+GIT_SUBMODULES += lib/mbed-os
+endif
+ifeq ($(MBED_GR_LIBS), 1)
+GIT_SUBMODULES += lib/mbed-gr-libs
+endif
 
 GCC_VERSION = "`$(CC) -dumpversion`"
 GCC_VERSION_9 = "9.0"
@@ -130,7 +133,8 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(BOARD_DIR)
-INC += -I$(MCU_SERIES_LOW)
+INC += -Irz
+INC += -Irz/$(MCU_SERIES_LOW)
 INC += -I$(TOP)/lib/oofatfs
 ifeq ($(MICROPY_PY_LWIP),1)
 INC += -I$(TOP)/lib/lwip/src/include
@@ -147,10 +151,11 @@ ifeq ($(MICROPY_PY_ESP8266),1)
 INC += -I$(TOP)/drivers/esp8266/inc
 endif
 ifeq ($(USE_FONT), 1)
-INC += -Ifont
+INC += -Ilibs/font
 endif
 ifeq ($(USE_LCDSPI), 1)
-INC += -Ilcdspi
+INC += -Ilibs/lcdspi
+INC += -Ilibs/jpeg
 endif
 ifeq ($(USE_DBG_PRINT) ,1)
 INC += -Idebug
@@ -161,6 +166,11 @@ endif
 ifeq ($(LVGL_ENABLE),1)
 INC += -Ilvgl
 INC += -Ilib/lv_bindings/lvgl
+endif
+ifeq ($(MBED_GR_LIBS_DRP_FOR_MBED),1)
+INC += -I$(TOP)/lib/mbed-gr-libs/drp-for-mbed/TARGET_RZ_A2XX/r_drp/inc
+INC += -I$(TOP)/lib/mbed-gr-libs/drp-for-mbed/TARGET_RZ_A2XX/r_drp/src
+INC += -I$(TOP)/lib/mbed-gr-libs/drp-for-mbed/TARGET_RZ_A2XX/r_drp/drp_lib
 endif
 
 #######################################################################
@@ -229,6 +239,7 @@ CFLAGS += -Wno-error=implicit-function-declaration
 CFLAGS += -Wno-error=incompatible-pointer-types
 # main.c
 CFLAGS += -Wno-error=main
+CFLAGS += -Wno-error=format=
 # sd/sd_write.c
 CFLAGS += -Wno-error=maybe-uninitialized
 CFLAGS += -Wno-error=missing-braces
@@ -298,6 +309,14 @@ COPT += -Os -DNDEBUG
 endif
 CFLAGS += $(COPT)
 
+# Flags for optional C++ source code
+CXXFLAGS += $(filter-out -Wmissing-prototypes -Wold-style-definition -std=gnu99,$(CFLAGS))
+CXXFLAGS += $(CXXFLAGS_MOD)
+ifneq ($(SRC_CXX)$(SRC_MOD_CXX),)
+LIBSTDCPP_FILE_NAME = "$(shell $(CXX) $(CXXFLAGS) -print-file-name=libstdc++.a)"
+LDFLAGS += -L"$(shell dirname $(LIBSTDCPP_FILE_NAME))"
+endif
+
 # Options for mpy-cross
 MPY_CROSS_FLAGS += -march=armv7m
 
@@ -351,23 +370,23 @@ endif
 # source files
 #######################################################################
 
-LIB_SRC_C = $(addprefix lib/,\
+SHARED_SRC_C += $(addprefix shared/,\
 	libc/string0.c \
-	mp-readline/readline.c \
+	netutils/dhcpserver.c \
 	netutils/netutils.c \
 	netutils/trace.c \
-	netutils/dhcpserver.c \
+	readline/readline.c \
+	runtime/gchelper_native.c \
+	runtime/interrupt_char.c \
+	runtime/mpirq.c \
+	runtime/pyexec.c \
+	runtime/stdout_helpers.c \
+	runtime/sys_stdio_mphal.c \
 	timeutils/timeutils.c \
-	utils/gchelper_native.c \
-	utils/pyexec.c \
-	utils/interrupt_char.c \
-	utils/printf.c \
-	utils/sys_stdio_mphal.c \
-	utils/mpirq.c \
 	)
 
 ifeq ($(MICROPY_FLOAT_IMPL),double)
-LIBM_SRC_C = $(addprefix lib/libm_dbl/,\
+LIBM_SRC_C += $(addprefix lib/libm_dbl/,\
 	__cos.c \
 	__expo2.c \
 	__fpclassify.c \
@@ -418,7 +437,7 @@ else
 LIBM_SRC_C += lib/libm_dbl/sqrt.c
 endif
 else
-LIBM_SRC_C = $(addprefix lib/libm/,\
+LIBM_SRC_C += $(addprefix lib/libm/,\
 	math.c \
 	acoshf.c \
 	asinfacosf.c \
@@ -460,11 +479,13 @@ ifeq ($(MICROPY_FLOAT_IMPL),double)
 $(LIBM_O): CFLAGS := $(filter-out -Wdouble-promotion -Wfloat-conversion, $(CFLAGS))
 endif
 
-EXTMOD_SRC_C = $(addprefix extmod/,\
+EXTMOD_SRC_C += $(addprefix extmod/,\
 	modonewire.c \
+	modnetwork.c \
+	modusocket.c \
 	)
 
-DRIVERS_SRC_C = $(addprefix drivers/,\
+DRIVERS_SRC_C += $(addprefix drivers/,\
 	bus/softspi.c \
 	bus/softqspi.c \
 	memory/spiflash.c \
@@ -487,43 +508,49 @@ ifeq ($(BOOT_LOADER),1)
 SRC_C += boards/$(BOARD)/$(BOARD)_bl.c
 endif
 
-SRC_C += $(MCU_SERIES_LOW)/bootstrap.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_adc.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_exti.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_gpio.c
+SRC_C += rz/$(MCU_SERIES_LOW)/bootstrap.c
+SRC_C += rz/rz_adc.c
+SRC_C += rz/rz_exti.c
+SRC_C += rz/rz_gpio.c
 ifneq ($(MBED_OS_EMAC),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ether.c
+SRC_C += rz/rz_ether.c
 endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_init.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_mtu.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_servo.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_ostm2.c
-SRC_C += $(MCU_SERIES_LOW)/rza2m_rtc.c
+SRC_C += rz/rz_init.c
+SRC_C += rz/rz_mtu.c
+SRC_C += rz/rz_servo.c
+SRC_C += rz/rz_ostm2.c
+SRC_C += rz/rz_rtc.c
 ifneq ($(MBED_UART_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sci.c
+SRC_C += rz/rz_sci.c
 endif
 ifneq ($(MBED_SPI_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_spi.c
+SRC_C += rz/rz_spi.c
 endif
-SRC_C += $(MCU_SERIES_LOW)/rza2m_utils.c
+SRC_C += rz/rz_utils.c
 ifneq ($(MBED_SD_WRAPPER),1)
-SRC_C += $(MCU_SERIES_LOW)/rza2m_sd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_dev_low.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_device.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_cmd.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_int.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_init.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_mount.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_read.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_trns.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_util.c
-SRC_C += $(MCU_SERIES_LOW)/sd/sd_write.c
+SRC_C += rz/rz_sd.c
+SRC_C += rz/sd/sd_dev_low.c
+SRC_C += rz/sd/sd_device.c
+SRC_C += rz/sd/sd_cd.c
+SRC_C += rz/sd/sd_cmd.c
+SRC_C += rz/sd/sd_int.c
+SRC_C += rz/sd/sd_init.c
+SRC_C += rz/sd/sd_mount.c
+SRC_C += rz/sd/sd_read.c
+SRC_C += rz/sd/sd_trns.c
+SRC_C += rz/sd/sd_util.c
+SRC_C += rz/sd/sd_write.c
 endif
 
 ifeq ($(MBED_GR_LIBS), 1)
 ifeq ($(MBED_GR_LIBS_components_CAMERA), 1)
-EXTMOD_SRC_C += camera.c
+EXTMOD_SRC_C += display.c
+EXTMOD_SRC_C += rz_camera.c
+EXTMOD_SRC_C += rz_display.c
+EXTMOD_SRC_C += rz_lcd.c
+EXTMOD_SRC_C += rz_buf.c
+EXTMOD_SRC_C += rz_drp.c
+EXTMOD_SRC_C += rz_isp.c
 endif
 endif
 
@@ -535,11 +562,7 @@ endif
 
 SRC_C += adc.c
 SRC_C += bufhelper.c
-ifeq ($(LAN_NEW),1)
 SRC_C += eth.c
-else
-SRC_C += ethernetif.c
-endif
 SRC_C += extint.c
 SRC_C += factoryreset.c
 SRC_C += fatfs_port.c
@@ -557,22 +580,19 @@ SRC_C += machine_spi.c
 SRC_C += machine_timer.c
 SRC_C += machine_uart.c
 SRC_C += modmachine.c
-SRC_C += modnetwork.c
-SRC_C += modnwrxeth.c
 ifeq ($(MICROPY_PY_ESP8266),1)
 CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function
-SRC_C += modnwesp8266.c
+SRC_C += network_esp8266.c
 endif
 SRC_C += modpyb.c
+SRC_C += modrz.c
+SRC_C += modrzreg.c
 SRC_C += moduos.c
-SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
-ifeq ($(LAN_NEW),1)
+SRC_C += mpnetworkport.c
+SRC_C += mpthreadport.c
 SRC_C += network_lan.c
-else
-SRC_C += modnwrxeth.c
-endif
 SRC_C += pendsv.c
 ifneq ($(MBED_OS_EMAC),1)
 SRC_C += phy.c
@@ -594,6 +614,8 @@ SRC_C += systick.c
 #SRC_C += timer.c
 SRC_C += uart.c
 SRC_C += usrsw.c
+SRC_C += mpy_file.c
+SRC_C += rz_buf.c
 
 ifeq ($(USE_DBG_PRINT) ,1)
 SRC_C += debug/debug_printf.c
@@ -601,18 +623,23 @@ SRC_C += debug/vsnprintf.c
 endif
 
 ifeq ($(USE_FONT), 1)
-SRC_C += font/font.c
+SRC_C += libs/font/font.c
+SRC_C += rz_font.c
 endif
 ifeq ($(USE_LCDSPI), 1)
-SRC_C += lcdspi/lcdspi.c
-SRC_C += lcdspi/jpeg.c
-SRC_C += lcdspi/picojpeg.c
+SRC_C += libs/jpeg/jpeg_disp.c
+SRC_C += libs/jpeg/jpeg_src.c
+SRC_C += libs/jpeg/jpeg.c
+SRC_C += libs/jpeg/picojpeg.c
+SRC_C += libs/lcdspi/lcdspi_file.c
+SRC_C += libs/lcdspi/lcdspi_info.c
+SRC_C += libs/lcdspi/lcdspi.c
+SRC_C += rz_lcdspi.c
 endif
 
 ifeq ($(MICROPY_PY_BLUETOOTH),1)
 CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH=1
 CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE=1
-CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_GATTS_ON_READ_CALLBACK=1
 endif
 
 ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
@@ -676,11 +703,6 @@ SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	)
 endif
 
-#ifeq ($(MICROPY_PY_LWIP),1)
-#SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
-#SRC_MOD += lwip_utils/sntp_client.c
-#endif
-
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
 CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
@@ -689,89 +711,6 @@ SRC_MOD += mbedtls/mbedtls_port.c
 SRC_MOD := $(filter-out %/mbedtls/library/error.c, $(SRC_MOD))
 LIB_SRC_C += lib/mbedtls_errors/mp_mbedtls_errors.c
 endif
-
-#ifeq ($(MICROPY_SSL_MBEDTLS),1)
-#CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
-#SRC_MOD += mbedtls/mbedtls_port.c
-#SRC_MOD += $(addprefix lib/,\
-#	mbedtls/library/aes.c \
-#	mbedtls/library/aesni.c \
-#	mbedtls/library/arc4.c \
-#	mbedtls/library/aria.c \
-#	mbedtls/library/asn1parse.c \
-#	mbedtls/library/asn1write.c \
-#	mbedtls/library/base64.c \
-#	mbedtls/library/bignum.c \
-#	mbedtls/library/blowfish.c \
-#	mbedtls/library/camellia.c \
-#	mbedtls/library/ccm.c \
-#	mbedtls/library/certs.c \
-#	mbedtls/library/chacha20.c \
-#	mbedtls/library/chachapoly.c \
-#	mbedtls/library/cipher_wrap.c \
-#	mbedtls/library/cipher.c \
-#	mbedtls/library/cmac.c \
-#	mbedtls/library/ctr_drbg.c \
-#	mbedtls/library/debug.c \
-#	mbedtls/library/des.c \
-#	mbedtls/library/dhm.c \
-#	mbedtls/library/ecdh.c \
-#	mbedtls/library/ecdsa.c \
-#	mbedtls/library/ecjpake.c \
-#	mbedtls/library/ecp.c \
-#	mbedtls/library/ecp_curves.c \
-#	mbedtls/library/entropy.c \
-#	mbedtls/library/entropy_poll.c \
-#	mbedtls/library/error.c \
-#	mbedtls/library/gcm.c \
-#	mbedtls/library/havege.c \
-#	mbedtls/library/hmac_drbg.c \
-#	mbedtls/library/md.c \
-#	mbedtls/library/md_wrap.c \
-#	mbedtls/library/md2.c \
-#	mbedtls/library/md4.c \
-#	mbedtls/library/md5.c \
-#	mbedtls/library/memory_buffer_alloc.c \
-#	mbedtls/library/oid.c \
-#	mbedtls/library/padlock.c \
-#	mbedtls/library/pem.c \
-#	mbedtls/library/pk.c \
-#	mbedtls/library/pk_wrap.c \
-#	mbedtls/library/pkcs11.c \
-#	mbedtls/library/pkcs12.c \
-#	mbedtls/library/pkcs5.c \
-#	mbedtls/library/pkparse.c \
-#	mbedtls/library/pkwrite.c \
-#	mbedtls/library/platform.c \
-#	mbedtls/library/platform_util.c \
-#	mbedtls/library/poly1305.c \
-#	mbedtls/library/ripemd160.c \
-#	mbedtls/library/rsa.c \
-#	mbedtls/library/rsa_internal.c \
-#	mbedtls/library/sha1.c \
-#	mbedtls/library/sha256.c \
-#	mbedtls/library/sha512.c \
-#	mbedtls/library/ssl_cache.c \
-#	mbedtls/library/ssl_ciphersuites.c \
-#	mbedtls/library/ssl_cli.c \
-#	mbedtls/library/ssl_cookie.c \
-#	mbedtls/library/ssl_srv.c \
-#	mbedtls/library/ssl_ticket.c \
-#	mbedtls/library/ssl_tls.c \
-#	mbedtls/library/threading.c \
-#	mbedtls/library/timing.c \
-#	mbedtls/library/version.c \
-#	mbedtls/library/version_features.c \
-#	mbedtls/library/x509.c \
-#	mbedtls/library/x509_create.c \
-#	mbedtls/library/x509_crl.c \
-#	mbedtls/library/x509_crt.c \
-#	mbedtls/library/x509_csr.c \
-#	mbedtls/library/x509write_crt.c \
-#	mbedtls/library/x509write_csr.c \
-#)
-#endif
-
 
 ifeq ($(MICROPY_PY_BLUETOOTH),1)
 
@@ -784,13 +723,17 @@ endif
 endif
 
 ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+GIT_SUBMODULES += lib/mynewt-nimble
+CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS=1
 include $(TOP)/extmod/nimble/nimble.mk
-SRC_C += nimble.c
+SRC_C += mpnimbleport.c
 endif
 
 ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+GIT_SUBMODULES += lib/btstack
+MICROPY_BLUETOOTH_BTSTACK_H4 ?= 1
 include $(TOP)/extmod/btstack/btstack.mk
-SRC_C += btstack.c
+SRC_C += mpbtstackport.c
 endif
 
 ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
@@ -816,9 +759,12 @@ OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(LIBM_O)
+OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
+
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_O))
@@ -828,7 +774,7 @@ OBJ += $(BUILD)/pins_$(BOARD).o
 # This file contains performance critical functions so turn up the optimisation
 # level.  It doesn't add much to the code size and improves performance a bit.
 # Don't use -O3 with this file because gcc tries to optimise memset in terms of itself.
-$(BUILD)/lib/libc/string0.o: COPT += -O2
+$(BUILD)/shared/libc/string0.o: COPT += -O2
 
 # We put several files into the first 16K section with the ISRs.
 # If we compile these using -O0 then it won't fit. So if you really want these
@@ -893,13 +839,13 @@ GEN_PINS_AF_PY = $(BUILD)/pins_af.py
 INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
 FILE2H = $(TOP)/tools/file2h.py
 
-USB_IDS_FILE = usb.h
+USB_IDS_FILE = mpconfigboard_common.h
 CDCINF_TEMPLATE = pybcdc.inf_template
 GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
 GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_MOD) $(LIB_SRC_C) $(EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SRC_MOD) $(SHARED_SRC_C) $(EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)
