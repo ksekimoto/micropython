@@ -214,10 +214,10 @@ STATIC err_t eth_netif_output(struct netif *netif, struct pbuf *p) {
  */
 static struct pbuf *low_level_input(struct netif *netif) {
     struct pbuf *p0 = NULL;
-    struct pbuf *p;
-    struct pbuf *q;
+    struct pbuf *p = NULL;
+    struct pbuf *q = NULL;
     bool flag = true;
-    int32_t recvd;
+    int32_t recvd = 0;
     int32_t readcount = 0;
     int32_t recvdsize = 0;
 
@@ -231,9 +231,8 @@ static struct pbuf *low_level_input(struct netif *netif) {
         EDMAC0.EESR.LONG |= 0x00040000;
     }
     #endif
-    uint32_t state = rx_disable_irq();
+//     uint32_t state = rx_disable_irq();
     while (flag) {
-        // recvd = rx_ether_fifo_read(le0.rxcurrent, (int8_t *)&rx_buf);
         readcount++;
         if (readcount >= 2 && recvdsize == 0) {
             break;
@@ -316,7 +315,7 @@ static struct pbuf *low_level_input(struct netif *netif) {
             #endif
         }
     }
-    rx_enable_irq(state);
+//     rx_enable_irq(state);
     #if defined(DEBUG_ETH_PACKET_READ)
     if (recvdsize > 0) {
         printf("ERX:%ld\r\n", recvdsize);

@@ -469,8 +469,8 @@ STATIC const esp8266_obj_t esp8266_obj = {{(mp_obj_type_t *)&mod_network_nic_typ
 STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_ch, ARG_baudrate, ARG_en, ARG_reset };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 115200} },
         { MP_QSTR_en,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     };
@@ -479,7 +479,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
     uint32_t ch = 0;
     uint32_t baud = 115200;
     #if defined(MICROPY_HW_ESP8266_UART_CH)
-    ch = MICROPY_HW_ESP8266_UART_CH;
+    ch = MICROPY_HW_ESP8266_UART_CH - 1;
     #endif
     #if defined(MICROPY_HW_ESP8266_UART_BAUD)
     baud = MICROPY_HW_ESP8266_UART_BAUD;
@@ -498,10 +498,10 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
         mp_hal_pin_high(MICROPY_HW_ESP8266_EN);
         #endif
     } else if (n_args >= 1 || n_args <= 4) {
-        if (args[ARG_ch].u_int != -1) {
-            ch = args[ARG_ch].u_int;
+        if (args[ARG_ch].u_int > 0) {
+            ch = args[ARG_ch].u_int - 1;
         }
-        if (args[ARG_baudrate].u_int != -1) {
+        if (args[ARG_baudrate].u_int > 0) {
             baud = args[ARG_ch].u_int;
         }
         if (args[ARG_reset].u_obj != MP_OBJ_NULL) {

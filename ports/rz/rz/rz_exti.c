@@ -290,4 +290,3 @@ static void exti_irq6(void) {
 static void exti_irq7(void) {
     rz_exti_irq_handler(7);
 }
-

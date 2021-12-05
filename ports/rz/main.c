@@ -83,7 +83,7 @@
 #include "servo.h"
 // #include "dac.h"
 // #include "can.h"
-#include "modnetwork.h"
+#include "extmod/modnetwork.h"
 // #include "usb_entry.h"
 #include "mbed_timer.h"
 #include "rz_init.h"

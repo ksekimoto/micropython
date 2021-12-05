@@ -394,12 +394,12 @@ void rz_sci_tx_break(uint32_t ch) {
 void rz_sci_tx_str(uint32_t ch, uint8_t *p) {
     int c;
     if (ch_9bit[ch]) {
-        while ((c = (int)*p++) != 0) {
+        uint16_t *q = (uint16_t *)p;
+        while ((c = *q++) != 0) {
             rz_sci_tx_ch(ch, (int)c);
         }
     } else {
-        uint16_t *q = (uint16_t *)p;
-        while ((c = *q++) != 0) {
+        while ((c = (int)*p++) != 0) {
             rz_sci_tx_ch(ch, (int)c);
         }
     }
@@ -594,6 +594,10 @@ void rz_sci_init_with_flow(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32
 
 void rz_sci_init(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow) {
     rz_sci_init_with_flow(ch, tx_pin, rx_pin, baud, bits, parity, stop, flow, PIN_END, PIN_END);
+}
+
+void rz_sci_init_default(uint32_t ch, uint32_t baud) {
+    rz_sci_init(ch, sci_tx_pins[ch], sci_rx_pins[ch], baud, 8, 0, 1, 0);
 }
 
 void rz_sci_deinit(uint32_t ch) {

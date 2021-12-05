@@ -199,4 +199,3 @@ void bootstrap(void) {
     rx_ethernet_enable(ETH_CH);
     rx_ethernet_MII_mode(ETH_CH);
 }
-

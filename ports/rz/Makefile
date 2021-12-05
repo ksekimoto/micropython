@@ -574,14 +574,13 @@ SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
 SRC_C += led.c
-#SRC_C += machine_adc.c
 SRC_C += machine_i2c.c
 SRC_C += machine_spi.c
 SRC_C += machine_timer.c
 SRC_C += machine_uart.c
 SRC_C += modmachine.c
 ifeq ($(MICROPY_PY_ESP8266),1)
-CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function
+CFLAGS += -DMICROPY_PY_ESP8266=1
 SRC_C += network_esp8266.c
 endif
 SRC_C += modpyb.c
@@ -694,7 +693,7 @@ endif
 ifeq ($(MICROPY_PY_ESP8266),1)
 ESP8266_DIR=drivers/esp8266
 INC += -I$(TOP)/$(ESP8266_DIR)/inc
-CFLAGS += -DMICROPY_PY_ESP8266=1 -Wno-unused-function -Wno-unused-variable
+CFLAGS += -DMICROPY_PY_ESP8266=1
 #SRC_MOD += modnwesp8266.c
 SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	esp8266_driver.c \
@@ -705,7 +704,6 @@ endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
-CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
 SRC_MOD += mbedtls/mbedtls_port.c
 # replace mbedtls' error.c by ours
 SRC_MOD := $(filter-out %/mbedtls/library/error.c, $(SRC_MOD))
@@ -714,7 +712,7 @@ endif
 
 ifeq ($(MICROPY_PY_BLUETOOTH),1)
 
-SRC_C += modbluetooth_hci.c
+SRC_C += mpbthciport.c
 
 ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
 ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
@@ -755,7 +753,6 @@ endif
 # object files
 #######################################################################
 
-OBJ =
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(LIBM_O)
@@ -764,7 +761,6 @@ OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
-
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_O))

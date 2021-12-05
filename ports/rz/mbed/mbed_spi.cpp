@@ -96,4 +96,3 @@ void mbed_spi_deinit(uint32_t ch, uint32_t cs) {
     spi_t *pspi = &MBED_SPI[ch];
     spi_free(pspi);
 }
-

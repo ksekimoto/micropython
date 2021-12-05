@@ -49,6 +49,8 @@
 // #define DEBUG_ETH_PACKET_WRITE
 #define DEBUG_ETH_FATAL_ERROR
 
+static uint32_t eth_ch = ETH_CH;
+
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
 #define IFNAME1 'n'
@@ -89,7 +91,7 @@ STATIC void eth_phy_write(uint32_t reg, uint32_t val) {
 
 STATIC uint32_t eth_phy_read(uint32_t reg) {
     uint32_t data;
-    phy_read(reg, &data);
+    phy_read(eth_ch, reg, &data);
     return data;
 }
 
@@ -111,9 +113,9 @@ STATIC int eth_mac_init(eth_t *self) {
     #endif
     // self->netif.mtu = 1500;
     // self->netif.flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP | NETIF_FLAG_ETHERNET;
-    rz_ether_init((uint8_t *)&self->netif.hwaddr);
-    rz_ether_input_set_callback((rz_ETHER_INPUT_CB)ethernetif_input_cb);
-    rz_ether_start();
+    rz_ether_init(eth_ch, (uint8_t *)&self->netif.hwaddr);
+    rz_ether_input_set_callback(eth_ch, (RZ_ETHER_INPUT_CB)ethernetif_input_cb);
+    rz_ether_start(eth_ch);
     return 0;
 }
 
@@ -121,7 +123,7 @@ STATIC void eth_mac_deinit(eth_t *self) {
     #if defined(DEBUG_ETH_FUNC_TRACE)
     printf("eth_mac_deinit\r\n");
     #endif
-    rz_ether_deinit();
+    rz_ether_deinit(eth_ch);
 }
 
 STATIC int eth_tx_buf_get(size_t len, uint8_t **buf) {
@@ -138,9 +140,7 @@ STATIC int eth_tx_buf_send(void) {
     le0.txcurrent->status |= (flag | ACT);
     le0.txcurrent = le0.txcurrent->next;
     le0.stat.tx_packets++;
-    if (EDMAC0.EDTRR.LONG == 0x00000000) {
-        EDMAC0.EDTRR.LONG = 0x00000001;
-    }
+    rz_ether_tx_req(eth_ch);
     return 0;
 }
 
@@ -191,7 +191,7 @@ STATIC err_t eth_netif_output(struct netif *netif, struct pbuf *p) {
         return ERR_BUF;
     } else {
         #if defined(DEBUG_ETH_PACKET_WRITE)
-        printf("ETX:%d\r\n", p->tot_len);
+        printf("ETX(%ld):%d(%d)\r\n", eth_ch, p->tot_len, p->tot_len);
         #endif
         return ERR_OK;
     }
@@ -207,19 +207,16 @@ STATIC err_t eth_netif_output(struct netif *netif, struct pbuf *p) {
  */
 static struct pbuf *low_level_input(struct netif *netif) {
     struct pbuf *p0 = NULL;
-    struct pbuf *p;
-    struct pbuf *q;
+    struct pbuf *p = NULL;
+    struct pbuf *q = NULL;
     bool flag = true;
-    int32_t recvd;
+    int32_t recvd = 0;
     int32_t readcount = 0;
     int32_t recvdsize = 0;
 
-    if ((EDMAC0.EESR.LONG & 0x00040000) != 0) {
-        EDMAC0.EESR.LONG |= 0x00040000;
-    }
-    uint32_t state = rz_disable_irq();
+    rz_ether_rx_frame(eth_ch);
+//     uint32_t state = rz_disable_irq();
     while (flag) {
-        // recvd = rz_ether_fifo_read(le0.rxcurrent, (int8_t *)&rz_buf);
         readcount++;
         if (readcount >= 2 && recvdsize == 0) {
             break;
@@ -228,16 +225,13 @@ static struct pbuf *low_level_input(struct netif *netif) {
             /* No descriptor to process */
         } else if ((le0.rxcurrent->status & FE) != 0) {
             /* Frame error.  Point to next frame.  Clear this descriptor. */
-            le0.stat.rz_errors++;
+            le0.stat.rx_errors++;
             recvdsize = 0;
             le0.rxcurrent->status &= ~(FP1 | FP0 | FE);
             le0.rxcurrent->status &= ~(RFOVER | RAD | RMAF | RRF | RTLF | RTSF | PRE | CERF);
             le0.rxcurrent->status |= ACT;
             le0.rxcurrent = le0.rxcurrent->next;
-            if (EDMAC0.EDRRR.LONG == 0x00000000L) {
-                /* Restart if stopped */
-                EDMAC0.EDRRR.LONG = 0x00000001L;
-            }
+            rz_ether_rx_req(eth_ch);
         } else {
             /* We have a good buffer. */
             if ((le0.rxcurrent->status & FP1) == FP1) {
@@ -246,8 +240,9 @@ static struct pbuf *low_level_input(struct netif *netif) {
             }
             if ((le0.rxcurrent->status & FP0) == FP0) {
                 /* Frame is complete */
-                le0.stat.rz_packets++;
+                le0.stat.rx_packets++;
                 flag = false;
+#if 1
                 /* This is the last descriptor.  Complete frame is received.   */
                 recvd = le0.rxcurrent->size;
                 while (recvd > ALIGNED_BUFSIZE) {
@@ -260,6 +255,7 @@ static struct pbuf *low_level_input(struct netif *netif) {
                  **/
                 recvd = ALIGNED_BUFSIZE;
             }
+#endif
             p = pbuf_alloc(PBUF_RAW, recvd, PBUF_RAM);
             if (p == NULL) {
                 #if defined(DEBUG_ETH_FATAL_ERROR)
@@ -280,16 +276,13 @@ static struct pbuf *low_level_input(struct netif *netif) {
             le0.rxcurrent->status &= ~(FP1 | FP0);
             le0.rxcurrent->status |= ACT;
             le0.rxcurrent = le0.rxcurrent->next;
-            if (EDMAC0.EDRRR.LONG == 0x00000000L) {
-                /* Restart if stopped */
-                EDMAC0.EDRRR.LONG = 0x00000001L;
-            }
+            rz_ether_rx_req(eth_ch);
         }
     }
-    rz_enable_irq(state);
+//     rz_enable_irq(state);
     #if defined(DEBUG_ETH_PACKET_READ)
     if (recvdsize > 0) {
-        printf("ERX:%ld\r\n", recvdsize);
+        printf("ERX(%ld):%ld\r\n", eth_ch, recvdsize);
     }
     #endif
     return p0;

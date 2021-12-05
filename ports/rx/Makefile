@@ -16,15 +16,13 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-USE_DBG_PRINT = 1
+USE_DBG_PRINT = 0
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1
 #MICROPY_DEBUG_PRINTERS = 1
 
 # Use developing usb library instead of stable one for testing
-#USE_NEW_USBLIB = 1
-
 # Use ramdisk instead of CPU internal flash for testing the related codes
 #TEST_RAMDISK = 1
 
@@ -489,7 +487,7 @@ SRC_C += gccollect.c
 SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
-# SRC_C += machine_bitstream.c
+SRC_C += led.c
 SRC_C += machine_i2c.c
 SRC_C += machine_spi.c
 SRC_C += machine_timer.c
@@ -503,13 +501,11 @@ SRC_C += modpyb.c
 SRC_C += modrx.c
 SRC_C += modrxreg.c
 SRC_C += moduos.c
-#SRC_C += modusocket.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpnetworkport.c
 SRC_C += mpthreadport.c
 SRC_C += network_lan.c
-SRC_C += led.c
 SRC_C += pendsv.c
 SRC_C += phy.c
 SRC_C += pin.c

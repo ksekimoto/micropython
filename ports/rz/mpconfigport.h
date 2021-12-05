@@ -282,15 +282,25 @@ extern void lv_deinit(void);
 #define UTIME_BUILTIN_MODULE
 #endif
 
-#if MICROPY_PY_USOCKET && MICROPY_PY_LWIP
+#if MICROPY_PY_USOCKET
+#if MICROPY_PY_LWIP && MICROPY_HW_ESP8266
 // usocket implementation provided by lwIP
 #define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_lwip) },
-#elif MICROPY_PY_USOCKET
+// usocket implementation provided by skeleton wrapper
+#define WSOCKET_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_uwsocket), MP_ROM_PTR(&mp_module_usocket) },
+#elif MICROPY_PY_LWIP && !MICROPY_HW_ESP8266
+// usocket implementation provided by lwIP
+#define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_lwip) },
+#define WSOCKET_BUILTIN_MODULE
+#elif !MICROPY_PY_LWIP
 // usocket implementation provided by skeleton wrapper
 #define SOCKET_BUILTIN_MODULE               { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_usocket) },
+#define WSOCKET_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_uwsocket), MP_ROM_PTR(&mp_module_usocket) }
 #else
 // no usocket module
 #define SOCKET_BUILTIN_MODULE
+#define WSOCKET_BUILTIN_MODULE
+#endif
 #endif
 
 #if MICROPY_PY_NETWORK
@@ -363,6 +373,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
     UOS_BUILTIN_MODULE \
     UTIME_BUILTIN_MODULE \
     SOCKET_BUILTIN_MODULE \
+    WSOCKET_BUILTIN_MODULE \
     NETWORK_BUILTIN_MODULE \
     ONEWIRE_BUILTIN_MODULE \
     MICROPY_PORT_LVGL_DEF \

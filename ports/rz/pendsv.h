@@ -26,8 +26,6 @@
 #ifndef MICROPY_INCLUDED_RZ_PENDSV_H
 #define MICROPY_INCLUDED_RZ_PENDSV_H
 
-// #define PENDSV_ENABLE
-
 #include "boardctrl.h"
 
 enum {

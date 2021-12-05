@@ -43,7 +43,6 @@ struct netif;
 void mod_network_lwip_poll_wrapper(uint32_t ticks_ms);
 mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_obj_t *args);
 
-#if MICROPY_HW_ESP8266
 struct _mod_network_socket_obj_t;
 
 typedef struct _mod_network_nic_type_t {
@@ -87,7 +86,7 @@ typedef struct _mod_network_socket_obj_t {
     mp_uint_t handle;
     #endif
 } mod_network_socket_obj_t;
-#endif
+
 #else
 
 struct _mod_network_socket_obj_t;

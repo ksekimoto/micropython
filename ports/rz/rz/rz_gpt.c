@@ -262,4 +262,3 @@ void rz_gpt_pin_pulsewidth_sec(uint32_t pin, float seconds) {
 void rz_gpt_pin_pulsewidth_ms(uint32_t pin, int ms) {
     rz_gpt_pin_pulsewidth_us(pin, ms * 1000);
 }
-

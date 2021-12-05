@@ -78,7 +78,7 @@
 #include "r_ether_rza2_if.h"
 #endif
 
-#if MICROPY_HW_ETH_RZ && MICROPY_PY_LWIP
+#if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 #define ETH_NUM 2
 

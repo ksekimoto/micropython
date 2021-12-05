@@ -59,4 +59,3 @@ void rz_init(void) {
     // usb_init();
     // internal_flash_init();
 }
-
