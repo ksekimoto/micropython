@@ -1,0 +1,1 @@
+# need to convert private key in DER formatopenssl rsa -in xxxxxx-private.pem.key -outform der -out xxxxxx-private.txtwriting RSA key

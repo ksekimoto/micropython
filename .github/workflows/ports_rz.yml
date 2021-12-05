@@ -1,0 +1,26 @@
+name: rz port
+
+on:
+  push:
+  pull_request:
+    paths:
+      - '.github/workflows/*.yml'
+      - 'tools/**'
+      - 'py/**'
+      - 'extmod/**'
+      - 'lib/**'
+      - 'drivers/**'
+      - 'ports/rz/**'
+
+jobs:
+  build_gr_mango:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install packages
+      run: source tools/ci.sh && ci_rz_setup
+    - name: Build mpy-cross
+      run: source tools/ci.sh && ci_rz_mpy_cross_build
+    - name: Build
+      run: source tools/ci.sh && ci_rz_gr_mango_build
+

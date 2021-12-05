@@ -1,0 +1,1 @@
+# need to convert certificate in DER formatopenssl x509 -in xxxxxx-certificate.pem.crt -outform der -out xxxxxx-certificate.txt
