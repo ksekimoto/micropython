@@ -1,5 +1,7 @@
 #!/bin/bash
 set -eu -o pipefail
+git submodule update --init --recursive ../../lib/mbedtls
+git submodule update --init --recursive ../../lib/lwip
 export BOARD="GR_ROSE"
 DT=`date +%Y%m%d%H%M`
 make V=1 DEBUG=1 BOARD=${BOARD} clean 2>&1 | tee ${BOARD}_build_${DT}.log

@@ -1,8 +1,20 @@
 #!/bin/bash
 set -eu -o pipefail
-make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD clean 2>&1 | tee GR_CITRUS_DD_build.log
-make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_CITRUS_DD 2>&1 | tee GR_CITRUS_DD_build.log
-make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD clean 2>&1 | tee GR_ROSE_DD_build.log
-make V=1 DEBUG=1 MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_ROSE_DD 2>&1 | tee GR_ROSE_DD_build.log
-make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD clean 2>&1 | tee GR_SAKURA_DD_build.log
-make V=1 DEBUG=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 BOARD=GR_SAKURA_DD 2>&1 | tee GR_SAKURA_DD_build.log
+git submodule update --init --recursive ../../lib/mbedtls
+git submodule update --init --recursive ../../lib/lwip
+
+# GR-CITRUS
+export BOARD="GR_CITRUS_DD"
+DT=`date +%Y%m%d%H%M`
+make V=1 DEBUG=1 BOARD=${BOARD} clean 2>&1 | tee ${BOARD}_build_${DT}.log
+make V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 2>&1 | tee -a ${BOARD}_build_${DT}.log
+# GR-ROSE
+export BOARD="GR_ROSE_DD"
+DT=`date +%Y%m%d%H%M`
+make V=1 DEBUG=1 BOARD=${BOARD} clean 2>&1 | tee ${BOARD}_build_${DT}.log
+make V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1 2>&1 | tee -a ${BOARD}_build_${DT}.log
+# GR-SAKURA
+export BOARD="GR_SAKURA_DD"
+DT=`date +%Y%m%d%H%M`
+make V=1 DEBUG=1 BOARD=${BOARD} clean 2>&1 | tee ${BOARD}_build_${DT}.log
+make V=1 DEBUG=1 BOARD=${BOARD} MICROPY_PY_LWIP=1 2>&1 | tee -a ${BOARD}_build_${DT}.log

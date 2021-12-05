@@ -1,5 +1,12 @@
 #!/bin/bash
 set -eu -o pipefail
+git submodule update --init --recursive ../../lib/mbedtls
+git submodule update --init --recursive ../../lib/lwip
+git submodule update --init --recursive ../../lib/lv_bindings
+DT=`date +%Y%m%d%H%M`
+mv ../../lib/lv_bindings/lv_conf.h ../../lib/lv_bindings/lv_conf_org_${DT}.h
+cp -f ./lvgl/lv_conf.h ../../lib/lv_bindings/lv_conf.h
+cp -f ./lvgl/mp_lodepng.c ../../lib/lv_bindings/driver/png/mp_lodepng.c
 export BOARD="GR_ROSE_LV"
 DT=`date +%Y%m%d%H%M`
 make V=1 DEBUG=1 BOARD=${BOARD} clean 2>&1 | tee ${BOARD}_build_${DT}.log
