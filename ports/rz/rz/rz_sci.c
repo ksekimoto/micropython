@@ -683,4 +683,3 @@ void sci_isr_te3(void) {
 void sci_isr_te4(void) {
     rz_sci_isr_te(4);
 }
-

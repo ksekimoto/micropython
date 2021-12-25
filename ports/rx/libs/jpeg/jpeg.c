@@ -1,56 +1,63 @@
 /*
- * This file is part of the MicroPython project, http://micropython.org/
+ * Copyright (c) 2020, Kentaro Sekimoto
+ * All rights reserved.
  *
- * The MIT License (MIT)
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * Copyright (c) 2018 Kentaro Sekimoto
+ *  -Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *  -Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
  *
- * Permission is hereby granted, m_free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Porting from the following repositories.
+ * https://github.com/richgel999/picojpeg.git
+ * https://github.com/MakotoKurauchi/JPEGDecoder.git
  */
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
-#include "py/runtime.h"
-#include "py/mphal.h"
-#include "common.h"
-#include "extmod/vfs.h"
-#include "extmod/vfs_fat.h"
-#include "ff.h"
 
+// #include "common.h"
+#include "jpeg_src.h"
 #include "jpeg.h"
 #include "picojpeg.h"
+#include "jpeg_debug.h"
 
-#if MICROPY_PY_PYB_LCDSPI
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 
 #if defined(USE_DBG_PRINT)
 #define DEBUG_JPEG
 #endif
 
-static FIL g_pInFile;
-static uint32_t g_nInFileSize;
-static uint32_t g_nInFileOfs;
+jpeg_src_t *g_jpeg_src;
 
 void jpeg_init(jpeg_t *jpeg) {
-    g_nInFileSize = 0;
-    g_nInFileOfs = 0;
     jpeg->err = 0;
-    jpeg->is_available = 0;
+    jpeg->is_available = false;
     jpeg->mcu_x = 0;
     jpeg->mcu_y = 0;
     jpeg->row_pitch = 0;
@@ -58,85 +65,40 @@ void jpeg_init(jpeg_t *jpeg) {
     jpeg->decoded_height = 0;
     jpeg->row_blocks_per_mcu = 0;
     jpeg->col_blocks_per_mcu = 0;
-    jpeg->m_split = 1;
+    jpeg->reduce = true;
     jpeg->pImage = (uint8_t *)NULL;
     jpeg->comps = 0;
     jpeg->MCUSPerRow = 0;
     jpeg->MCUSPerCol = 0;
     jpeg->MCUx = 0;
     jpeg->MCUy = 0;
-    jpeg->scanType = PJPG_GRAYSCALE;
 }
 
 void jpeg_deinit(jpeg_t *jpeg) {
-    f_close(&g_pInFile);
-    #if defined(DEBUG_JPEG)
-    debug_printf("File closed");
-    #endif
+    jpeg_src_close(g_jpeg_src);
     if (jpeg->pImage != (uint8_t *)NULL) {
         m_free(jpeg->pImage);
         jpeg->pImage = (uint8_t *)NULL;
         #if defined(DEBUG_JPEG)
-        debug_printf("pImage deallocated");
+        debug_printf("pImage deallocated\r\n");
         #endif
     }
-}
-
-inline int width(jpeg_t *jpeg) {
-    return (int)jpeg->image_info.m_width;
-}
-inline int height(jpeg_t *jpeg) {
-    return (int)jpeg->image_info.m_height;
-}
-inline int MCUWidth(jpeg_t *jpeg) {
-    return (int)jpeg->image_info.m_MCUWidth;
-}
-inline int MCUHeight(jpeg_t *jpeg) {
-    return (int)jpeg->image_info.m_MCUHeight;
 }
 
 unsigned char pjpeg_need_bytes_callback(unsigned char *pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data) {
-    int n;
     uint32_t readed;
-    n = (int)min(g_nInFileSize - g_nInFileOfs, buf_size);
-    #if defined(DEBUG_JPEG)
-    debug_printf("FileSize:%d\r\n", g_nInFileSize);
-    debug_printf("FileOfs:%d\r\n", g_nInFileOfs);
-    #endif
-    f_read(&g_pInFile, (void *)pBuf, (UINT)n, (UINT *)&readed);
-    *pBytes_actually_read = (unsigned char)(n);
-    g_nInFileOfs += n;
+    jpeg_src_read(g_jpeg_src, (void *)pBuf, (uint32_t)buf_size, (uint32_t *)&readed);
+    *pBytes_actually_read = (unsigned char)readed;
     return 0;
 }
 
-int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
-    FRESULT res;
-    fs_user_mount_t *vfs_fat;
-    const char *p_out;
-    jpeg->m_split = split;
-
-    mp_vfs_mount_t *vfs = mp_vfs_lookup_path(filename, &p_out);
-    if (vfs != MP_VFS_NONE && vfs != MP_VFS_ROOT) {
-        vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
-    } else {
-        #if defined(DEBUG_JPEG)
-        debug_printf("Cannot find user mount for %s\r\n", filename);
-        #endif
-        return -1;
+bool jpeg_decode(jpeg_t *jpeg, bool reduce) {
+    jpeg->reduce = reduce;
+    int ret = jpeg_src_open(g_jpeg_src);
+    if (ret < 0) {
+        return false;
     }
-    res = f_open(&vfs_fat->fatfs, &g_pInFile, filename, FA_READ);
-    if (res != FR_OK) {
-        #if defined(DEBUG_JPEG)
-        debug_printf("File can't be opened %s\r\n", filename);
-        #endif
-        return -1;
-    }
-    g_nInFileOfs = 0;
-    g_nInFileSize = f_size(&g_pInFile);
-    #if defined(DEBUG_JPEG)
-    debug_printf("FileSize:%d\r\n", g_nInFileSize);
-    #endif
-    jpeg->err = (int)pjpeg_decode_init(&jpeg->image_info, (pjpeg_need_bytes_callback_t)pjpeg_need_bytes_callback, (void *)NULL, jpeg->m_split);
+    jpeg->err = (uint32_t)pjpeg_decode_init(&jpeg->image_info, (pjpeg_need_bytes_callback_t)pjpeg_need_bytes_callback, (void *)NULL, (unsigned char)jpeg->reduce);
     if (jpeg->err != 0) {
         #if defined(DEBUG_JPEG)
         debug_printf("pjpeg_decode_init() NG %d\r\n", (int)jpeg->err);
@@ -146,25 +108,21 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
             debug_printf("Progressive JPEG not supported.%d\r\n", (int)jpeg->err);
             #endif
         }
-        f_close(&g_pInFile);
-        #if defined(DEBUG_JPEG)
-        debug_printf("File closed %s\r\n", filename);
-        #endif
-        return -1;
+        jpeg_src_close(g_jpeg_src);
+        return false;
     }
-    int MCUWidth = jpeg->image_info.m_MCUWidth;
-    int MCUHeight = jpeg->image_info.m_MCUHeight;
-    int width = jpeg->image_info.m_width;
-    int height = jpeg->image_info.m_height;
+    uint16_t MCUWidth = (uint16_t)jpeg->image_info.m_MCUWidth;
+    uint16_t MCUHeight = (uint16_t)jpeg->image_info.m_MCUHeight;
+    uint16_t width = (uint16_t)jpeg->image_info.m_width;
+    uint16_t height = (uint16_t)jpeg->image_info.m_height;
     jpeg->decoded_width =
-        jpeg->m_split ? (jpeg->image_info.m_MCUSPerRow * MCUWidth) / 8 : width;
+        jpeg->reduce ? (jpeg->image_info.m_MCUSPerRow * MCUWidth) / 8 : width;
     jpeg->decoded_height =
-        jpeg->m_split ? (jpeg->image_info.m_MCUSPerCol * MCUHeight) / 8 : height;
+        jpeg->reduce ? (jpeg->image_info.m_MCUSPerCol * MCUHeight) / 8 : height;
     jpeg->comps = jpeg->image_info.m_comps;
-    jpeg->row_pitch = MCUWidth * jpeg->image_info.m_comps;
-    jpeg->MCUSPerRow = jpeg->image_info.m_MCUSPerRow;
-    jpeg->MCUSPerCol = jpeg->image_info.m_MCUSPerCol;
-    jpeg->scanType = jpeg->image_info.m_scanType;
+    jpeg->row_pitch = (uint16_t)MCUWidth * jpeg->image_info.m_comps;
+    jpeg->MCUSPerRow = (uint16_t)jpeg->image_info.m_MCUSPerRow;
+    jpeg->MCUSPerCol = (uint16_t)jpeg->image_info.m_MCUSPerCol;
     #if defined(DEBUG_JPEG)
     debug_printf("decoded_width: %d\r\n", jpeg->decoded_width);
     debug_printf("decoded_height: %d\r\n", jpeg->decoded_height);
@@ -174,19 +132,15 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
     debug_printf("row_pitch: %d\r\n", jpeg->row_pitch);
     debug_printf("MCUSPerRow: %d\r\n", jpeg->MCUSPerRow);
     debug_printf("MCUSPerCol: %d \r\n", jpeg->MCUSPerCol);
-    debug_printf("scanType: %d\r\n", jpeg->image_info.m_scanType);
     #endif
-    int ImageSize = MCUWidth * MCUHeight * jpeg->image_info.m_comps;
-    jpeg->pImage = (uint8_t *)m_malloc(ImageSize);
+    uint32_t ImageSize = (uint32_t)(MCUWidth * MCUHeight * jpeg->image_info.m_comps);
+    jpeg->pImage = (uint8_t *)m_malloc((size_t)ImageSize);
     if (!jpeg->pImage) {
         #if defined(DEBUG_JPEG)
         debug_printf("Memory allocation failed.\r\n");
         #endif
-        f_close(&g_pInFile);
-        #if defined(DEBUG_JPEG)
-        debug_printf("File closed %s\r\n", filename);
-        #endif
-        return -1;
+        jpeg_src_close(g_jpeg_src);
+        return false;
     } else {
         #if defined(DEBUG_JPEG)
         debug_printf("pImage allocated:%d\r\n", ImageSize);
@@ -195,17 +149,17 @@ int jpeg_decode(jpeg_t *jpeg, char *filename, int split) {
     memset(jpeg->pImage, 0, ImageSize);
     jpeg->row_blocks_per_mcu = MCUWidth >> 3;
     jpeg->col_blocks_per_mcu = MCUHeight >> 3;
-    jpeg->is_available = 1;
+    jpeg->is_available = true;
     return jpeg_decode_mcu(jpeg);
 }
 
-int jpeg_decode_mcu(jpeg_t *jpeg) {
+bool jpeg_decode_mcu(jpeg_t *jpeg) {
     jpeg->err = pjpeg_decode_mcu();
     if (jpeg->err != 0) {
-        jpeg->is_available = 0;
-        f_close(&g_pInFile);
+        jpeg->is_available = false;
+        jpeg_src_close(g_jpeg_src);
         #if defined(DEBUG_JPEG)
-        debug_printf("File closed\r\n", 0);
+        debug_printf("File closed\r\n");
         #endif
         if (jpeg->err != PJPG_NO_MORE_BLOCKS) {
             #if defined(DEBUG_JPEG)
@@ -218,24 +172,21 @@ int jpeg_decode_mcu(jpeg_t *jpeg) {
                 debug_printf("pImage deallocated\r\n");
                 #endif
             }
-            return -1;
+            return false;
         }
     }
-    return 1;
+    return true;
 }
 
-int jpeg_read(jpeg_t *jpeg) {
-    int y, x;
+bool jpeg_read(jpeg_t *jpeg) {
+    uint16_t y, x;
     uint8_t *pDst_row;
 
-    if (jpeg->is_available == 0) {
-        return 0;
+    if (!jpeg->is_available) {
+        return false;
     }
-    if (jpeg->mcu_y >= jpeg->image_info.m_MCUSPerCol) {
-        f_close(&g_pInFile);
-        #if defined(DEBUG_JPEG)
-        debug_printf("File closed\r\n");
-        #endif
+    if (jpeg->mcu_y >= (uint32_t)jpeg->image_info.m_MCUSPerCol) {
+        jpeg_src_close(g_jpeg_src);
         if (jpeg->pImage != (uint8_t *)NULL) {
             m_free(jpeg->pImage);
             jpeg->pImage = (uint8_t *)NULL;
@@ -243,9 +194,9 @@ int jpeg_read(jpeg_t *jpeg) {
             debug_printf("pImage deallocated\r\n");
             #endif
         }
-        return 0;
+        return false;
     }
-    if (jpeg->m_split) {
+    if (jpeg->reduce) {
         pDst_row = jpeg->pImage;
         #if defined(DEBUG_JPEG)
         debug_printf("col_blocks: %d\r\n", jpeg->col_blocks_per_mcu);
@@ -256,9 +207,8 @@ int jpeg_read(jpeg_t *jpeg) {
         if (jpeg->image_info.m_scanType == PJPG_GRAYSCALE) {
             *pDst_row = jpeg->image_info.m_pMCUBufR[0];
         } else {
-            uint32_t y, x;
             for (y = 0; y < jpeg->col_blocks_per_mcu; y++) {
-                uint32_t src_ofs = (y * 128U);
+                uint16_t src_ofs = (y * 128U);
                 for (x = 0; x < jpeg->row_blocks_per_mcu; x++) {
                     pDst_row[0] = jpeg->image_info.m_pMCUBufR[src_ofs];
                     pDst_row[1] = jpeg->image_info.m_pMCUBufG[src_ofs];
@@ -266,7 +216,7 @@ int jpeg_read(jpeg_t *jpeg) {
                     pDst_row += 3;
                     src_ofs += 64;
                 }
-                pDst_row += (jpeg->row_pitch - 3 * jpeg->row_blocks_per_mcu);
+                pDst_row += (uint32_t)(jpeg->row_pitch - 3 * jpeg->row_blocks_per_mcu);
                 #if defined(DEBUG_JPEG)
                 debug_printf("pDst_row ofs: %d\r\n", (int)(pDst_row - jpeg->pImage));
                 debug_printf("(row_pitch - 3 * row_blocks_per_mcu): %d\r\n", (int)(jpeg->row_pitch - 3 * jpeg->row_blocks_per_mcu));
@@ -274,10 +224,10 @@ int jpeg_read(jpeg_t *jpeg) {
             }
         }
     } else {
-        int MCUWidth = jpeg->image_info.m_MCUWidth;
-        int MCUHeight = jpeg->image_info.m_MCUHeight;
-        int width = jpeg->image_info.m_width;
-        int height = jpeg->image_info.m_height;
+        uint16_t MCUWidth = jpeg->image_info.m_MCUWidth;
+        uint16_t MCUHeight = jpeg->image_info.m_MCUHeight;
+        uint16_t width = jpeg->image_info.m_width;
+        uint16_t height = jpeg->image_info.m_height;
 
         pDst_row = jpeg->pImage;
         for (y = 0; y < MCUHeight; y += 8) {
@@ -323,13 +273,12 @@ int jpeg_read(jpeg_t *jpeg) {
     jpeg->MCUx = jpeg->mcu_x;
     jpeg->MCUy = jpeg->mcu_y;
     jpeg->mcu_x++;
-    if (jpeg->mcu_x == jpeg->image_info.m_MCUSPerRow) {
+    if (jpeg->mcu_x == (uint32_t)jpeg->image_info.m_MCUSPerRow) {
         jpeg->mcu_x = 0;
         jpeg->mcu_y++;
     }
-    if (jpeg_decode_mcu(jpeg) == -1) {
-        jpeg->is_available = 0;
+    if (!jpeg_decode_mcu(jpeg)) {
+        jpeg->is_available = false;
     }
-    return 1;
+    return true;
 }
-#endif

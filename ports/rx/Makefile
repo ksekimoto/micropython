@@ -128,10 +128,12 @@ ifeq ($(MICROPY_PY_ESP8266),1)
 INC += -I$(TOP)/drivers/esp8266/inc
 endif
 ifeq ($(USE_FONT), 1)
-INC += -Ifont
+INC += -Ilibs/font
 endif
 ifeq ($(USE_LCDSPI), 1)
-INC += -Ilcdspi
+INC += -Ilibs/lcdspi
+INC += -Ilibs/jpeg
+INC += -Ilibs/xpt2046
 endif
 INC += -Isd
 ifeq ($(USE_DBG_PRINT) ,1)
@@ -587,12 +589,18 @@ SRC_C += debug/debug_printf.c
 SRC_C += debug/vsnprintf.c
 SRC_C += debug/division.c
 ifeq ($(USE_FONT), 1)
-SRC_C += font/font.c
+SRC_C += libs/font/font.c
+SRC_C += libs/rx_font.c
 endif
 ifeq ($(USE_LCDSPI), 1)
-SRC_C += lcdspi/lcdspi.c
-SRC_C += lcdspi/jpeg.c
-SRC_C += lcdspi/picojpeg.c
+SRC_C += libs/lcdspi/lcdspi_file.c
+SRC_C += libs/lcdspi/lcdspi_info.c
+SRC_C += libs/lcdspi/lcdspi.c
+SRC_C += libs/jpeg/jpeg_disp.c
+SRC_C += libs/jpeg/jpeg_src.c
+SRC_C += libs/jpeg/jpeg.c
+SRC_C += libs/jpeg/picojpeg.c
+SRC_C += libs/rx_lcdspi.c
 endif
 
 SRC_C += sd/sd.c

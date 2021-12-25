@@ -1,55 +1,37 @@
 /*
- * This file is part of the MicroPython project, http://micropython.org/
+ * Copyright (c) 2020, Kentaro Sekimoto
+ * All rights reserved.
  *
- * The MIT License (MIT)
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * Copyright (c) 2018 Kentaro Sekimoto
+ *  -Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ *  -Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
-#include "common.h"
-
-#if MICROPY_PY_PYB_FONT
-
-#define MISAKIFONT4X8   1
-#define MISAKIFONT6X12  2
-#if MICROPY_PY_PYB_UNICODE_FONT
-#define MISAKIFONT8X8   3
-#define MISAKIFONT12X12 4
-#endif
-
 #include "font.h"
 
 #if defined(USE_DBG_PRINT)
 #define DEBUG_LCDSPI
-#endif
-
-// #define   DEBUG       // Define if you want to debug
-#ifdef DEBUG
-#define debug_printf(m,v)    { Serial.print("** "); Serial.print((m)); Serial.print(":"); Serial.println((v)); }
-#else
-#define debug_printf(m,v)      // do nothing
 #endif
 
 #ifdef MISAKIFONT4X8
@@ -84,7 +66,7 @@ static const ASCII_FONT_TBL _misaki_font6x12_Tbl = {
 
 static const FONT_TBL misaki_font6x12_tbl = {
     FONT_ASCII,
-    6, /* UnitX */
+    6,  /* UnitX */
     12, /* UnitY */
     (char *)"MisakiFont6x12",
     (ASCII_FONT_TBL *)&_misaki_font6x12_Tbl,
@@ -128,7 +110,7 @@ static const UNICODE_FONT_TBL _misaki_font12x12_Tbl = {
 
 static const FONT_TBL misaki_font12x12_tbl = {
     FONT_UNICODE,
-    6, /* UnitX */
+    6,  /* UnitX */
     12, /* UnitY */
     (char *)"MisakiFont12x12",
     (ASCII_FONT_TBL *)&_misaki_font6x12_Tbl,
@@ -167,7 +149,10 @@ static const FONT_TBL *fontTblList[] = {
 font_t MisakiFont4x8 = {
     "MisakiFont4x8",
     FONT_ASCII,
-    4, 8, 4, 8,
+    4,
+    8,
+    4,
+    8,
     (FONT_TBL *)&misaki_font4x8_tbl,
 };
 #endif
@@ -175,7 +160,10 @@ font_t MisakiFont4x8 = {
 font_t MisakiFont6x12 = {
     "MisakiFont6x12",
     FONT_ASCII,
-    6, 12, 6, 12,
+    6,
+    12,
+    6,
+    12,
     (FONT_TBL *)&misaki_font6x12_tbl,
 };
 #endif
@@ -183,7 +171,10 @@ font_t MisakiFont6x12 = {
 font_t MisakiFont8x8 = {
     "MisakiFont8x8",
     FONT_UNICODE,
-    8, 8, 8, 8,
+    8,
+    8,
+    8,
+    8,
     (FONT_TBL *)&misaki_font8x8_tbl,
 };
 #endif
@@ -191,7 +182,10 @@ font_t MisakiFont8x8 = {
 font_t MisakiFont12x12 = {
     "MisakiFont12x12",
     FONT_UNICODE,
-    12, 12, 12, 12,
+    12,
+    12,
+    12,
+    12,
     (FONT_TBL *)&misaki_font12x12_tbl,
 };
 #endif
@@ -211,31 +205,32 @@ font_t *fontList[] = {
     #endif
 };
 
+#if 0
 typedef struct _pyb_font_obj_t {
-    mp_obj_base_t base;
-    mp_uint_t font_id;
+    uint32_t font_id;
     const font_t *font;
 } pyb_font_obj_t;
 
-STATIC const pyb_font_obj_t pyb_font_obj[] = {
+static const pyb_font_obj_t pyb_font_obj[] = {
     #ifdef MISAKIFONT4X8
-    {{&pyb_font_type}, MISAKIFONT4X8, (const font_t *)&MisakiFont4x8},
+    { MISAKIFONT4X8, (const font_t *)&MisakiFont4x8 },
     #endif
     #ifdef MISAKIFONT8X8
-    {{&pyb_font_type}, MISAKIFONT8X8, (const font_t *)&MisakiFont8x8},
+    { MISAKIFONT8X8, (const font_t *)&MisakiFont8x8 },
     #endif
     #ifdef MISAKIFONT6X12
-    {{&pyb_font_type}, MISAKIFONT6X12, (const font_t *)&MisakiFont6x12},
+    { MISAKIFONT6X12, (const font_t *)&MisakiFont6x12 },
     #endif
     #ifdef MISAKIFONT12X12
-    {{&pyb_font_type}, MISAKIFONT12X12, (const font_t *)&MisakiFont12x12},
+    { MISAKIFONT12X12, (const font_t *)&MisakiFont12x12 },
     #endif
 };
-#define NUM_FONTS   MP_ARRAY_SIZE(pyb_font_obj)
+#define NUM_FONTS (sizeof(pyb_font_obj) / sizeof(pyb_font_obj_t))
 
 void font_init(font_t *font, FONT_TBL *font_tbl) {
     font->_font_tbl = font_tbl;
 }
+#endif
 
 void font_deinit() {
 }
@@ -285,6 +280,9 @@ int font_fontBytes(font_t *font, int c) {
  */
 unsigned char *font_fontData(font_t *font, int idx) {
     unsigned char *p;
+    if (font->_font_tbl->font_type == FONT_ASCII) {
+        idx &= 0xff;
+    }
     if (idx < 0x100) {
         idx &= 0xff;
         #if defined(DEBUG_LCDSPI)
@@ -304,10 +302,11 @@ unsigned char *font_fontData(font_t *font, int idx) {
         unsigned char mask = (unsigned char)(1 << (idx & 7));
         unsigned char *font_map = font->_font_tbl->unicode_font_tbl->CUniFontMap;
         unsigned short *font_idx = font->_font_tbl->unicode_font_tbl->CUniFontIdx;
-        if (font_map[(tblH * CUNIFONT_TBL_SIZE) / 8 + tblL / 8] & mask) {
+        int off = (tblH * CUNIFONT_TBL_SIZE) / 8 + tblL / 8;
+        if (font_map[off] & mask) {
             fidx = font_idx[tblH];
             for (i = 0; i < tblL; i++) {
-                mask = (1 << (i & 7));
+                mask = (uint8_t)(1 << (i & 7));
                 if (font_map[(tblH * CUNIFONT_TBL_SIZE) / 8 + (i / 8)] & mask) {
                     fidx++;
                 }
@@ -327,12 +326,10 @@ unsigned char *font_fontData(font_t *font, int idx) {
     }
 }
 
-#if 0
-// ToDo: implement python method for cnv_u8_to_u16
 /*
  * convert utf8 string to unicode string
  */
-static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int dsize, int *dlen) {
+void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int dsize, int *dlen) {
     int len;
     int idst = 0;
     unsigned char c;
@@ -367,7 +364,9 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
             src++;
             slen--;
         }
-        debug_printf("unicode",u)
+        #if defined(DEBUG_LCDSPI)
+        debug_printf("unicode: %x\r\n", u);
+        #endif
         if ((0x10000 <= u) && (u <= 0x10FFFF)) {
             if (udst != NULL) {
                 udst[idst] = (unsigned short)(0xD800 | (((u & 0x1FFC00) >> 10) - 0x40));
@@ -376,20 +375,21 @@ static void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int 
             idst += 2;
         } else {
             if (udst != NULL) {
-                udst[idst] = u;
+                udst[idst] = (uint16_t)u;
             }
             idst++;
         }
     }
-    debug_printf("len", idst)
-    * dlen = idst;
+    #if defined(DEBUG_LCDSPI)
+    debug_printf("len: %d\r\n", idst);
+    #endif
+    *dlen = idst;
 }
-#endif
 
 int get_font_by_name(char *name) {
     int idx = 0;
     FONT_TBL *p = (FONT_TBL *)fontTblList;
-    while (p != NULL) {
+    while ((p != NULL) && (p->font_name != NULL)) {
         if (strcmp(p->font_name, name) == 0) {
             return idx;
         }
@@ -397,102 +397,3 @@ int get_font_by_name(char *name) {
     }
     return -1;
 }
-
-bool find_font_id(int font_id) {
-    bool find = false;
-    for (int i = 0; i < NUM_FONTS; i++) {
-        if (pyb_font_obj[i].font_id == font_id) {
-            find = true;
-            break;
-        }
-    }
-    return find;
-}
-
-font_t *get_font_by_id(int font_id) {
-    font_t *font = 0;
-    for (int i = 0; i < NUM_FONTS; i++) {
-        if (pyb_font_obj[i].font_id == font_id) {
-            font = (font_t *)pyb_font_obj[i].font;
-            break;
-        }
-    }
-    return font;
-}
-
-/******************************************************************************/
-/* MicroPython bindings                                                       */
-
-void font_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "FONT(%u):%s", self->font_id, self->font->fontName);
-}
-
-STATIC mp_obj_t pyb_font_name(mp_obj_t self_in) {
-    pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    char *font_name = self->font->fontName;
-    return mp_obj_new_str((const char *)font_name, strlen(font_name));
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_font_name_obj, pyb_font_name);
-
-STATIC mp_obj_t pyb_font_width(mp_obj_t self_in) {
-    pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int font_width = self->font->fontWidth;
-    return mp_obj_new_int(font_width);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_font_width_obj, pyb_font_width);
-
-STATIC mp_obj_t pyb_font_height(mp_obj_t self_in) {
-    pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int font_height = self->font->fontHeight;
-    return mp_obj_new_int(font_height);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_font_height_obj, pyb_font_height);
-
-STATIC mp_obj_t pyb_font_data(mp_obj_t self_in, mp_obj_t idx) {
-    pyb_font_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int font_idx = mp_obj_get_int(idx);
-    int font_bytes = font_fontBytes((font_t *)self->font, font_idx);
-    unsigned char *font_data = font_fontData((font_t *)self->font, font_idx);
-    return mp_obj_new_bytearray_by_ref((size_t)font_bytes, (void *)font_data);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_font_data_obj, pyb_font_data);
-
-/// \classmethod \constructor(id)
-/// Create an FONT object
-///
-STATIC mp_obj_t font_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // check arguments
-    mp_arg_check_num(n_args, n_kw, 1, 1, false);
-    mp_int_t font_id = mp_obj_get_int(args[0]);
-    // check font number
-    if (!find_font_id(font_id)) {
-        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("FONT(%d) doesn't exist"), font_id);
-    }
-    // return static font object
-    return MP_OBJ_FROM_PTR(&pyb_font_obj[font_id]);
-}
-
-STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pyb_font_name_obj) },
-    { MP_ROM_QSTR(MP_QSTR_width), MP_ROM_PTR(&pyb_font_width_obj) },
-    { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&pyb_font_height_obj) },
-    { MP_ROM_QSTR(MP_QSTR_MISAKIA_8), MP_ROM_INT(MISAKIFONT4X8) },
-    { MP_ROM_QSTR(MP_QSTR_MISAKIA_12), MP_ROM_INT(MISAKIFONT6X12) },
-    #if MICROPY_PY_PYB_UNICODE_FONT
-    { MP_ROM_QSTR(MP_QSTR_MISAKIU_8), MP_ROM_INT(MISAKIFONT8X8) },
-    { MP_ROM_QSTR(MP_QSTR_MISAKIU_12), MP_ROM_INT(MISAKIFONT12X12) },
-    #endif
-};
-
-STATIC MP_DEFINE_CONST_DICT(font_locals_dict, font_locals_dict_table);
-
-const mp_obj_type_t pyb_font_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_FONT,
-    .print = font_obj_print,
-    .make_new = font_obj_make_new,
-    .locals_dict = (mp_obj_dict_t *)&font_locals_dict,
-};
-
-#endif

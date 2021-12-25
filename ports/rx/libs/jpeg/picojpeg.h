@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+// clang-format off
 // Error codes
 enum
 {
@@ -122,8 +123,9 @@ unsigned char pjpeg_decode_init(pjpeg_image_info_t *pInfo, pjpeg_need_bytes_call
 // Not thread safe.
 unsigned char pjpeg_decode_mcu(void);
 
+// clang-format on
 #ifdef __cplusplus
 }
 #endif
 
-#endif // PICOJPEG_H
+#endif  // PICOJPEG_H

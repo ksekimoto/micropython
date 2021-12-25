@@ -1,5 +1,5 @@
 ifeq ($(LVGL_ENABLE),1)
-LIB_LVGL = libs/liblvgl.a
+LIB_LVGL = build_libs/liblvgl.a
 
 #LittlevGL
 LVGL_BINDING_DIR = $(TOP)/lib/lv_bindings
@@ -59,7 +59,7 @@ AR_LVGL_FLAGS = rcs
 
 $(LIB_LVGL): $(OBJ_LVGL)
 	$(ECHO) "LIB $@"
-	$(MKDIR) -p libs
+	$(MKDIR) -p build_libs
 	$(Q)$(AR) $(AR_LVGL_FLAGS) $(LIB_LVGL) $^
 
 endif

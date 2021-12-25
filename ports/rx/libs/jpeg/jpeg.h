@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Kentaro Sekimoto
+ * Copyright (c) 2018 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,18 +24,53 @@
  * THE SOFTWARE.
  */
 
-#ifndef LCD_ST7789_H_
-#define LCD_ST7789_H_
+#ifndef SJPEG_H
+#define SJPEG_H
 
-#define ST7789_CASET 0x2A      // column address set
-#define ST7789_PASET 0x2B      // page address set
-#define ST7789_RAMWR 0x2C      // memory write
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "picojpeg.h"
 
-#define ST7789_COLORMODE_65K    (0x50)
-#define ST7789_COLORMODE_262K   (0x60)
-#define ST7789_COLORMODE_12BIT  (0x03)
-#define ST7789_COLORMODE_16BIT  (0x05)
-#define ST7789_COLORMODE_18BIT  (0x06)
-#define ST7789_COLORMODE_16M    (0x07)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* LCD_ST7789_H_ */
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+typedef struct {
+    pjpeg_image_info_t image_info;
+    bool is_available;
+    bool reduce;    // In reduce mode output 1 pixel per 8x8 block.
+    uint32_t err;
+    uint16_t mcu_x;
+    uint16_t mcu_y;
+    uint16_t row_pitch;
+    uint16_t row_blocks_per_mcu;
+    uint16_t col_blocks_per_mcu;
+    uint8_t *pImage;
+    uint16_t decoded_width;
+    uint16_t decoded_height;
+    uint32_t comps;
+    uint16_t MCUSPerRow;
+    uint16_t MCUSPerCol;
+    uint16_t MCUx;
+    uint16_t MCUy;
+} jpeg_t;
+
+void jpeg_init(jpeg_t *jpeg);
+void jpeg_deinit(jpeg_t *jpeg);
+bool jpeg_decode(jpeg_t *jpeg, bool reduce);
+bool jpeg_decode_mcu(jpeg_t *jpeg);
+bool jpeg_read(jpeg_t *jpeg);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

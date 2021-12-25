@@ -41,7 +41,7 @@ static inline void mpu_config_region(uint32_t region, uint32_t base_addr, uint32
 }
 
 static inline void mpu_config_end(uint32_t irq_state) {
-    enable_irq(irq_state);
+    rz_enable_irq(irq_state);
 }
 
 #else

@@ -10,6 +10,7 @@
 #ifndef SFONT4X8_DATA_H_
 #define SFONT4X8_DATA_H_
 
+// clang-format off
 static const unsigned char misaki_font4x8_data[] = {
 // Unicode=0x0000
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -524,5 +525,6 @@ static const unsigned char misaki_font4x8_data[] = {
 // Unicode=0x00FF
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
+// clang-format on
 
 #endif /* SFONT4X8_DATA_H_ */

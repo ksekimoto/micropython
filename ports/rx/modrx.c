@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
+ * Portion Copyright (c) 2021 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,13 +51,11 @@ STATIC const mp_rom_map_elem_t rx_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mem16), MP_ROM_PTR(&machine_mem16_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem32), MP_ROM_PTR(&machine_mem32_obj) },
 
-    #if 0
     #if MICROPY_PY_PYB_FONT
     { MP_ROM_QSTR(MP_QSTR_FONT), MP_ROM_PTR(&rx_font_type) },
     #endif
     #if MICROPY_PY_PYB_LCDSPI
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&rx_lcdspi_type) },
-    #endif
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(rx_module_globals, rx_module_globals_table);
