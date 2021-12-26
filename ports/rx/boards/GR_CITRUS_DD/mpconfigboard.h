@@ -14,11 +14,11 @@
 #define MICROPY_HW_ESP8266          (1)
 
 // UART config
-#define MICROPY_HW_UART0_TX         (pin_P20)
-#define MICROPY_HW_UART0_RX         (pin_P21)
-#define MICROPY_HW_UART2_TX         (pin_P50)
-#define MICROPY_HW_UART2_RX         (pin_P52)
-//#define MICROPY_HW_UART_REPL        PYB_UART_0
+#define MICROPY_HW_UART1_TX         (pin_P20)
+#define MICROPY_HW_UART1_RX         (pin_P21)
+#define MICROPY_HW_UART3_TX         (pin_P50)
+#define MICROPY_HW_UART3_RX         (pin_P52)
+//#define MICROPY_HW_UART_REPL        PYB_UART_1
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
@@ -37,11 +37,11 @@
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
 
 // SPI busses
-//#define MICROPY_HW_SPI1_NAME "X"
-//#define MICROPY_HW_SPI1_NSS  (pin_PC4)
-//#define MICROPY_HW_SPI1_SCK  (pin_PC5)
-//#define MICROPY_HW_SPI1_MISO (pin_PC7)
-//#define MICROPY_HW_SPI1_MOSI (pin_PC6)
+#define MICROPY_HW_SPI1_NAME "X"
+#define MICROPY_HW_SPI1_NSS  (pin_PC4)
+#define MICROPY_HW_SPI1_SCK  (pin_PC5)
+#define MICROPY_HW_SPI1_MISO (pin_PC7)
+#define MICROPY_HW_SPI1_MOSI (pin_PC6)
 // USRSW is pulled low. Pressing the button makes the input go high.
 //#define MICROPY_HW_USRSW_PIN        (pin_PA7)
 //#define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)
@@ -76,7 +76,7 @@
 
 #if MICROPY_HW_ESP8266
 #define MICROPY_HW_HAS_ESP8266      (0)
-#define MICROPY_HW_ESP8266_UART_CH      6
+#define MICROPY_HW_ESP8266_UART_CH      7   // CH=6
 #define MICROPY_HW_ESP8266_UART_BAUD    115200
 #define MICROPY_HW_ESP8266_EN           (pin_P50)
 #endif
@@ -100,3 +100,5 @@
 #define BOARD_SERVO4_PIN    (pin_P33)
 #define BOARD_SERVO5_PIN    (pin_PB3)
 #define BOARD_SERVO6_PIN    (pin_PB5)
+
+#define MICROPY_PY_PYB_LEGACY   1   // if flash rom is short, shoule be 0

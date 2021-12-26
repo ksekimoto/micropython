@@ -28,7 +28,6 @@
 #include "common.h"
 #include "pin.h"
 
-
 // timing functions
 
 #include "irq.h"
@@ -56,15 +55,15 @@ static inline mp_uint_t mp_hal_ticks_cpu(void) {
 #define mp_hal_pin_obj_t const pin_obj_t *
 #define mp_hal_get_pin_obj(o)   pin_find(o)
 #define mp_hal_pin_name(p)      ((p)->name)
-#define mp_hal_pin_input(p)     gpio_mode_input((p)->pin)
-#define mp_hal_pin_output(p)    gpio_mode_output((p)->pin)
+#define mp_hal_pin_input(p)     rx_gpio_mode_input((p)->id)
+#define mp_hal_pin_output(p)    rx_gpio_mode_output((p)->id)
 #define mp_hal_pin_open_drain(p)
-#define mp_hal_pin_high(p)      gpio_write((p)->pin, 1)
-#define mp_hal_pin_low(p)       gpio_write((p)->pin, 0)
-#define mp_hal_pin_toggle(p)    gpio_toggle((p)->pin)
+#define mp_hal_pin_high(p)      rx_gpio_write((p)->id, 1)
+#define mp_hal_pin_low(p)       rx_gpio_write((p)->id, 0)
+#define mp_hal_pin_toggle(p)    rx_gpio_toggle((p)->id)
 #define mp_hal_pin_od_low(p)    mp_hal_pin_low(p)
 #define mp_hal_pin_od_high(p)   mp_hal_pin_high(p)
-#define mp_hal_pin_read(p)      gpio_read((p)->pin)
+#define mp_hal_pin_read(p)      rx_gpio_read((p)->id)
 #define mp_hal_pin_write(p, v)  do { if (v) { mp_hal_pin_high(p); } else { mp_hal_pin_low(p); } } while (0)
 
 void mp_hal_pin_config(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint32_t alt);

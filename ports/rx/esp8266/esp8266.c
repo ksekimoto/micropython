@@ -39,6 +39,7 @@
 #include "py/nlr.h"
 #include "py/obj.h"
 #include "py/runtime.h"
+#include "py/mphal.h"
 #include "py/binary.h"
 #include "portmodules.h"
 
@@ -77,27 +78,27 @@ char *itoa(int num, char *str, int base);
 
 static unsigned char wifi_data[WIFI_DATA_MAX];
 static int WiFiRecvOutlNum = -1; /* serial number from ESP8266 */
-static int esp8266_at_ch = WIFI_SERIAL;
-static int esp8266_at_baud = WIFI_BAUDRATE;
+static int esp8266_at_ch = MICROPY_HW_ESP8266_UART_CH;
+static int esp8266_at_baud = MICROPY_HW_ESP8266_UART_BAUD;
 
 unsigned long millis() {
     return mtick();
 }
 
 static void esp8266_at_serial_begin(void) {
-    sci_init_default(esp8266_at_ch, esp8266_at_baud);
+    rx_sci_init(esp8266_at_ch, (MICROPY_HW_ESP8266_TX)->id, (MICROPY_HW_ESP8266_RX)->id, esp8266_at_baud, 8, 0, 1, 0);
 }
 
 static int esp8266_at_serial_available(void) {
-    return sci_rx_any(esp8266_at_ch);
+    return rx_sci_rx_any(esp8266_at_ch);
 }
 
 static int esp8266_at_serial_read(void) {
-    return (int)sci_rx_ch(esp8266_at_ch);
+    return (int)rx_sci_rx_ch(esp8266_at_ch);
 }
 
 static void esp8266_at_serial_write_byte(unsigned char c) {
-    sci_tx_ch(esp8266_at_ch, (unsigned char)c);
+    rx_sci_tx_ch(esp8266_at_ch, (unsigned char)c);
 }
 
 #if 0
@@ -109,25 +110,25 @@ static void esp8266_at_serial_write(unsigned char *s, int len) {
 #endif
 
 static void esp8266_at_serial_print(const char *s) {
-    sci_tx_str(esp8266_at_ch, (uint8_t *)s);
+    rx_sci_tx_str(esp8266_at_ch, (uint8_t *)s);
 }
 
 static void esp8266_at_serial_printi(int i) {
     char s[MAX_DIGITS];
     itoa(i, (char *)s, 10);
-    sci_tx_str(esp8266_at_ch, (uint8_t *)s);
+    rx_sci_tx_str(esp8266_at_ch, (uint8_t *)s);
 }
 
 static void esp8266_at_serial_println(const char *s) {
-    sci_tx_str(esp8266_at_ch, (uint8_t *)s);
-    sci_tx_ch(esp8266_at_ch, '\r');
-    sci_tx_ch(esp8266_at_ch, '\n');
+    rx_sci_tx_str(esp8266_at_ch, (uint8_t *)s);
+    rx_sci_tx_ch(esp8266_at_ch, '\r');
+    rx_sci_tx_ch(esp8266_at_ch, '\n');
 }
 
 static void esp8266_at_serial_printiln(int i) {
     esp8266_at_serial_printi(i);
-    sci_tx_ch(esp8266_at_ch, '\r');
-    sci_tx_ch(esp8266_at_ch, '\n');
+    rx_sci_tx_ch(esp8266_at_ch, '\r');
+    rx_sci_tx_ch(esp8266_at_ch, '\n');
 }
 
 #if 0

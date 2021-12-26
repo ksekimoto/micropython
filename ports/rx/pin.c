@@ -330,7 +330,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         { MP_QSTR_pull, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE}},
         { MP_QSTR_af, MP_ARG_INT, {.u_int = -1}}, // legacy
         { MP_QSTR_value, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
-        { MP_QSTR_alt, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1}},
+        { MP_QSTR_alt, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
     };
 
     // parse args
@@ -364,7 +364,7 @@ STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const 
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("invalid pin af: %d"), af);
     }
     #endif
-    mp_hal_pin_config(self, mode, pull, -1);
+    mp_hal_pin_config(self, mode, pull, 0);
     // if given, set the pin value before initialising to prevent glitches
     if (args[3].u_obj != MP_OBJ_NULL) {
         mp_hal_pin_write(self, mp_obj_is_true(args[3].u_obj));
@@ -460,7 +460,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_names_obj, pin_names);
 /// Get the pin port.
 STATIC mp_obj_t pin_port(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin / 8);
+    return MP_OBJ_NEW_SMALL_INT(self->id / 8);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 
@@ -468,7 +468,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_port_obj, pin_port);
 /// Get the pin bit.
 STATIC mp_obj_t pin_bit(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin & 7);
+    return MP_OBJ_NEW_SMALL_INT(self->id & 7);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_bit_obj, pin_bit);
 
@@ -476,7 +476,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_bit_obj, pin_bit);
 /// Get the pin number.
 STATIC mp_obj_t pin_pin(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT(self->pin);
+    return MP_OBJ_NEW_SMALL_INT(self->id);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_pin_obj, pin_pin);
 

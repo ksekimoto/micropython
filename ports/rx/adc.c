@@ -37,6 +37,22 @@
 
 #if MICROPY_HW_ENABLE_ADC
 
+/// \moduleref pyb
+/// \class ADC - analog to digital conversion: read analog values on a pin
+///
+/// Usage:
+///
+///     adc = pyb.ADC(pin)              # create an analog object from a pin
+///     val = adc.read()                # read an analog value
+///
+///     adc = pyb.ADCAll(resolution)    # creale an ADCAll object
+///     val = adc.read_channel(channel) # read the given channel
+///     val = adc.read_core_temp()      # read MCU temperature
+///     val = adc.read_core_vbat()      # read MCU VBAT
+///     val = adc.read_core_vref()      # read MCU VREF
+
+/* ADC defintions */
+
 typedef struct _pyb_obj_adc_t {
     mp_obj_base_t base;
     mp_obj_t pin_name;
@@ -52,25 +68,32 @@ static inline uint32_t adc_get_internal_channel(uint32_t channel) {
 }
 
 // STATIC bool is_adcx_channel(int channel) {
+// ToDo implement
 //    return true;
 // }
 
 // STATIC void adc_wait_for_eoc_or_timeout(int32_t timeout) {
+// ToDo implement
 // }
 
 // STATIC void adcx_clock_enable(void) {
+// ToDo implement
 // }
 
 // STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
+// ToDo implement
 // }
 
 // STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
+// ToDo implement
 // }
 
 // STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
+// ToDo implement
 // }
 
 // STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
+// ToDo implement
 //    return 1;
 // }
 
@@ -95,6 +118,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
     pyb_obj_adc_t *o = m_new_obj(pyb_obj_adc_t);
     // check number of arguments
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
+
     // 1st argument is the pin name
     mp_obj_t pin_obj = args[0];
     int32_t resolution = 0;
@@ -109,7 +133,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         channel = rx_adc_get_channel((uint8_t)pin_idx);
     } else {
         const pin_obj_t *pin = pin_find(pin_obj);
-        pin_idx = (int)pin->pin;
+        pin_idx = (int)pin->id;
         resolution = rx_adc_get_resolution((uint8_t)pin_idx);
         if (resolution < 0) {
             mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("pin %q does not have ADC capabilities"), pin->name);

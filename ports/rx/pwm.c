@@ -121,9 +121,9 @@ STATIC mp_obj_t pyb_pwm_make_new(const mp_obj_type_t *type,
     // create PWM object from the given pin
     pyb_pwm_obj_t *self = m_new_obj(pyb_pwm_obj_t);
     self->base.type = &pyb_pwm_type;
-    self->pin = pin->pin;
+    self->pin = pin->id;
     self->active = 0;
-    self->channel = rx_pwm_get_mtu_channel(pin->pin);
+    self->channel = rx_pwm_get_mtu_channel(pin->id);
     // start the PWM subsystem if it's not already running
     if (!pwm_inited) {
         pwm_init();

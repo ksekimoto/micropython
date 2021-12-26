@@ -39,6 +39,7 @@
 
 #if MICROPY_PY_PYB_FONT
 extern const mp_obj_type_t rx_font_type;
+extern const mp_obj_type_t rx_xpt2046_type;
 #endif
 #if MICROPY_PY_PYB_LCDSPI
 extern const mp_obj_type_t rx_lcdspi_type;
@@ -56,6 +57,7 @@ STATIC const mp_rom_map_elem_t rx_module_globals_table[] = {
     #endif
     #if MICROPY_PY_PYB_LCDSPI
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&rx_lcdspi_type) },
+    { MP_ROM_QSTR(MP_QSTR_XPT2046), MP_ROM_PTR(&rx_xpt2046_type) },
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(rx_module_globals, rx_module_globals_table);

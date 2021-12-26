@@ -3,8 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2013-2020 Damien P. George
+ * Copyright (c) 2021 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -94,6 +94,14 @@ int mp_interrupt_channel;
 
 #if MICROPY_PY_THREAD
 STATIC pyb_thread_t pyb_thread_main;
+#endif
+
+#if MICROPY_HW_ENABLE_STORAGE
+// STATIC fs_user_mount_t fs_user_mount_flash;
+#endif
+
+#if MICROPY_HW_ENABLE_SDCARD
+FATFS *fatfs_sd = (FATFS *)0;
 #endif
 
 #if defined(MICROPY_HW_UART_REPL)
@@ -327,14 +335,8 @@ static int chk_kbd_interrupt(int d) {
 
 
 void rx_main(uint32_t reset_mode) {
+    rx_init();
     // Enable caches and prefetch buffers
-
-    #if defined(RX63N)
-    rx63n_init();
-    #endif
-    #if defined(RX65N)
-    rx65n_init();
-    #endif
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif

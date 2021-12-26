@@ -53,6 +53,9 @@
 #define DEBUG_JPEG
 #endif
 
+void *m_malloc(size_t n);
+void m_free(void *p);
+
 jpeg_src_t *g_jpeg_src;
 
 void jpeg_init(jpeg_t *jpeg) {

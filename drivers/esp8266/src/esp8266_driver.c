@@ -42,13 +42,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "py/mphal.h"
+
 #include "py/runtime.h"
-#include "common.h"
+#include "py/stream.h"
+#include "py/mperrno.h"
+#include "py/mphal.h"
+#include "shared/runtime/mpirq.h"
 #include "systick.h"
+#include "uart.h"
+
+#include "common.h"
 #include "tinymalloc.h"
 #include "vector.h"
 #include "esp8266_driver.h"
+
+pyb_uart_obj_t mp_esp_uart_obj;
+mp_irq_obj_t mp_esp_irq_obj;
+static uint8_t esp_rxbuf[768];
 
 // #if defined(USE_DBG_PRINT)
 // #define DEBUG_ESP8266_ERR
@@ -73,11 +83,11 @@
 #define SCI_TX_STR          rz_sci_tx_str
 
 #else
-#define SCI_INIT_DEFAULT    sci_init_default
-#define SCI_RX_ANY          sci_rx_any
-#define SCI_RX_CH           sci_rx_ch
-#define SCI_TX_CH           sci_tx_ch
-#define SCI_TX_STR          sci_tx_str
+#define SCI_INIT_DEFAULT    rx_sci_init_default
+#define SCI_RX_ANY          rx_sci_rx_any
+#define SCI_RX_CH           rx_sci_rx_ch
+#define SCI_TX_CH           rx_sci_tx_ch
+#define SCI_TX_STR          rx_sci_tx_str
 
 #endif
 
@@ -392,8 +402,17 @@ static void esp8266_serial_clear_buf(void) {
     memset((void *)wifi_data, 0, (size_t)WIFI_DATA_MAX);
 }
 
-static void esp8266_serial_begin(void) {
-    SCI_INIT_DEFAULT(esp8266_ch, esp8266_baud);
+static void esp8266_serial_begin(int uart_id, int baud) {
+    //SCI_INIT_DEFAULT(esp8266_ch, esp8266_baud);
+    mp_esp_uart_obj.base.type = &pyb_uart_type;
+    mp_esp_uart_obj.uart_id = uart_id;
+    mp_esp_uart_obj.is_static = true;
+    // We don't want to block indefinitely, but expect flow control is doing its job.
+    mp_esp_uart_obj.timeout = 200;
+    mp_esp_uart_obj.timeout_char = 200;
+    MP_STATE_PORT(pyb_uart_obj_all)[mp_esp_uart_obj.uart_id - 1] = &mp_esp_uart_obj;
+    uart_init(&mp_esp_uart_obj, baud, 8, 0, 1, 0);
+    uart_set_rxbuf(&mp_esp_uart_obj, sizeof(esp_rxbuf), esp_rxbuf);
 }
 
 static int esp8266_serial_available(void) {
@@ -1586,11 +1605,11 @@ uint32_t esp8266_recv(uint8_t *data, uint32_t amount, uint32_t *data_len, uint32
 /*
  * driver_init
  */
-void esp8266_driver_init(uint32_t ch, uint32_t baud) {
+void esp8266_driver_init(uint32_t uart_id, uint32_t baud) {
     #if defined(DEBUG_ESP8266_DRIVER)
     printf("esp8266_driver_init()\r\n");
     #endif
-    esp8266_ch = ch;
+    esp8266_ch = uart_id - 1;
     esp8266_baud = baud;
     tinymalloc_init((void *)local_buf, (size_t)LOCAL_BUF_MAX);
     _heap_usage = 0;
@@ -1610,7 +1629,7 @@ void esp8266_driver_init(uint32_t ch, uint32_t baud) {
     memset(_ids, 0, sizeof(_ids));
     memset(_cbs, 0, sizeof(_cbs));
     vector_init(&_accept_id);
-    esp8266_serial_begin();
+    esp8266_serial_begin(uart_id, baud);
     esp8266_ATE0();
     esp8266_set_AT_CIPMUX(1);
 }

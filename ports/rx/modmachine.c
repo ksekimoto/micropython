@@ -170,12 +170,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);
 
 // Resets the pyboard in a manner similar to pushing the external RESET button.
 STATIC mp_obj_t machine_reset(void) {
-    #if defined(RX63N)
-    rx63n_software_reset();
-    #endif
-    #if defined(RX65N)
-    rx65n_software_reset();
-    #endif
+    rx_software_reset();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);

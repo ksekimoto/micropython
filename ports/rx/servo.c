@@ -125,7 +125,7 @@ void servo_timer_irq_callback(void) {
                 need_it = true;
             }
             // set the pulse width
-            rx_servo_set_pulse(s->pin->pin, s->pulse_cur);
+            rx_servo_set_pulse(s->pin->id, s->pulse_cur);
         }
     }
     if (need_it) {
@@ -137,9 +137,9 @@ void servo_timer_irq_callback(void) {
 
 STATIC void servo_init_channel(pyb_servo_obj_t *s) {
     // static const uint8_t channel_table[PYB_SERVO_NUM] = {0, 1};
-    // uint8_t tpu_channel = rx_tpu_get_tpu_channel(s->pin->pin);
-    rx_servo_set_pulse(s->pin->pin, s->pulse_cur);
-    rx_tpu_pin_init(s->pin->pin);
+    // uint8_t tpu_channel = rx_tpu_get_tpu_channel(s->pin->id);
+    rx_servo_set_pulse(s->pin->id, s->pulse_cur);
+    rx_tpu_pin_init(s->pin->id);
 }
 
 /******************************************************************************/
@@ -157,11 +157,11 @@ STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
     switch (p) {
         case 1:
             ;
-            rx_servo_set_pulse(pyb_servo_obj[0].pin->pin, v);
+            rx_servo_set_pulse(pyb_servo_obj[0].pin->id, v);
             break;
         case 2:
             ;
-            rx_servo_set_pulse(pyb_servo_obj[1].pin->pin, v);
+            rx_servo_set_pulse(pyb_servo_obj[1].pin->id, v);
             break;
     }
     return mp_const_none;
@@ -173,8 +173,8 @@ STATIC mp_obj_t pyb_pwm_set(mp_obj_t period, mp_obj_t pulse) {
     // int pe = mp_obj_get_int(period);
     int pu = mp_obj_get_int(pulse);
     // Not used?
-    rx_servo_set_pulse(pyb_servo_obj[0].pin->pin, pu);
-    rx_servo_set_pulse(pyb_servo_obj[1].pin->pin, pu);
+    rx_servo_set_pulse(pyb_servo_obj[0].pin->id, pu);
+    rx_servo_set_pulse(pyb_servo_obj[1].pin->id, pu);
     return mp_const_none;
 }
 
@@ -282,7 +282,7 @@ STATIC mp_obj_t pyb_servo_angle(size_t n_args, const mp_obj_t *args) {
             self->time_left = mp_obj_get_int(args[2]) / 20;
             self->pulse_accum = 0;
         }
-        rx_servo_start(self->pin->pin);
+        rx_servo_start(self->pin->id);
         servo_timer_irq_callback();
         return mp_const_none;
     }

@@ -23,7 +23,7 @@
 { \
     { &pin_type }, \
     .name = MP_QSTR_ ## p_name, \
-    .pin = p_pin, \
+    .id = p_pin, \
     .bit = ad_bit, \
     .channel = ad_channel \
 }
@@ -32,6 +32,6 @@
 { \
     { &pin_type }, \
     .name = MP_QSTR_ ## p_name, \
-    .pin = p_pin, \
+    .id = p_pin, \
     .ad = p_ad, \
 }

@@ -136,7 +136,7 @@ void mp_hal_ticks_cpu_enable(void) {
 }
 
 void mp_hal_pin_config(mp_hal_pin_obj_t pin_obj, uint32_t mode, uint32_t pull, uint32_t alt) {
-    gpio_config(pin_obj->pin, mode, pull, alt);
+    rx_gpio_config(pin_obj->id, mode, pull, alt);
 }
 
 bool mp_hal_pin_config_alt(mp_hal_pin_obj_t pin, uint32_t mode, uint32_t pull, uint8_t fn, uint8_t unit) {

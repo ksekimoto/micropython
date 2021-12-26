@@ -46,7 +46,7 @@ typedef struct {
 typedef struct {
     mp_obj_base_t base;
     qstr name;
-    uint8_t pin;
+    uint8_t id;
     uint8_t bit;
     uint8_t channel;
 } pin_ad_obj_t;
@@ -54,7 +54,7 @@ typedef struct {
 typedef struct {
     mp_obj_base_t base;
     qstr name;
-    uint8_t pin;
+    uint8_t id;
     uint8_t num_af;
     const pin_af_obj_t *af;
     const pin_ad_obj_t *ad;

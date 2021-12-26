@@ -32,12 +32,7 @@
 #include "extint.h"
 #include "rtc.h"
 #include "irq.h"
-#if defined(RX63N)
-#include "rx63n_rtc.h"
-#endif
-#if defined(RX65N)
-#include "rx65n_rtc.h"
-#endif
+#include "rx_rtc.h"
 
 #define RTC_INIT_YEAR   2019
 #define RTC_INIT_MONTH  1

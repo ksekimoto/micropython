@@ -29,6 +29,7 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "modmachine.h"
+#include "extmod/machine_spi.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "font.h"
@@ -41,30 +42,8 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "extmod/machine_spi.h"
-
 #define DEF_SPI_ID      0
 #define DEF_BAUDRATE    115200
-
-static void rx_gpio_mode_input(uint32_t pin) {
-    gpio_mode_input((uint8_t)pin);
-}
-
-static void rx_gpio_mode_output(uint32_t pin) {
-    gpio_mode_output((uint8_t)pin);
-}
-
-static void rx_gpio_write(uint32_t pin, bool level) {
-    if (level) {
-        gpio_write((uint8_t)pin, 1);
-    } else {
-        gpio_write((uint8_t)pin, 0);
-    }
-}
-
-static bool rx_gpio_read(uint32_t pin) {
-    return (bool)gpio_read((uint8_t)pin);
-}
 
 typedef struct _mod_lcdspi_obj_t {
     mp_obj_base_t base;
@@ -157,7 +136,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_cs].u_obj);
-        self->pins.pin_cs = (uint32_t)pin->pin;
+        self->pins.pin_cs = (uint32_t)pin->id;
     }
     /* clk */
     if (vals[ARG_clk].u_obj == MP_OBJ_NULL) {
@@ -166,7 +145,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_clk].u_obj);
-        self->pins.pin_clk = (uint32_t)pin->pin;
+        self->pins.pin_clk = (uint32_t)pin->id;
     }
     /* dout */
     if (vals[ARG_dout].u_obj == MP_OBJ_NULL) {
@@ -175,7 +154,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_dout].u_obj);
-        self->pins.pin_dout = (uint32_t)pin->pin;
+        self->pins.pin_dout = (uint32_t)pin->id;
     }
     /* reset */
     if (vals[ARG_reset].u_obj == MP_OBJ_NULL) {
@@ -184,7 +163,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_reset].u_obj);
-        self->pins.pin_reset = (uint32_t)pin->pin;
+        self->pins.pin_reset = (uint32_t)pin->id;
     }
     /* rs */
     if (vals[ARG_rs].u_obj == MP_OBJ_NULL) {
@@ -193,7 +172,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_rs].u_obj);
-        self->pins.pin_rs = (uint32_t)pin->pin;
+        self->pins.pin_rs = (uint32_t)pin->id;
     }
     /* din */
     if (vals[ARG_din].u_obj == MP_OBJ_NULL) {
@@ -203,12 +182,12 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_din].u_obj);
-        self->pins.pin_din = pin->pin;
+        self->pins.pin_din = pin->id;
     }
 
-    pin_mosi.pin = (uint8_t)self->pins.pin_dout;
-    pin_miso.pin = (uint8_t)self->pins.pin_din;
-    pin_sck.pin = (uint8_t)self->pins.pin_clk;
+    pin_mosi.id = (uint8_t)self->pins.pin_dout;
+    pin_miso.id = (uint8_t)self->pins.pin_din;
+    pin_sck.id = (uint8_t)self->pins.pin_clk;
     m_args[0] = MP_OBJ_NEW_SMALL_INT(self->lcdspi->spi_ch);
     m_args[1] = MP_ROM_QSTR(MP_QSTR_baudrate);
     m_args[2] = MP_OBJ_NEW_SMALL_INT(self->lcdspi->baud);

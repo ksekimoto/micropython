@@ -36,6 +36,8 @@ typedef struct _rx_font_obj_t {
     const font_t *font;
 } rx_font_obj_t;
 
+const mp_obj_type_t rx_font_type;
+
 static const rx_font_obj_t rx_font_obj[] = {
     #ifdef MISAKIFONT4X8
     { {&rx_font_type}, MISAKIFONT4X8, (const font_t *)&MisakiFont4x8 },
