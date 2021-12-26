@@ -1049,11 +1049,11 @@ uint32_t flash_get_sector_size(const flash_t *obj, uint32_t address)
 
 uint32_t flash_get_page_size(const flash_t *obj)
 {
-#if defined(USE_OCTAFLASH)
-    return OCTAFLASH_PAGE_SIZE;
-#else /* USE_OCTAFLASH */
+// #if defined(USE_OCTAFLASH)
+//     return OCTAFLASH_PAGE_SIZE;
+// #else /* USE_OCTAFLASH */
     return 8;
-#endif /* USE_OCTAFLASH */
+// #endif /* USE_OCTAFLASH */
 }
 
 uint32_t flash_get_start_address(const flash_t *obj)
