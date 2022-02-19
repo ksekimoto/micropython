@@ -10,16 +10,17 @@
 #define MICROPY_HW_NUM_PIN_IRQS (3 * 32)
 
 // Define mapping logical UART # to hardware UART #
-// RX/TX   HW-UART    Logical UART
-// D3/D5   LPUART1    Not usable, Since D3 is blocked.
-// D0/D1   LPUART2 -> 1
-// D6/D9   LPUART3 -> 2
-// D10/D12 LPUART5 -> 3
-// D14/D15 LPUART8 -> 4
-// A0/A1   LPUART4 -> 5
+// RX/TX      HW-UART    Logical UART
+// DEBUG USB  LPUART1 -> 0
+// D3/D5      LPUART1    Not usable, Since D3 is blocked.
+// D0/D1      LPUART2 -> 1
+// D6/D9      LPUART3 -> 2
+// D10/D12    LPUART5 -> 3
+// D14/D15    LPUART8 -> 4
+// A0/A1      LPUART4 -> 5
 
 #define MICROPY_HW_UART_NUM     (sizeof(uart_index_table) / sizeof(uart_index_table)[0])
-#define MICROPY_HW_UART_INDEX   { 0, 2, 3, 5, 8, 4 }
+#define MICROPY_HW_UART_INDEX   { 1, 2, 3, 5, 8, 4 }
 
 #define IOMUX_TABLE_UART \
     { IOMUXC_GPIO_AD_B0_06_LPUART1_TX }, { IOMUXC_GPIO_AD_B0_07_LPUART1_RX }, \
@@ -36,10 +37,13 @@
 #define IOMUX_TABLE_SPI \
     { IOMUXC_GPIO_AD_B0_10_LPSPI1_SCK }, { IOMUXC_GPIO_AD_B0_11_LPSPI1_PCS0 }, \
     { IOMUXC_GPIO_AD_B0_12_LPSPI1_SDO }, { IOMUXC_GPIO_AD_B0_13_LPSPI1_SDI }, \
+    { 0 }, \
     { 0 }, { 0 }, \
     { 0 }, { 0 }, \
+    { 0 }, \
     { IOMUXC_GPIO_AD_B1_12_LPSPI3_SCK }, { IOMUXC_GPIO_AD_B1_13_LPSPI3_PCS0 }, \
-    { IOMUXC_GPIO_AD_B1_14_LPSPI3_SDO }, { IOMUXC_GPIO_AD_B1_15_LPSPI3_SDI },
+    { IOMUXC_GPIO_AD_B1_14_LPSPI3_SDO }, { IOMUXC_GPIO_AD_B1_15_LPSPI3_SDI }, \
+    { IOMUXC_GPIO_AD_B1_09_LPSPI3_PCS1 } \
 
 #define DMA_REQ_SRC_RX { 0, kDmaRequestMuxLPSPI1Rx, kDmaRequestMuxLPSPI2Rx, \
                          kDmaRequestMuxLPSPI3Rx, kDmaRequestMuxLPSPI4Rx }

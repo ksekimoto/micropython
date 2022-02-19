@@ -86,6 +86,7 @@
 #define MICROPY_OPT_MAP_LOOKUP_CACHE (1)
 #endif
 #define MICROPY_MODULE_WEAK_LINKS   (1)
+#define MICROPY_MODULE_OVERRIDE_MAIN_IMPORT (1)
 #define MICROPY_CAN_OVERRIDE_BUILTINS (1)
 #define MICROPY_VFS_POSIX_FILE      (1)
 #define MICROPY_PY_FUNCTION_ATTRS   (1)
@@ -109,6 +110,7 @@
 #define MICROPY_PY_ARRAY_SLICE_ASSIGN (1)
 #define MICROPY_PY_BUILTINS_SLICE_ATTRS (1)
 #define MICROPY_PY_BUILTINS_SLICE_INDICES (1)
+#define MICROPY_PY_SYS_PATH_ARGV_DEFAULTS (0)
 #define MICROPY_PY_SYS_EXIT         (1)
 #define MICROPY_PY_SYS_ATEXIT       (1)
 #if MICROPY_PY_SYS_SETTRACE
@@ -121,6 +123,9 @@
 #else
     #define MICROPY_PY_SYS_PLATFORM  "linux"
 #endif
+#endif
+#ifndef MICROPY_PY_SYS_PATH_DEFAULT
+#define MICROPY_PY_SYS_PATH_DEFAULT ".frozen:~/.micropython/lib:/usr/lib/micropython"
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
@@ -199,7 +204,6 @@ extern const struct _mp_print_t mp_stderr_print;
 #define mp_type_fileio mp_type_vfs_posix_fileio
 #define mp_type_textio mp_type_vfs_posix_textio
 
-extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_os;
 extern const struct _mp_obj_module_t mp_module_uos_vfs;
 extern const struct _mp_obj_module_t mp_module_uselect;
@@ -250,7 +254,6 @@ extern const struct _mp_obj_module_t mp_module_jni;
     MICROPY_PY_JNI_DEF \
     MICROPY_PY_UTIME_DEF \
     MICROPY_PY_SOCKET_DEF \
-    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     MICROPY_PY_UOS_DEF \
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \

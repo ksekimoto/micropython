@@ -109,6 +109,10 @@ def run_micropython(pyb, args, test_file, is_special=False):
                         return b"SKIP\n"
                     import select
 
+                    # Even though these might have the pty module, it's unlikely to function.
+                    if sys.platform in ["win32", "msys", "cygwin"]:
+                        return b"SKIP\n"
+
                     def get(required=False):
                         rv = b""
                         while True:
@@ -852,7 +856,7 @@ the last matching regex is used:
 
     if not args.keep_path:
         # clear search path to make sure tests use only builtin modules and those in extmod
-        os.environ["MICROPYPATH"] = os.pathsep + base_path("../extmod")
+        os.environ["MICROPYPATH"] = ".frozen" + os.pathsep + base_path("../extmod")
 
     try:
         os.makedirs(args.result_dir, exist_ok=True)

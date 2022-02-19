@@ -116,6 +116,7 @@ uint32_t trng_random_u32(void);
 #define MICROPY_PY_URE_MATCH_GROUPS         (1)
 #define MICROPY_PY_URE_MATCH_SPAN_START_END (1)
 #define MICROPY_PY_URE_SUB                  (1)
+#define MICROPY_PY_USSL_FINALISER           (MICROPY_PY_USSL)
 #define MICROPY_PY_UHASHLIB                 (1)
 #define MICROPY_PY_UBINASCII                (1)
 #define MICROPY_PY_UBINASCII_CRC32          (1)
@@ -129,6 +130,10 @@ uint32_t trng_random_u32(void);
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW     mp_pin_make_new
 #define MICROPY_PY_MACHINE_BITSTREAM        (1)
 #define MICROPY_PY_MACHINE_PULSE            (1)
+#define MICROPY_PY_MACHINE_PWM              (1)
+#define MICROPY_PY_MACHINE_PWM_INIT         (1)
+#define MICROPY_PY_MACHINE_PWM_DUTY_U16_NS  (1)
+#define MICROPY_PY_MACHINE_PWM_INCLUDEFILE  "ports/mimxrt/machine_pwm.c"
 #define MICROPY_PY_MACHINE_I2C              (1)
 #define MICROPY_PY_MACHINE_SOFTI2C          (1)
 #define MICROPY_PY_MACHINE_SPI              (1)
@@ -212,7 +217,6 @@ static inline void restore_irq_pri(uint32_t basepri) {
 #define MICROPY_PORT_BUILTINS \
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
-extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_mimxrt;
 extern const struct _mp_obj_module_t mp_module_onewire;
 extern const struct _mp_obj_module_t mp_module_uos;
@@ -251,7 +255,6 @@ extern const struct _mp_obj_type_t network_lan_type;
 #endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
-    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_mimxrt), (mp_obj_t)&mp_module_mimxrt }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \

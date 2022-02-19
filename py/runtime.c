@@ -122,6 +122,15 @@ void mp_init(void) {
     MP_STATE_VM(vfs_mount_table) = NULL;
     #endif
 
+    #if MICROPY_PY_SYS_PATH_ARGV_DEFAULTS
+    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), 0);
+    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR_)); // current dir (or base dir of the script)
+    #if MICROPY_MODULE_FROZEN
+    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__dot_frozen));
+    #endif
+    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
+    #endif
+
     #if MICROPY_PY_SYS_ATEXIT
     MP_STATE_VM(sys_exitfunc) = mp_const_none;
     #endif
@@ -1100,12 +1109,20 @@ void mp_load_method_maybe(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
     if (attr == MP_QSTR___next__ && type->iternext != NULL) {
         dest[0] = MP_OBJ_FROM_PTR(&mp_builtin_next_obj);
         dest[1] = obj;
-
-    } else if (type->attr != NULL) {
+        return;
+    }
+    if (type->attr != NULL) {
         // this type can do its own load, so call it
         type->attr(obj, attr, dest);
-
-    } else if (type->locals_dict != NULL) {
+        // If type->attr has set dest[1] = MP_OBJ_SENTINEL, we should proceed
+        // with lookups below (i.e. in locals_dict). If not, return right away.
+        if (dest[1] != MP_OBJ_SENTINEL) {
+            return;
+        }
+        // Clear the fail flag set by type->attr so it's like it never ran.
+        dest[1] = MP_OBJ_NULL;
+    }
+    if (type->locals_dict != NULL) {
         // generic method lookup
         // this is a lookup in the object (ie not class or type)
         assert(type->locals_dict->base.type == &mp_type_dict); // MicroPython restriction, for now
@@ -1114,6 +1131,7 @@ void mp_load_method_maybe(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
         if (elem != NULL) {
             mp_convert_member_lookup(obj, type, elem->value, dest);
         }
+        return;
     }
 }
 
