@@ -58,6 +58,11 @@
 #define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
 #endif
 
+// If internal flash storage is enabled, whether to use a second segment of flash.
+#ifndef MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
+#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE_SEGMENT2 (0)
+#endif
+
 // Whether to enable the RTC, exposed as pyb.RTC
 #ifndef MICROPY_HW_ENABLE_RTC
 #define MICROPY_HW_ENABLE_RTC (0)
@@ -76,6 +81,11 @@
 // Whether to enable the DAC peripheral, exposed as pyb.DAC
 #ifndef MICROPY_HW_ENABLE_DAC
 #define MICROPY_HW_ENABLE_DAC (0)
+#endif
+
+// Whether to enable the DCMI peripheral
+#ifndef MICROPY_HW_ENABLE_DCMI
+#define MICROPY_HW_ENABLE_DCMI (0)
 #endif
 
 // Whether to enable USB support
@@ -196,20 +206,6 @@
 // is defined by a board then all needed PID options must also be defined.  The
 // VID and PID can also be set dynamically in pyb.usb_mode().
 // Windows needs a different PID to distinguish different device configurations.
-// #ifndef MICROPY_HW_USB_VID
-// #define MICROPY_HW_USB_VID              (0xf055)
-// #define MICROPY_HW_USB_PID_CDC_MSC      (0x9800)
-// #define MICROPY_HW_USB_PID_CDC_HID      (0x9801)
-// #define MICROPY_HW_USB_PID_CDC          (0x9802)
-// #define MICROPY_HW_USB_PID_MSC          (0x9803)
-// #define MICROPY_HW_USB_PID_CDC2_MSC     (0x9804)
-// #define MICROPY_HW_USB_PID_CDC2         (0x9805)
-// #define MICROPY_HW_USB_PID_CDC3         (0x9806)
-// #define MICROPY_HW_USB_PID_CDC3_MSC     (0x9807)
-// #define MICROPY_HW_USB_PID_CDC_MSC_HID  (0x9808)
-// #define MICROPY_HW_USB_PID_CDC2_MSC_HID (0x9809)
-// #define MICROPY_HW_USB_PID_CDC3_MSC_HID (0x980a)
-// #endif
 
 // Windows needs a different PID to distinguish different device configurations
 #ifdef GRSAKURA
@@ -284,10 +280,10 @@
 
 // Heap start / end definitions
 #ifndef MICROPY_HEAP_START
-#define MICROPY_HEAP_START &_heap_start
+#define MICROPY_HEAP_START &heap_start
 #endif
 #ifndef MICROPY_HEAP_END
-#define MICROPY_HEAP_END &_heap_end
+#define MICROPY_HEAP_END &heap_end
 #endif
 
 // Configuration for RX63N series

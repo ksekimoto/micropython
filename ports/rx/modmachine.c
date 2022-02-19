@@ -34,6 +34,7 @@
 #include "py/objstr.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+// #include "extmod/machine_bitstream.h"
 #include "extmod/machine_mem.h"
 #include "extmod/machine_signal.h"
 #include "extmod/machine_pulse.h"
@@ -45,6 +46,7 @@
 #include "extmod/vfs_fat.h"
 #include "gccollect.h"
 #include "irq.h"
+// #include "powerctrl.h"
 #include "pybthread.h"
 #include "rng.h"
 #include "storage.h"
@@ -57,10 +59,6 @@
 #include "spi.h"
 #include "uart.h"
 #include "wdt.h"
-#include "pwm.h"
-#if 0
-#include "genhdr/pllfreqtable.h"
-#endif
 #include "common.h"
 
 #define PYB_RESET_SOFT      (0)
@@ -106,7 +104,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
         printf("_edata=%p\n", &edata);
         printf("_sbss=%p\n", &sbss);
         printf("_ebss=%p\n", &ebss);
-        // printf("_sstack=%p\n", &sstack);
+        printf("_sstack=%p\n", &sstack);
         printf("_estack=%p\n", &estack);
         printf("_ram_start=%p\n", &ram_start);
         printf("_heap_start=%p\n", &heap_start);
@@ -283,7 +281,12 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disable_irq),         MP_ROM_PTR(&machine_disable_irq_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable_irq),          MP_ROM_PTR(&machine_enable_irq_obj) },
 
+    #if MICROPY_PY_MACHINE_BITSTREAM
+    { MP_ROM_QSTR(MP_QSTR_bitstream),           MP_ROM_PTR(&machine_bitstream_obj) },
+    #endif
+    #if MICROPY_PY_MACHINE_PULSE
     { MP_ROM_QSTR(MP_QSTR_time_pulse_us),       MP_ROM_PTR(&machine_time_pulse_us_obj) },
+    #endif
 
     { MP_ROM_QSTR(MP_QSTR_mem8),                MP_ROM_PTR(&machine_mem8_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem16),               MP_ROM_PTR(&machine_mem16_obj) },
@@ -304,8 +307,13 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     #endif
     { MP_ROM_QSTR(MP_QSTR_SoftI2C),             MP_ROM_PTR(&mp_machine_soft_i2c_type) },
     #endif
+    #if MICROPY_PY_MACHINE_SPI
     { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_SoftSPI),             MP_ROM_PTR(&mp_machine_soft_spi_type) },
+    #endif
+    #if MICROPY_HW_ENABLE_I2S
+    { MP_ROM_QSTR(MP_QSTR_I2S),                 MP_ROM_PTR(&machine_i2s_type) },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
     { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },
     { MP_ROM_QSTR(MP_QSTR_Timer),               MP_ROM_PTR(&machine_timer_type) },
@@ -332,7 +340,7 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(machine_module_globals, machine_module_globals_table);
 
-const mp_obj_module_t machine_module = {
+const mp_obj_module_t mp_module_machine = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&machine_module_globals,
 };

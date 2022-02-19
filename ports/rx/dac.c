@@ -67,6 +67,16 @@
 #if defined(MICROPY_HW_ENABLE_DAC) && MICROPY_HW_ENABLE_DAC
 
 void dac_init(void) {
+    // ToDo: implement
+}
+
+STATIC void dac_deinit(uint32_t dac_channel) {
+    // ToDo: implement
+}
+
+void dac_deinit_all(void) {
+    // ToDo: implement
+    dac_deinit(0);
 }
 
 /******************************************************************************/

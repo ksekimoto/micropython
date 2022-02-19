@@ -337,9 +337,8 @@ static int chk_kbd_interrupt(int d) {
 void rx_main(uint32_t reset_mode) {
     rx_init();
     // Enable caches and prefetch buffers
-    #if defined(MICROPY_BOARD_EARLY_INIT)
+
     MICROPY_BOARD_EARLY_INIT();
-    #endif
 
     // basic sub-system init
     #if MICROPY_HW_SDRAM_SIZE
@@ -347,7 +346,7 @@ void rx_main(uint32_t reset_mode) {
     bool sdram_valid = true;
     UNUSED(sdram_valid);
     #if MICROPY_HW_SDRAM_STARTUP_TEST
-    sdram_valid = sdram_test(true);
+    sdram_valid = sdram_test(false);
     #endif
     #endif
     #if MICROPY_PY_THREAD
@@ -367,7 +366,7 @@ void rx_main(uint32_t reset_mode) {
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     i2c_init0();
     #endif
-    #if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD || MICROPY_HW_ENABLE_MMCARD
     sdcard_init();
     #endif
     #if MICROPY_HW_ENABLE_STORAGE
@@ -384,8 +383,7 @@ void rx_main(uint32_t reset_mode) {
     systick_enable_dispatch(SYSTICK_DISPATCH_LWIP, mod_network_lwip_poll_wrapper);
     #endif
     #if MICROPY_PY_BLUETOOTH
-    extern void mp_bluetooth_hci_systick(uint32_t ticks_ms);
-    systick_enable_dispatch(SYSTICK_DISPATCH_BLUETOOTH_HCI, mp_bluetooth_hci_systick);
+    mp_bluetooth_hci_init();
     #endif
 
     #if MICROPY_PY_NETWORK_CYW43
@@ -431,11 +429,10 @@ soft_reset:
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
     mp_stack_set_top(&estack);
-    mp_stack_set_limit((char *)&estack - (char *)&heap_end - 1024);
+    mp_stack_set_limit((char *)&estack - (char *)&sstack - 1024);
 
     // GC init
-    // gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
-    gc_init(&heap_start, &heap_end);
+    gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
 
     #if MICROPY_ENABLE_PYSTACK
     static mp_obj_t pystack[384];
@@ -444,9 +441,6 @@ soft_reset:
 
     // MicroPython init
     mp_init();
-    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), 0);
-    mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR_)); // current dir (or base dir of the script)
-    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
 
     // Initialise low-level sub-systems.  Here we need to very basic things like
     // zeroing out memory and resetting any of the sub-systems.  Following this
@@ -490,10 +484,13 @@ soft_reset:
     }
     #endif
 
+    #if MICROPY_HW_ENABLE_USB
     // if the SD card isn't used as the USB MSC medium then use the internal flash
     if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
         pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_FLASH;
     }
+    #endif
+
     // set sys.path based on mounted filesystems (/sd is first so it can override /flash)
     if (mounted_sdcard) {
         mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_sd));
@@ -506,6 +503,11 @@ soft_reset:
 
     // reset config variables; they should be set by boot.py
     MP_STATE_PORT(pyb_config_main) = MP_OBJ_NULL;
+
+    // Run optional frozen boot code.
+    #ifdef MICROPY_BOARD_FROZEN_BOOT_FILE
+    pyexec_frozen_module(MICROPY_BOARD_FROZEN_BOOT_FILE);
+    #endif
 
     // Run boot.py (or whatever else a board configures at this stage).
     if (MICROPY_BOARD_RUN_BOOT_PY(&state) == BOARDCTRL_GOTO_SOFT_RESET_EXIT) {
@@ -551,9 +553,6 @@ soft_reset:
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
-        #if MICROPY_HW_ENABLE_STORAGE
-        storage_flush();
-        #endif
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             if (pyexec_raw_repl() != 0) {
                 break;
@@ -598,6 +597,9 @@ soft_reset_exit:
     #if MICROPY_HW_ENABLE_CAN
     can_deinit_all();
     #endif
+    #if MICROPY_HW_ENABLE_DAC
+    dac_deinit_all();
+    #endif
     machine_deinit();
 
     #if MICROPY_PY_THREAD
@@ -611,6 +613,7 @@ soft_reset_exit:
     #endif
 
     gc_sweep_all();
+    mp_deinit();
 
     goto soft_reset;
 }

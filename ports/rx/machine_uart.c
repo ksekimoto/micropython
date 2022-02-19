@@ -77,6 +77,24 @@ STATIC void pyb_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     pyb_uart_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (!self->is_enabled) {
         mp_printf(print, "UART(%u)", self->uart_id);
+    } else {
+        mp_printf(print, "UART(%u, baudrate=%u, bits=%u, parity=",
+            self->uart_id, self->baudrate, self->bits);
+        if (self->parity == UART_PARITY_NONE) {
+            mp_print_str(print, "None");
+        } else if (self->parity == UART_PARITY_ODD) {
+            mp_print_str(print, "Odd");
+        } else {
+            mp_print_str(print, "Even");
+        }
+        mp_printf(print, ", stop=%u, flow=%u", self->stop, self->flow);
+        mp_printf(print, ", timeout=%u, timeout_char=%u, rxbuf=%u",
+            self->timeout, self->timeout_char,
+            self->read_buf_len == 0 ? 0 : self->read_buf_len - 1); // -1 to adjust for usable length of buffer
+        if (self->mp_irq_trigger != 0) {
+            mp_printf(print, "; irq=0x%x", self->mp_irq_trigger);
+        }
+        mp_print_str(print, ")");
     }
 }
 
@@ -219,7 +237,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
 /// the bus, if any).  If extra arguments are given, the bus is initialised.
 /// See `init` for parameters of initialisation.
 ///
-/// The physical pins of the UART busses are:
+/// The physical pins of the UART buses are:
 ///
 ///   - `UART(4)` is on `XA`: `(TX, RX) = (X1, X2) = (PA0, PA1)`
 ///   - `UART(1)` is on `XB`: `(TX, RX) = (X9, X10) = (PB6, PB7)`
@@ -283,6 +301,11 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
         if (!uart_exists(uart_id)) {
             mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%d) doesn't exist"), uart_id);
         }
+    }
+
+    // check if the UART is reserved for system use or not
+    if (MICROPY_HW_UART_IS_RESERVED(uart_id)) {
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%d) is reserved"), uart_id);
     }
 
     pyb_uart_obj_t *self;
@@ -453,9 +476,11 @@ STATIC mp_uint_t pyb_uart_write(mp_obj_t self_in, const void *buf_in, mp_uint_t 
     }
 
     // wait to be able to write the first character. EAGAIN causes write to return None
-    if (!uart_tx_wait(self, self->timeout)) {
-        *errcode = MP_EAGAIN;
-        return MP_STREAM_ERROR;
+    if (self->timeout != 0) {
+        if (!uart_tx_wait(self, self->timeout)) {
+            *errcode = MP_EAGAIN;
+            return MP_STREAM_ERROR;
+        }
     }
 
     // write the data
@@ -478,11 +503,9 @@ STATIC mp_uint_t pyb_uart_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t a
         if ((flags & MP_STREAM_POLL_RD) && uart_rx_any(self)) {
             ret |= MP_STREAM_POLL_RD;
         }
-        #if RX_TODO
         if ((flags & MP_STREAM_POLL_WR) && uart_tx_avail(self)) {
             ret |= MP_STREAM_POLL_WR;
         }
-        #endif
     } else {
         *errcode = MP_EINVAL;
         ret = MP_STREAM_ERROR;
