@@ -586,7 +586,6 @@ endif
 SRC_C += modpyb.c
 SRC_C += modrz.c
 SRC_C += modrzreg.c
-SRC_C += moduos.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpnetworkport.c

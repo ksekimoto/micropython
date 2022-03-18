@@ -38,9 +38,8 @@
 const char sdigit_str[] = "0123456789abcdef";
 const char bdigit_str[] = "0123456789ABCDEF";
 
-static int isdigit(register int c)
-{
-    return ((c >= '0') && (c <= '9'));
+static int isdigit(register int c) {
+    return (c >= '0') && (c <= '9');
 }
 
 // put_s_buf
@@ -50,8 +49,7 @@ static int isdigit(register int c)
 // width:   width to be stored
 // buf_size size of buffer
 // minusflag    if 0, then right aligned
-static unsigned int put_s_buf(char *buf, char *s, int width, unsigned int buf_size, int minusflag)
-{
+static unsigned int put_s_buf(char *buf, char *s, int width, unsigned int buf_size, int minusflag) {
     unsigned int size = 0;
     if ((!minusflag) && (width > 0)) {
         // ToDo: if buf_size < width, then crash.
@@ -64,14 +62,16 @@ static unsigned int put_s_buf(char *buf, char *s, int width, unsigned int buf_si
         }
     }
     for (; *s != 0; s++, width--) {
-        if (buf_size-- == 0)
-        return -1;
+        if (buf_size-- == 0) {
+            return -1;
+        }
         *buf++ = *s;
         size++;
     }
     for (; width > 0; width--) {
-        if (buf_size-- == 0)
-        return -1;
+        if (buf_size-- == 0) {
+            return -1;
+        }
         *buf++ = ' ';
         size++;
     }
@@ -84,8 +84,7 @@ static unsigned int put_s_buf(char *buf, char *s, int width, unsigned int buf_si
 // c:       a character to be stored
 // width:   width to be stored
 // buf_size size of buffer
-static unsigned int put_c_buf(char *buf, char c, int width, unsigned int buf_size)
-{
+static unsigned int put_c_buf(char *buf, char c, int width, unsigned int buf_size) {
     unsigned int size = 0;
     if (buf_size > 0) {
         if (width > 0) {
@@ -111,8 +110,7 @@ static unsigned int put_c_buf(char *buf, char c, int width, unsigned int buf_siz
 // width:   width to be stored
 // zeroflag flag for zero filling
 // buf_size size of buffer
-static unsigned int put_n_buf(char *buf, const char *fmt, unsigned long long vv, int width, unsigned int zeroflag, unsigned int buf_size)
-{
+static unsigned int put_n_buf(char *buf, const char *fmt, unsigned long long vv, int width, unsigned int zeroflag, unsigned int buf_size) {
     long long vvd;
     char tmp[MAX_DIGIT];
     char *p, *t, z;
@@ -122,49 +120,51 @@ static unsigned int put_n_buf(char *buf, const char *fmt, unsigned long long vv,
     unsigned int negativeflag = 0;
 
     p = tmp;
-    if (zeroflag)
+    if (zeroflag) {
         z = '0';
-    else
+    } else {
         z = ' ';
-    switch(*fmt) {
-    case 'b':
-        base = 2;
-        break;
-    case 'd':
-        base = 10;
-        vvd = (long long)vv;
-        if (vvd < 0) {
-            vv = -vvd;
-            negativeflag = 1;
-        }
-        break;
-    case 'u':
-        base = 10;
-        break;
-    case 'o':
-        base = 8;
-        break;
-    case 'x':
-        base = 16;
-        break;
-    case 'D':
-        base = 10;
-        cap = 1;
-        break;
-    case 'O':
-        base = 8;
-        cap = 1;
-        break;
-    case 'X':
-        base = 16;
-        cap = 1;
-        break;
-    default:
-        return size;
+    }
+    switch (*fmt) {
+        case 'b':
+            base = 2;
+            break;
+        case 'd':
+            base = 10;
+            vvd = (long long)vv;
+            if (vvd < 0) {
+                vv = -vvd;
+                negativeflag = 1;
+            }
+            break;
+        case 'u':
+            base = 10;
+            break;
+        case 'o':
+            base = 8;
+            break;
+        case 'x':
+            base = 16;
+            break;
+        case 'D':
+            base = 10;
+            cap = 1;
+            break;
+        case 'O':
+            base = 8;
+            cap = 1;
+            break;
+        case 'X':
+            base = 16;
+            cap = 1;
+            break;
+        default:
+            return size;
     }
     t = (char *)sdigit_str;
-    if (cap)
+    if (cap) {
         t = (char *)bdigit_str;
+    }
     do {
         width--;
         *p++ = t[vv % base];
@@ -175,23 +175,26 @@ static unsigned int put_n_buf(char *buf, const char *fmt, unsigned long long vv,
         *p++ = '-';
     }
     if (zeroflag && negativeflag) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = '-';
         size++;
         width--;
     }
     for (; width > 0; width--) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = z;
         size++;
     }
     while (p > tmp) {
-        if (buf_size == 0)
+        if (buf_size == 0) {
             return -1;
+        }
         buf_size--;
         *buf++ = *--p;
         size++;
@@ -209,8 +212,7 @@ static unsigned int put_n_buf(char *buf, const char *fmt, unsigned long long vv,
 // adp:     width for after dicimal point
 // zeroflag flag for zero filling
 // buf_size size of buffer
-static int put_f_buf(char *buf, const char *fmt, double f, int width, int adp, int zeroflag, unsigned int buf_size)
-{
+static int put_f_buf(char *buf, const char *fmt, double f, int width, int adp, int zeroflag, unsigned int buf_size) {
     char tmp[MAX_DIGIT];
 
     long long l;
@@ -245,7 +247,7 @@ static int put_f_buf(char *buf, const char *fmt, double f, int width, int adp, i
         adp--;
         *p++ = t[l % base];
         l /= base;
-    }while (l != 0);
+    } while (l != 0);
     if (!zeroflag && negativeflag) {
         width--;
         *p++ = '-';
@@ -279,8 +281,7 @@ static int put_f_buf(char *buf, const char *fmt, double f, int width, int adp, i
 }
 #endif
 
-int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
-{
+int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args) {
     char p;
     int m;
     unsigned long v;
@@ -291,9 +292,9 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
     int zeroflag = 0;
     int minusflag = 0;
     int shortflag = 0;
-#ifndef NO_FLOAT
+    #ifndef NO_FLOAT
     double f;
-#endif
+    #endif
 
     for (; *fmt != '\0'; fmt++) {
         p = *fmt;
@@ -301,7 +302,7 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
             size = 0;
             fmt++;
             p = *fmt;
-            vxsnprintf_0: if (p == '%') {
+        vxsnprintf_0: if (p == '%') {
                 goto vxsnprintf_next;
             } else if (p == '*') {
                 fmt++;
@@ -323,106 +324,106 @@ int vxsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args)
             }
             if (isdigit(p)) {
                 n = *fmt++ - '0';
-#if MORETHAN10
+                #if MORETHAN10
                 while (isdigit(*fmt)) {
                     n = n * 10 + (*fmt++ - '0');
                 }
-#endif
+                #endif
                 if (*fmt == '.') {
                     fmt++;
                     if (isdigit(*fmt)) {
                         m = *fmt++ - '0';
-#if MORETHAN10
+                        #if MORETHAN10
                         while (isdigit(*fmt)) {
                             m = m * 10 + (*fmt++ - '0');
                         }
                     }
                 }
                 p = *fmt;
-#endif
-            } else if (n == 0) {
-                n = -1;
-            }
+                        #endif
+                    } else if (n == 0) {
+                        n = -1;
+                    }
 
-            switch(p) {
-                case 'I':
-                    if (('6' == *(fmt + 1)) && ('4' == *(fmt + 2))) {
-                        vv = (unsigned long long)va_arg(args, long long);
-                        fmt += 3;
-                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                    switch (p) {
+                        case 'I':
+                            if (('6' == *(fmt + 1)) && ('4' == *(fmt + 2))) {
+                                vv = (unsigned long long)va_arg(args, long long);
+                                fmt += 3;
+                                size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                            }
+                            break;
+                        case 'l': {
+                            char p1 = *(fmt + 1);
+                            char p2 = *(fmt + 2);
+                            if ((p1 == 'd') || (p1 == 'u') || (p1 == 'x') || (p1 == 'X')) {
+                                vv = (unsigned long long)va_arg(args, long);
+                                fmt += 1;
+                                size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                            } else if ((p1 == 'l') && ((p2 == 'd') || (p2 == 'u') || (p2 == 'x') || (p2 == 'X'))) {
+                                vv = (unsigned long long)va_arg(args, long long);
+                                fmt += 2;
+                                size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                            }
+                            break;
+                        }
+                        case 's':
+                            v = (unsigned long)va_arg(args, long);
+                            size = put_s_buf(buf, (char *)v, n, buf_size, minusflag);
+                            break;
+                        case 'c':
+                            v = (unsigned long)va_arg(args, long);
+                            size = put_c_buf(buf, (char)v, n, buf_size);
+                            break;
+                        case 'd':
+                            size = put_n_buf(buf, fmt, (long long)va_arg(args, long), n, zeroflag, buf_size);
+                            break;
+                        case 'h':
+                            shortflag = 1;
+                            fmt++;
+                            p = *fmt;
+                            goto vxsnprintf_0;
+                        case 'b':
+                        case 'u':
+                        case 'o':
+                        case 'x':
+                        case 'e':
+                        case 'O':
+                        case 'X':
+                            if (shortflag) {
+                                v = (unsigned long)(va_arg(args, long) & 0xffff);
+                            } else {
+                                v = (unsigned long)va_arg(args, long);
+                            }
+                            size = put_n_buf(buf, fmt, (long long)v, n, zeroflag, buf_size);
+                            break;
+                        #ifndef NO_FLOAT
+                        case 'f':
+                            f = (float)va_arg(args, double);
+                            size = put_f_buf(buf, fmt, f, n, m, zeroflag, buf_size);
+                            break;
+                        #endif
                     }
-                    break;
-                case 'l': {
-                    char p1 = *(fmt + 1);
-                    char p2 = *(fmt + 2);
-                    if ((p1 == 'd') || (p1 == 'u') || (p1 == 'x') || (p1 == 'X')) {
-                        vv = (unsigned long long)va_arg(args, long);
-                        fmt += 1;
-                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
-                    } else if ((p1 == 'l') && ((p2 == 'd') || (p2 == 'u') || (p2 == 'x') || (p2 == 'X'))) {
-                        vv = (unsigned long long)va_arg(args, long long);
-                        fmt += 2;
-                        size = put_n_buf(buf, fmt, vv, n, zeroflag, buf_size);
+                    if (size < 0) {
+                        return -1;
                     }
-                    break;
+                    if (size) {
+                        buf += size;
+                        len += size;
+                        buf_size -= size;
+                    }
+                } else {
+                vxsnprintf_next:
+                    if (buf_size == 0) {
+                        return -1;
+                    }
+                    *buf++ = p;
+                    len++;
+                    buf_size--;
                 }
-                case 's':
-                    v = (unsigned long)va_arg(args, long);
-                    size = put_s_buf(buf, (char *)v, n, buf_size, minusflag);
-                    break;
-                case 'c':
-                    v = (unsigned long)va_arg(args, long);
-                    size = put_c_buf(buf, (char)v, n, buf_size);
-                    break;
-                case 'd':
-                    size = put_n_buf(buf, fmt, (long long)va_arg(args, long), n, zeroflag, buf_size);
-                    break;
-                case 'h':
-                    shortflag = 1;
-                    fmt++;
-                    p = *fmt;
-                    goto vxsnprintf_0;
-                case 'b':
-                case 'u':
-                case 'o':
-                case 'x':
-                case 'e':
-                case 'O':
-                case 'X':
-                    if (shortflag) {
-                        v = (unsigned long)(va_arg(args, long) & 0xffff);
-                    } else {
-                        v = (unsigned long)va_arg(args, long);
-                    }
-                    size = put_n_buf(buf, fmt, (long long)v, n, zeroflag, buf_size);
-                    break;
-#ifndef NO_FLOAT
-                case 'f':
-                    f = (float)va_arg(args, double);
-                    size = put_f_buf(buf, fmt, f, n, m, zeroflag, buf_size);
-                    break;
-#endif
             }
-            if (size < 0) {
-                return -1;
-            }
-            if (size) {
-                buf += size;
-                len += size;
-                buf_size -= size;
-            }
-        } else {
-vxsnprintf_next:
-            if (buf_size == 0) {
-                return -1;
-            }
-            *buf++ = p;
-            len++;
-            buf_size--;
+            *buf++ = '\0';
+            return len;
         }
-    }
-    *buf++ = '\0';
-    return len;
-}
 
 #endif
