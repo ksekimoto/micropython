@@ -336,7 +336,9 @@ static int chk_kbd_interrupt(int d) {
 
 void rx_main(uint32_t reset_mode) {
     rx_init();
-    // Enable caches and prefetch buffers
+    // Hook for a board to run code at start up, for example check if a
+    // bootloader should be entered instead of the main application.
+    // MICROPY_BOARD_STARTUP();
 
     MICROPY_BOARD_EARLY_INIT();
 
@@ -429,10 +431,11 @@ soft_reset:
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
     mp_stack_set_top(&estack);
-    mp_stack_set_limit((char *)&estack - (char *)&sstack - 1024);
+    mp_stack_set_limit((char *)&estack - (char *)&heap_end - 1024);
 
     // GC init
-    gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
+    // gc_init(MICROPY_HEAP_START, MICROPY_HEAP_END);
+    gc_init(&heap_start, &heap_end);
 
     #if MICROPY_ENABLE_PYSTACK
     static mp_obj_t pystack[384];
@@ -553,6 +556,9 @@ soft_reset:
     // Main script is finished, so now go into REPL mode.
     // The REPL mode can change, or it can request a soft reset.
     for (;;) {
+        #if MICROPY_HW_ENABLE_STORAGE
+        storage_flush();
+        #endif
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             if (pyexec_raw_repl() != 0) {
                 break;

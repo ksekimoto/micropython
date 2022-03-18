@@ -324,7 +324,7 @@ static void clock_source_select(void) {
     #else
     SYSTEM.PLLCR.BIT.PLLSRCSEL = 1;
     #endif
-    SYSTEM.PLLCR.BIT.STC = ((uint8_t)((float)BSP_CFG_PLL_MUL * 2.0)) - 1;
+    SYSTEM.PLLCR.BIT.STC = ((uint8_t)((float)BSP_CFG_PLL_MUL * 2.0f)) - 1;
     SYSTEM.PLLCR2.BYTE = 0x00;
     while (0 == SYSTEM.OSCOVFSR.BIT.PLOVF) {
     }

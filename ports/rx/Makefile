@@ -66,7 +66,7 @@ endif
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
+GIT_SUBMODULES += lib/lwip lib/mbedtls
 
 GCC_VERSION = "`$(CC) -dumpversion`"
 GCC_VERSION_9 = "9.0"
@@ -148,7 +148,7 @@ endif
 #######################################################################
 # C flags.
 #######################################################################
-CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
 # CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
 CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer 
@@ -332,7 +332,7 @@ endif
 LDFLAGS += -g
 LDFLAGS += -nostdlib
 LDFLAGS += -L boards
-LDFLAGS += -nostartfiles
+# LDFLAGS += -nostartfiles
 LDFLAGS += -T $(LD_FILES)
 LDFLAGS += -Map=$@.map --cref --defsym=_estack_reserve=8
 LDFLAGS += --gc-sections
@@ -503,7 +503,6 @@ endif
 SRC_C += modpyb.c
 SRC_C += modrx.c
 SRC_C += modrxreg.c
-SRC_C += moduos.c
 SRC_C += modutime.c
 SRC_C += mphalport.c
 SRC_C += mpnetworkport.c
@@ -793,6 +792,7 @@ ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
 # then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+CFLAGS += -DMICROPY_MODULE_FROZEN_STR
 endif
 
 

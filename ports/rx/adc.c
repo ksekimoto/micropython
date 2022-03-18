@@ -269,7 +269,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_vref_obj, adc_all_read_core_v
 STATIC mp_obj_t adc_all_read_vref(mp_obj_t self_in) {
     pyb_adc_all_obj_t *self = MP_OBJ_TO_PTR(self_in);
     adc_read_core_vref(&self->handle);
-    return mp_obj_new_float(3.3 * adc_refcor);
+    return mp_obj_new_float(3.3f * adc_refcor);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_vref_obj, adc_all_read_vref);
 #endif
