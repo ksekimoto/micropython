@@ -186,7 +186,6 @@ SRC_HAL_IMX_C += \
 	$(MCU_DIR)/drivers/fsl_lpspi.c \
 	$(MCU_DIR)/drivers/fsl_lpspi_edma.c \
 	$(MCU_DIR)/drivers/fsl_lpuart.c \
-	$(MCU_DIR)/drivers/fsl_ocotp.c \
 	$(MCU_DIR)/drivers/fsl_pit.c \
 	$(MCU_DIR)/drivers/fsl_pwm.c \
 	$(MCU_DIR)/drivers/fsl_snvs_lp.c \
@@ -239,7 +238,6 @@ SRC_C += \
 	mimxrt_sdram.c \
 	modmachine.c \
 	modmimxrt.c \
-	moduos.c \
 	modutime.c \
 	mphalport.c \
 	mpnetworkport.c \
@@ -410,7 +408,6 @@ SRC_QSTR += \
 	mimxrt_flash.c \
 	modmachine.c \
 	modmimxrt.c \
-	moduos.c \
 	modutime.c \
 	pin.c \
 	shared/runtime/mpirq.c \
