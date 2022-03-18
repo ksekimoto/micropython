@@ -67,6 +67,16 @@
 #if defined(MICROPY_HW_ENABLE_DAC) && MICROPY_HW_ENABLE_DAC
 
 void dac_init(void) {
+    // ToDo: implement
+}
+
+STATIC void dac_deinit(uint32_t dac_channel) {
+    // ToDo: implement
+}
+
+void dac_deinit_all(void) {
+    // ToDo: implement
+    dac_deinit(0);
 }
 
 /******************************************************************************/
@@ -87,7 +97,7 @@ STATIC void pyb_dac_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 STATIC mp_obj_t pyb_dac_init_helper(pyb_dac_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // GPIO configuration
     // mp_hal_pin_config(self->pin, MP_HAL_PIN_MODE_ANALOG, MP_HAL_PIN_PULL_NONE, 0);
-    rx_dac_init((uint8_t)(self->pin->pin));
+    rx_dac_init((uint8_t)(self->pin->id));
     return mp_const_none;
 }
 
@@ -109,7 +119,7 @@ STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_
     //    pin_idx = mp_obj_get_int(args[0]);
     // } else {
     const pin_obj_t *pin = pin_find(args[0]);
-    pin_idx = pin->pin;
+    pin_idx = pin->id;
     uint8_t channel = rx_dac_get_channel(pin_idx);
     if (channel == 0xff) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Pin(%q) doesn't have DAC capabilities"), pin->name);
@@ -145,7 +155,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_dac_deinit_obj, pyb_dac_deinit);
 /// Direct access to the DAC output (8 bit only at the moment).
 STATIC mp_obj_t pyb_dac_write(mp_obj_t self_in, mp_obj_t val) {
     pyb_dac_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    rx_dac_write((uint8_t)(self->pin->pin), (uint16_t)mp_obj_get_int(val));
+    rx_dac_write((uint8_t)(self->pin->id), (uint16_t)mp_obj_get_int(val));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_write_obj, pyb_dac_write);

@@ -106,8 +106,6 @@ int get_font_by_name(char *name);
 bool find_font_idx_by_id(int font_id, int *idx);
 font_t *get_font_by_id(int font_id);
 
-extern const mp_obj_type_t rx_font_type;
-
 #ifdef __cplusplus
 }
 #endif

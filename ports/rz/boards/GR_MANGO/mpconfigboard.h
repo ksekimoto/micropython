@@ -87,7 +87,7 @@
 #define MICROPY_HW_HAS_ESP8266          (1)  // SCI0
 #define MICROPY_HW_ESP8266_UART_CH      (1)
 #define MICROPY_HW_ESP8266_UART_BAUD    115200
-//#define MICROPY_HW_ESP8266_RE           (pin_P44)
+// ESP8266 Reset pin connects GR-MANGO Extension pin11 (P40).
 #define MICROPY_HW_ESP8266_RE           (pin_P40)
 #endif
 

@@ -476,10 +476,10 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);    // check arguments
-    uint32_t ch = 0;
+    uint32_t uart_id = 0;
     uint32_t baud = 115200;
     #if defined(MICROPY_HW_ESP8266_UART_CH)
-    ch = MICROPY_HW_ESP8266_UART_CH - 1;
+    uart_id = MICROPY_HW_ESP8266_UART_CH;
     #endif
     #if defined(MICROPY_HW_ESP8266_UART_BAUD)
     baud = MICROPY_HW_ESP8266_UART_BAUD;
@@ -499,7 +499,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
         #endif
     } else if (n_args >= 1 || n_args <= 4) {
         if (args[ARG_ch].u_int > 0) {
-            ch = args[ARG_ch].u_int - 1;
+            uart_id = args[ARG_ch].u_int;
         }
         if (args[ARG_baudrate].u_int > 0) {
             baud = args[ARG_ch].u_int;
@@ -523,7 +523,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
 #define SDK_MAX 32
     char at_ver[AT_MAX];
     char sdk_ver[SDK_MAX];
-    esp8266_driver_init(ch, baud);
+    esp8266_driver_init(uart_id, baud);
     if (!esp8266_driver_reset()) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP8266 module\n"));
     }

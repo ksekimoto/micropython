@@ -29,7 +29,9 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "modmachine.h"
+#include "extmod/machine_spi.h"
 #include "xpt2046.h"
+#include "common.h"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -41,28 +43,14 @@
 #define DEF_SPI_ID  0
 #define DEF_BAUDRATE 2000000
 
-uint32_t disable_irq(void) {
-    uint32_t state = MICROPY_BEGIN_ATOMIC_SECTION();
-    return state;
-}
-
-void enable_irq(uint32_t state) {
-    MICROPY_END_ATOMIC_SECTION(state);
-}
-
-typedef struct _machine_pin_obj_t {
-    mp_obj_base_t base;
-    uint32_t id;
-} machine_pin_obj_t;
-
-extern const mp_obj_type_t machine_pin_type;
-extern const mp_obj_type_t machine_spi_type;
+extern const mp_obj_type_t pin_type;
+extern const mp_obj_type_t machine_hard_spi_type ;
 static mp_obj_t m_spi_obj;
 static mp_machine_spi_p_t *machine_spi_p;
 
-static machine_pin_obj_t pin_mosi = {{&machine_pin_type}, 0};
-static machine_pin_obj_t pin_miso = {{&machine_pin_type}, 0};
-static machine_pin_obj_t pin_sck = {{&machine_pin_type}, 0};
+static pin_obj_t pin_mosi = {{&pin_type}, 0};
+static pin_obj_t pin_miso = {{&pin_type}, 0};
+static pin_obj_t pin_sck = {{&pin_type}, 0};
 
 static mp_obj_t m_args[] = {
     MP_OBJ_NEW_SMALL_INT(DEF_SPI_ID),
@@ -77,28 +65,12 @@ static mp_obj_t m_args[] = {
 };
 
 static void xpt2046_spi_init_helper(void) {
-    m_spi_obj = machine_spi_type.make_new(&machine_spi_type, 1, 4, (const mp_obj_t *)m_args);
-    machine_spi_p = (mp_machine_spi_p_t *)machine_spi_type.protocol;
+    m_spi_obj = machine_hard_spi_type.make_new(&machine_hard_spi_type, 1, 4, (const mp_obj_t *)m_args);
+    machine_spi_p = (mp_machine_spi_p_t *)machine_hard_spi_type.protocol;
 }
 
 static void xpt2046_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest) {
     machine_spi_p->transfer((mp_obj_base_t *)m_spi_obj, (size_t)len, (const uint8_t *)src, (uint8_t *)dest);
-}
-
-static void rx_gpio_mode_input(uint32_t pin) {
-    mp_hal_pin_input((mp_hal_pin_obj_t)pin);
-}
-
-static void rx_gpio_mode_output(uint32_t pin) {
-    mp_hal_pin_output((mp_hal_pin_obj_t)pin);
-}
-
-static void rx_gpio_write(uint32_t pin, bool level) {
-    mp_hal_pin_write((mp_hal_pin_obj_t)pin, (int)level);
-}
-
-static bool rx_gpio_read(uint32_t pin) {
-    return (bool)mp_hal_pin_read((mp_hal_pin_obj_t)pin);
 }
 
 typedef struct mod_xpt2046_obj_t {
@@ -145,38 +117,38 @@ STATIC mp_obj_t xpt2046_make_new(const mp_obj_type_t *type, size_t n_args, size_
     self->xpt2046->mode = args[ARG_mode].u_int;
     if (args[ARG_mosi].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("mosi pin not specified"));
-    } else if (!mp_obj_is_type(args[ARG_mosi].u_obj, &machine_pin_type)) {
+    } else if (!mp_obj_is_type(args[ARG_mosi].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
-        self->xpt2046->mosi_id = ((machine_pin_obj_t *)args[ARG_mosi].u_obj)->id;
+        self->xpt2046->mosi_id = ((pin_obj_t *)args[ARG_mosi].u_obj)->id;
     }
     if (args[ARG_miso].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("miso pin not specified"));
-    } else if (!mp_obj_is_type(args[ARG_miso].u_obj, &machine_pin_type)) {
+    } else if (!mp_obj_is_type(args[ARG_miso].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
-        self->xpt2046->miso_id = ((machine_pin_obj_t *)args[ARG_miso].u_obj)->id;
+        self->xpt2046->miso_id = ((pin_obj_t *)args[ARG_miso].u_obj)->id;
     }
     if (args[ARG_clk].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("clk pin not specified"));
-    } else if (!mp_obj_is_type(args[ARG_clk].u_obj, &machine_pin_type)) {
+    } else if (!mp_obj_is_type(args[ARG_clk].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
-        self->xpt2046->clk_id = ((machine_pin_obj_t *)args[ARG_clk].u_obj)->id;
+        self->xpt2046->clk_id = ((pin_obj_t *)args[ARG_clk].u_obj)->id;
     }
     if (args[ARG_cs].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("cs pin not specified"));
-    } else if (!mp_obj_is_type(args[ARG_cs].u_obj, &machine_pin_type)) {
+    } else if (!mp_obj_is_type(args[ARG_cs].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
-        self->xpt2046->cs_id = ((machine_pin_obj_t *)args[ARG_cs].u_obj)->id;
+        self->xpt2046->cs_id = ((pin_obj_t *)args[ARG_cs].u_obj)->id;
     }
     if (args[ARG_irq].u_obj == MP_OBJ_NULL) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("irq pin not specified"));
-    } else if (!mp_obj_is_type(args[ARG_irq].u_obj, &machine_pin_type)) {
+    } else if (!mp_obj_is_type(args[ARG_irq].u_obj, &pin_type)) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
-        self->xpt2046->irq_id = ((machine_pin_obj_t *)args[ARG_irq].u_obj)->id;
+        self->xpt2046->irq_id = ((pin_obj_t *)args[ARG_irq].u_obj)->id;
     }
     self->xpt2046->x_min = (int16_t)args[ARG_x_min].u_int;
     self->xpt2046->y_min = (int16_t)args[ARG_y_min].u_int;

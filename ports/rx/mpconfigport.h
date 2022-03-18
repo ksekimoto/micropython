@@ -71,7 +71,6 @@
 #define MICROPY_ENABLE_GC           (1)
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF (1)
 #define MICROPY_EMERGENCY_EXCEPTION_BUF_SIZE (0)
-#define MICROPY_HELPER_REPL         (1)
 #define MICROPY_REPL_INFO           (1)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_MPZ)
 #ifndef MICROPY_FLOAT_IMPL // can be configured by each board via mpconfigboard.mk
@@ -95,6 +94,7 @@
 #endif
 
 // extended modules
+#define MICROPY_PY_USSL_FINALISER   (MICROPY_PY_USSL)
 #define MICROPY_PY_UHASHLIB_MD5     (MICROPY_PY_USSL)
 #define MICROPY_PY_UHASHLIB_SHA1    (MICROPY_PY_USSL)
 #define MICROPY_PY_UCRYPTOLIB       (MICROPY_PY_USSL)
@@ -186,7 +186,6 @@
 extern const struct _mp_obj_module_t mp_module_wifi;
 extern const struct _mp_obj_module_t mp_module_twitter;
 #endif
-extern const struct _mp_obj_module_t machine_module;
 extern const struct _mp_obj_module_t pyb_module;
 #if MICROPY_PY_RX
 extern const struct _mp_obj_module_t rx_module;
@@ -225,10 +224,10 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #endif
 
 #if MICROPY_PY_MACHINE
-#define MACHINE_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) },
-#define MACHINE_BUILTIN_MODULE_CONSTANTS    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) },
+#define MACHINE_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
+    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
 #else
-#define MACHINE_BUILTIN_MODULE
 #define MACHINE_BUILTIN_MODULE_CONSTANTS
 #endif
 
@@ -314,7 +313,7 @@ extern void lv_deinit(void);
 #define ONEWIRE_BUILTIN_MODULE
 #endif
 
-#if MICROPY_HW_ETH_MDC
+#if defined(MICROPY_HW_ETH_MDC)
 extern const struct _mp_obj_type_t network_lan_type;
 #define MICROPY_HW_NIC_ETH                  { MP_ROM_QSTR(MP_QSTR_LAN), MP_ROM_PTR(&network_lan_type) },
 #else
@@ -329,7 +328,11 @@ extern const struct _mp_obj_type_t mp_network_cyw43_type;
 #endif
 
 #if MICROPY_PY_WIZNET5K
+#if MICROPY_PY_LWIP
+extern const struct _mp_obj_type_t mod_network_nic_type_wiznet5k;
+#else
 extern const struct _mod_network_nic_type_t mod_network_nic_type_wiznet5k;
+#endif
 #define MICROPY_HW_NIC_WIZNET5K             { MP_ROM_QSTR(MP_QSTR_WIZNET5K), MP_ROM_PTR(&mod_network_nic_type_wiznet5k) },
 #else
 #define MICROPY_HW_NIC_WIZNET5K
@@ -365,7 +368,6 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
     /* MYMODULE_BUILTIN_MODULE */ \
     /* WIFI_BUILTIN_MODULE */ \
     /* TWITTER_BUILTIN_MODULE */ \
-    MACHINE_BUILTIN_MODULE \
     PYB_BUILTIN_MODULE \
     RX_BUILTIN_MODULE \
     RXREG_BUILTIN_MODULE \
@@ -381,7 +383,6 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
-    MACHINE_BUILTIN_MODULE \
     MACHINE_BUILTIN_MODULE_CONSTANTS \
     PYB_BUILTIN_MODULE \
     RX_BUILTIN_MODULE \

@@ -63,6 +63,24 @@ static void set_kbd_interrupt(uint32_t ch, void *keyex) {
 
 #endif
 
+static void uart_rx_cb(uint32_t ch, int d) {
+    pyb_uart_obj_t *self = MP_STATE_PORT(pyb_uart_obj_all)[ch];
+    if (self == NULL) {
+        // UART object has not been set, so we can't do anything, not
+        // even disable the IRQ.  This should never happen.
+        return;
+    }
+    #if MICROPY_KBD_EXCEPTION
+    if (keyex_cb[ch]) {
+        (*keyex_cb[ch])(d);
+    }
+    #endif
+    // Check the flags to see if the user handler should be called
+    if (self->mp_irq_trigger) {
+        mp_irq_handler(self->mp_irq_obj);
+    }
+}
+
 void uart_init0(void) {
 }
 
@@ -336,8 +354,12 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
             return false;
     }
 
-    sci_init_with_pins(uart_unit, (int)pins[0]->pin, (int)pins[1]->pin, baudrate, bits, parity, stop, flow);
-
+    if (flow) {
+        rx_sci_init_with_flow(uart_unit - 1, (uint32_t)pins[0]->id, (uint32_t)pins[1]->id, baudrate, bits, parity, stop, flow, (uint32_t)pins[2]->id, (uint32_t)pins[3]->id);
+    } else {
+        rx_sci_init(uart_unit - 1, (uint32_t)pins[0]->id, (uint32_t)pins[1]->id, baudrate, bits, parity, stop, flow);
+    }
+    rx_sci_rx_set_callback((int)uart_unit - 1, (SCI_CB)uart_rx_cb);
     uart_obj->is_enabled = true;
     uart_obj->attached_to_repl = false;
 
@@ -373,17 +395,15 @@ void uart_set_rxbuf(pyb_uart_obj_t *self, size_t len, void *buf) {
     // len = 0 (no interrupt) is not supported. static buf is used.
     self->read_buf_len = len;
     self->read_buf = buf;
-    // if (len == 0) {
-    //    UART_RXNE_IT_DIS(self->uartx);
-    // } else {
-    //    UART_RXNE_IT_EN(self->uartx);
-    // }
+    if (len) {
+        int ch = (int)self->uart_id - 1;
+        rx_sci_rxfifo_set(ch, (uint8_t *)buf, (uint32_t)len);
+    }
 }
+
 void uart_deinit(pyb_uart_obj_t *self) {
     self->is_enabled = false;
-    sci_deinit(self->uart_id);
-
-    // ToDo: implement
+    rx_sci_deinit(self->uart_id - 1);
 }
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
@@ -398,8 +418,13 @@ void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached) {
 }
 
 mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
-    int ch = (int)self->uart_id;
-    return sci_rx_any(ch);
+    int ch = (int)self->uart_id - 1;
+    return rx_sci_rx_any(ch);
+}
+
+mp_uint_t uart_tx_avail(pyb_uart_obj_t *self) {
+    int ch = (int)self->uart_id - 1;
+    return rx_sci_tx_wait(ch);
 }
 
 // Waits at most timeout milliseconds for at least 1 char to become ready for
@@ -409,7 +434,7 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id - 1;
     uint32_t start = mtick();
     for (;;) {
-        if (sci_rx_any(ch)) {
+        if (rx_sci_rx_any(ch)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -422,16 +447,15 @@ bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 // assumes there is a character available
 int uart_rx_char(pyb_uart_obj_t *self) {
     int ch = (int)self->uart_id - 1;
-    return sci_rx_ch(ch);
+    return rx_sci_rx_ch(ch);
 }
 
 // Waits at most timeout milliseconds for TX register to become empty.
 // Returns true if can write, false if can't.
 bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
-    int ch = (int)self->uart_id - 1;
     uint32_t start = mtick();
     for (;;) {
-        if (sci_tx_wait(ch)) {
+        if (uart_tx_avail(self)) {
             return true;
         }
         if (mtick() - start >= timeout) {
@@ -446,18 +470,26 @@ bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 // *errcode - returns 0 for success, MP_Exxx on error
 // returns the number of characters sent (valid even if there was an error)
 size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
-    int ch = (int)self->uart_id;
-    uint8_t *data = (uint8_t *)src_in;
+    int ch = (int)self->uart_id - 1;
+    uint8_t *d8 = (uint8_t *)src_in;
+    uint16_t *d16 = (uint16_t *)src_in;
     if (num_chars == 0) {
         *errcode = 0;
         return 0;
     }
     int i;
+    if (self->char_width == CHAR_WIDTH_9BIT) {
     for (i = 0; i < (int)num_chars; i++) {
-        sci_tx_ch(ch, *data++);
+            rx_sci_tx_ch(ch, (int)*d16++);
     }
+    } else {
+        for (i = 0; i < (int)num_chars; i++) {
+            rx_sci_tx_ch(ch, (int)*d8++);
+        }
+    }
+
     *errcode = 0;
-    return (size_t)i;
+    return (size_t)num_chars;
 }
 
 void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {

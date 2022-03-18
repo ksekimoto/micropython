@@ -28,7 +28,7 @@
 
 // Current version of MicroPython
 #define MICROPY_VERSION_MAJOR 1
-#define MICROPY_VERSION_MINOR 17
+#define MICROPY_VERSION_MINOR 18
 #define MICROPY_VERSION_MICRO 0
 
 // Combined version as a 32-bit number for convenience
@@ -326,6 +326,14 @@
 // This is enabled automatically when needed by other features
 #ifndef MICROPY_PERSISTENT_CODE
 #define MICROPY_PERSISTENT_CODE (MICROPY_PERSISTENT_CODE_LOAD || MICROPY_PERSISTENT_CODE_SAVE || MICROPY_MODULE_FROZEN_MPY)
+#endif
+
+// Whether bytecode uses a qstr_table to map internal qstr indices in the bytecode
+// to global qstr values in the runtime (behaviour when feature is enabled), or
+// just stores global qstr values directly in the bytecode.  This must be enabled
+// if MICROPY_PERSISTENT_CODE is enabled.
+#ifndef MICROPY_EMIT_BYTECODE_USES_QSTR_TABLE
+#define MICROPY_EMIT_BYTECODE_USES_QSTR_TABLE (MICROPY_PERSISTENT_CODE)
 #endif
 
 // Whether to emit x64 native code
@@ -814,6 +822,12 @@ typedef double mp_float_t;
 #define MICROPY_STREAMS_POSIX_API (0)
 #endif
 
+// Whether modules can use MP_MODULE_ATTR_DELEGATION_ENTRY() to delegate failed
+// attribute lookups.
+#ifndef MICROPY_MODULE_ATTR_DELEGATION
+#define MICROPY_MODULE_ATTR_DELEGATION (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
 // Whether to call __init__ when importing builtin modules for the first time
 #ifndef MICROPY_MODULE_BUILTIN_INIT
 #define MICROPY_MODULE_BUILTIN_INIT (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
@@ -827,6 +841,12 @@ typedef double mp_float_t;
 // Whether module weak links are supported
 #ifndef MICROPY_MODULE_WEAK_LINKS
 #define MICROPY_MODULE_WEAK_LINKS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
+// Whether to enable importing foo.py with __name__ set to '__main__'
+// Used by the unix port for the -m flag.
+#ifndef MICROPY_MODULE_OVERRIDE_MAIN_IMPORT
+#define MICROPY_MODULE_OVERRIDE_MAIN_IMPORT (0)
 #endif
 
 // Whether frozen modules are supported in the form of strings
@@ -1215,6 +1235,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_MATH (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
 #endif
 
+// Whether to provide all math module constants (Python 3.5+), or just pi and e.
+#ifndef MICROPY_PY_MATH_CONSTANTS
+#define MICROPY_PY_MATH_CONSTANTS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
 // Whether to provide special math functions: math.{erf,erfc,gamma,lgamma}
 #ifndef MICROPY_PY_MATH_SPECIAL_FUNCTIONS
 #define MICROPY_PY_MATH_SPECIAL_FUNCTIONS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
@@ -1275,17 +1300,6 @@ typedef double mp_float_t;
 #define MICROPY_PY_IO_IOBASE (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
 #endif
 
-// Whether to provide "uio.resource_stream()" function with
-// the semantics of CPython's pkg_resources.resource_stream()
-// (allows to access binary resources in frozen source packages).
-// Note that the same functionality can be achieved in "pure
-// Python" by prepocessing binary resources into Python source
-// and bytecode-freezing it (with a simple helper module available
-// e.g. in micropython-lib).
-#ifndef MICROPY_PY_IO_RESOURCE_STREAM
-#define MICROPY_PY_IO_RESOURCE_STREAM (0)
-#endif
-
 // Whether to provide "io.FileIO" class
 #ifndef MICROPY_PY_IO_FILEIO
 #define MICROPY_PY_IO_FILEIO (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
@@ -1309,6 +1323,11 @@ typedef double mp_float_t;
 // Whether to provide "sys" module
 #ifndef MICROPY_PY_SYS
 #define MICROPY_PY_SYS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
+#endif
+
+// Whether to initialise "sys.path" and "sys.argv" to their defaults in mp_init()
+#ifndef MICROPY_PY_SYS_PATH_ARGV_DEFAULTS
+#define MICROPY_PY_SYS_PATH_ARGV_DEFAULTS (MICROPY_PY_SYS)
 #endif
 
 // Whether to provide "sys.maxsize" constant
@@ -1337,6 +1356,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_SYS_ATEXIT (0)
 #endif
 
+// Whether to provide sys.{ps1,ps2} mutable attributes, to control REPL prompts
+#ifndef MICROPY_PY_SYS_PS1_PS2
+#define MICROPY_PY_SYS_PS1_PS2 (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
 // Whether to provide "sys.settrace" function
 #ifndef MICROPY_PY_SYS_SETTRACE
 #define MICROPY_PY_SYS_SETTRACE (0)
@@ -1356,6 +1380,17 @@ typedef double mp_float_t;
 // This is implemented per-port
 #ifndef MICROPY_PY_SYS_STDIO_BUFFER
 #define MICROPY_PY_SYS_STDIO_BUFFER (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
+// Whether to provide sys.tracebacklimit mutable attribute
+#ifndef MICROPY_PY_SYS_TRACEBACKLIMIT
+#define MICROPY_PY_SYS_TRACEBACKLIMIT (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EVERYTHING)
+#endif
+
+// Whether the sys module supports attribute delegation
+// This is enabled automatically when needed by other features
+#ifndef MICROPY_PY_SYS_ATTR_DELEGATION
+#define MICROPY_PY_SYS_ATTR_DELEGATION (MICROPY_PY_SYS_PS1_PS2 || MICROPY_PY_SYS_TRACEBACKLIMIT)
 #endif
 
 // Whether to provide "uerrno" module
@@ -1440,6 +1475,14 @@ typedef double mp_float_t;
 // Whether to support the "separators" argument to dump, dumps
 #ifndef MICROPY_PY_UJSON_SEPARATORS
 #define MICROPY_PY_UJSON_SEPARATORS (1)
+#endif
+
+#ifndef MICROPY_PY_UOS
+#define MICROPY_PY_UOS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
+#ifndef MICROPY_PY_UOS_STATVFS
+#define MICROPY_PY_UOS_STATVFS (MICROPY_PY_UOS)
 #endif
 
 #ifndef MICROPY_PY_URE
@@ -1552,7 +1595,10 @@ typedef double mp_float_t;
 
 #ifndef MICROPY_PY_USSL
 #define MICROPY_PY_USSL (0)
+#endif
+
 // Whether to add finaliser code to ussl objects
+#ifndef MICROPY_PY_USSL_FINALISER
 #define MICROPY_PY_USSL_FINALISER (0)
 #endif
 
@@ -1579,6 +1625,12 @@ typedef double mp_float_t;
 // Additional builtin function definitions - see modbuiltins.c:mp_module_builtins_globals_table for format.
 #ifndef MICROPY_PORT_BUILTINS
 #define MICROPY_PORT_BUILTINS
+#endif
+
+// Additional builtin function definitions for extension by command-line, boards or variants.
+// See modbuiltins.c:mp_module_builtins_globals_table for format.
+#ifndef MICROPY_PORT_EXTRA_BUILTINS
+#define MICROPY_PORT_EXTRA_BUILTINS
 #endif
 
 // Additional builtin module definitions - see objmodule.c:mp_builtin_module_table for format.

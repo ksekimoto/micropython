@@ -119,44 +119,56 @@ void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baudrate,
 // TODO allow to take a list of pins to use
 void spi_init(const spi_t *self, bool enable_nss_pin) {
     // ToDo: implement using pins definition
-    // const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
+    const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
     if (0) {
     #if defined(MICROPY_HW_SPI1_SCK)
     } else if (self->ch == 0) {
-        // #if defined(MICROPY_HW_SPI1_NSS)
-        // pins[0] = MICROPY_HW_SPI1_NSS;
-        // #endif
-        // pins[1] = MICROPY_HW_SPI1_SCK;
-        // #if defined(MICROPY_HW_SPI1_MISO)
-        // pins[2] = MICROPY_HW_SPI1_MISO;
-        // #endif
-        // pins[3] = MICROPY_HW_SPI1_MOSI;
-        rx_spi_init(self->ch, 0, 4000000, 8, 0);
+        #if defined(MICROPY_HW_SPI1_NSS)
+        pins[0] = MICROPY_HW_SPI1_NSS;
+        #endif
+        #if defined(MICROPY_HW_SPI1_SCK)
+        pins[1] = MICROPY_HW_SPI1_SCK;
+        #endif
+        #if defined(MICROPY_HW_SPI1_MISO)
+        pins[2] = MICROPY_HW_SPI1_MISO;
+        #endif
+        #if defined(MICROPY_HW_SPI1_MOSI)
+        pins[3] = MICROPY_HW_SPI1_MOSI;
+        #endif
+        rx_spi_init_with_pin(self->ch, pins[3]->id, pins[2]->id, pins[1]->id, pins[0]->id, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
     } else if (self->ch == 1) {
-        // #if defined(MICROPY_HW_SPI2_NSS)
-        // pins[0] = MICROPY_HW_SPI2_NSS;
-        // #endif
-        // pins[1] = MICROPY_HW_SPI2_SCK;
-        // #if defined(MICROPY_HW_SPI2_MISO)
-        // pins[2] = MICROPY_HW_SPI2_MISO;
-        // #endif
-        // pins[3] = MICROPY_HW_SPI2_MOSI;
-        rx_spi_init(self->ch, 0, 4000000, 8, 0);
+        #if defined(MICROPY_HW_SPI2_NSS)
+        pins[0] = MICROPY_HW_SPI2_NSS;
+        #endif
+        #if defined(MICROPY_HW_SPI2_SCK)
+        pins[1] = MICROPY_HW_SPI2_SCK;
+        #endif
+        #if defined(MICROPY_HW_SPI2_MISO)
+        pins[2] = MICROPY_HW_SPI2_MISO;
+        #endif
+        #if defined(MICROPY_HW_SPI2_MOSI)
+        pins[3] = MICROPY_HW_SPI2_MOSI;
+        #endif
+        rx_spi_init_with_pin(self->ch, pins[3]->id, pins[2]->id, pins[1]->id, pins[0]->id, 4000000, 8, 0);
     #endif
     #if defined(MICROPY_HW_SPI3_SCK)
-    } else if (self->ch == 3) {
-        // #if defined(MICROPY_HW_SPI0_NSS)
-        // pins[0] = MICROPY_HW_SPI3_NSS;
-        // #endif
-        // pins[1] = MICROPY_HW_SPI3_SCK;
-        // #if defined(MICROPY_HW_SPI3_MISO)
-        // pins[2] = MICROPY_HW_SPI3_MISO;
-        // #endif
-        // pins[3] = MICROPY_HW_SPI3_MOSI;
-        rx_spi_init(self->ch, 0, 4000000, 8, 0);
+    } else if (self->ch == 2) {
+        #if defined(MICROPY_HW_SPI3_NSS)
+        pins[0] = MICROPY_HW_SPI3_NSS;
+        #endif
+        #if defined(MICROPY_HW_SPI3_SCK)
+        pins[1] = MICROPY_HW_SPI3_SCK;
+        #endif
+        #if defined(MICROPY_HW_SPI3_MISO)
+        pins[2] = MICROPY_HW_SPI3_MISO;
+        #endif
+        #if defined(MICROPY_HW_SPI3_MISO)
+        pins[3] = MICROPY_HW_SPI3_MOSI;
+        #endif
+        rx_spi_init_with_pin(self->ch, pins[3]->id, pins[2]->id, pins[1]->id, pins[0]->id, 4000000, 8, 0);
     #endif
     } else {
         // SPI does not exist for this board (shouldn't get here, should be checked by caller)

@@ -58,7 +58,7 @@ static char *_add(const char *str, char *pt, const char *ptlim);
 size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *t) {
     char *p;
 
-    p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize);
+    p = _fmt(((format == (const char *)NULL) ? "%c" : format), t, s, s + maxsize);
     if (p == s + maxsize) {
         return 0;
     }

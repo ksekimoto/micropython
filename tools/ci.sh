@@ -68,6 +68,23 @@ function ci_code_size_build {
 }
 
 ########################################################################################
+# .mpy file format
+
+function ci_mpy_format_setup {
+    sudo pip3 install pyelftools
+}
+
+function ci_mpy_format_test {
+    # Test mpy-tool.py dump feature on bytecode
+    python2 ./tools/mpy-tool.py -xd ports/minimal/frozentest.mpy
+    python3 ./tools/mpy-tool.py -xd ports/minimal/frozentest.mpy
+
+    # Test mpy-tool.py dump feature on native code
+    make -C examples/natmod/features1
+    ./tools/mpy-tool.py -xd examples/natmod/features1/features1.mpy
+}
+
+########################################################################################
 # ports/cc3200
 
 function ci_cc3200_setup {
@@ -107,8 +124,7 @@ function ci_esp32_idf402_setup {
 }
 
 function ci_esp32_idf44_setup {
-    # This commit is just before v5.0-dev
-    ci_esp32_setup_helper 142bb32c50fa9875b8b69fa539a2d59559460d72
+    ci_esp32_setup_helper v4.4
 }
 
 function ci_esp32_build {
@@ -282,12 +298,16 @@ function ci_stm32_nucleo_build {
     make ${MAKEOPTS} -C mpy-cross
     make ${MAKEOPTS} -C ports/stm32 submodules
     git submodule update --init lib/mynewt-nimble
+
+    # Test building various MCU families, some with additional options.
     make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_F091RC
     make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_H743ZI CFLAGS_EXTRA='-DMICROPY_PY_THREAD=1'
     make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_L073RZ
     make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_L476RG DEBUG=1
-    make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_WB55
-    make ${MAKEOPTS} -C ports/stm32/mboot BOARD=NUCLEO_WB55
+
+    # Test building a board with mboot packing enabled (encryption, signing, compression).
+    make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_WB55 USE_MBOOT=1 MBOOT_ENABLE_PACKING=1
+    make ${MAKEOPTS} -C ports/stm32/mboot BOARD=NUCLEO_WB55 USE_MBOOT=1 MBOOT_ENABLE_PACKING=1
     # Test mboot_pack_dfu.py created a valid file, and that its unpack-dfu command works.
     BOARD_WB55=ports/stm32/boards/NUCLEO_WB55
     BUILD_WB55=ports/stm32/build-NUCLEO_WB55
@@ -365,6 +385,7 @@ function ci_unix_run_tests_full_helper {
     fi
     make -C ports/unix VARIANT=$variant "$@" test_full
     (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/$micropython ./run-multitests.py multi_net/*.py)
+    (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/$micropython ./run-perfbench.py 1000 1000)
 }
 
 function ci_native_mpy_modules_build {
@@ -404,10 +425,6 @@ function ci_unix_standard_run_tests {
     ci_unix_run_tests_full_helper standard
 }
 
-function ci_unix_standard_run_perfbench {
-    (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython ./run-perfbench.py 1000 1000)
-}
-
 function ci_unix_dev_build {
     ci_unix_build_helper VARIANT=dev
 }
@@ -434,7 +451,7 @@ function ci_unix_coverage_run_tests {
 
 function ci_unix_coverage_run_native_mpy_tests {
     MICROPYPATH=examples/natmod/features2 ./ports/unix/micropython-coverage -m features2
-    (cd tests && ./run-natmodtests.py "$@" extmod/{btree*,framebuf*,uheapq*,ure*,uzlib*}.py)
+    (cd tests && ./run-natmodtests.py "$@" extmod/{btree*,framebuf*,uheapq*,urandom*,ure*,uzlib*}.py)
 }
 
 function ci_unix_32bit_setup {
@@ -463,7 +480,7 @@ function ci_unix_coverage_32bit_run_native_mpy_tests {
 
 function ci_unix_nanbox_build {
     # Use Python 2 to check that it can run the build scripts
-    ci_unix_build_helper PYTHON=python2 VARIANT=nanbox
+    ci_unix_build_helper PYTHON=python2 VARIANT=nanbox CFLAGS_EXTRA="-DMICROPY_PY_MATH_CONSTANTS=1"
     ci_unix_build_ffi_lib_helper gcc -m32
 }
 
@@ -599,31 +616,34 @@ function ci_windows_build {
 ########################################################################################
 # ports/zephyr
 
+ZEPHYR_DOCKER_VERSION=v0.21.0
+ZEPHYR_SDK_VERSION=0.13.2
+ZEPHYR_VERSION=v3.0.0
+
 function ci_zephyr_setup {
-    docker pull zephyrprojectrtos/ci:v0.17.3
+    docker pull zephyrprojectrtos/ci:${ZEPHYR_DOCKER_VERSION}
     docker run --name zephyr-ci -d -it \
       -v "$(pwd)":/micropython \
-      -e ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-0.12.4 \
+      -e ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${ZEPHYR_SDK_VERSION} \
       -e ZEPHYR_TOOLCHAIN_VARIANT=zephyr \
       -e ZEPHYR_BASE=/zephyrproject/zephyr \
       -w /micropython/ports/zephyr \
-      zephyrprojectrtos/ci:v0.17.3
+      zephyrprojectrtos/ci:${ZEPHYR_DOCKER_VERSION}
     docker ps -a
 }
 
 function ci_zephyr_install {
-    docker exec zephyr-ci west init --mr v2.6.0 /zephyrproject
+    docker exec zephyr-ci west init --mr ${ZEPHYR_VERSION} /zephyrproject
     docker exec -w /zephyrproject zephyr-ci west update
     docker exec -w /zephyrproject zephyr-ci west zephyr-export
 }
 
 function ci_zephyr_build {
     docker exec zephyr-ci west build -p auto -b qemu_x86 -- -DCONF_FILE=prj_minimal.conf
-    docker exec zephyr-ci west build -p auto -b frdm_k64f -- -DCONF_FILE=prj_minimal.conf
     docker exec zephyr-ci west build -p auto -b qemu_x86
     docker exec zephyr-ci west build -p auto -b frdm_k64f
     docker exec zephyr-ci west build -p auto -b mimxrt1050_evk
-    docker exec zephyr-ci west build -p auto -b reel_board
+    docker exec zephyr-ci west build -p auto -b nucleo_wb55rg # for bluetooth
 }
 
 ########################################################################################

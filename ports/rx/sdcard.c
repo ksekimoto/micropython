@@ -121,8 +121,8 @@ static uint32_t sd_blocksize = 512;
 static uint8_t sd_card_type;
 
 #define SD_TIMEOUT  1000000
-#define CS_HIGH()       gpio_write(sd_cs, 1)
-#define CS_LOW()        gpio_write(sd_cs, 0)
+#define CS_HIGH()       rx_gpio_write(sd_cs, 1)
+#define CS_LOW()        rx_gpio_write(sd_cs, 0)
 
 inline static uint8_t xchg_spi(uint8_t dat) {
     return rx_spi_write_byte(sd_ch, dat);
@@ -215,7 +215,7 @@ static BYTE sd_cmd(uint8_t cmd, uint32_t arg) {
 
 static void sd_readinto(uint8_t *buf, uint32_t len) {
     uint32_t timeout = 10000;
-    gpio_write(sd_cs,0);
+    rx_gpio_write(sd_cs,0);
     while (true) {
         if (rx_spi_write_byte(sd_ch, 0xff) == _TOKEN_DATA) {
             break;
@@ -227,36 +227,36 @@ static void sd_readinto(uint8_t *buf, uint32_t len) {
     rx_spi_transfer8(sd_ch, buf, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);   /* read checksum */
     rx_spi_write_byte(sd_ch, 0xff);   /* read checksum */
-    gpio_write(sd_cs,1);
+    rx_gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
 
 static void sd_write_buf(uint8_t token, uint8_t *buf, uint32_t len) {
-    gpio_write(sd_cs,0);
+    rx_gpio_write(sd_cs,0);
     rx_spi_write_byte(sd_ch, token);
     rx_spi_write_bytes8(sd_ch, buf, len);
     rx_spi_write_byte(sd_ch, 0xff);
     rx_spi_write_byte(sd_ch, 0xff);
     if ((rx_spi_write_byte(sd_ch, 0xff) & 0x1f) != 0x05) {
-        gpio_write(sd_cs,1);
+        rx_gpio_write(sd_cs,1);
         rx_spi_write_byte(sd_ch, 0xff);
         return;
     }
     while (rx_spi_write_byte(sd_ch, 0xff) == 0) {
         ;
     }
-    gpio_write(sd_cs,1);
+    rx_gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
 
 static void sd_write_token(uint8_t token) {
-    gpio_write(sd_cs,0);
+    rx_gpio_write(sd_cs,0);
     rx_spi_write_byte(sd_ch, token);
     rx_spi_write_byte(sd_ch, 0xff);
     while (rx_spi_write_byte(sd_ch, 0xff) == 0) {
         ;
     }
-    gpio_write(sd_cs,1);
+    rx_gpio_write(sd_cs,1);
     rx_spi_write_byte(sd_ch, 0xff);
 }
 
@@ -308,12 +308,27 @@ static void sd_get_sector_block_size(void) {
 }
 
 uint8_t sd_init_card(void) {
+    const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
     uint8_t n, cmd, ty, ocr[4];
     uint32_t timeout;
+    sd_sectors = 0;
 
-    gpio_write(sd_cs, 1);
-    rx_spi_init(sd_ch, sd_cs, 100000, 8, 0);
-    /* Send 80 dummy clocks */
+    #if defined(MICROPY_HW_SDCARD_SPI_CS)
+    pins[0] = MICROPY_HW_SDCARD_SPI_CS;
+    #endif
+    #if defined(MICROPY_HW_SDCARD_SPI_CK)
+    pins[1] = MICROPY_HW_SDCARD_SPI_CK;
+    #endif
+    #if defined(MICROPY_HW_SDCARD_SPI_MISO)
+    pins[2] = MICROPY_HW_SDCARD_SPI_MISO;
+    #endif
+    #if defined(MICROPY_HW_SDCARD_SPI_MOSI)
+    pins[3] = MICROPY_HW_SDCARD_SPI_MOSI;
+    #endif
+    sd_cs = pins[0]->id;
+    rx_gpio_write(sd_cs, 1);
+    rx_spi_init_with_pin(sd_ch, pins[3]->id, pins[2]->id, pins[1]->id, sd_cs, SD_SPI_CLOCK_LOW, 8, 0);
+    // Send 80 dummy clocks
     for (int i = 0; i < 10; i++) {
         xchg_spi(0xFF);
     }
@@ -362,7 +377,7 @@ uint8_t sd_init_card(void) {
     sd_get_sector_block_size();
     sd_deselect();
 
-    rx_spi_init(sd_ch, sd_cs, 4000000, 8, 0);
+    rx_spi_init_with_pin(sd_ch, pins[3]->id, pins[2]->id, pins[1]->id, sd_cs, SD_SPI_CLOCK_HIGH, 8, 0);
     return 0;
 }
 
@@ -373,15 +388,19 @@ void sdcard_init(void) {
     mp_hal_pin_config(MICROPY_HW_SDCARD_DETECT_PIN, MP_HAL_PIN_MODE_INPUT, MICROPY_HW_SDCARD_DETECT_PULL, 0);
     #endif
     sd_ch = MICROPY_HW_SDCARD_SPI_CH;
-    sd_cs = MICROPY_HW_SDCARD_SPI_CS->pin;
-    gpio_mode_output(sd_cs);
+    sd_cs = MICROPY_HW_SDCARD_SPI_CS->id;
+    rx_gpio_mode_output(sd_cs);
     sd_init_card();
     sd_handle = 1;
 }
 
 bool sdcard_is_present(void) {
-    gpio_mode_input(MICROPY_HW_SDCARD_DETECT_PIN->pin);
-    return gpio_read(MICROPY_HW_SDCARD_DETECT_PIN->pin) == MICROPY_HW_SDCARD_DETECT_PRESENT;
+    #if defined(MICROPY_HW_SDCARD_DETECT_PIN)
+    rx_gpio_mode_input(MICROPY_HW_SDCARD_DETECT_PIN->id);
+    return rx_gpio_read(MICROPY_HW_SDCARD_DETECT_PIN->id) == MICROPY_HW_SDCARD_DETECT_PRESENT;
+    #else
+    return true;
+    #endif
 }
 
 bool sdcard_power_on(void) {
@@ -414,14 +433,14 @@ static uint32_t sd_readblocks(uint32_t block_num, uint8_t *buf, uint32_t len) {
     uint32_t nblocks = len;
     if (nblocks == 1) {
         if (sd_cmd(CMD17, block_num * sd_cdv) != 0) {
-            gpio_write(sd_cs, 1);
+            rx_gpio_write(sd_cs, 1);
             // raise OSError(5)
             return SD_ERR_EIO;
         }
         sd_readinto(buf, 512);
     } else {
         if (sd_cmd(CMD18, block_num * sd_cdv) != 0) {
-            gpio_write(sd_cs, 1);
+            rx_gpio_write(sd_cs, 1);
             // raise OSError(5)
             return SD_ERR_EIO;
         }
@@ -584,9 +603,9 @@ STATIC mp_obj_t pyb_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
         case MP_BLOCKDEV_IOCTL_INIT:
-            // if (!sdcard_power_on()) {
-            //    return MP_OBJ_NEW_SMALL_INT(-1); // error
-            // }
+            if (!sdcard_power_on()) {
+                return MP_OBJ_NEW_SMALL_INT(-1);  // error
+            }
             return MP_OBJ_NEW_SMALL_INT(0); // success
 
         case MP_BLOCKDEV_IOCTL_DEINIT:

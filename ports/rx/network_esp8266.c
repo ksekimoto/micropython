@@ -469,17 +469,17 @@ STATIC const esp8266_obj_t esp8266_obj = {{(mp_obj_type_t *)&mod_network_nic_typ
 STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_ch, ARG_baudrate, ARG_en, ARG_reset };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 115200} },
         { MP_QSTR_en,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);    // check arguments
-    uint32_t ch = 0;
+    uint32_t uart_id = 0;
     uint32_t baud = 115200;
     #if defined(MICROPY_HW_ESP8266_UART_CH)
-    ch = MICROPY_HW_ESP8266_UART_CH;
+    uart_id = MICROPY_HW_ESP8266_UART_CH;
     #endif
     #if defined(MICROPY_HW_ESP8266_UART_BAUD)
     baud = MICROPY_HW_ESP8266_UART_BAUD;
@@ -498,10 +498,10 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
         mp_hal_pin_high(MICROPY_HW_ESP8266_EN);
         #endif
     } else if (n_args >= 1 || n_args <= 4) {
-        if (args[ARG_ch].u_int != -1) {
-            ch = args[ARG_ch].u_int;
+        if (args[ARG_ch].u_int > 0) {
+            uart_id = args[ARG_ch].u_int;
         }
-        if (args[ARG_baudrate].u_int != -1) {
+        if (args[ARG_baudrate].u_int > 0) {
             baud = args[ARG_ch].u_int;
         }
         if (args[ARG_reset].u_obj != MP_OBJ_NULL) {
@@ -523,7 +523,7 @@ STATIC mp_obj_t esp8266_make_new(const mp_obj_type_t *type, size_t n_args, size_
 #define SDK_MAX 32
     char at_ver[AT_MAX];
     char sdk_ver[SDK_MAX];
-    esp8266_driver_init(ch, baud);
+    esp8266_driver_init(uart_id, baud);
     if (!esp8266_driver_reset()) {
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP8266 module\n"));
     }

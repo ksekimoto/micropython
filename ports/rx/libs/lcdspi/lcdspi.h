@@ -244,8 +244,6 @@ font_t *lcdspi_get_font(lcdspi_t *lcdspi);
 unsigned short cnvUtf8ToUnicode(unsigned char *str, uint32_t *size);
 int lcdspi_disp_bmp_file(lcdspi_t *lcdspi, int x, int y, const char *filename);
 
-extern const mp_obj_type_t rx_lcdspi_type;
-
 #ifdef __cplusplus
 }
 #endif

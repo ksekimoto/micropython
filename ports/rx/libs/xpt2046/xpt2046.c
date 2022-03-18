@@ -41,9 +41,6 @@
 #endif
 #define PIN_NONE 0xffff
 
-uint32_t disable_irq(void);
-void enable_irq(uint32_t);
-
 static xpt2046_gpio_output_t m_gpio_output;
 static xpt2046_gpio_input_t m_gpio_input;
 static xpt2046_gpio_write_t m_gpio_write;

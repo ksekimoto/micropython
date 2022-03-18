@@ -30,12 +30,7 @@
 #include "py/runtime.h"
 #include "shared/runtime/interrupt_char.h"
 #include "pendsv.h"
-#if defined(RX63N)
-#include "rx63n_timer.h"
-#endif
-#if defined(RX65N)
-#include "rx65n_timer.h"
-#endif
+#include "rx_timer.h"
 
 // This variable is used to save the exception object between a ctrl-C and the
 // PENDSV call that actually raises the exception.  It must be non-static

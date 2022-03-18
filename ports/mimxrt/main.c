@@ -75,9 +75,6 @@ int main(void) {
         gc_init(&_gc_heap_start, &_gc_heap_end);
         mp_init();
 
-        mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), 0);
-        mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR_));
-        mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
         #if MICROPY_PY_NETWORK
         mod_network_init();
         #endif
@@ -119,6 +116,7 @@ int main(void) {
         #if MICROPY_PY_NETWORK
         mod_network_deinit();
         #endif
+        machine_pwm_deinit_all();
         gc_sweep_all();
         mp_deinit();
     }

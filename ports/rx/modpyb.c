@@ -42,15 +42,14 @@
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
-#if 0
-#include "can.h"
-#endif
+// #include "can.h"
 #include "adc.h"
 #include "storage.h"
 #include "sdcard.h"
 #include "accel.h"
 #include "servo.h"
 #include "dac.h"
+// #include "lcd.h"
 #include "usb.h"
 #include "portmodules.h"
 #include "modmachine.h"
@@ -59,10 +58,11 @@
 #include "pwm.h"
 
 #if MICROPY_PY_PYB_FONT
-#include "font.h"
+extern const mp_obj_type_t rx_font_type;
+extern const mp_obj_type_t rx_xpt2046_type;
 #endif
 #if MICROPY_PY_PYB_LCDSPI
-#include "lcdspi.h"
+extern const mp_obj_type_t rx_lcdspi_type;
 #endif
 
 char pyb_country_code[2];
@@ -144,6 +144,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_country_obj, 0, 1, pyb_country);
 
 STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_pyb) },
+
+    // { MP_ROM_QSTR(MP_QSTR_fault_debug), MP_ROM_PTR(&pyb_fault_debug_obj) },
 
     #if MICROPY_PY_PYB_LEGACY
     { MP_ROM_QSTR(MP_QSTR_bootloader), MP_ROM_PTR(&machine_bootloader_obj) },
@@ -269,6 +271,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
     #if MICROPY_PY_PYB_LCDSPI
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&rx_lcdspi_type) },
+    { MP_ROM_QSTR(MP_QSTR_XPT2046), MP_ROM_PTR(&rx_xpt2046_type) },
     #endif
 
 };
