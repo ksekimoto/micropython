@@ -61,8 +61,30 @@
     do { \
         unum = (unum << 7) + (*ip & 0x7f); \
     } while ((*ip++ & 0x80) != 0)
-#define DECODE_ULABEL size_t ulab = (ip[0] | (ip[1] << 8)); ip += 2
-#define DECODE_SLABEL size_t slab = (ip[0] | (ip[1] << 8)) - 0x8000; ip += 2
+
+#define DECODE_ULABEL \
+    size_t ulab; \
+    do { \
+        if (ip[0] & 0x80) { \
+            ulab = ((ip[0] & 0x7f) | (ip[1] << 7)); \
+            ip += 2; \
+        } else { \
+            ulab = ip[0]; \
+            ip += 1; \
+        } \
+    } while (0)
+
+#define DECODE_SLABEL \
+    size_t slab; \
+    do { \
+        if (ip[0] & 0x80) { \
+            slab = ((ip[0] & 0x7f) | (ip[1] << 7)) - 0x4000; \
+            ip += 2; \
+        } else { \
+            slab = ip[0] - 0x40; \
+            ip += 1; \
+        } \
+    } while (0)
 
 #if MICROPY_EMIT_BYTECODE_USES_QSTR_TABLE
 
@@ -538,9 +560,9 @@ dispatch_loop:
                 }
 
                 ENTRY(MP_BC_JUMP_IF_TRUE_OR_POP): {
-                    DECODE_SLABEL;
+                    DECODE_ULABEL;
                     if (mp_obj_is_true(TOP())) {
-                        ip += slab;
+                        ip += ulab;
                     } else {
                         sp--;
                     }
@@ -548,11 +570,11 @@ dispatch_loop:
                 }
 
                 ENTRY(MP_BC_JUMP_IF_FALSE_OR_POP): {
-                    DECODE_SLABEL;
+                    DECODE_ULABEL;
                     if (mp_obj_is_true(TOP())) {
                         sp--;
                     } else {
-                        ip += slab;
+                        ip += ulab;
                     }
                     DISPATCH_WITH_PEND_EXC_CHECK();
                 }
@@ -723,8 +745,8 @@ unwind_jump:;
                     obj = mp_getiter(obj, iter_buf);
                     if (obj != MP_OBJ_FROM_PTR(iter_buf)) {
                         // Iterator didn't use the stack so indicate that with MP_OBJ_NULL.
-                        sp[-MP_OBJ_ITER_BUF_NSLOTS + 1] = MP_OBJ_NULL;
-                        sp[-MP_OBJ_ITER_BUF_NSLOTS + 2] = obj;
+                        *(sp - MP_OBJ_ITER_BUF_NSLOTS + 1) = MP_OBJ_NULL;
+                        *(sp - MP_OBJ_ITER_BUF_NSLOTS + 2) = obj;
                     }
                     DISPATCH();
                 }
@@ -735,8 +757,8 @@ unwind_jump:;
                     DECODE_ULABEL; // the jump offset if iteration finishes; for labels are always forward
                     code_state->sp = sp;
                     mp_obj_t obj;
-                    if (sp[-MP_OBJ_ITER_BUF_NSLOTS + 1] == MP_OBJ_NULL) {
-                        obj = sp[-MP_OBJ_ITER_BUF_NSLOTS + 2];
+                    if (*(sp - MP_OBJ_ITER_BUF_NSLOTS + 1) == MP_OBJ_NULL) {
+                        obj = *(sp - MP_OBJ_ITER_BUF_NSLOTS + 2);
                     } else {
                         obj = MP_OBJ_FROM_PTR(&sp[-MP_OBJ_ITER_BUF_NSLOTS + 1]);
                     }
@@ -927,8 +949,8 @@ unwind_jump:;
                     // unum & 0xff == n_positional
                     // (unum >> 8) & 0xff == n_keyword
                     // We have following stack layout here:
-                    // fun arg0 arg1 ... kw0 val0 kw1 val1 ... seq dict <- TOS
-                    sp -= (unum & 0xff) + ((unum >> 7) & 0x1fe) + 2;
+                    // fun arg0 arg1 ... kw0 val0 kw1 val1 ... bitmap <- TOS
+                    sp -= (unum & 0xff) + ((unum >> 7) & 0x1fe) + 1;
                     #if MICROPY_STACKLESS
                     if (mp_obj_get_type(*sp) == &mp_type_fun_bc) {
                         code_state->ip = ip;
@@ -1012,8 +1034,8 @@ unwind_jump:;
                     // unum & 0xff == n_positional
                     // (unum >> 8) & 0xff == n_keyword
                     // We have following stack layout here:
-                    // fun self arg0 arg1 ... kw0 val0 kw1 val1 ... seq dict <- TOS
-                    sp -= (unum & 0xff) + ((unum >> 7) & 0x1fe) + 3;
+                    // fun self arg0 arg1 ... kw0 val0 kw1 val1 ... bitmap <- TOS
+                    sp -= (unum & 0xff) + ((unum >> 7) & 0x1fe) + 2;
                     #if MICROPY_STACKLESS
                     if (mp_obj_get_type(*sp) == &mp_type_fun_bc) {
                         code_state->ip = ip;

@@ -37,6 +37,7 @@
 #include "irq.h"
 #include "mboot.h"
 #include "powerctrl.h"
+#include "sdcard.h"
 #include "dfu.h"
 #include "pack.h"
 
@@ -115,6 +116,11 @@ dfu_context_t dfu_context SECTION_NOZERO_BSS;
 
 uint32_t get_le32(const uint8_t *b) {
     return b[0] | b[1] << 8 | b[2] << 16 | b[3] << 24;
+}
+
+uint64_t get_le64(const uint8_t *b) {
+    return (uint64_t)b[0] | (uint64_t)b[1] << 8 | (uint64_t)b[2] << 16 | (uint64_t)b[3] << 24
+        | (uint64_t)b[4] << 32 | (uint64_t)b[5] << 40 | (uint64_t)b[6] << 48 | (uint64_t)b[7] << 56;
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
@@ -636,7 +642,7 @@ int hw_page_erase(uint32_t addr, uint32_t *next_addr) {
     return ret;
 }
 
-void hw_read(uint32_t addr, int len, uint8_t *buf) {
+void hw_read(mboot_addr_t addr, size_t len, uint8_t *buf) {
     led0_state(LED0_STATE_FAST_FLASH);
     #if defined(MBOOT_SPIFLASH_ADDR)
     if (MBOOT_SPIFLASH_ADDR <= addr && addr < MBOOT_SPIFLASH_ADDR + MBOOT_SPIFLASH_BYTE_SIZE) {
@@ -648,9 +654,19 @@ void hw_read(uint32_t addr, int len, uint8_t *buf) {
         mp_spiflash_read(MBOOT_SPIFLASH2_SPIFLASH, addr - MBOOT_SPIFLASH2_ADDR, len, buf);
     } else
     #endif
+    #if defined(MBOOT_SDCARD_ADDR)
+    if (MBOOT_SDCARD_ADDR <= addr && addr < MBOOT_SDCARD_ADDR + MBOOT_SDCARD_BYTE_SIZE) {
+        // Read address and length must be aligned.
+        if (addr % SDCARD_BLOCK_SIZE == 0 && len % SDCARD_BLOCK_SIZE == 0) {
+            sdcard_read_blocks(buf, (addr - MBOOT_SDCARD_ADDR) / SDCARD_BLOCK_SIZE, len / SDCARD_BLOCK_SIZE);
+        } else {
+            memset(buf, 0xff, len);
+        }
+    } else
+    #endif
     {
         // Other addresses, just read directly from memory
-        memcpy(buf, (void*)addr, len);
+        memcpy(buf, (void *)(uintptr_t)addr, len);
     }
     led0_state(LED0_STATE_SLOW_FLASH);
 }
@@ -688,7 +704,7 @@ int do_page_erase(uint32_t addr, uint32_t *next_addr) {
     #endif
 }
 
-void do_read(uint32_t addr, int len, uint8_t *buf) {
+void do_read(mboot_addr_t addr, size_t len, uint8_t *buf) {
     #if MBOOT_ENABLE_PACKING
     // Read disabled on packed (encrypted) mode.
     dfu_context.status = DFU_STATUS_ERROR_FILE;
@@ -699,11 +715,15 @@ void do_read(uint32_t addr, int len, uint8_t *buf) {
     #endif
 }
 
-int do_write(uint32_t addr, const uint8_t *src8, size_t len) {
+int do_write(uint32_t addr, const uint8_t *src8, size_t len, bool dry_run) {
     #if MBOOT_ENABLE_PACKING
-    return mboot_pack_write(addr, src8, len);
+    return mboot_pack_write(addr, src8, len, dry_run);
     #else
-    return hw_write(addr, src8, len);
+    if (dry_run) {
+        return 0;
+    } else {
+        return hw_write(addr, src8, len);
+    }
     #endif
 }
 
@@ -788,7 +808,15 @@ void i2c_slave_process_rx_end(i2c_slave_t *i2c) {
     if (buf[0] == I2C_CMD_ECHO) {
         ++len;
     } else if (buf[0] == I2C_CMD_GETID && len == 0) {
+        #if __GNUC__ >= 11
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Warray-bounds"
+        #pragma GCC diagnostic ignored "-Wstringop-overread"
+        #endif
         memcpy(buf, (uint8_t*)MP_HAL_UNIQUE_ID_ADDRESS, 12);
+        #if __GNUC__ >= 11
+        #pragma GCC diagnostic pop
+        #endif
         memcpy(buf + 12, MICROPY_HW_MCU_NAME, sizeof(MICROPY_HW_MCU_NAME));
         memcpy(buf + 12 + sizeof(MICROPY_HW_MCU_NAME), MICROPY_HW_BOARD_NAME, sizeof(MICROPY_HW_BOARD_NAME) - 1);
         len = 12 + sizeof(MICROPY_HW_MCU_NAME) + sizeof(MICROPY_HW_BOARD_NAME) - 1;
@@ -820,7 +848,7 @@ void i2c_slave_process_rx_end(i2c_slave_t *i2c) {
             // Mark the 2 lower bits to indicate invalid app firmware
             buf[1] |= APP_VALIDITY_BITS;
         }
-        int ret = do_write(i2c_obj.cmd_wraddr, buf + 1, len);
+        int ret = do_write(i2c_obj.cmd_wraddr, buf + 1, len, false);
         if (ret < 0) {
             len = ret;
         } else {
@@ -842,7 +870,7 @@ void i2c_slave_process_rx_end(i2c_slave_t *i2c) {
             len = -1;
         } else {
             buf &= ~APP_VALIDITY_BITS;
-            int ret = do_write(APPLICATION_ADDR, (void*)&buf, 4);
+            int ret = do_write(APPLICATION_ADDR, (void*)&buf, 4, false);
             if (ret < 0) {
                 len = ret;
             } else {
@@ -916,7 +944,7 @@ static int dfu_process_dnload(void) {
     } else if (dfu_context.wBlockNum > 1) {
         // write data to memory
         uint32_t addr = (dfu_context.wBlockNum - 2) * DFU_XFER_SIZE + dfu_context.addr;
-        ret = do_write(addr, dfu_context.buf, dfu_context.wLength);
+        ret = do_write(addr, dfu_context.buf, dfu_context.wLength, false);
     }
     if (ret == 0) {
         return DFU_STATE_DNLOAD_IDLE;
@@ -1527,12 +1555,18 @@ enter_bootloader:
     mp_spiflash_init(MBOOT_SPIFLASH2_SPIFLASH);
     #endif
 
+    #if defined(MBOOT_SDCARD_ADDR)
+    sdcard_init();
+    sdcard_select_sd();
+    sdcard_power_on();
+    #endif
+
     #if MBOOT_ENABLE_PACKING
     mboot_pack_init();
     #endif
 
-    #if MBOOT_FSLOAD
     if ((initial_r0 & 0xffffff80) == 0x70ad0080) {
+        #if MBOOT_FSLOAD
         // Application passed through elements, validate then process them
         const uint8_t *elem_end = elem_search(ELEM_DATA_START, ELEM_TYPE_END);
         if (elem_end != NULL && elem_end[-1] == 0) {
@@ -1545,11 +1579,11 @@ enter_bootloader:
                 *status_ptr = ret;
             }
         }
+        #endif
         // Always reset because the application is expecting to resume
         led_state_all(0);
         leave_bootloader();
     }
-    #endif
 
     dfu_init();
 

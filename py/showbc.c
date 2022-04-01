@@ -38,8 +38,28 @@
             unum = (unum << 7) + (*ip & 0x7f); \
         } while ((*ip++ & 0x80) != 0); \
 }
-#define DECODE_ULABEL do { unum = (ip[0] | (ip[1] << 8)); ip += 2; } while (0)
-#define DECODE_SLABEL do { unum = (ip[0] | (ip[1] << 8)) - 0x8000; ip += 2; } while (0)
+
+#define DECODE_ULABEL \
+    do { \
+        if (ip[0] & 0x80) { \
+            unum = ((ip[0] & 0x7f) | (ip[1] << 7)); \
+            ip += 2; \
+        } else { \
+            unum = ip[0]; \
+            ip += 1; \
+        } \
+    } while (0)
+
+#define DECODE_SLABEL \
+    do { \
+        if (ip[0] & 0x80) { \
+            unum = ((ip[0] & 0x7f) | (ip[1] << 7)) - 0x4000; \
+            ip += 2; \
+        } else { \
+            unum = ip[0] - 0x40; \
+            ip += 1; \
+        } \
+    } while (0)
 
 #if MICROPY_EMIT_BYTECODE_USES_QSTR_TABLE
 
@@ -318,12 +338,12 @@ const byte *mp_bytecode_print_str(const mp_print_t *print, const byte *ip_start,
             break;
 
         case MP_BC_JUMP_IF_TRUE_OR_POP:
-            DECODE_SLABEL;
+            DECODE_ULABEL;
             mp_printf(print, "JUMP_IF_TRUE_OR_POP " UINT_FMT, (mp_uint_t)(ip + unum - ip_start));
             break;
 
         case MP_BC_JUMP_IF_FALSE_OR_POP:
-            DECODE_SLABEL;
+            DECODE_ULABEL;
             mp_printf(print, "JUMP_IF_FALSE_OR_POP " UINT_FMT, (mp_uint_t)(ip + unum - ip_start));
             break;
 

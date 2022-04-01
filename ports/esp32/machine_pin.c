@@ -47,7 +47,6 @@
 // Used to implement a range of pull capabilities
 #define GPIO_PULL_DOWN (1)
 #define GPIO_PULL_UP   (2)
-#define GPIO_PULL_HOLD (4)
 
 #if CONFIG_IDF_TARGET_ESP32
 #define GPIO_FIRST_NON_OUTPUT (34)
@@ -93,7 +92,11 @@ STATIC const machine_pin_obj_t machine_pin_obj[] = {
     #endif
     {{&machine_pin_type}, GPIO_NUM_18},
     {{&machine_pin_type}, GPIO_NUM_19},
+    #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
+    {{&machine_pin_type}, GPIO_NUM_20},
+    #else
     {{NULL}, -1},
+    #endif
     {{&machine_pin_type}, GPIO_NUM_21},
     {{&machine_pin_type}, GPIO_NUM_22},
     {{&machine_pin_type}, GPIO_NUM_23},
@@ -253,14 +256,15 @@ STATIC void machine_pin_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
     mp_printf(print, "Pin(%u)", self->id);
 }
 
-// pin.init(mode=None, pull=-1, *, value, drive)
+// pin.init(mode=None, pull=-1, *, value, drive, hold)
 STATIC mp_obj_t machine_pin_obj_init_helper(const machine_pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_mode, ARG_pull, ARG_value, ARG_drive };
+    enum { ARG_mode, ARG_pull, ARG_value, ARG_drive, ARG_hold };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode, MP_ARG_OBJ, {.u_obj = mp_const_none}},
         { MP_QSTR_pull, MP_ARG_OBJ, {.u_obj = MP_OBJ_NEW_SMALL_INT(-1)}},
         { MP_QSTR_value, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
         { MP_QSTR_drive, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
+        { MP_QSTR_hold, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
     };
 
     // parse args
@@ -325,10 +329,15 @@ STATIC mp_obj_t machine_pin_obj_init_helper(const machine_pin_obj_t *self, size_
         } else {
             gpio_pullup_dis(self->id);
         }
-        if (mode & GPIO_PULL_HOLD) {
+    }
+
+    // configure pad hold
+    if (args[ARG_hold].u_obj != MP_OBJ_NULL && GPIO_IS_VALID_OUTPUT_GPIO(self->id)) {
+        // always disable pad hold to apply outstanding config changes
+        gpio_hold_dis(self->id);
+        // (re-)enable pad hold if requested
+        if (mp_obj_is_true(args[ARG_hold].u_obj)) {
             gpio_hold_en(self->id);
-        } else if (GPIO_IS_VALID_OUTPUT_GPIO(self->id)) {
-            gpio_hold_dis(self->id);
         }
     }
 
@@ -480,7 +489,6 @@ STATIC const mp_rom_map_elem_t machine_pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_OPEN_DRAIN), MP_ROM_INT(GPIO_MODE_INPUT_OUTPUT_OD) },
     { MP_ROM_QSTR(MP_QSTR_PULL_UP), MP_ROM_INT(GPIO_PULL_UP) },
     { MP_ROM_QSTR(MP_QSTR_PULL_DOWN), MP_ROM_INT(GPIO_PULL_DOWN) },
-    { MP_ROM_QSTR(MP_QSTR_PULL_HOLD), MP_ROM_INT(GPIO_PULL_HOLD) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_RISING), MP_ROM_INT(GPIO_PIN_INTR_POSEDGE) },
     { MP_ROM_QSTR(MP_QSTR_IRQ_FALLING), MP_ROM_INT(GPIO_PIN_INTR_NEGEDGE) },
     { MP_ROM_QSTR(MP_QSTR_WAKE_LOW), MP_ROM_INT(GPIO_PIN_INTR_LOLEVEL) },
@@ -556,7 +564,11 @@ STATIC const machine_pin_irq_obj_t machine_pin_irq_object[] = {
     #endif
     {{&machine_pin_irq_type}, GPIO_NUM_18},
     {{&machine_pin_irq_type}, GPIO_NUM_19},
+    #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
+    {{&machine_pin_irq_type}, GPIO_NUM_20},
+    #else
     {{NULL}, -1},
+    #endif
     {{&machine_pin_irq_type}, GPIO_NUM_21},
     {{&machine_pin_irq_type}, GPIO_NUM_22},
     {{&machine_pin_irq_type}, GPIO_NUM_23},
