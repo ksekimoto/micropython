@@ -51,3 +51,6 @@
 [submodule "lib/mbed-os"]
 	path = lib/mbed-os
 	url = https://github.com/ARMmbed/mbed-os.git
+[submodule "lib/fsp"]
+	path = lib/fsp
+	url = https://github.com/renesas/fsp.git
