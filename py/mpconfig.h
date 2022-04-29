@@ -441,6 +441,12 @@
 #define MICROPY_COMP_CONST_FOLDING (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
 #endif
 
+// Whether to compile constant tuples immediately to their respective objects; eg (1, True)
+// Otherwise the tuple will be built at runtime
+#ifndef MICROPY_COMP_CONST_TUPLE
+#define MICROPY_COMP_CONST_TUPLE (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
+#endif
+
 // Whether to enable optimisations for constant literals, eg OrderedDict
 #ifndef MICROPY_COMP_CONST_LITERAL
 #define MICROPY_COMP_CONST_LITERAL (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
@@ -891,6 +897,11 @@ typedef double mp_float_t;
 // Support for internal scheduler
 #ifndef MICROPY_ENABLE_SCHEDULER
 #define MICROPY_ENABLE_SCHEDULER (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
+#endif
+
+// Whether the scheduler supports scheduling static nodes with C callbacks
+#ifndef MICROPY_SCHEDULER_STATIC_NODES
+#define MICROPY_SCHEDULER_STATIC_NODES (0)
 #endif
 
 // Maximum number of entries in the scheduler
@@ -1593,6 +1604,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_MACHINE_SOFTSPI (0)
 #endif
 
+// The default backlog value for socket.listen(backlog)
+#ifndef MICROPY_PY_USOCKET_LISTEN_BACKLOG_DEFAULT
+#define MICROPY_PY_USOCKET_LISTEN_BACKLOG_DEFAULT (2)
+#endif
+
 #ifndef MICROPY_PY_USSL
 #define MICROPY_PY_USSL (0)
 #endif
@@ -1696,6 +1712,20 @@ typedef double mp_float_t;
 // like __attribute__((aligned(4))).
 #ifndef MICROPY_OBJ_BASE_ALIGNMENT
 #define MICROPY_OBJ_BASE_ALIGNMENT
+#endif
+
+// String used for the banner, and sys.version additional information
+#ifndef MICROPY_BANNER_NAME_AND_VERSION
+#define MICROPY_BANNER_NAME_AND_VERSION "MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
+#endif
+
+// String used for the second part of the banner, and sys.implementation._machine
+#ifndef MICROPY_BANNER_MACHINE
+#ifdef MICROPY_HW_BOARD_NAME
+#define MICROPY_BANNER_MACHINE MICROPY_HW_BOARD_NAME " with " MICROPY_HW_MCU_NAME
+#else
+#define MICROPY_BANNER_MACHINE MICROPY_PY_SYS_PLATFORM " [" MICROPY_PLATFORM_COMPILER "] version"
+#endif
 #endif
 
 // On embedded platforms, these will typically enable/disable irqs.

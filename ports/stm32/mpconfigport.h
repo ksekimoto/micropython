@@ -75,6 +75,7 @@
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
 #endif
 #define MICROPY_USE_INTERNAL_ERRNO  (1)
+#define MICROPY_SCHEDULER_STATIC_NODES (1)
 #define MICROPY_SCHEDULER_DEPTH     (8)
 #define MICROPY_VFS                 (1)
 
@@ -82,7 +83,6 @@
 #ifndef MICROPY_PY_BUILTINS_HELP_TEXT
 #define MICROPY_PY_BUILTINS_HELP_TEXT stm32_help_text
 #endif
-#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT || MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
 #define MICROPY_PY_SYS_PLATFORM     "pyboard"
 #endif

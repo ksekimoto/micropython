@@ -60,12 +60,6 @@
 // Optimisations
 #define MICROPY_OPT_COMPUTED_GOTO               (1)
 
-// Features currently overriden for rp2, planned to be brought in line with
-// other ports
-#define MICROPY_PY_BUILTINS_EXECFILE            (0)
-#define MICROPY_PY_BUILTINS_NOTIMPLEMENTED      (0)
-#define MICROPY_REPL_EMACS_KEYS                 (0)
-
 // Python internal features
 #define MICROPY_READER_VFS                      (1)
 #define MICROPY_ENABLE_GC                       (1)
@@ -88,6 +82,7 @@
 #define MICROPY_PY_UOS_URANDOM                  (1)
 #define MICROPY_PY_URE_MATCH_GROUPS             (1)
 #define MICROPY_PY_URE_MATCH_SPAN_START_END     (1)
+#define MICROPY_PY_UCRYPTOLIB                   (1)
 #define MICROPY_PY_UTIME_MP_HAL                 (1)
 #define MICROPY_PY_URANDOM_SEED_INIT_FUNC       (rosc_random_u32())
 #define MICROPY_PY_MACHINE                      (1)
@@ -107,6 +102,7 @@
 #define MICROPY_VFS                             (1)
 #define MICROPY_VFS_LFS2                        (1)
 #define MICROPY_VFS_FAT                         (1)
+#define MICROPY_SSL_MBEDTLS                     (1)
 
 // fatfs configuration
 #define MICROPY_FATFS_ENABLE_LFN                (1)

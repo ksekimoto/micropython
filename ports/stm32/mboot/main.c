@@ -62,13 +62,13 @@
 #define IRQ_PRI_I2C (NVIC_EncodePriority(NVIC_PRIORITYGROUP_4, 1, 0))
 
 #if defined(MBOOT_CLK_PLLM)
-  // The board specified the PLL values, flash latency and bus dividers
+// The board specified the PLL values, flash latency and bus dividers
   #define CORE_PLL_FREQ (1000000 * MBOOT_CLK_PLLN / MBOOT_CLK_PLLP)
 #else
-  // The board did not specify the clock values, so configure defaults
+// The board did not specify the clock values, so configure defaults
   #if defined(STM32F4) || defined(STM32F7)
     #if MBOOT_ENABLE_PACKING
-      // With encryption/signing/compression, a faster CPU makes processing much faster.
+// With encryption/signing/compression, a faster CPU makes processing much faster.
       #define CORE_PLL_FREQ (96000000)
       #define MBOOT_FLASH_LATENCY FLASH_LATENCY_3
     #else
@@ -109,7 +109,7 @@
 #define APP_VALIDITY_BITS (0x00000003)
 
 // For 1ms system ticker.
-static volatile uint32_t systick_ms;
+volatile uint32_t systick_ms;
 
 // Global dfu state
 dfu_context_t dfu_context SECTION_NOZERO_BSS;
@@ -120,7 +120,7 @@ uint32_t get_le32(const uint8_t *b) {
 
 uint64_t get_le64(const uint8_t *b) {
     return (uint64_t)b[0] | (uint64_t)b[1] << 8 | (uint64_t)b[2] << 16 | (uint64_t)b[3] << 24
-        | (uint64_t)b[4] << 32 | (uint64_t)b[5] << 40 | (uint64_t)b[6] << 48 | (uint64_t)b[7] << 56;
+           | (uint64_t)b[4] << 32 | (uint64_t)b[5] << 40 | (uint64_t)b[6] << 48 | (uint64_t)b[7] << 56;
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
@@ -217,17 +217,17 @@ void SystemClock_Config(void) {
         1 << RCC_PLLCFGR_PLLSRC_Pos // HSE selected as PLL source
         #endif
         | MBOOT_CLK_PLLM << RCC_PLLCFGR_PLLM_Pos
-        | MBOOT_CLK_PLLN << RCC_PLLCFGR_PLLN_Pos
-        | ((MBOOT_CLK_PLLP >> 1) - 1) << RCC_PLLCFGR_PLLP_Pos
-        | MBOOT_CLK_PLLQ << RCC_PLLCFGR_PLLQ_Pos
+            | MBOOT_CLK_PLLN << RCC_PLLCFGR_PLLN_Pos
+            | ((MBOOT_CLK_PLLP >> 1) - 1) << RCC_PLLCFGR_PLLP_Pos
+            | MBOOT_CLK_PLLQ << RCC_PLLCFGR_PLLQ_Pos
         #ifdef RCC_PLLCFGR_PLLR
         | 2 << RCC_PLLCFGR_PLLR_Pos // default PLLR value of 2
         #endif
-        ;
+    ;
 
     // Enable PLL
     __HAL_RCC_PLL_ENABLE();
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
     }
 
     // Increase latency before changing clock
@@ -299,9 +299,9 @@ void SystemClock_Config(void) {
     RCC->PLL1FRACR = 0;
     RCC->PLL1DIVR =
         (MBOOT_CLK_PLLN - 1) << RCC_PLL1DIVR_N1_Pos
-        | (MBOOT_CLK_PLLP - 1) << RCC_PLL1DIVR_P1_Pos // only even P allowed
-        | (MBOOT_CLK_PLLQ - 1) << RCC_PLL1DIVR_Q1_Pos
-        | (MBOOT_CLK_PLLR - 1) << RCC_PLL1DIVR_R1_Pos;
+            | (MBOOT_CLK_PLLP - 1) << RCC_PLL1DIVR_P1_Pos // only even P allowed
+            | (MBOOT_CLK_PLLQ - 1) << RCC_PLL1DIVR_Q1_Pos
+            | (MBOOT_CLK_PLLR - 1) << RCC_PLL1DIVR_R1_Pos;
 
     // Configure PLL3 for use by USB at Q=48MHz
     RCC->PLLCKSELR |= MICROPY_HW_CLK_PLL3M << RCC_PLLCKSELR_DIVM3_Pos;
@@ -309,21 +309,21 @@ void SystemClock_Config(void) {
     RCC->PLL3FRACR = 0;
     RCC->PLL3DIVR =
         (MICROPY_HW_CLK_PLL3N - 1) << RCC_PLL3DIVR_N3_Pos
-        | (MICROPY_HW_CLK_PLL3P - 1) << RCC_PLL3DIVR_P3_Pos // only even P allowed
-        | (MICROPY_HW_CLK_PLL3Q - 1) << RCC_PLL3DIVR_Q3_Pos
-        | (MICROPY_HW_CLK_PLL3R - 1) << RCC_PLL3DIVR_R3_Pos;
+            | (MICROPY_HW_CLK_PLL3P - 1) << RCC_PLL3DIVR_P3_Pos // only even P allowed
+            | (MICROPY_HW_CLK_PLL3Q - 1) << RCC_PLL3DIVR_Q3_Pos
+            | (MICROPY_HW_CLK_PLL3R - 1) << RCC_PLL3DIVR_R3_Pos;
 
     // Select PLL3-Q for USB clock source
     MODIFY_REG(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL, RCC_D2CCIP2R_USBSEL_1);
 
     // Enable PLL1
     __HAL_RCC_PLL_ENABLE();
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
     }
 
     // Enable PLL3
     __HAL_RCC_PLL3_ENABLE();
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLL3RDY) == RESET) {
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLL3RDY) == RESET) {
     }
 
     // Increase latency before changing SYSCLK
@@ -334,8 +334,8 @@ void SystemClock_Config(void) {
     // Configure AHB divider
     RCC->D1CFGR =
         0 << RCC_D1CFGR_D1CPRE_Pos // SYSCLK prescaler of 1
-        | MBOOT_CLK_AHB_DIV
-        ;
+            | MBOOT_CLK_AHB_DIV
+    ;
 
     // Configure SYSCLK source from PLL
     __HAL_RCC_SYSCLK_CONFIG(RCC_SYSCLKSOURCE_PLLCLK);
@@ -374,7 +374,7 @@ void SystemClock_Config(void) {
 #endif
 
 void mp_hal_pin_config(mp_hal_pin_obj_t port_pin, uint32_t mode, uint32_t pull, uint32_t alt) {
-    GPIO_TypeDef *gpio = (GPIO_TypeDef*)(port_pin & ~0xf);
+    GPIO_TypeDef *gpio = (GPIO_TypeDef *)(port_pin & ~0xf);
 
     // Enable the GPIO peripheral clock
     uint32_t gpio_idx = ((uintptr_t)gpio - GPIOA_BASE) / (GPIOB_BASE - GPIOA_BASE);
@@ -392,115 +392,9 @@ void mp_hal_pin_config(mp_hal_pin_obj_t port_pin, uint32_t mode, uint32_t pull, 
 }
 
 void mp_hal_pin_config_speed(uint32_t port_pin, uint32_t speed) {
-    GPIO_TypeDef *gpio = (GPIO_TypeDef*)(port_pin & ~0xf);
+    GPIO_TypeDef *gpio = (GPIO_TypeDef *)(port_pin & ~0xf);
     uint32_t pin = port_pin & 0xf;
     gpio->OSPEEDR = (gpio->OSPEEDR & ~(3 << (2 * pin))) | (speed << (2 * pin));
-}
-
-/******************************************************************************/
-// LED
-
-#if defined(MBOOT_LED1)
-#define LED0 MBOOT_LED1
-#elif defined(MICROPY_HW_LED1)
-#define LED0 MICROPY_HW_LED1
-#endif
-
-#if defined(MBOOT_LED2)
-#define LED1 MBOOT_LED2
-#elif defined(MICROPY_HW_LED2)
-#define LED1 MICROPY_HW_LED2
-#endif
-
-#if defined(MBOOT_LED3)
-#define LED2 MBOOT_LED3
-#elif defined(MICROPY_HW_LED3)
-#define LED2 MICROPY_HW_LED3
-#endif
-
-#if defined(MBOOT_LED4)
-#define LED3 MBOOT_LED4
-#elif defined(MICROPY_HW_LED4)
-#define LED3 MICROPY_HW_LED4
-#endif
-
-// For flashing states: bit 0 is "active", bit 1 is "inactive", bits 2-6 are flash rate.
-typedef enum {
-    LED0_STATE_OFF = 0,
-    LED0_STATE_ON = 1,
-    LED0_STATE_SLOW_FLASH = (20 << 2) | 1,
-    LED0_STATE_FAST_FLASH = (2 << 2) | 1,
-    LED0_STATE_SLOW_INVERTED_FLASH = (20 << 2) | 2,
-} led0_state_t;
-
-static led0_state_t led0_cur_state = LED0_STATE_OFF;
-static uint32_t led0_ms_interval = 0;
-static int led0_toggle_count = 0;
-
-MP_WEAK void led_init(void) {
-    #if defined(MBOOT_BOARD_LED_INIT)
-    // Custom LED init function provided by the board.
-    MBOOT_BOARD_LED_INIT();
-    #else
-    // Init LEDs using GPIO calls.
-    mp_hal_pin_output(LED0);
-    #ifdef LED1
-    mp_hal_pin_output(LED1);
-    #endif
-    #ifdef LED2
-    mp_hal_pin_output(LED2);
-    #endif
-    #ifdef LED3
-    mp_hal_pin_output(LED3);
-    #endif
-    #endif
-
-    led0_cur_state = LED0_STATE_OFF;
-}
-
-MP_WEAK void led_state(uint32_t led, int val) {
-    #if defined(MBOOT_BOARD_LED_STATE)
-    // Custom LED state function provided by the board.
-    return MBOOT_BOARD_LED_STATE(led, val);
-    #else
-    // Set LEDs using GPIO calls.
-    if (val) {
-        MICROPY_HW_LED_ON(led);
-    } else {
-        MICROPY_HW_LED_OFF(led);
-    }
-    #endif
-}
-
-void led_state_all(unsigned int mask) {
-    led_state(LED0, mask & 1);
-    #ifdef LED1
-    led_state(LED1, mask & 2);
-    #endif
-    #ifdef LED2
-    led_state(LED2, mask & 4);
-    #endif
-    #ifdef LED3
-    led_state(LED3, mask & 8);
-    #endif
-}
-
-void led0_state(led0_state_t state) {
-    led0_cur_state = state;
-    if (state == LED0_STATE_OFF || state == LED0_STATE_ON) {
-        led_state(LED0, state);
-    }
-}
-
-void led0_update() {
-    if (led0_cur_state != LED0_STATE_OFF && systick_ms - led0_ms_interval > 50) {
-        uint8_t rate = (led0_cur_state >> 2) & 0x1f;
-        led0_ms_interval += 50;
-        if (++led0_toggle_count >= rate) {
-            led0_toggle_count = 0;
-        }
-        led_state(LED0, (led0_cur_state & (led0_toggle_count == 0 ? 1 : 2)));
-    }
 }
 
 /******************************************************************************/
@@ -563,7 +457,7 @@ static int mboot_flash_page_erase(uint32_t addr, uint32_t *next_addr) {
 
     // Check the erase set bits to 1, at least for the first 256 bytes
     for (int i = 0; i < 64; ++i) {
-        if (((volatile uint32_t*)sector_start)[i] != 0xffffffff) {
+        if (((volatile uint32_t *)sector_start)[i] != 0xffffffff) {
             return -MBOOT_ERRNO_FLASH_ERASE_FAILED;
         }
     }
@@ -581,7 +475,7 @@ static int mboot_flash_write(uint32_t addr, const uint8_t *src8, size_t len) {
         return -MBOOT_ERRNO_FLASH_WRITE_DISALLOWED;
     }
 
-    const uint32_t *src = (const uint32_t*)src8;
+    const uint32_t *src = (const uint32_t *)src8;
     size_t num_word32 = (len + 3) / 4;
 
     // Write the data to flash.
@@ -617,8 +511,9 @@ static int spiflash_page_erase(mp_spiflash_t *spif, uint32_t addr, uint32_t n_bl
 #endif
 
 int hw_page_erase(uint32_t addr, uint32_t *next_addr) {
+    mboot_state_change(MBOOT_STATE_ERASE_START, addr);
+
     int ret = -1;
-    led0_state(LED0_STATE_ON);
 
     #if defined(MBOOT_SPIFLASH_ADDR)
     if (MBOOT_SPIFLASH_ADDR <= addr && addr < MBOOT_SPIFLASH_ADDR + MBOOT_SPIFLASH_BYTE_SIZE) {
@@ -638,12 +533,14 @@ int hw_page_erase(uint32_t addr, uint32_t *next_addr) {
         ret = mboot_flash_page_erase(addr, next_addr);
     }
 
-    led0_state((ret == 0) ? LED0_STATE_SLOW_FLASH : LED0_STATE_SLOW_INVERTED_FLASH);
+    mboot_state_change(MBOOT_STATE_ERASE_END, ret);
+
     return ret;
 }
 
 void hw_read(mboot_addr_t addr, size_t len, uint8_t *buf) {
-    led0_state(LED0_STATE_FAST_FLASH);
+    mboot_state_change(MBOOT_STATE_READ_START, addr);
+
     #if defined(MBOOT_SPIFLASH_ADDR)
     if (MBOOT_SPIFLASH_ADDR <= addr && addr < MBOOT_SPIFLASH_ADDR + MBOOT_SPIFLASH_BYTE_SIZE) {
         mp_spiflash_read(MBOOT_SPIFLASH_SPIFLASH, addr - MBOOT_SPIFLASH_ADDR, len, buf);
@@ -668,12 +565,14 @@ void hw_read(mboot_addr_t addr, size_t len, uint8_t *buf) {
         // Other addresses, just read directly from memory
         memcpy(buf, (void *)(uintptr_t)addr, len);
     }
-    led0_state(LED0_STATE_SLOW_FLASH);
+
+    mboot_state_change(MBOOT_STATE_READ_END, 0);
 }
 
 int hw_write(uint32_t addr, const uint8_t *src8, size_t len) {
+    mboot_state_change(MBOOT_STATE_WRITE_START, addr);
+
     int ret = -1;
-    led0_state(LED0_STATE_FAST_FLASH);
     #if defined(MBOOT_SPIFLASH_ADDR)
     if (MBOOT_SPIFLASH_ADDR <= addr && addr < MBOOT_SPIFLASH_ADDR + MBOOT_SPIFLASH_BYTE_SIZE) {
         ret = mp_spiflash_write(MBOOT_SPIFLASH_SPIFLASH, addr - MBOOT_SPIFLASH_ADDR, len, src8);
@@ -691,7 +590,8 @@ int hw_write(uint32_t addr, const uint8_t *src8, size_t len) {
         dfu_context.error = MBOOT_ERROR_STR_INVALID_ADDRESS_IDX;
     }
 
-    led0_state((ret == 0) ? LED0_STATE_SLOW_FLASH : LED0_STATE_SLOW_INVERTED_FLASH);
+    mboot_state_change(MBOOT_STATE_WRITE_END, ret);
+
     return ret;
 }
 
@@ -707,9 +607,10 @@ int do_page_erase(uint32_t addr, uint32_t *next_addr) {
 void do_read(mboot_addr_t addr, size_t len, uint8_t *buf) {
     #if MBOOT_ENABLE_PACKING
     // Read disabled on packed (encrypted) mode.
+    mboot_state_change(MBOOT_STATE_READ_START, addr);
     dfu_context.status = DFU_STATUS_ERROR_FILE;
     dfu_context.error = MBOOT_ERROR_STR_INVALID_READ_IDX;
-    led0_state(LED0_STATE_SLOW_INVERTED_FLASH);
+    mboot_state_change(MBOOT_STATE_READ_END, -MBOOT_ERRNO_FLASH_READ_DISALLOWED);
     #else
     hw_read(addr, len, buf);
     #endif
@@ -732,8 +633,8 @@ int do_write(uint32_t addr, const uint8_t *src8, size_t len, bool dry_run) {
 
 #if defined(MBOOT_I2C_SCL)
 
-#define PASTE2(a, b) a ## b
-#define PASTE3(a, b, c) a ## b ## c
+#define PASTE2(a, b) a##b
+#define PASTE3(a, b, c) a##b##c
 #define EVAL_PASTE2(a, b) PASTE2(a, b)
 #define EVAL_PASTE3(a, b, c) PASTE3(a, b, c)
 
@@ -813,7 +714,7 @@ void i2c_slave_process_rx_end(i2c_slave_t *i2c) {
         #pragma GCC diagnostic ignored "-Warray-bounds"
         #pragma GCC diagnostic ignored "-Wstringop-overread"
         #endif
-        memcpy(buf, (uint8_t*)MP_HAL_UNIQUE_ID_ADDRESS, 12);
+        memcpy(buf, (uint8_t *)MP_HAL_UNIQUE_ID_ADDRESS, 12);
         #if __GNUC__ >= 11
         #pragma GCC diagnostic pop
         #endif
@@ -859,22 +760,22 @@ void i2c_slave_process_rx_end(i2c_slave_t *i2c) {
         uint32_t hashlen = get_le32(buf + 1);
         static CRYAL_SHA256_CTX ctx;
         sha256_init(&ctx);
-        sha256_update(&ctx, (const void*)i2c_obj.cmd_rdaddr, hashlen);
+        sha256_update(&ctx, (const void *)i2c_obj.cmd_rdaddr, hashlen);
         i2c_obj.cmd_rdaddr += hashlen;
         sha256_final(&ctx, buf);
         len = 32;
     } else if (buf[0] == I2C_CMD_MARKVALID && len == 0) {
         uint32_t buf;
-        buf = *(volatile uint32_t*)APPLICATION_ADDR;
+        buf = *(volatile uint32_t *)APPLICATION_ADDR;
         if ((buf & APP_VALIDITY_BITS) != APP_VALIDITY_BITS) {
             len = -1;
         } else {
             buf &= ~APP_VALIDITY_BITS;
-            int ret = do_write(APPLICATION_ADDR, (void*)&buf, 4, false);
+            int ret = do_write(APPLICATION_ADDR, (void *)&buf, 4, false);
             if (ret < 0) {
                 len = ret;
             } else {
-                buf = *(volatile uint32_t*)APPLICATION_ADDR;
+                buf = *(volatile uint32_t *)APPLICATION_ADDR;
                 if ((buf & APP_VALIDITY_BITS) != 0) {
                     len = -2;
                 } else {
@@ -1117,7 +1018,7 @@ static uint8_t cfg_descr[9 + 9 + 9] =
 
 static uint8_t *pyb_usbdd_DeviceDescriptor(USBD_HandleTypeDef *pdev, uint16_t *length) {
     *length = USB_LEN_DEV_DESC;
-    return (uint8_t*)dev_descr;
+    return (uint8_t *)dev_descr;
 }
 
 static char get_hex_char(int val) {
@@ -1135,19 +1036,19 @@ static void format_hex(char *buf, int val) {
 }
 
 static uint8_t *pyb_usbdd_StrDescriptor(USBD_HandleTypeDef *pdev, uint8_t idx, uint16_t *length) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     uint8_t *str_desc = self->usbd_str_desc;
     switch (idx) {
         case USBD_IDX_LANGID_STR:
             *length = sizeof(USBD_LangIDDesc);
-            return (uint8_t*)USBD_LangIDDesc; // the data should only be read from this buf
+            return (uint8_t *)USBD_LangIDDesc; // the data should only be read from this buf
 
         case USBD_IDX_MFC_STR:
-            USBD_GetString((uint8_t*)MBOOT_USBD_MANUFACTURER_STRING, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_USBD_MANUFACTURER_STRING, str_desc, length);
             return str_desc;
 
         case USBD_IDX_PRODUCT_STR:
-            USBD_GetString((uint8_t*)MBOOT_USBD_PRODUCT_STRING, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_USBD_PRODUCT_STRING, str_desc, length);
             return str_desc;
 
         case USBD_IDX_SERIAL_STR: {
@@ -1163,7 +1064,7 @@ static uint8_t *pyb_usbdd_StrDescriptor(USBD_HandleTypeDef *pdev, uint8_t idx, u
             //     dfu-util -l
             //
             // See: https://my.st.com/52d187b7 for the algorithim used.
-            uint8_t *id = (uint8_t*)MP_HAL_UNIQUE_ID_ADDRESS;
+            uint8_t *id = (uint8_t *)MP_HAL_UNIQUE_ID_ADDRESS;
             char serial_buf[16];
             format_hex(&serial_buf[0], id[11]);
             format_hex(&serial_buf[2], id[10] + id[2]);
@@ -1173,29 +1074,29 @@ static uint8_t *pyb_usbdd_StrDescriptor(USBD_HandleTypeDef *pdev, uint8_t idx, u
             format_hex(&serial_buf[10], id[6]);
             serial_buf[12] = '\0';
 
-            USBD_GetString((uint8_t*)serial_buf, str_desc, length);
+            USBD_GetString((uint8_t *)serial_buf, str_desc, length);
             return str_desc;
         }
 
         case USBD_IDX_CONFIG_STR:
-            USBD_GetString((uint8_t*)FLASH_LAYOUT_STR, str_desc, length);
+            USBD_GetString((uint8_t *)FLASH_LAYOUT_STR, str_desc, length);
             return str_desc;
 
         case MBOOT_ERROR_STR_OVERWRITE_BOOTLOADER_IDX:
-            USBD_GetString((uint8_t*)MBOOT_ERROR_STR_OVERWRITE_BOOTLOADER, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_ERROR_STR_OVERWRITE_BOOTLOADER, str_desc, length);
             return str_desc;
 
         case MBOOT_ERROR_STR_INVALID_ADDRESS_IDX:
-            USBD_GetString((uint8_t*)MBOOT_ERROR_STR_INVALID_ADDRESS, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_ERROR_STR_INVALID_ADDRESS, str_desc, length);
             return str_desc;
 
         #if MBOOT_ENABLE_PACKING
         case MBOOT_ERROR_STR_INVALID_SIG_IDX:
-            USBD_GetString((uint8_t*)MBOOT_ERROR_STR_INVALID_SIG, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_ERROR_STR_INVALID_SIG, str_desc, length);
             return str_desc;
 
         case MBOOT_ERROR_STR_INVALID_READ_IDX:
-            USBD_GetString((uint8_t*)MBOOT_ERROR_STR_INVALID_READ, str_desc, length);
+            USBD_GetString((uint8_t *)MBOOT_ERROR_STR_INVALID_READ, str_desc, length);
             return str_desc;
         #endif
 
@@ -1210,19 +1111,19 @@ static const USBD_DescriptorsTypeDef pyb_usbdd_descriptors = {
 };
 
 static uint8_t pyb_usbdd_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     (void)self;
     return USBD_OK;
 }
 
 static uint8_t pyb_usbdd_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     (void)self;
     return USBD_OK;
 }
 
 static uint8_t pyb_usbdd_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     (void)self;
     self->bRequest = req->bRequest;
     self->wValue = req->wValue;
@@ -1248,7 +1149,7 @@ static uint8_t pyb_usbdd_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 }
 
 static uint8_t pyb_usbdd_EP0_TxSent(USBD_HandleTypeDef *pdev) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     self->tx_pending = false;
     #if !USE_USB_POLLING
     // Process now that we have sent a response
@@ -1258,19 +1159,19 @@ static uint8_t pyb_usbdd_EP0_TxSent(USBD_HandleTypeDef *pdev) {
 }
 
 static uint8_t pyb_usbdd_EP0_RxReady(USBD_HandleTypeDef *pdev) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     dfu_handle_rx(self->bRequest, self->wValue, self->wLength, self->rx_buf);
     return USBD_OK;
 }
 
 static uint8_t *pyb_usbdd_GetCfgDesc(USBD_HandleTypeDef *pdev, uint16_t *length) {
     *length = sizeof(cfg_descr);
-    return (uint8_t*)cfg_descr;
+    return (uint8_t *)cfg_descr;
 }
 
 // this is used only in high-speed mode, which we don't support
 static uint8_t *pyb_usbdd_GetDeviceQualifierDescriptor(USBD_HandleTypeDef *pdev, uint16_t *length) {
-    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t*)pdev->pClassData;
+    pyb_usbdd_obj_t *self = (pyb_usbdd_obj_t *)pdev->pClassData;
     (void)self;
     /*
     *length = sizeof(USBD_CDC_MSC_HID_DeviceQualifierDesc);
@@ -1327,7 +1228,7 @@ static void pyb_usbdd_init(pyb_usbdd_obj_t *self, int phy_id) {
     USBD_HandleTypeDef *usbd = &self->hUSBDDevice;
     usbd->id = phy_id;
     usbd->dev_state = USBD_STATE_DEFAULT;
-    usbd->pDesc = (USBD_DescriptorsTypeDef*)&pyb_usbdd_descriptors;
+    usbd->pDesc = (USBD_DescriptorsTypeDef *)&pyb_usbdd_descriptors;
     usbd->pClass = &pyb_usbdd_class;
     usbd->pClassData = self;
 }
@@ -1360,71 +1261,6 @@ static int pyb_usbdd_shutdown(void) {
 /******************************************************************************/
 // main
 
-#if defined(MBOOT_BOARD_GET_RESET_MODE)
-
-static inline int mboot_get_reset_mode(void) {
-    return MBOOT_BOARD_GET_RESET_MODE();
-}
-
-#else
-
-#define RESET_MODE_NUM_STATES (4)
-#define RESET_MODE_TIMEOUT_CYCLES (8)
-#ifdef LED2
-#ifdef LED3
-#define RESET_MODE_LED_STATES 0x8421
-#else
-#define RESET_MODE_LED_STATES 0x7421
-#endif
-#else
-#define RESET_MODE_LED_STATES 0x3210
-#endif
-
-static void usrbtn_init(void) {
-    mp_hal_pin_config(MICROPY_HW_USRSW_PIN, MP_HAL_PIN_MODE_INPUT, MICROPY_HW_USRSW_PULL, 0);
-}
-
-static int usrbtn_state(void) {
-    return mp_hal_pin_read(MICROPY_HW_USRSW_PIN) == MICROPY_HW_USRSW_PRESSED;
-}
-
-static int mboot_get_reset_mode(void) {
-    usrbtn_init();
-    int reset_mode = BOARDCTRL_RESET_MODE_NORMAL;
-    if (usrbtn_state()) {
-        // Cycle through reset modes while USR is held
-        // Timeout is roughly 20s, where reset_mode=1
-        systick_init();
-        led_init();
-        reset_mode = 0;
-        for (int i = 0; i < (RESET_MODE_NUM_STATES * RESET_MODE_TIMEOUT_CYCLES + 1) * 32; i++) {
-            if (i % 32 == 0) {
-                if (++reset_mode > RESET_MODE_NUM_STATES) {
-                    reset_mode = BOARDCTRL_RESET_MODE_NORMAL;
-                }
-                uint8_t l = RESET_MODE_LED_STATES >> ((reset_mode - 1) * 4);
-                led_state_all(l);
-            }
-            if (!usrbtn_state()) {
-                break;
-            }
-            mp_hal_delay_ms(19);
-        }
-        // Flash the selected reset mode
-        for (int i = 0; i < 6; i++) {
-            led_state_all(0);
-            mp_hal_delay_ms(50);
-            uint8_t l = RESET_MODE_LED_STATES >> ((reset_mode - 1) * 4);
-            led_state_all(l);
-            mp_hal_delay_ms(50);
-        }
-        mp_hal_delay_ms(300);
-    }
-    return reset_mode;
-}
-
-#endif
-
 NORETURN static __attribute__((naked)) void branch_to_application(uint32_t r0, uint32_t bl_addr) {
     __asm volatile (
         "ldr r2, [r1, #0]\n"    // get address of stack pointer
@@ -1436,7 +1272,7 @@ NORETURN static __attribute__((naked)) void branch_to_application(uint32_t r0, u
 }
 
 static void try_enter_application(int reset_mode) {
-    uint32_t msp = *(volatile uint32_t*)APPLICATION_ADDR;
+    uint32_t msp = *(volatile uint32_t *)APPLICATION_ADDR;
     if ((msp & APP_VALIDITY_BITS) != 0) {
         // Application is invalid.
         return;
@@ -1566,11 +1402,13 @@ enter_bootloader:
     #endif
 
     if ((initial_r0 & 0xffffff80) == 0x70ad0080) {
+        mboot_state_change(MBOOT_STATE_FSLOAD_START, 0);
+        int ret = -1;
         #if MBOOT_FSLOAD
         // Application passed through elements, validate then process them
         const uint8_t *elem_end = elem_search(ELEM_DATA_START, ELEM_TYPE_END);
         if (elem_end != NULL && elem_end[-1] == 0) {
-            int ret = fsload_process();
+            ret = fsload_process();
             // If there is a valid ELEM_TYPE_STATUS element then store the status in the given location.
             const uint8_t *elem_status = elem_search(ELEM_DATA_START, ELEM_TYPE_STATUS);
             if (elem_status != NULL && elem_status[-1] == 4) {
@@ -1580,8 +1418,8 @@ enter_bootloader:
             }
         }
         #endif
+        mboot_state_change(MBOOT_STATE_FSLOAD_END, ret);
         // Always reset because the application is expecting to resume
-        led_state_all(0);
         leave_bootloader();
     }
 
@@ -1598,8 +1436,7 @@ enter_bootloader:
     i2c_init(initial_r0);
     #endif
 
-    led_state_all(0);
-    led0_state(LED0_STATE_SLOW_FLASH);
+    mboot_state_change(MBOOT_STATE_DFU_START, 0);
 
     #if MBOOT_USB_RESET_ON_DISCONNECT
     bool has_connected = false;
@@ -1633,8 +1470,9 @@ enter_bootloader:
         #endif
     }
 
+    mboot_state_change(MBOOT_STATE_DFU_END, 0);
+
     // Shutdown and leave the bootloader.
-    led_state_all(0);
     mp_hal_delay_ms(50);
     pyb_usbdd_shutdown();
     #if defined(MBOOT_I2C_SCL)
