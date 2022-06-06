@@ -52,12 +52,14 @@
 
 char *itoa(int num, char *str, int base);
 
+#if defined(USE_DBG_PRINT)
 // #define DEBUG_ESP8266
 // #define DEBUG_ESP8266_GET_DATA
 // #define DEBUG_ESP8266_POST
 // #define DEBUG_ESP8266_POST_HEADER
 // #define DEBUG_ESP8266_POST_DATA
 // #define DEBUG_ESP8266_CHKOK
+#endif
 
 #ifdef DEBUG_ESP8266
 #define DEBUG_PRINT(m,v)     { debug_printf("%s:%d\r\n", m, v); }

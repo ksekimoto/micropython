@@ -51,14 +51,14 @@
 #define PID_STALL_2 3
 #define USBCDC_BUF_SIZE 2048
 
-static uint8_t cdc_rx_buf[USBCDC_BUF_SIZE];
-static uint8_t cdc_tx_buf[USBCDC_BUF_SIZE];
+static uint8_t rx_buf[USBCDC_BUF_SIZE];
+static uint8_t tx_buf[USBCDC_BUF_SIZE];
 
 volatile bool _begin = false;
-volatile uint32_t cdc_rx_buf_head = 0;
-volatile uint32_t cdc_rx_buf_tail = 0;
-volatile uint32_t cdc_tx_buf_head = 0;
-volatile uint32_t cdc_tx_buf_tail = 0;
+volatile uint32_t rx_buf_head = 0;
+volatile uint32_t rx_buf_tail = 0;
+volatile uint32_t tx_buf_head = 0;
+volatile uint32_t tx_buf_tail = 0;
 
 static USB_CALLBACK usb_callback = 0;
 
@@ -66,19 +66,15 @@ void usb_rx_set_callback(USB_CALLBACK callback) {
     usb_callback = callback;
 }
 
-bool cdc_tx_buf_available() {
-    return (cdc_tx_buf_head != cdc_tx_buf_tail);
-}
-
-bool cdc_rx_buf_available() {
-    return (cdc_rx_buf_head != cdc_rx_buf_tail);
+bool tx_buf_available() {
+    return (tx_buf_head != tx_buf_tail);
 }
 
 int rx_write_buf(uint8_t c) {
-    uint32_t i = (uint32_t)(cdc_rx_buf_head + 1) % USBCDC_BUF_SIZE;
-    if (i != cdc_rx_buf_tail) {
-        cdc_rx_buf[cdc_rx_buf_head] = c;
-        cdc_rx_buf_head = i;
+    uint32_t i = (uint32_t)(rx_buf_head + 1) % USBCDC_BUF_SIZE;
+    if (i != rx_buf_tail) {
+        rx_buf[rx_buf_head] = c;
+        rx_buf_head = i;
         return 1;
     } else {
         return 0;
@@ -86,9 +82,9 @@ int rx_write_buf(uint8_t c) {
 }
 
 uint8_t tx_read_buf() {
-    uint8_t c = cdc_tx_buf[cdc_tx_buf_tail];
-    if (cdc_tx_buf_head != cdc_tx_buf_tail) {
-        cdc_tx_buf_tail = (cdc_tx_buf_tail + 1) % USBCDC_BUF_SIZE;
+    uint8_t c = tx_buf[tx_buf_tail];
+    if (tx_buf_head != tx_buf_tail) {
+        tx_buf_tail = (tx_buf_tail + 1) % USBCDC_BUF_SIZE;
     }
     return c;
 }
@@ -160,7 +156,7 @@ void WriteBulkINPacketCDC(void) {
     }
     /* Write data to the IN Fifo until have written a full packet
      or we have no more data to write */
-    while ((Count < BULK_IN_PACKET_SIZE) && cdc_tx_buf_available()) {
+    while ((Count < BULK_IN_PACKET_SIZE) && tx_buf_available()) {
         USBIO.D0FIFO.WORD = (unsigned short)tx_read_buf();
         Count++;
     }
@@ -172,19 +168,19 @@ void WriteBulkINPacketCDC(void) {
     if (Count != BULK_IN_PACKET_SIZE) {
         USBIO.D0FIFOCTR.BIT.BVAL = 1;
     }
-    if (!cdc_tx_buf_available()) {
+    if (!tx_buf_available()) {
         USBIO.BRDYENB.BIT.PIPE2BRDYE = 0;
     }
 }
 
 void usbcdc_write(uint8_t c) {
-    unsigned int i = (cdc_tx_buf_head + 1) % USBCDC_BUF_SIZE;
+    unsigned int i = (tx_buf_head + 1) % USBCDC_BUF_SIZE;
 
     if (_begin) {
-        if (i != cdc_tx_buf_tail) {
+        if (i != tx_buf_tail) {
             USBIO.INTENB0.BIT.BRDYE = 0;
-            cdc_tx_buf[cdc_tx_buf_head] = c;
-            cdc_tx_buf_head = i;
+            tx_buf[tx_buf_head] = c;
+            tx_buf_head = i;
             USBIO.INTENB0.BIT.BRDYE = 1;
             USBIO.BRDYENB.BIT.PIPE2BRDYE = 1;
         }
@@ -192,28 +188,23 @@ void usbcdc_write(uint8_t c) {
         if (USBCDC_IsConnected()) {
             _begin = true;
         }
-        cdc_tx_buf[cdc_tx_buf_head] = c;
-        cdc_tx_buf_head = i;
+        tx_buf[tx_buf_head] = c;
+        tx_buf_head = i;
     }
 }
 
 int usbcdc_read(void) {
     // if the head isn't ahead of the tail, we don't have any characters
-    if (cdc_rx_buf_head == cdc_rx_buf_tail) {
+    if (rx_buf_head == rx_buf_tail) {
         return 0;
     } else {
-        uint8_t c = cdc_rx_buf[cdc_rx_buf_tail];
-        cdc_rx_buf_tail = (uint32_t)(cdc_rx_buf_tail + 1) % USBCDC_BUF_SIZE;
+        uint8_t c = rx_buf[rx_buf_tail];
+        rx_buf_tail = (uint32_t)(rx_buf_tail + 1) % USBCDC_BUF_SIZE;
         return c;
     }
 }
 
 void usb_init(void) {
-    _begin = false;
-    cdc_rx_buf_head = 0;
-    cdc_rx_buf_tail = 0;
-    cdc_tx_buf_head = 0;
-    cdc_tx_buf_tail = 0;
 #if defined(USB_CDC_MSC)
 #if defined(USB_HID)
     USB_ERR err = USBCDCMSCHID_Init();

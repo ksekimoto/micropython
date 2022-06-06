@@ -1085,6 +1085,10 @@ void rx_sci_init(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud, u
     rx_sci_init_with_flow(ch, tx_pin, rx_pin, baud, bits, parity, stop, flow, PIN_END, PIN_END);
 }
 
+void rx_sci_init_default(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud) {
+    rx_sci_init(ch, tx_pin, rx_pin, baud, 8, 0, 1, 0);
+}
+
 void rx_sci_deinit(uint32_t ch) {
     uint32_t idx = ch_to_idx[ch];
     if (rx_sci_init_flag[idx] != 0) {

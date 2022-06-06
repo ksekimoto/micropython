@@ -36,7 +36,6 @@
 #include "uart.h"
 #include "usb_entry.h"
 #include "modmachine.h"
-#include "common.h"
 
 typedef enum
 {
@@ -74,7 +73,6 @@ void flash_cache_commit(void);
 void _mp_hal_stdout_tx_chr(int c);
 int _mp_hal_stdin_rx_chr(void);
 void _mp_hal_stdout_tx_strn(const char *str, int len);
-bool cdc_rx_buf_available(void);
 
 MP_WEAK int mp_hal_stdin_rx_chr(void) {
     for (;;) {
@@ -100,16 +98,8 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
         }
         #if MICROPY_HW_ENABLE_RX_USB
         byte c;
-        if (cdc_rx_buf_available()) {
-            c = usbcdc_read();
-            #if defined(USE_DBG_PRINT)
-            if (c > 10) {
-                rx_sci_tx_ch(DEBUG_CH, (int)c);
-            } else {
-                debug_printf("0x%02x", c);
-            }
-            #endif
-            return (int)c;
+        if ((c = usbcdc_read()) != 0) {
+            return c;
         }
         #endif
         int dupterm_c = mp_uos_dupterm_rx_chr();
@@ -135,9 +125,6 @@ MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     #if MICROPY_HW_ENABLE_RX_USB
     uint8_t *p = (uint8_t *)str;
     while (len--) {
-        #if defined(USE_DBG_PRINT)
-        rx_sci_tx_ch(DEBUG_CH, (int)*p);
-        #endif
         usbcdc_write(*p++);
     }
     #endif

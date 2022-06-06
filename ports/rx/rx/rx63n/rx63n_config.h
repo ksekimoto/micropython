@@ -41,10 +41,16 @@ extern "C" {
 #if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
 #endif
-// #define DEBUG_TXSTR(s)  rx_sci_tx_str(DEBUG_CH, (unsigned char *)s)
-// #define DEBUG_TXCH(c)   rx_sci_tx_ch(DEBUG_CH, c)
-#define DEBUG_TXSTR(S)  printf("%s", S)
-#define DEBUG_TXCH(C)   printf("%c", C)
+#if !defined(DEBUG_CH_TX)
+#define DEBUG_CH_TX P20
+#endif
+#if !defined(DEBUG_CH_RX)
+#define DEBUG_CH_RX P21
+#endif
+#define DEBUG_TXSTR(s)  rx_sci_tx_str(DEBUG_CH, (unsigned char *)s)
+#define DEBUG_TXCH(c)   rx_sci_tx_ch(DEBUG_CH, c)
+// #define DEBUG_TXSTR(S)  printf("%s", S)
+// #define DEBUG_TXCH(C)   printf("%c", C)
 #else
 #define DEBUG_TXSTR(s)
 #define DEBUG_TXCH(c)

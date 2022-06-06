@@ -99,6 +99,7 @@ void rx_sci_int_disable(uint32_t ch);
 void rx_sci_set_baud(uint32_t ch, uint32_t baud);
 void rx_sci_init_with_flow(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow, uint32_t cts_pin, uint32_t rts_pin);
 void rx_sci_init(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud, uint32_t bits, uint32_t parity, uint32_t stop, uint32_t flow);
+void rx_sci_init_default(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32_t baud);
 void rx_sci_deinit(uint32_t ch);
 
 #ifdef __cplusplus

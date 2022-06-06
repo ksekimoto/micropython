@@ -56,15 +56,18 @@
 #include "vector.h"
 #include "esp8266_driver.h"
 
+#if NEW_IMPL
 pyb_uart_obj_t mp_esp_uart_obj;
 mp_irq_obj_t mp_esp_irq_obj;
 static uint8_t esp_rxbuf[768];
+#else
+#endif
 
-// #if defined(USE_DBG_PRINT)
-// #define DEBUG_ESP8266_ERR
-// #define DEBUG_ESP8266_AT_ERR
+#if defined(USE_DBG_PRINT)
+#define DEBUG_ESP8266_ERR
+#define DEBUG_ESP8266_AT_ERR
 // #define DEBUG_ESP8266_SOCKET_ERR
-// #define DEBUG_ESP8266_AT
+#define DEBUG_ESP8266_AT
 // #define DEBUG_ESP8266_RAW_DATA
 // #define DEBUG_ESP8266_PACKET
 // #define DEBUG_ESP8266_DRIVER
@@ -73,20 +76,20 @@ static uint8_t esp_rxbuf[768];
 // #define DEBUG_ESP8266_SOCKET
 // #define DEBUG_ESP8266_SOCKET_RECV
 // #define DEBUG_ESP8266_SOCKET_SEND
-// endif
+#endif
 
 #if defined(RZA2M)
-#define SCI_INIT_DEFAULT    rz_sci_init_default
+#define SCI_INIT_DEFAULT(CH, BAUD)  rz_sci_init(CH, 0x42, 0x41, BAUD, 8, 0, 1, 0)
 #define SCI_RX_ANY          rz_sci_rx_any
 #define SCI_RX_CH           rz_sci_rx_ch
 #define SCI_TX_CH           rz_sci_tx_ch
 #define SCI_TX_STR          rz_sci_tx_str
 
 #else
-#define SCI_INIT_DEFAULT    rx_sci_init_default
+#define SCI_INIT_DEFAULT(CH, BAUD)  rx_sci_init(CH, P23, P25, BAUD, 8, 0, 1, 0)
 #define SCI_RX_ANY          rx_sci_rx_any
 #define SCI_RX_CH           rx_sci_rx_ch
-#define SCI_TX_CH           rx_sci_tx_ch
+#define SCI_TX_CH(A,C)      rx_sci_tx_ch(A,C)
 #define SCI_TX_STR          rx_sci_tx_str
 
 #endif
@@ -403,7 +406,7 @@ static void esp8266_serial_clear_buf(void) {
 }
 
 static void esp8266_serial_begin(int uart_id, int baud) {
-    //SCI_INIT_DEFAULT(esp8266_ch, esp8266_baud);
+    #if NEW_IMPL
     mp_esp_uart_obj.base.type = &pyb_uart_type;
     mp_esp_uart_obj.uart_id = uart_id;
     mp_esp_uart_obj.is_static = true;
@@ -413,6 +416,9 @@ static void esp8266_serial_begin(int uart_id, int baud) {
     MP_STATE_PORT(pyb_uart_obj_all)[mp_esp_uart_obj.uart_id - 1] = &mp_esp_uart_obj;
     uart_init(&mp_esp_uart_obj, baud, 8, 0, 1, 0);
     uart_set_rxbuf(&mp_esp_uart_obj, sizeof(esp_rxbuf), esp_rxbuf);
+    #else
+    SCI_INIT_DEFAULT(esp8266_ch, esp8266_baud);
+    #endif
 }
 
 static int esp8266_serial_available(void) {
@@ -424,7 +430,7 @@ static int esp8266_serial_read(void) {
 }
 
 static void esp8266_serial_write_byte(uint8_t c) {
-    SCI_TX_CH(esp8266_ch, (uint8_t)c);
+    SCI_TX_CH(esp8266_ch, (int)c);
     #if defined(DEBUG_ESP8266_RAW_DATA)
     if (debug_write) {
         if (isdisplayed(c)) {
@@ -454,8 +460,8 @@ static void esp8266_serial_printi(int i) {
 
 static void esp8266_serial_println(const char *s) {
     esp8266_serial_print(s);
-    SCI_TX_CH(esp8266_ch, '\r');
-    SCI_TX_CH(esp8266_ch, '\n');
+    SCI_TX_CH(esp8266_ch, (int)'\r');
+    SCI_TX_CH(esp8266_ch, (int)'\n');
     #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');
@@ -464,8 +470,8 @@ static void esp8266_serial_println(const char *s) {
 
 static void esp8266_serial_printiln(int i) {
     esp8266_serial_printi(i);
-    SCI_TX_CH(esp8266_ch, '\r');
-    SCI_TX_CH(esp8266_ch, '\n');
+    SCI_TX_CH(esp8266_ch, (int)'\r');
+    SCI_TX_CH(esp8266_ch, (int)'\n');
     #if defined(DEBUG_ESP8266_RAW_DATA)
     DEBUG_TXCH('\r');
     DEBUG_TXCH('\n');

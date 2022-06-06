@@ -41,9 +41,9 @@ void rx_init(void) {
     udelay_init();
     rx_rtc_init();
     #ifdef USE_DBG_PRINT
-    // rx_sci_init_default(DEBUG_CH, SCI_BAUD);
-    // sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
-    // sci_tx_str(DEBUG_CH, (uint8_t *)"rx65n_init\r\n");
+    rx_sci_init_default(DEBUG_CH, DEBUG_CH_TX, DEBUG_CH_RX, SCI_BAUD);
+    rx_sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
+    rx_sci_tx_str(DEBUG_CH, (uint8_t *)"rx65n_init\r\n");
     #endif
     // usb_init();
     internal_flash_init();
