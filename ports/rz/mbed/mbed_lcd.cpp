@@ -636,11 +636,6 @@ static void *lcd_port_init(void *display, uint16_t lcd_type, uint16_t lcd_size) 
     return (void *)m_LcdCfgTbl_LCD_shield;
 }
 
-// void mbed_ticker_thread(void *thread, uint32_t us) {
-//     static Ticker ticker;
-//     ticker.attach_us((void (*)())thread, (us_timestamp_t)us);
-// }
-
 void mbed_lcd_start_display(display_t *dp) {
     if (!mbed_lcd_is_initialzed()) {
         return;

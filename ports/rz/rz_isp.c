@@ -33,6 +33,7 @@
 #include "rz_buf.h"
 #include "rz_isp.h"
 
+#if USE_DRP
 // ==================================================================
 // ISP class
 // ==================================================================
@@ -247,3 +248,5 @@ const mp_obj_type_t rz_isp_type = {
     .make_new = rz_isp_obj_make_new,
     .locals_dict = (mp_obj_dict_t *)&rz_isp_locals_dict,
 };
+
+#endif

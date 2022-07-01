@@ -32,7 +32,7 @@
 #include "mphalport.h"
 #include "pin.h"
 #if defined(RZA2M)
-#include "rza2m_spi.h"
+#include "rz_spi.h"
 #endif
 
 #if defined(RZA2M)
@@ -231,14 +231,14 @@ STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in) {
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     mp_activate_xpt2046(self_in);
-    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate, 8, self->mode);
+    SPI_INIT((uint32_t)self->spihost, self->cs->id, self->baudrate, 8, self->mode);
     SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
     return mp_const_none;
 }
 
 STATIC mp_obj_t mp_xpt2046_deinit(mp_obj_t self_in) {
     xpt2046_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    SPI_DEINIT((uint32_t)self->spihost, self->cs->pin);
+    SPI_DEINIT((uint32_t)self->spihost, self->cs->id);
     return mp_const_none;
 }
 

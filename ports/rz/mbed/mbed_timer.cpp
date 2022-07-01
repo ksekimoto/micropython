@@ -42,6 +42,11 @@ uint32_t mbed_timer_get_ticks(void) {
     return _mstick;
 }
 
+void mbed_ticker_thread(void *thread, uint32_t us) {
+    static Ticker ticker;
+    ticker.attach_us((void (*)())thread, (us_timestamp_t)us);
+}
+
 void mbed_timer_init(void) {
     _mstick = 0;
     ms_tick.attach_us(onMillisecondTicker,1000);

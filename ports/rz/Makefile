@@ -41,14 +41,14 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 0
+LVGL_ENABLE = 1
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
 MBED_GR_LIBS = 1
 #MBED_GR_LIBS_LCD_TYPE = RGB_TO_HDMI
 MBED_GR_LIBS_LCD_TYPE = ATM0430D25
-MBED_GR_LIBS_DRP_FOR_MBED = 1
+MBED_GR_LIBS_DRP_FOR_MBED = 0
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
@@ -366,6 +366,10 @@ ifeq ($(MBED_GR_LIBS_components_LCD),1)
 CFLAGS += -DMBED_GR_LIBS_components_LCD
 endif
 
+ifeq ($(MBED_GR_LIBS_DRP_FOR_MBED),1)
+CFLAGS += -DUSE_DRP=1
+endif
+
 #######################################################################
 # source files
 #######################################################################
@@ -549,8 +553,10 @@ EXTMOD_SRC_C += rz_camera.c
 EXTMOD_SRC_C += rz_display.c
 EXTMOD_SRC_C += rz_lcd.c
 EXTMOD_SRC_C += rz_buf.c
+ifeq ($(MBED_GR_LIBS_DRP_FOR_MBED),1)
 EXTMOD_SRC_C += rz_drp.c
 EXTMOD_SRC_C += rz_isp.c
+endif
 endif
 endif
 

@@ -29,7 +29,7 @@
 #include "dcache-control.h"
 #include "MT9V111_config.h"
 #include "OV2640_config.h"
-#include "ov2640_regs.h"
+#include "OV2640_regs.h"
 #include "OV5642_config.h"
 #include "OV7725_config.h"
 #include "OV7670_config.h"

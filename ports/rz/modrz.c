@@ -66,8 +66,10 @@ STATIC const mp_rom_map_elem_t rz_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_DISPLAY), MP_ROM_PTR(&rz_display_type) },
     { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&rz_lcd_type) },
     { MP_ROM_QSTR(MP_QSTR_CAMERA), MP_ROM_PTR(&rz_camera_type) },
+    #if USE_DRP
     { MP_ROM_QSTR(MP_QSTR_DRP), MP_ROM_PTR(&rz_drp_type) },
     { MP_ROM_QSTR(MP_QSTR_ISP), MP_ROM_PTR(&rz_isp_type) },
+    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(rz_module_globals, rz_module_globals_table);
 

@@ -33,6 +33,9 @@
 
 extern void dcache_clean(void *p_buf, uint32_t size);
 extern void dcache_invalid(void *p_buf, uint32_t size);
+void lvrz_set_pixel(int32_t x, int32_t y, uint16_t color);
+uint8_t *lvrz_get_lcd_fb_ptr(void);
+uint32_t lvrz_get_lcd_fb_size(void);
 
 //////////////////////////////////////////////////////////////////////////////
 // rzlcd requires specific lv_conf resolution and color depth
@@ -145,8 +148,8 @@ STATIC mp_obj_t mp_init_rzlcd(mp_obj_t self_in) {
     // rzlcd_t *self = MP_OBJ_TO_PTR(self_in);
     mp_activate_rzlcd(self_in);
 
-    tft_fb_ptr = mbed_get_lcd_fb_ptr();
-    tft_fb_size = mbed_get_lcd_fb_size();
+    tft_fb_ptr = lvrz_get_lcd_fb_ptr();
+    tft_fb_size = lvrz_get_lcd_fb_size();
     // rzlcd_clear(0, 0, 239, 319, 0);
     mbed_lcd_init();
 
@@ -166,7 +169,7 @@ STATIC void rzlcd_flush(struct _disp_drv_t *disp_drv, const lv_area_t *area, lv_
         for (x = area->x1; x <= area->x2; x++) {
             /* Put a pixel to the display. For example: */
             /* put_px(x, y, *color_p)*/
-            mbed_set_pixel(x, y, (*color_p).full);
+            lvrz_set_pixel(x, y, (*color_p).full);
             color_p++;
         }
     }

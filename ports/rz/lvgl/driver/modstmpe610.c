@@ -32,7 +32,7 @@
 #include "mphalport.h"
 #include "pin.h"
 #if defined(RZA2M)
-#include "rza2m_spi.h"
+#include "rz_spi.h"
 #endif
 #include "stmpe610.h"
 
@@ -268,7 +268,7 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     mp_activate_stmpe610(self_in);
-    SPI_INIT((uint32_t)self->spihost, self->cs->pin, self->baudrate, 8, self->mode);
+    SPI_INIT((uint32_t)self->spihost, self->cs->id, self->baudrate, 8, self->mode);
     SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
 
     write_8bit_reg(self, STMPE_SYS_CTRL1, STMPE_SYS_CTRL1_RESET);
@@ -310,7 +310,7 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
 
 STATIC mp_obj_t mp_stmpe610_deinit(mp_obj_t self_in) {
     stmpe610_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    SPI_DEINIT((uint32_t)self->spihost, self->cs->pin);
+    SPI_DEINIT((uint32_t)self->spihost, self->cs->id);
     return mp_const_none;
 }
 

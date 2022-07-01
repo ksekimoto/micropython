@@ -36,6 +36,8 @@
 #include "rz_isp.h"
 #include "rz_drp.h"
 
+#if USE_DRP
+
 // ==================================================================
 // DRP class
 // ==================================================================
@@ -155,3 +157,5 @@ const mp_obj_type_t rz_drp_type = {
     .make_new = rz_drp_obj_make_new,
     .locals_dict = (mp_obj_dict_t *)&rz_drp_locals_dict,
 };
+
+#endif

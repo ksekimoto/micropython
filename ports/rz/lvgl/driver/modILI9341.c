@@ -31,7 +31,7 @@
 #include "mphalport.h"
 #include "pin.h"
 #if defined(RZA2M)
-#include "rza2m_spi.h"
+#include "rz_spi.h"
 #endif
 
 #if defined(RZA2M)
@@ -241,7 +241,7 @@ STATIC void disp_spi_init(ILI9341_t *self) {
     mp_hal_pin_output(self->cs);
     mp_hal_pin_write(self->cs, 1);
     uint32_t state = disable_irq();
-    SPI_INIT((uint32_t)self->spihost, (uint32_t)self->cs->pin, self->baudrate, 8, self->mode);
+    SPI_INIT((uint32_t)self->spihost, (uint32_t)self->cs->id, self->baudrate, 8, self->mode);
     SPI_GET_CONF((uint32_t)self->spihost, &self->spcmd, &self->spbr);
     enable_irq(state);
 }

@@ -32,9 +32,10 @@
 extern "C" {
 #endif
 
+uint32_t mbed_timer_get_ticks(void);
+void mbed_ticker_thread(void *thread, uint32_t us);
 void mbed_timer_init(void);
 void mbed_timer_deinit(void);
-uint32_t mbed_timer_get_ticks(void);
 
 void SysTick_Handler(void);
 
