@@ -65,6 +65,7 @@ endif
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 GIT_SUBMODULES += lib/lwip lib/mbedtls
 
@@ -150,6 +151,7 @@ endif
 #######################################################################
 CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
+CFLAGS += -I$(BOARD_DIR)
 # CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer -fdollars-in-identifiers -fshort-wchar -fno-exceptions -funsigned-char
 CFLAGS += -ffunction-sections -fdata-sections -fomit-frame-pointer 
 CFLAGS += -Wno-missing-braces
@@ -207,8 +209,6 @@ CFLAGS += -Wno-error=main
 CFLAGS += -Wno-error=format=
 endif
 endif
-
-CFLAGS += -I$(BOARD_DIR)
 
 ifeq ($(DEBUG), 1)
 #CFLAGS += -Os -ggdb
@@ -412,7 +412,6 @@ LIBM_SRC_C += $(addprefix lib/libm_dbl/,\
 	trunc.c \
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
-# ToDo
 LIBM_SRC_C += lib/libm_dbl/thumb_vfp_sqrt.c
 else
 LIBM_SRC_C += lib/libm_dbl/sqrt.c
@@ -614,7 +613,6 @@ SRC_S += setjmp.S
 SRC_S += gchelper.S
 
 ifeq ($(MICROPY_PY_LWIP),1)
-SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
 SRC_MOD += lwip_utils/sntp_client.c
 endif
 
@@ -638,17 +636,17 @@ DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
 LIBS += $(TOP)/drivers/cyw43/libcyw43.a
 endif
 
-ifneq ($(MICROPY_PY_WIZNET5K),0)
+ifneq ($(MICROPY_PY_NETWORK_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
-CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_NETWORK_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_NETWORK_WIZNET5K)
 ifeq ($(MICROPY_PY_LWIP),1)
 # When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
 CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
 endif
 SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
 SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
-	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
+	ethernet/w$(MICROPY_PY_NETWORK_WIZNET5K)/w$(MICROPY_PY_NETWORK_WIZNET5K).c \
 	ethernet/wizchip_conf.c \
 	ethernet/socket.c \
 	internet/dns/dns.c \
@@ -690,11 +688,6 @@ SRC_MOD += $(addprefix $(ESP8266_DIR)/src/,\
 	tinymalloc.c \
 	)
 endif
-
-#ifeq ($(MICROPY_PY_LWIP),1)
-#SRC_MOD += $(LWIP_DIR)/apps/sntp/sntp.c
-#SRC_MOD += lwip_utils/sntp_client.c
-#endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
@@ -781,15 +774,7 @@ all: $(BUILD)/firmware.elf
 # build rules
 #######################################################################
 
-ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
-# To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
-# and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
-CFLAGS += -DMICROPY_MODULE_FROZEN_STR
-endif
-
-ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
-# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
-# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+ifneq ($(FROZEN_MANIFEST),)
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 CFLAGS += -DMICROPY_MODULE_FROZEN_STR
@@ -797,9 +782,6 @@ endif
 
 
 
-#$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-#	$(ECHO) "MISC freezing bytecode"
-#	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware.elf: $(OBJ) $(LIB_LVGL)
 	$(ECHO) "LINK $@"

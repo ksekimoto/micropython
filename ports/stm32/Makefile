@@ -33,6 +33,7 @@ MBOOT_TEXT0_ADDR ?= 0x08000000
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 GIT_SUBMODULES += lib/libhydrogen lib/lwip lib/mbedtls lib/stm32lib
 
@@ -95,13 +96,22 @@ CFLAGS += -fsingle-precision-constant
 endif
 endif
 
-LDFLAGS = -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Map=$(@:.elf=.map) --cref
-LDFLAGS += --defsym=_estack_reserve=8
+LDFLAGS = -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Wl,-Map=$(@:.elf=.map) -Wl,--cref
+LDFLAGS += -Wl,--defsym=_estack_reserve=8
 LIBS += "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 # Remove uncalled code from the final image.
 CFLAGS += -fdata-sections -ffunction-sections
-LDFLAGS += --gc-sections
+LDFLAGS += -Wl,--gc-sections
+
+ifeq ($(LTO),1)
+CFLAGS += -flto=auto
+# LTO requires passing compiler flags to the linker as it will run the assembler.
+# To avoid risk of missing something relevant, pass all flags except for preprocessor args
+LDFLAGS += $(filter-out -I%,$(filter-out -D%,$(CFLAGS)))
+
+$(BUILD)/stm32_it.o $(BUILD)/pendsv.o: CFLAGS += -fno-lto
+endif
 
 # Debugging/Optimization
 ifeq ($(DEBUG), 1)
@@ -325,11 +335,8 @@ SRC_O += \
 	$(STARTUP_FILE) \
 	$(SYSTEM_FILE)
     
-ifeq ($(MCU_SERIES),l0)
-CSUPEROPT = -Os # save some code space
-endif
-
 ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 g0 l0))
+CSUPEROPT = -Os # save some code space
 SRC_O += \
 	resethandler_m0.o \
 	shared/runtime/gchelper_m0.o
@@ -449,17 +456,17 @@ DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
 LIBS += $(TOP)/drivers/cyw43/libcyw43.a
 endif
 
-ifneq ($(MICROPY_PY_WIZNET5K),0)
+ifneq ($(MICROPY_PY_NETWORK_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
-CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_NETWORK_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_NETWORK_WIZNET5K)
 ifeq ($(MICROPY_PY_LWIP),1)
 # When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
 CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
 endif
 SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
 SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
-	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
+	ethernet/w$(MICROPY_PY_NETWORK_WIZNET5K)/w$(MICROPY_PY_NETWORK_WIZNET5K).c \
 	ethernet/wizchip_conf.c \
 	ethernet/socket.c \
 	internet/dns/dns.c \
@@ -594,7 +601,7 @@ endef
 
 define GENERATE_ELF
 	$(ECHO) "LINK $(1)"
-	$(Q)$(LD) $(LDFLAGS) -o $(1) $(2) $(LDFLAGS_MOD) $(LIBS)
+	$(Q)$(CC) $(LDFLAGS) -o $(1) $(2) $(LDFLAGS_MOD) $(LIBS)
 	$(Q)$(SIZE) $(1)
 	$(if $(filter-out $(TEXT0_ADDR),0x08000000), \
 		$(ECHO) "INFO: this build requires mboot to be installed first")

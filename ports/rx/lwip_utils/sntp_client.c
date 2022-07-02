@@ -37,6 +37,7 @@
 //#define DEBUG_SNTP_CLIENT
 
 void set_time(time_t *t);
+void mdelay(int m);
 
 void sntp_set_system_time(u32_t sec, u32_t frac) {
 #if defined(DEBUG_SNTP_CLIENT)

@@ -188,7 +188,7 @@ STATIC mp_obj_t machine_soft_reset(void) {
 MP_DEFINE_CONST_FUN_OBJ_0(machine_soft_reset_obj, machine_soft_reset);
 
 // Activate the bootloader without BOOT* pins.
-STATIC NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
+NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
     #if MICROPY_HW_ENABLE_USB
     pyb_usb_dev_deinit();
     #endif
@@ -223,9 +223,6 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
         mp_raise_NotImplementedError(MP_ERROR_TEXT("machine.freq set not supported yet"));
         return mp_const_none;
 
-        // fail:;
-        //    void NORETURN __fatal_error(const char *msg);
-        //    __fatal_error("can't change freq");
     }
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_freq_obj, 0, 4, machine_freq);

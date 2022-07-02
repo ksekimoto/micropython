@@ -179,7 +179,7 @@ STATIC mp_obj_t machine_soft_reset(void) {
 MP_DEFINE_CONST_FUN_OBJ_0(machine_soft_reset_obj, machine_soft_reset);
 
 // Activate the bootloader without BOOT* pins.
-STATIC NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
+NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
     #if MICROPY_HW_ENABLE_USB
     pyb_usb_dev_deinit();
     #endif
@@ -277,6 +277,9 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disable_irq),         MP_ROM_PTR(&machine_disable_irq_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable_irq),          MP_ROM_PTR(&machine_enable_irq_obj) },
 
+    #if MICROPY_PY_MACHINE_BITSTREAM
+    { MP_ROM_QSTR(MP_QSTR_bitstream),           MP_ROM_PTR(&machine_bitstream_obj) },
+    #endif
     #if MICROPY_PY_MACHINE_PULSE
     { MP_ROM_QSTR(MP_QSTR_time_pulse_us),       MP_ROM_PTR(&machine_time_pulse_us_obj) },
     #endif

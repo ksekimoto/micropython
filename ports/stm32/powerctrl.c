@@ -78,7 +78,7 @@
 // Location in RAM of bootloader state (just after the top of the stack).
 // STM32H7 has ECC and writes to RAM must be 64-bit so they are fully committed
 // to actual SRAM before a system reset occurs.
-#define BL_STATE_PTR                ((uint64_t *)&_estack)
+#define BL_STATE_PTR                ((uint64_t *)&_bl_state)
 #define BL_STATE_KEY                (0x5a5)
 #define BL_STATE_KEY_MASK           (0xfff)
 #define BL_STATE_KEY_SHIFT          (32)
@@ -87,7 +87,7 @@
 #define BL_STATE_GET_REG(s)         ((s) & 0xffffffff)
 #define BL_STATE_GET_KEY(s)         (((s) >> BL_STATE_KEY_SHIFT) & BL_STATE_KEY_MASK)
 #define BL_STATE_GET_ADDR(s)        (((s) >> BL_STATE_KEY_SHIFT) & ~BL_STATE_KEY_MASK)
-extern uint64_t _estack[];
+extern uint64_t _bl_state[];
 #endif
 
 static inline void powerctrl_disable_hsi_if_unused(void) {
@@ -685,10 +685,17 @@ void powerctrl_enter_stop_mode(void) {
     // executed until after the clocks are reconfigured
     uint32_t irq_state = disable_irq();
 
-    #if defined(STM32H7)
+    #if defined(STM32H7) || \
+    defined(STM32F427xx) || defined(STM32F437xx) || \
+    defined(STM32F429xx) || defined(STM32F439xx) || \
+    defined(STM32WB55xx) || defined(STM32WB35xx)
     // Disable SysTick Interrupt
     // Note: This seems to be required at least on the H7 REV Y,
     // otherwise the MCU will leave stop mode immediately on entry.
+    // Note: According to ST Errata ES0206 Rev 18, Section 2.2.1 this is needed
+    // for STM32F427xx, STM32F437xx, STM32F429xx and STM32F439xx
+    // Note: According to ST Errata ES0394 Rev 11, Section 2.2.17 this is needed
+    // for STM32WB55xx and STM32WB35xx
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     #endif
 
@@ -849,7 +856,10 @@ void powerctrl_enter_stop_mode(void) {
     MICROPY_BOARD_LEAVE_STOP
     #endif
 
-    #if defined(STM32H7)
+    #if defined(STM32H7) || \
+    defined(STM32F427xx) || defined(STM32F437xx) || \
+    defined(STM32F429xx) || defined(STM32F439xx) || \
+    defined(STM32WB55xx) || defined(STM32WB35xx)
     // Enable SysTick Interrupt
     SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
     #endif

@@ -33,6 +33,11 @@
 #include "tusb.h"
 #include "uart.h"
 #include "hardware/rtc.h"
+#include "pico/unique_id.h"
+
+#if MICROPY_PY_NETWORK_CYW43
+#include "lib/cyw43-driver/src/cyw43.h"
+#endif
 
 #if MICROPY_HW_ENABLE_UART_REPL || MICROPY_HW_ENABLE_USBDEV
 
@@ -163,4 +168,40 @@ uint64_t mp_hal_time_ns(void) {
     rtc_get_datetime(&t);
     uint64_t s = timeutils_seconds_since_epoch(t.year, t.month, t.day, t.hour, t.min, t.sec);
     return s * 1000000000ULL;
+}
+
+// Generate a random locally administered MAC address (LAA)
+void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
+    #ifndef NDEBUG
+    printf("Warning: No MAC in OTP, generating MAC from board id\n");
+    #endif
+    pico_unique_board_id_t pid;
+    pico_get_unique_board_id(&pid);
+    buf[0] = 0x02; // LAA range
+    buf[1] = (pid.id[7] << 4) | (pid.id[6] & 0xf);
+    buf[2] = (pid.id[5] << 4) | (pid.id[4] & 0xf);
+    buf[3] = (pid.id[3] << 4) | (pid.id[2] & 0xf);
+    buf[4] = pid.id[1];
+    buf[5] = (pid.id[0] << 2) | idx;
+}
+
+// A board can override this if needed
+MP_WEAK void mp_hal_get_mac(int idx, uint8_t buf[6]) {
+    #if MICROPY_PY_NETWORK_CYW43
+    // The mac should come from cyw43 otp when CYW43_USE_OTP_MAC is defined
+    // This is loaded into the state after the driver is initialised
+    // cyw43_hal_generate_laa_mac is only called by the driver to generate a mac if otp is not set
+    memcpy(buf, cyw43_state.mac, 6);
+    #else
+    mp_hal_generate_laa_mac(idx, buf);
+    #endif
+}
+
+void mp_hal_get_mac_ascii(int idx, size_t chr_off, size_t chr_len, char *dest) {
+    static const char hexchr[16] = "0123456789ABCDEF";
+    uint8_t mac[6];
+    mp_hal_get_mac(idx, mac);
+    for (; chr_len; ++chr_off, --chr_len) {
+        *dest++ = hexchr[mac[chr_off >> 1] >> (4 * (1 - (chr_off & 1))) & 0xf];
+    }
 }

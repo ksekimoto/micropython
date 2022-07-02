@@ -41,14 +41,14 @@ TARGET = TARGET_RZ_A2XX
 TARGET_BOARD = TARGET_GR_MANGO
 TARGET_LD = boards/$(BOARD)/$(BOARD).ld
 STACK_USAGE = 16384
-LVGL_ENABLE = 1
+LVGL_ENABLE = 0
 MBED_OS = 1
 MBED_OS_EMAC=0
 MBED_OS_EVENTS=0
 MBED_GR_LIBS = 1
 #MBED_GR_LIBS_LCD_TYPE = RGB_TO_HDMI
 MBED_GR_LIBS_LCD_TYPE = ATM0430D25
-MBED_GR_LIBS_DRP_FOR_MBED = 0
+MBED_GR_LIBS_DRP_FOR_MBED = 1
 MBED_GR_LIBS_dcache-control = 1
 MBED_GR_LIBS_components_LCD = 1
 MBED_GR_LIBS_components_CAMERA = 1
@@ -93,6 +93,7 @@ FROZEN_MANIFEST ?= boards/manifest.py
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 GIT_SUBMODULES = lib/lwip lib/mbedtls lib/mynewt-nimble
 ifeq ($(MBED_OS), 1)
@@ -435,7 +436,6 @@ LIBM_SRC_C += $(addprefix lib/libm_dbl/,\
 	trunc.c \
 	)
 ifeq ($(SUPPORTS_HARDWARE_FP_DOUBLE),1)
-# ToDo
 LIBM_SRC_C += lib/libm_dbl/thumb_vfp_sqrt.c
 else
 LIBM_SRC_C += lib/libm_dbl/sqrt.c
@@ -654,17 +654,17 @@ DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
 LIBS += $(TOP)/drivers/cyw43/libcyw43.a
 endif
 
-ifneq ($(MICROPY_PY_WIZNET5K),0)
+ifneq ($(MICROPY_PY_NETWORK_WIZNET5K),0)
 WIZNET5K_DIR=drivers/wiznet5k
 INC += -I$(TOP)/$(WIZNET5K_DIR)
-CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_WIZNET5K)
+CFLAGS_MOD += -DMICROPY_PY_WIZNET5K=$(MICROPY_PY_NETWORK_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_NETWORK_WIZNET5K)
 ifeq ($(MICROPY_PY_LWIP),1)
 # When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
 CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
 endif
 SRC_MOD += network_wiznet5k.c modnwwiznet5k.c
 SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
-	ethernet/w$(MICROPY_PY_WIZNET5K)/w$(MICROPY_PY_WIZNET5K).c \
+	ethernet/w$(MICROPY_PY_NETWORK_WIZNET5K)/w$(MICROPY_PY_NETWORK_WIZNET5K).c \
 	ethernet/wizchip_conf.c \
 	ethernet/socket.c \
 	internet/dns/dns.c \
@@ -793,17 +793,10 @@ all: $(BUILD)/firmware.bin
 # build rules
 #######################################################################
 
-ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
-# To use frozen source modules, put your .py files in a subdirectory (eg scripts/)
-# and then invoke make with FROZEN_DIR=scripts (be sure to build from scratch).
-CFLAGS += -DMICROPY_MODULE_FROZEN_STR
-endif
-
-ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
-# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
-# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+ifneq ($(FROZEN_MANIFEST),)
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+CFLAGS += -DMICROPY_MODULE_FROZEN_STR
 endif
 
 $(BUILD)/firmware.hex: $(BUILD)/firmware.elf

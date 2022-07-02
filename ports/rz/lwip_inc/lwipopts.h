@@ -5,16 +5,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "py/runtime.h"
-#include "py/mphal.h"
-
-//#define LWIP_DEBUG                      LWIP_DBG_ON
-//#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
-//#define DHCP_DEBUG                      LWIP_DBG_ON
-//#define DNS_DEBUG                       LWIP_DBG_ON
-//#define SNTP_DEBUG                      LWIP_DBG_ON
-//#define TCP_DEBUG                       LWIP_DBG_ON
-//#define IP_DEBUG                        LWIP_DBG_ON
 
 // This protection is not needed, instead we execute all lwIP code at PendSV priority
 #define SYS_ARCH_DECL_PROTECT(lev) do { } while (0)
@@ -76,6 +66,13 @@ extern uint32_t rng_get(void);
 // TCP u/l is very slow
 
 #if 0
+// lwip takes 19159 bytes; TCP d/l and u/l are around 320k/s on local network
+#define MEM_SIZE (5000)
+#define TCP_WND (4 * TCP_MSS)
+#define TCP_SND_BUF (4 * TCP_MSS)
+#endif
+
+#if 1
 // lwip takes 26700 bytes; TCP dl/ul are around 750/600 k/s on local network
 #define MEM_SIZE (8000)
 #define TCP_MSS (800)
@@ -94,13 +91,6 @@ extern uint32_t rng_get(void);
 #endif
 
 typedef uint32_t sys_prot_t;
-
-//#if !defined(MICROPY_PY_LWIP)
-// For now, we can simply define this as a macro for the timer code. But this function isn't
-// universal and other ports will need to do something else. It may be necessary to move
-// things like this into a port-provided header file.
-//#define sys_now mp_hal_ticks_ms
-//#endif
 
 #include "lwip/arch.h"
 #include "sntp_client.h"

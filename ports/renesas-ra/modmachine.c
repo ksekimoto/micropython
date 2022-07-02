@@ -47,6 +47,7 @@
 #include "gccollect.h"
 #include "irq.h"
 #include "powerctrl.h"
+#include "boardctrl.h"
 #include "pybthread.h"
 #include "storage.h"
 #include "pin.h"
@@ -55,6 +56,7 @@
 #include "spi.h"
 #include "uart.h"
 
+#if MICROPY_PY_MACHINE
 
 #define PYB_RESET_SOFT      (0)
 #define PYB_RESET_POWER_ON  (1)
@@ -181,12 +183,14 @@ STATIC mp_obj_t machine_soft_reset(void) {
 MP_DEFINE_CONST_FUN_OBJ_0(machine_soft_reset_obj, machine_soft_reset);
 
 // Activate the bootloader without BOOT* pins.
-STATIC NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
+NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
     #if MICROPY_HW_ENABLE_STORAGE
     storage_flush();
     #endif
 
     __disable_irq();
+
+    MICROPY_BOARD_ENTER_BOOTLOADER(n_args, args);
 
     #if MICROPY_HW_USES_BOOTLOADER
     // ToDo: need to review how to implement
@@ -224,7 +228,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(machine_idle_obj, machine_idle);
 STATIC mp_obj_t machine_lightsleep(size_t n_args, const mp_obj_t *args) {
     if (n_args != 0) {
         mp_obj_t args2[2] = {MP_OBJ_NULL, args[0]};
-        pyb_rtc_wakeup(2, args2);
+        machine_rtc_wakeup(2, args2);
     }
     powerctrl_enter_stop_mode();
     return mp_const_none;
@@ -234,7 +238,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_lightsleep_obj, 0, 1, machine_lights
 STATIC mp_obj_t machine_deepsleep(size_t n_args, const mp_obj_t *args) {
     if (n_args != 0) {
         mp_obj_t args2[2] = {MP_OBJ_NULL, args[0]};
-        pyb_rtc_wakeup(2, args2);
+        machine_rtc_wakeup(2, args2);
     }
     powerctrl_enter_standby_mode();
     return mp_const_none;
@@ -273,7 +277,7 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Pin),                 MP_ROM_PTR(&machine_pin_type) },
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
 
-    { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
+    { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&machine_rtc_type) },
     { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&machine_adc_type) },
     #if MICROPY_PY_MACHINE_I2C
     #if MICROPY_HW_ENABLE_HW_I2C
@@ -285,7 +289,7 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
     { MP_ROM_QSTR(MP_QSTR_SoftSPI),             MP_ROM_PTR(&mp_machine_soft_spi_type) },
     #endif
-    { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
+    { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&machine_uart_type) },
     { MP_ROM_QSTR(MP_QSTR_Timer),               MP_ROM_PTR(&machine_timer_type) },
     { MP_ROM_QSTR(MP_QSTR_PWRON_RESET),         MP_ROM_INT(PYB_RESET_POWER_ON) },
     { MP_ROM_QSTR(MP_QSTR_HARD_RESET),          MP_ROM_INT(PYB_RESET_HARD) },
@@ -302,3 +306,7 @@ const mp_obj_module_t mp_module_machine = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&machine_module_globals,
 };
+
+MP_REGISTER_MODULE(MP_QSTR_umachine, mp_module_machine);
+
+#endif // MICROPY_PY_MACHINE

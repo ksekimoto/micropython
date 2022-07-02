@@ -53,20 +53,9 @@
 #endif
 
 // Don't enable lookup cache on M0 (low RAM)
-// #ifndef MICROPY_OPT_MAP_LOOKUP_CACHE
-// #define MICROPY_OPT_MAP_LOOKUP_CACHE (__CORTEX_M > 0)
-// #endif
-
-// emitters
-// #define MICROPY_PERSISTENT_CODE_LOAD (1)
-// #ifndef MICROPY_EMIT_THUMB
-// #define MICROPY_EMIT_THUMB          (1)
-// #endif
-// #ifndef MICROPY_EMIT_INLINE_THUMB
-// #define MICROPY_EMIT_INLINE_THUMB   (1)
-// #endif
 
 // Python internal features
+#define MICROPY_TRACKED_ALLOC       (MICROPY_SSL_MBEDTLS)
 #define MICROPY_READER_VFS          (1)
 #define MICROPY_ENABLE_GC           (1)
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF (1)
@@ -77,6 +66,7 @@
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
 #endif
 #define MICROPY_USE_INTERNAL_ERRNO  (1)
+#define MICROPY_SCHEDULER_STATIC_NODES (1)
 #define MICROPY_SCHEDULER_DEPTH     (8)
 #define MICROPY_VFS                 (1)
 
@@ -84,7 +74,6 @@
 #ifndef MICROPY_PY_BUILTINS_HELP_TEXT
 #define MICROPY_PY_BUILTINS_HELP_TEXT rx_help_text
 #endif
-#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT || MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
 // #define MICROPY_PY_SYS_PLATFORM     "pyboard"
 #define MICROPY_PY_SYS_PLATFORM     "rxboard"
@@ -175,48 +164,30 @@
 #define mp_type_textio mp_type_vfs_lfs2_textio
 #endif
 
-// use vfs's functions for import stat and builtin open
-#define mp_import_stat mp_vfs_import_stat
-#define mp_builtin_open mp_vfs_open
-#define mp_builtin_open_obj mp_vfs_open_obj
+// #if RX_TODO
+// extern const struct _mp_obj_module_t mp_module_wifi;
+// extern const struct _mp_obj_module_t mp_module_twitter;
+// #endif
 
-// extra built in names to add to the global namespace
-#define MICROPY_PORT_BUILTINS \
-    { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
-
-// extra built in modules to add to the list of known ones
-#if RX_TODO
-extern const struct _mp_obj_module_t mp_module_wifi;
-extern const struct _mp_obj_module_t mp_module_twitter;
-#endif
-extern const struct _mp_obj_module_t pyb_module;
 #if MICROPY_PY_RX
 extern const struct _mp_obj_module_t rx_module;
 #endif
 #if MICROPY_PY_RXREG
 extern const struct _mp_obj_module_t rxreg_module;
 #endif
-extern const struct _mp_obj_module_t mp_module_ubinascii;
-extern const struct _mp_obj_module_t mp_module_ure;
-extern const struct _mp_obj_module_t mp_module_uzlib;
-extern const struct _mp_obj_module_t mp_module_ujson;
-extern const struct _mp_obj_module_t mp_module_uheapq;
-extern const struct _mp_obj_module_t mp_module_uhashlib;
-extern const struct _mp_obj_module_t mp_module_utime;
-extern const struct _mp_obj_module_t mp_module_usocket;
-extern const struct _mp_obj_module_t mp_module_network;
-extern const struct _mp_obj_module_t mp_module_onewire;
 
 #if MICROPY_PY_PYB
-#define PYB_BUILTIN_MODULE                  { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) },
+extern const struct _mp_obj_module_t pyb_module;
+#define PYB_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) },
 #else
-#define PYB_BUILTIN_MODULE
+#define PYB_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_RX
-#define RX_BUILTIN_MODULE                   { MP_ROM_QSTR(MP_QSTR_rx), MP_ROM_PTR(&rx_module) },
+#define RX_BUILTIN_MODULE_CONSTANTS         { MP_ROM_QSTR(MP_QSTR_rx), MP_ROM_PTR(&rx_module) },
 #else
-#define RX_BUILTIN_MODULE
+#define RX_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_RXREG
@@ -323,8 +294,12 @@ extern const struct _mp_obj_type_t mp_network_cyw43_type;
 #define MICROPY_HW_NIC_CYW43
 #endif
 
-#if MICROPY_PY_WIZNET5K
+#if MICROPY_PY_NETWORK_WIZNET5K
+#if MICROPY_PY_LWIP
+extern const struct _mp_obj_type_t mod_network_nic_type_wiznet5k;
+#else
 extern const struct _mod_network_nic_type_t mod_network_nic_type_wiznet5k;
+#endif
 #define MICROPY_HW_NIC_WIZNET5K             { MP_ROM_QSTR(MP_QSTR_WIZNET5K), MP_ROM_PTR(&mod_network_nic_type_wiznet5k) },
 #else
 #define MICROPY_HW_NIC_WIZNET5K
@@ -375,23 +350,22 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
     MACHINE_BUILTIN_MODULE_CONSTANTS \
-    PYB_BUILTIN_MODULE \
-    RX_BUILTIN_MODULE \
+    PYB_BUILTIN_MODULE_CONSTANTS \
+    RX_BUILTIN_MODULE_CONSTANTS \
+
+#ifndef MICROPY_BOARD_NETWORK_INTERFACES
+#define MICROPY_BOARD_NETWORK_INTERFACES
+#endif
 
 #define MICROPY_PORT_NETWORK_INTERFACES \
     MICROPY_HW_NIC_ETH  \
     MICROPY_HW_NIC_CYW43 \
     MICROPY_HW_NIC_WIZNET5K \
     MICROPY_HW_NIC_CC3K \
+    MICROPY_BOARD_NETWORK_INTERFACES\
     MICROPY_HW_NIC_ESP8266 \
 
 #define MP_STATE_PORT MP_STATE_VM
-
-#if MICROPY_SSL_MBEDTLS
-#define MICROPY_PORT_ROOT_POINTER_MBEDTLS void **mbedtls_memory;
-#else
-#define MICROPY_PORT_ROOT_POINTER_MBEDTLS
-#endif
 
 #if MICROPY_BLUETOOTH_NIMBLE
 struct _mp_bluetooth_nimble_root_pointers_t;
@@ -451,7 +425,6 @@ struct _mp_bluetooth_btstack_root_pointers_t;
     mp_obj_list_t mod_network_nic_list; \
     \
     /* root pointers for sub-systems */ \
-    MICROPY_PORT_ROOT_POINTER_MBEDTLS \
     MICROPY_PORT_ROOT_POINTER_BLUETOOTH_NIMBLE \
     MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK \
     \

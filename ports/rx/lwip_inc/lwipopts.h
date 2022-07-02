@@ -5,17 +5,6 @@
 
 // #include <stdio.h>
 #include <stdint.h>
-#include "py/runtime.h"
-#include "py/mphal.h"
-#include "common.h"
-
-//#define LWIP_DEBUG                      LWIP_DBG_ON
-//#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
-//#define DHCP_DEBUG                      LWIP_DBG_ON
-//#define DNS_DEBUG                       LWIP_DBG_ON
-//#define SNTP_DEBUG                      LWIP_DBG_ON
-//#define TCP_DEBUG                       LWIP_DBG_ON
-//#define IP_DEBUG                        LWIP_DBG_ON
 
 // This protection is not needed, instead we execute all lwIP code at PendSV priority
 #define SYS_ARCH_DECL_PROTECT(lev) do { } while (0)

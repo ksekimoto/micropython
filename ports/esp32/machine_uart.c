@@ -267,12 +267,18 @@ STATIC void machine_uart_init_helper(machine_uart_obj_t *self, size_t n_args, co
     }
 
     // set timeout_char
-    // make sure it is at least as long as a whole character (13 bits to be safe)
+    // make sure it is at least as long as a whole character (12 bits here)
     if (args[ARG_timeout_char].u_int != -1) {
         self->timeout_char = args[ARG_timeout_char].u_int;
-        uint32_t min_timeout_char = 13000 / baudrate + 1;
-        if (self->timeout_char < min_timeout_char) {
-            self->timeout_char = min_timeout_char;
+        uint32_t char_time_ms = 12000 / baudrate + 1;
+        uint32_t rx_timeout = self->timeout_char / char_time_ms;
+        if (rx_timeout < 1) {
+            #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 1, 0)
+            uart_set_rx_full_threshold(self->uart_num, 1);
+            #endif
+            uart_set_rx_timeout(self->uart_num, 1);
+        } else {
+            uart_set_rx_timeout(self->uart_num, rx_timeout);
         }
     }
 
@@ -315,8 +321,7 @@ STATIC mp_obj_t machine_uart_make_new(const mp_obj_type_t *type, size_t n_args, 
     };
 
     // create instance
-    machine_uart_obj_t *self = m_new_obj(machine_uart_obj_t);
-    self->base.type = &machine_uart_type;
+    machine_uart_obj_t *self = mp_obj_malloc(machine_uart_obj_t, &machine_uart_type);
     self->uart_num = uart_num;
     self->bits = 8;
     self->parity = 0;
