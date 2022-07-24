@@ -46,7 +46,7 @@ extern const mp_obj_type_t rx_lcdspi_type;
 #endif
 
 STATIC const mp_rom_map_elem_t rx_module_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_rz) },
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_rx) },
 
     { MP_ROM_QSTR(MP_QSTR_mem8), MP_ROM_PTR(&machine_mem8_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem16), MP_ROM_PTR(&machine_mem16_obj) },
@@ -66,5 +66,7 @@ const mp_obj_module_t rx_module = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&rx_module_globals,
 };
+
+MP_REGISTER_MODULE(MP_QSTR_rx, rx_module);
 
 #endif // MICROPY_PY_RX

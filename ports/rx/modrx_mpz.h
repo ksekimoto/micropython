@@ -1,4 +1,4 @@
-#if 0
+#if MICROPY_PY_RXREG
 STATIC const mp_obj_int_t mpz_e8005800 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x5800, 0xe800}}};
 STATIC const mp_obj_int_t mpz_1f000000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x0000, 0x1f00}}};
 STATIC const mp_obj_int_t mpz_e8210000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x0000, 0xe821}}};

@@ -64,6 +64,8 @@ extern const mp_obj_type_t rx_lcdspi_type;
 
 char pyb_country_code[2];
 
+#if MICROPY_PY_PYB
+
 #if 0
 /* Only debugging for STM32 Hard Fault */
 STATIC mp_obj_t pyb_fault_debug(mp_obj_t value) {
@@ -277,3 +279,7 @@ const mp_obj_module_t pyb_module = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&pyb_module_globals,
 };
+
+MP_REGISTER_MODULE(MP_QSTR_pyb, pyb_module);
+
+#endif // MICROPY_PY_PYB

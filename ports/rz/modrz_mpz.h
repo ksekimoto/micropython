@@ -1,3 +1,4 @@
+#if MICROPY_PY_RZREG
 STATIC const mp_obj_int_t mpz_e8005800 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x5800, 0xe800}}};
 STATIC const mp_obj_int_t mpz_1f000000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x0000, 0x1f00}}};
 STATIC const mp_obj_int_t mpz_e8210000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x0000, 0xe821}}};
@@ -102,3 +103,4 @@ STATIC const mp_obj_int_t mpz_fcff7400 = {{&mp_type_int}, {.neg = 0, .fixed_dig 
 STATIC const mp_obj_int_t mpz_e803f000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0xf000, 0xe803}}};
 STATIC const mp_obj_int_t mpz_fcfe7000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x7000, 0xfcfe}}};
 STATIC const mp_obj_int_t mpz_1f003000 = {{&mp_type_int}, {.neg = 0, .fixed_dig = 1, .alloc = 2, .len = 2, .dig = (uint16_t *)(const uint16_t[]) {0x3000, 0x1f00}}};
+#endif

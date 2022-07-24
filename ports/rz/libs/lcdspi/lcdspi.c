@@ -367,20 +367,17 @@ void lcdspi_spi_write_dat8(uint8_t dat) {
     lcdspi_gpio_write(m_lcdspi_pins->pin_cs, HIGH);
 }
 
-void lcdspi_spi_write_cmd16(uint16_t cmd) {
-    // Enter command mode: RS=LOW at rising edge of 1st SCLK
-    lcdspi_gpio_write(m_lcdspi_pins->pin_rs, LOW);
-    lcdspi_gpio_write(m_lcdspi_pins->pin_cs, LOW);
-    lcdspi_spi_write((uint8_t)((cmd & 0xff) >> 8));
-    lcdspi_spi_write((uint8_t)(cmd & 0xff));
-    lcdspi_gpio_write(m_lcdspi_pins->pin_cs, HIGH);
+void lcdspi_spi_write_dat8_2(uint16_t dat) {
+    // Enter data mode: RS=HIGH at rising edge of 1st SCLK
+    lcdspi_spi_write_dat8((uint8_t)((dat >> 8) & 0xff));
+    lcdspi_spi_write_dat8((uint8_t)(dat & 0xff));
 }
 
 void lcdspi_spi_write_dat16(uint16_t dat) {
     // Enter data mode: RS=HIGH at rising edge of 1st SCLK
     lcdspi_gpio_write(m_lcdspi_pins->pin_rs, HIGH);
     lcdspi_gpio_write(m_lcdspi_pins->pin_cs, LOW);
-    lcdspi_spi_write((uint8_t)((dat & 0xff) >> 8));
+    lcdspi_spi_write((uint8_t)((dat >> 8) & 0xff));
     lcdspi_spi_write((uint8_t)(dat & 0xff));
     lcdspi_gpio_write(m_lcdspi_pins->pin_cs, HIGH);
 }
@@ -636,6 +633,7 @@ void lcdspi_set_lcd(lcdspi_t *lcdspi, uint32_t lcd_id) {
 void lcdspi_screen_init(lcdspi_screen_t *screen) {
     screen->cx = 0;
     screen->cy = 0;
+    screen->dy = 0;
     screen->fcol = (uint16_t)0xFFFFFF;
     screen->bcol = (uint16_t)0x000000;
     screen->unit_wx = 4;
@@ -712,11 +710,11 @@ static void lcdspi_spi_end_xfer(lcdspi_t *lcdspi) {
 
 static void lcdspi_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
     lcdspi_spi_write_cmd8(ILI9340_CASET);
-    lcdspi_spi_write_dat16(x1);
-    lcdspi_spi_write_dat16(x2);
+    lcdspi_spi_write_dat8_2(x1);
+    lcdspi_spi_write_dat8_2(x2);
     lcdspi_spi_write_cmd8(ILI9340_PASET);
-    lcdspi_spi_write_dat16(y1);
-    lcdspi_spi_write_dat16(y2);
+    lcdspi_spi_write_dat8_2(y1);
+    lcdspi_spi_write_dat8_2(y2);
     lcdspi_spi_write_cmd8(ILI9340_RAMWR);
 }
 
@@ -771,6 +769,36 @@ void lcdspi_box_fill(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, ui
     return;
 }
 
+
+void lcdspi_scroll(lcdspi_t *lcdspi, uint32_t dy) {
+    uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
+    if (lcd_ctrl_id == ILI9341 || lcd_ctrl_id == ST7735) {
+        lcdspi_spi_write_cmd8(0x37);
+        lcdspi_spi_write_dat8((uint8_t)(dy >> 8));
+        lcdspi_spi_write_dat8((uint8_t)(dy & 0xff));
+    }
+}
+
+void lcdspi_scroll_range(lcdspi_t *lcdspi, uint32_t sy, uint32_t wy, uint32_t ey) {
+#if 0
+    (void)lcdspi;
+    (void)sy;
+    (void)wy;
+    (void)ey;
+#else
+    uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
+    if (lcd_ctrl_id == ILI9341 || lcd_ctrl_id == ST7735) {
+        lcdspi_spi_write_cmd8(0x33);
+        lcdspi_spi_write_dat8((uint8_t)(sy >> 8));
+        lcdspi_spi_write_dat8((uint8_t)(sy & 0xff));
+        lcdspi_spi_write_dat8((uint8_t)(wy >> 8));
+        lcdspi_spi_write_dat8((uint8_t)(wy & 0xff));
+        lcdspi_spi_write_dat8((uint8_t)(ey >> 8));
+        lcdspi_spi_write_dat8((uint8_t)(ey & 0xff));
+    }
+#endif
+}
+
 void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col) {
     uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;
     uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
@@ -804,11 +832,13 @@ void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col) {
     } else {
         // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         lcdspi_addrset((uint16_t)sx, (uint16_t)sy, (uint16_t)ex, (uint16_t)ey);
-        lcdspi_spi_write_dat16_n(ey * ex * 2, col);
+        lcdspi_spi_write_dat16_n(width * height * 2, col);
     }
     lcdspi_spi_end_xfer(lcdspi);
     lcdspi->screen->cx = 0;
     lcdspi->screen->cy = 0;
+    lcdspi->screen->dy = 0;
+    lcdspi->screen->scroll = false;
     return;
 }
 
@@ -841,6 +871,12 @@ void lcdspi_init(lcdspi_t *lcdspi, lcdspi_screen_t *screen, lcdspi_pins_t *pins,
     }
     lcdspi->lcd->lcdspi_init();
     lcdspi_clear(lcdspi, 0);
+    uint16_t uy = (uint16_t)font_fontUnitY(lcdspi->screen->font);
+    uint16_t wy = (lcdspi->lcd->ey - lcdspi->lcd->sy + 1)/uy * uy;
+    lcdspi_scroll_range(lcdspi,
+            (uint32_t)lcdspi->lcd->sy,
+            (uint32_t)wy,
+            (uint32_t)(lcdspi->lcd->ey - lcdspi->lcd->sy + 1 - wy));
 }
 
 void lcdspi_deinit(lcdspi_t *lcdspi) {
@@ -916,8 +952,12 @@ void lcdspi_pset(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint16_t col) {
         lcdspi_spi_write_dat9(G4B4(v2));
     } else {
         lcdspi_addrset((uint16_t)(sx + x), (uint16_t)(sy + y), (uint16_t)(sx + x + 1), (uint16_t)(sy + y + 1));
+        if (lcd_ctrl_id == ILI9488) {
+            lcdspi_spi_write_dat16(col);
+        } else {
         lcdspi_spi_write_dat8((uint8_t)(col >> 8));
         lcdspi_spi_write_dat8((uint8_t)col);
+    }
     }
     lcdspi_spi_end_xfer(lcdspi);
 }
@@ -951,10 +991,16 @@ void lcdspi_hline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y, uint32_t x2, uint16
         }
     } else {
         lcdspi_addrset((uint16_t)(sx + x1), (uint16_t)(sy + y), (uint16_t)(sx + x2), (uint16_t)(sy + y));
+        if (lcd_ctrl_id == ILI9488) {
+            for (uint32_t i = x1; i <= x2; i += 1) {
+                lcdspi_spi_write_dat16(col);
+            }
+        } else {
         for (uint32_t i = x1; i <= x2; i += 1) {
             lcdspi_spi_write_dat8((uint8_t)(col >> 8));
             lcdspi_spi_write_dat8((uint8_t)col);
         }
+    }
     }
     lcdspi_spi_end_xfer(lcdspi);
 }
@@ -988,10 +1034,16 @@ void lcdspi_vline(lcdspi_t *lcdspi, uint32_t x, uint32_t y1, uint32_t y2, uint16
         }
     } else {
         lcdspi_addrset((uint16_t)(sx + x), (uint16_t)(sy + y1), (uint16_t)(sx + x), (uint16_t)(sy + y2));
+        if (lcd_ctrl_id == ILI9488) {
+            for (uint32_t i = y1; i <= y2; i += 1) {
+                lcdspi_spi_write_dat16(col);
+            }
+        } else {
         for (uint32_t i = y1; i <= y2; i += 1) {
             lcdspi_spi_write_dat8((uint8_t)(col >> 8));
             lcdspi_spi_write_dat8((uint8_t)col);
         }
+    }
     }
     lcdspi_spi_end_xfer(lcdspi);
 }
@@ -1135,83 +1187,8 @@ void lcdspi_circle_fill(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t r, ui
     lcdspi_circle_sub(lcdspi, x, y, r, col, true);
 }
 
-void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol) {
-    uint16_t x, y;
-    uint16_t ux, uy;
-    uint16_t wx, wy;
-    uint16_t col0, col1;
-    uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;
-    uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
-    uint8_t RAMWR = lcdspi->lcd->ctrl_info->RAMWR;
-    uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
-    uint16_t sx = lcdspi->lcd->sx;
-    uint16_t sy = lcdspi->lcd->sy;
-    uint16_t width = lcdspi->lcd->width;
-    uint16_t height = lcdspi->lcd->height;
-    font_t *font = lcdspi->screen->font;
-    uint8_t *data;
-
-    if (font == (font_t *)NULL) {
-        return;
-    }
-    if (c >= 0x80) {
-        c = 0;
-    }
-    data = (unsigned char *)font_fontData(font, (int)(c & 0x00ff));
-    ux = (uint16_t)font_fontUnitX(font);
-    uy = (uint16_t)font_fontUnitY(font);
-    wx = (uint16_t)font_fontWidth(font, (int)(c & 0x00ff));
-    wy = (uint16_t)font_fontHeight(font, (int)(c & 0x00ff));
-    lcdspi_spi_start_xfer(lcdspi);
-    if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
-        for (y = 0; y < wy; y++) {
-            lcdspi_spi_write_cmd9(CASET);
-            lcdspi_spi_write_dat9((uint8_t)(sx + cx * ux));
-            lcdspi_spi_write_dat9((uint8_t)(sx + width - 1));
-            lcdspi_spi_write_cmd9(PASET);  // y set
-            lcdspi_spi_write_dat9((uint8_t)(sy + cy * uy + y));
-            lcdspi_spi_write_dat9((uint8_t)(sy + height - 1));
-            lcdspi_spi_write_cmd9(RAMWR);
-            for (x = 0; x < (wx / 2); x++) {
-                if (data[y] & (0x80 >> (x * 2))) {
-                    col0 = fgcol;
-                } else {
-                    col0 = bgcol;
-                }
-                if (data[y] & (0x40 >> (x * 2))) {
-                    col1 = fgcol;
-                } else {
-                    col1 = bgcol;
-                }
-                lcdspi_spi_write_dat9((0xff & (uint8_t)(col0 >> 4)));
-                lcdspi_spi_write_dat9((0xf0 & (uint8_t)(col0 << 4)) | (0x0f & ((uint8_t)(col1 >> 8))));
-                lcdspi_spi_write_dat9((uint8_t)(0xff & col1));
-            }
-        }
-    } else {
-        // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
-        for (y = 0; y < wy; y++) {
-            lcdspi_addrset((uint16_t)(sx + cx * ux),
-                (uint16_t)(sy + cy * uy + y),
-                (uint16_t)(sx + width - 1),
-                (uint16_t)(sy + height - 1));
-            for (x = 0; x < wx; x++) {
-                if (data[y] & (0x80 >> x)) {
-                    col0 = fgcol;
-                } else {
-                    col0 = bgcol;
-                }
-                lcdspi_spi_write_dat8((uint8_t)(col0 >> 8));
-                lcdspi_spi_write_dat8((uint8_t)col0);
-            }
-        }
-    }
-    lcdspi_spi_end_xfer(lcdspi);
-}
-
-void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol) {
-    uint16_t x, y;
-    uint16_t ux, uy;
+void lcdspi_write_font_color_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, uint32_t y, uint16_t fgcol, uint16_t bgcol) {
+    uint16_t i, j;
     uint16_t wx, wy;
     uint16_t off;
     uint16_t col0, col1;
@@ -1230,31 +1207,29 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx,
         return;
     }
     data = (unsigned char *)font_fontData(font, (int)u);
-    ux = (uint16_t)font_fontUnitX(font);
-    uy = (uint16_t)font_fontUnitY(font);
     wx = (uint16_t)font_fontWidth(font, (int)u);
     wy = (uint16_t)font_fontHeight(font, (int)u);
     lcdspi_spi_start_xfer(lcdspi);
     off = 0;
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
-        for (y = 0; y < wy; y++) {
+        for (j = 0; j < wy; j++) {
             lcdspi_spi_write_cmd9(CASET);
-            lcdspi_spi_write_dat9((uint8_t)(sx + cx * ux));
-            lcdspi_spi_write_dat9((uint8_t)(sx + cx * ux + width - 1));
+            lcdspi_spi_write_dat9((uint8_t)(sx + x));
+            lcdspi_spi_write_dat9((uint8_t)(sx + width - 1));
             lcdspi_spi_write_cmd9(PASET);  // y set
-            lcdspi_spi_write_dat9((uint8_t)(sy + cy * uy + y));
+            lcdspi_spi_write_dat9((uint8_t)(sy + y + j));
             lcdspi_spi_write_dat9((uint8_t)(sy + height - 1));
             lcdspi_spi_write_cmd9(RAMWR);
-            for (x = 0; x < wx; x += 2) {
-                if (x == 8) {
+            for (i = 0; i < wx; i += 2) {
+                if (i == 8) {
                     off++;
                 }
-                if (data[off] & (0x80 >> (x & 0x7))) {
+                if (data[off] & (0x80 >> (i & 0x7))) {
                     col0 = fgcol;
                 } else {
                     col0 = bgcol;
                 }
-                if (data[off] & (0x40 >> (x & 0x7))) {
+                if (data[off] & (0x40 >> (i & 0x7))) {
                     col1 = fgcol;
                 } else {
                     col1 = bgcol;
@@ -1266,22 +1241,26 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx,
             off++;
         }
     } else {
-        for (y = 0; y < wy; y++) {
-            lcdspi_addrset((uint16_t)(sx + cx * ux),
-                (uint16_t)(sy + cy * uy + y),
-                (uint16_t)(sx + cx * ux + width - 1),
+        for (j = 0; j < wy; j++) {
+            lcdspi_addrset((uint16_t)(sx + x),
+                (uint16_t)(sy + y + j),
+                (uint16_t)(sx + width - 1),
                 (uint16_t)(sy + height - 1));
-            for (x = 0; x < wx; x++) {
-                if (x == 8) {
+            for (i = 0; i < wx; i++) {
+                if (i == 8) {
                     off++;
                 }
-                if (data[off] & (0x80 >> (x & 0x7))) {
+                if (data[off] & (0x80 >> (i & 0x7))) {
                     col0 = fgcol;
                 } else {
                     col0 = bgcol;
                 }
+                if (lcd_ctrl_id == ILI9488) {
+                    lcdspi_spi_write_dat16(col0);
+                } else {
                 lcdspi_spi_write_dat8((uint8_t)(col0 >> 8));
                 lcdspi_spi_write_dat8((uint8_t)col0);
+            }
             }
             off++;
         }
@@ -1289,52 +1268,55 @@ void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx,
     lcdspi_spi_end_xfer(lcdspi);
 }
 
+void lcdspi_write_char_color_xy(lcdspi_t *lcdspi, unsigned char c, uint32_t x, uint32_t y, uint16_t fgcol, uint16_t bgcol) {
+    lcdspi_write_font_color_xy(lcdspi, (unsigned short)c, x, y, fgcol, bgcol);
+}
+
+void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol) {
+    font_t *font = lcdspi->screen->font;
+    if (font == (font_t *)NULL) {
+        return;
+    }
+    uint16_t ux = (uint16_t)font_fontUnitX(font);
+    uint16_t uy = (uint16_t)font_fontUnitY(font);
+    lcdspi_write_char_color_xy(lcdspi, c, cx * ux, cy * uy, fgcol, bgcol);
+}
+
+void lcdspi_write_unicode_color_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, uint32_t y, uint16_t fgcol, uint16_t bgcol) {
+    lcdspi_write_font_color_xy(lcdspi, (unsigned short)u, x, y, fgcol, bgcol);
+}
+
+void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol) {
+    font_t *font = lcdspi->screen->font;
+    if (font == (font_t *)NULL) {
+        return;
+    }
+    uint16_t ux = (uint16_t)font_fontUnitX(font);
+    uint16_t uy = (uint16_t)font_fontUnitY(font);
+    lcdspi_write_unicode_color_xy(lcdspi, u, cx * ux, cy * uy, fgcol, bgcol);
+        }
+
+void lcdspi_write_char_xy(lcdspi_t *lcdspi, unsigned char c, uint32_t x, uint32_t y) {
+    lcdspi_write_char_color_xy(lcdspi, c, x, y, lcdspi->screen->fcol, lcdspi->screen->bcol);
+            }
+
 void lcdspi_write_char(lcdspi_t *lcdspi, unsigned char c, uint32_t row, uint32_t col) {
     lcdspi_write_char_color(lcdspi, c, row, col, lcdspi->screen->fcol, lcdspi->screen->bcol);
-}
+        }
+
+void lcdspi_write_unicode_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, uint32_t y) {
+    lcdspi_write_unicode_color_xy(lcdspi, u, x, y, lcdspi->screen->fcol, lcdspi->screen->bcol);
+    }
 
 void lcdspi_write_unicode(lcdspi_t *lcdspi, unsigned short u, uint32_t row, uint32_t col) {
     lcdspi_write_unicode_color(lcdspi, u, row, col, lcdspi->screen->fcol, lcdspi->screen->bcol);
 }
 
-void lcdspi_write_formatted_char(lcdspi_t *lcdspi, unsigned char ch) {
+void lcdspi_write_formatted_font(lcdspi_t *lcdspi, unsigned short u) {
     lcdspi_screen_t *screen = lcdspi->screen;
     uint16_t cx = screen->cx;
     uint16_t cy = screen->cy;
-    uint16_t unit_x = (uint32_t)font_fontUnitX(screen->font);
-    uint16_t unit_y = (uint32_t)font_fontUnitY(screen->font);
-    uint16_t width = lcdspi->lcd->width;
-    uint16_t height = lcdspi->lcd->height;
-    if (ch == 0xc) {
-        lcdspi_clear(lcdspi, 0);
-        cx = 0;
-        cy = 0;
-    } else if (ch == '\n') {
-        cy++;
-        if (cy == height / unit_y) {
-            cy = 0;
-        }
-    } else if (ch == '\r') {
-        cx = 0;
-    } else {
-        lcdspi_write_char(lcdspi, ch, cx, cy);
-        cx++;
-        if (cx == width / unit_x) {
-            cx = 0;
-            cy++;
-            if (cy == height / unit_y) {
-                cy = 0;
-            }
-        }
-    }
-    screen->cx = (uint16_t)cx;
-    screen->cy = (uint16_t)cy;
-}
-
-void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
-    lcdspi_screen_t *screen = lcdspi->screen;
-    uint16_t cx = screen->cx;
-    uint16_t cy = screen->cy;
+    uint16_t dy = screen->dy;
     uint16_t unit_x = (uint32_t)font_fontUnitX(screen->font);
     uint16_t unit_y = (uint32_t)font_fontUnitY(screen->font);
     uint16_t width = lcdspi->lcd->width;
@@ -1343,10 +1325,23 @@ void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
         lcdspi_clear(lcdspi, 0);
         cx = 0;
         cy = 0;
+        dy = 0;
     } else if ((char)u == '\n') {
-        cy++;
-        if (cy == height / unit_y) {
+        if (cy == height / unit_y - 1) {
+            screen->scroll = true;
             cy = 0;
+        } else {
+            cy++;
+        }
+        if (screen->scroll) {
+            dy += unit_y;
+            if (dy >= (height / unit_y * unit_y)) {
+                dy = 0;
+            }
+            lcdspi_scroll(lcdspi, dy);
+            for (uint16_t i = 0; i < (width / unit_x); i++) {
+                lcdspi_write_unicode(lcdspi, 0x20, i, cy);
+            }
         }
     } else if ((char)u == '\r') {
         cx = 0;
@@ -1359,14 +1354,35 @@ void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
         }
         if (cx >= width / unit_x) {
             cx = 0;
-            cy++;
-            if (cy == height / unit_y) {
+            if (cy == height / unit_y - 1) {
+                screen->scroll = true;
                 cy = 0;
+            } else {
+                cy++;
+            }
+            if (screen->scroll) {
+                dy += unit_y;
+                if (dy >= (height / unit_y * unit_y)) {
+                    dy = 0;
+                }
+                lcdspi_scroll(lcdspi, dy);
+                for (uint16_t i = 0; i < (width / unit_x); i++) {
+                    lcdspi_write_unicode(lcdspi, 0x20, i, cy);
+                }
             }
         }
     }
     screen->cx = (uint16_t)cx;
     screen->cy = (uint16_t)cy;
+    screen->dy = (uint16_t)dy;
+}
+
+void lcdspi_write_formatted_char(lcdspi_t *lcdspi, unsigned char ch) {
+    lcdspi_write_formatted_font(lcdspi, (unsigned short)ch);
+}
+
+void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u) {
+    lcdspi_write_formatted_font(lcdspi, (unsigned short)u);
 }
 
 void lcdspi_set_font(lcdspi_t *lcdspi, font_t *font) {

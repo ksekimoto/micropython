@@ -33,6 +33,7 @@
 #include "S1D15G10.h"
 #include "ILI9341.h"
 #include "ILI9340.h"
+#include "ILI9488.h"
 #include "ST7735.h"
 #include "ST7789.h"
 #include "lcdspi.h"
@@ -49,7 +50,6 @@
 
 static void lcdspi_cmd_exec(uint8_t *cmdtbl, uint32_t size);
 
-// static inline void delay_ms(volatile uint32_t n) {
 static void delay_ms(volatile uint32_t n) {
     // mp_hal_delay_ms(n);
     while (n-- > 0) {
@@ -531,6 +531,36 @@ static const lcdspi_lcd_t lcdspi_lcd_KMR18SPI = {
     159,
 };
 
+static const lcdspi_lcd_t lcdspi_lcd_WS_18SPI = {
+    (const char *)"WS_18SPI",
+    WS_18SPI,
+    ST7735R_G128x160_Initialize,
+    ST7735_Reset,
+    2000000,
+    &lcdspi_ctrl_ST7735,
+    132,
+    162,
+    0,
+    131,
+    0,
+    161,
+};
+
+static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G130x161 = {
+    (const char *)"ST7735R_G130x161",
+    ST7735R_G130x161,
+    ST7735R_G128x160_Initialize,
+    ST7735_Reset,
+    2000000,
+    &lcdspi_ctrl_ST7735,
+    130,
+    161,
+    2,
+    131,
+    1,
+    161,
+};
+
 #if OLD_UL018_2P
 // lcdspi initialize command table
 static const uint8_t ST7735_cmd[] = {
@@ -741,6 +771,21 @@ static const lcdspi_lcd_t lcdspi_lcd_RASPI13LCDSPI = {
     239,
 };
 
+static const lcdspi_lcd_t lcdspi_lcd_WS_13SPI = {
+    (const char *)"WS_13SPI",
+    WS_13SPI,
+    ST7789_Initialize,
+    ST7789_Reset,
+    24000000,
+    &lcdspi_ctrl_ST7789,
+    240,
+    240,
+    0,
+    239,
+    0,
+    239,
+};
+
 static const lcdspi_lcd_t lcdspi_lcd_PIM543 = {
     (const char *)"PIM543",
     PIM543,
@@ -756,6 +801,36 @@ static const lcdspi_lcd_t lcdspi_lcd_PIM543 = {
     279,
 };
 
+static const lcdspi_lcd_t lcdspi_lcd_WS_114SPI = {
+    (const char *)"WS_114SPI",
+    WS_114SPI,
+    ST7789_Initialize,
+    ST7789_Reset,
+    24000000,
+    &lcdspi_ctrl_ST7789,
+    135,
+    240,
+    52,
+    186,
+    40,
+    279,
+};
+
+static const lcdspi_lcd_t lcdspi_lcd_WS_28SPI = {
+    (const char *)"WS_28SPI",
+    WS_28SPI,
+    ST7789_Initialize,
+    ST7789_Reset,
+    24000000,
+    &lcdspi_ctrl_ST7789,
+    240,
+    320,
+    0,
+    239,
+    0,
+    319,
+};
+
 static void ST7789_Reset() {
     lcdspi_reset_high();
     delay_ms(50);
@@ -765,28 +840,80 @@ static void ST7789_Reset() {
     delay_ms(150);
 }
 
+static const uint8_t lcdcmd_ST7789[] = {
+    CMD8 + 0, 0x01,   // SWRESET
+    DLYMS, 50,
+    CMD8 + 0, 0x11,   // SLPOUT
+    CMD8 + 1, 0x3a, 0x55, /* col mod 16 bits/pixel */
+    DLYMS, 50,
+    CMD8 + 1, 0x36, 0x10,
+    CMD8 + 0, 0x21,   // INVON
+    DLYMS, 10,
+    CMD8 + 0, 0x13,
+    DLYMS, 10,
+    CMD8 + 0, 0x29,
+    DLYMS, 255,
+};
+#define ST7789_CMD_SIZE   (sizeof(lcdcmd_ST7789) / sizeof(uint8_t))
+
 static void ST7789_Initialize() {
-    /* soft reset */
-    lcdspi_spi_write_cmd8(0x01);
+    lcdspi_cmd_exec((uint8_t *)&lcdcmd_ST7789, ST7789_CMD_SIZE);
+}
+
+/* ********************************************************************* */
+/* LCD Controller: ILI9488                                               */
+/* ********************************************************************* */
+
+static void ILI9488_Reset();
+static void ILI9488_Initialize();
+
+static const lcdspi_ctrl_info_t lcdspi_ctrl_ILI9488 = {
+    ILI9488, ILI9488_PASET, ILI9488_CASET, ILI9488_RAMWR
+};
+
+static const lcdspi_lcd_t lcdspi_lcd_WS_35SPI = {
+    (const char *)"WS_35SPI",
+    WS_28SPI,
+    ILI9488_Initialize,
+    ILI9488_Reset,
+    24000000,
+    &lcdspi_ctrl_ILI9488,
+    320,
+    480,
+    0,
+    319,
+    0,
+    479,
+};
+
+static void ILI9488_Reset() {
+    lcdspi_reset_high();
     delay_ms(50);
-    /* sleep out */
-    lcdspi_spi_write_cmd8(0x11);
-    /* color mode */
-    lcdspi_spi_write_cmd8(0x3a);
-    lcdspi_spi_write_dat8(ST7789_COLORMODE_65K | ST7789_COLORMODE_16BIT);
+    lcdspi_reset_low();
     delay_ms(50);
-    /* MADCTL */
-    lcdspi_spi_write_cmd8(0x36);
-    lcdspi_spi_write_dat8(0x10);
-    /* inversion mode on */
-    lcdspi_spi_write_cmd8(0x21);
-    delay_ms(10);
-    /* norm on */
-    lcdspi_spi_write_cmd8(0x13);
-    delay_ms(10);
-    /* disp on */
-    lcdspi_spi_write_cmd8(0x29);
-    delay_ms(500);
+    lcdspi_reset_high();
+    delay_ms(150);
+}
+
+// lcdspi initialize command table
+static const uint8_t lcdcmd_ILI9488[] = {
+    CMD8 + 0, 0x21, /*  */
+    CMD8 + 1, 0xc2, 0x33, /* Normal mode, increase can change the display quality, while increasing power consumption
+        LCD_WriteData(0x33); */
+    CMD8 + 3, 0xc5, 0x00, 0x1e, 0x80, /*  */
+    CMD8 + 1, 0xb1, 0xb0, /* Sets the frame frequency of full color normal mode, 0XB0 =70HZ, <=0XB0.0xA0=62HZ */
+    CMD8 + 1, 0x36, 0x48, /* madctl 2 DOT FRAME MODE,F<=70HZ. */
+    CMD8 + 15, 0xe0, 0x00, 0x13, 0x18, 0x04, 0x0f, 0x06, 0x3a, 0x56, 0x4d, 0x03, 0x0a, 0x06, 0x30, 0x3e, 0x0f,
+    CMD8 + 15, 0xe1, 0x00, 0x13, 0x18, 0x01, 0x11, 0x06, 0x38, 0x34, 0x4d, 0x06, 0x0d, 0x0b, 0x31, 0x37, 0x0f,
+    CMD8 + 1, 0x3a, 0x55, /* col mod 16 bits/pixel */
+    CMD8 + 0, 0x11, /* sleep out */
+    DLYMS, 120,
+    CMD8 + 0, 0x29, /* display on */
+};
+#define ILI9488_CMD_SIZE   (sizeof(lcdcmd_ILI9488) / sizeof(uint8_t))
+
+static void ILI9488_Initialize() {
+    lcdspi_cmd_exec((uint8_t *)&lcdcmd_ILI9488, ILI9488_CMD_SIZE);
 }
 
 // ===================================================================
@@ -808,6 +935,12 @@ const lcdspi_lcd_t *lcdspi_info[] = {
     &lcdspi_lcd_ST7735R_G160x80,    // 11: ST7735R
     &lcdspi_lcd_AIDEEPEN22SPI,      // 12: AIDEEPEN22SPI
     &lcdspi_lcd_PIM543,             // 13: PIM543
+    &lcdspi_lcd_WS_114SPI,          // 14: WS_114SPI
+    &lcdspi_lcd_WS_13SPI,           // 15: WS_13SPI
+    &lcdspi_lcd_WS_18SPI,           // 16: WS_18SPI
+    &lcdspi_lcd_WS_28SPI,           // 17: WS_284SPI
+    &lcdspi_lcd_WS_35SPI,           // 18: WS_135SPI
+    &lcdspi_lcd_ST7735R_G130x161,   // 19: ST7735B
 };
 #define LCDSPI_MOD_SIZE (sizeof(lcdspi_info) / sizeof(lcdspi_lcd_t *))
 

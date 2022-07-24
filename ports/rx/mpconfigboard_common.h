@@ -38,6 +38,10 @@
 #define MICROPY_PY_RX (1)
 #endif
 
+#ifndef MICROPY_PY_RXREG
+#define MICROPY_PY_RXREG (0)    // can't be 1 because not implemented yet.
+#endif
+
 // Whether to include the pyb module
 #ifndef MICROPY_PY_PYB
 #define MICROPY_PY_PYB (1)

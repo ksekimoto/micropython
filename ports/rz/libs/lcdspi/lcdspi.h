@@ -50,6 +50,7 @@ extern "C" {
 #define ILI9340  3
 #define ST7735   4
 #define ST7789   5
+#define ILI9488  6
 
 /* LCD Model */
 #define NOKIA6100_0   0
@@ -67,6 +68,12 @@ extern "C" {
 #define ROBOT_LCD   8
 #define AIDEEPEN22SPI 12
 #define PIM543 13
+#define WS_114SPI   14          // Not Tested
+#define WS_13SPI    15          // Not Tested
+#define WS_18SPI    16
+#define WS_28SPI    17
+#define WS_35SPI    18
+#define ST7735R_G130x161    19
 
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb
@@ -146,6 +153,8 @@ typedef struct {
     uint16_t bcol;
     uint32_t unit_wx;
     uint32_t unit_wy;
+    bool scroll;
+    uint16_t dy;    // scroll start
 } lcdspi_screen_t;
 
 typedef void (*lcdspi_gpio_output_t)(uint32_t pin_id);
@@ -201,6 +210,8 @@ void lcdspi_spi_write_cmd9(uint8_t dat);
 void lcdspi_spi_write_dat9(uint8_t dat);
 void lcdspi_spi_write_cmd8(uint8_t dat);
 void lcdspi_spi_write_dat8(uint8_t dat);
+void lcdspi_spi_write_dat8_2(uint16_t dat);
+void lcdspi_spi_write_dat16(uint16_t dat);
 void lcdspi_spi_write_dat16_n(uint32_t size, uint16_t v);
 void lcdspi_spi_write_buf_n(uint8_t *buf, uint32_t size);
 uint8_t lcdspi_spisw_read_reg(uint8_t addr, uint8_t idx);
@@ -215,6 +226,7 @@ void lcdspi_set_screen(lcdspi_t *lcdspi, lcdspi_screen_t *lcdspi_screen);
 void lcdspi_spi_init(lcdspi_t *lcdspi, bool spw_hw_mode);
 void lcdspi_box_fill(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t col);
 void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col);
+void lcdspi_scroll(lcdspi_t *lcdspi, uint32_t dy);
 void lcdspi_screen_init(lcdspi_screen_t *lcdspi_screen);
 void lcdspi_init(lcdspi_t *lcdspi, lcdspi_screen_t *screen, lcdspi_pins_t *pins, uint32_t lcd_id, uint32_t spi_ch);
 void lcdspi_deinit(lcdspi_t *lcdspi);
@@ -225,9 +237,13 @@ void lcdspi_box(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_
 void lcdspi_line(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t col);
 void lcdspi_circle(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t r, uint16_t col);
 void lcdspi_circle_fill(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t r, uint16_t col);
+void lcdspi_write_char_color_xy(lcdspi_t *lcdspi, unsigned char c, uint32_t x, uint32_t y, uint16_t fgcol, uint16_t bgcol);
 void lcdspi_write_char_color(lcdspi_t *lcdspi, unsigned char c, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol);
+void lcdspi_write_unicode_color_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, uint32_t y, uint16_t fgcol, uint16_t bgcol);
 void lcdspi_write_unicode_color(lcdspi_t *lcdspi, unsigned short u, uint32_t cx, uint32_t cy, uint16_t fgcol, uint16_t bgcol);
+void lcdspi_write_char_xy(lcdspi_t *lcdspi, unsigned char c, uint32_t x, uint32_t y);
 void lcdspi_write_char(lcdspi_t *lcdspi, unsigned char c, uint32_t row, uint32_t col);
+void lcdspi_write_unicode_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, uint32_t y);
 void lcdspi_write_unicode(lcdspi_t *lcdspi, unsigned short u, uint32_t row, uint32_t col);
 void lcdspi_write_formatted_char(lcdspi_t *lcdspi, unsigned char ch);
 void lcdspi_write_formatted_unicode(lcdspi_t *lcdspi, unsigned short u);

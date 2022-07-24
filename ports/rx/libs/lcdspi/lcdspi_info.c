@@ -546,6 +546,21 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_18SPI = {
     161,
 };
 
+static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G130x161 = {
+    (const char *)"ST7735R_G130x161",
+    ST7735R_G130x161,
+    ST7735R_G128x160_Initialize,
+    ST7735_Reset,
+    2000000,
+    &lcdspi_ctrl_ST7735,
+    130,
+    161,
+    2,
+    131,
+    1,
+    161,
+};
+
 #if OLD_UL018_2P
 // lcdspi initialize command table
 static const uint8_t ST7735_cmd[] = {
@@ -925,6 +940,7 @@ const lcdspi_lcd_t *lcdspi_info[] = {
     &lcdspi_lcd_WS_18SPI,           // 16: WS_18SPI
     &lcdspi_lcd_WS_28SPI,           // 17: WS_284SPI
     &lcdspi_lcd_WS_35SPI,           // 18: WS_135SPI
+    &lcdspi_lcd_ST7735R_G130x161,   // 19: ST7735B
 };
 #define LCDSPI_MOD_SIZE (sizeof(lcdspi_info) / sizeof(lcdspi_lcd_t *))
 

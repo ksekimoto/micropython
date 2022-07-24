@@ -169,13 +169,6 @@
 // extern const struct _mp_obj_module_t mp_module_twitter;
 // #endif
 
-#if MICROPY_PY_RX
-extern const struct _mp_obj_module_t rx_module;
-#endif
-#if MICROPY_PY_RXREG
-extern const struct _mp_obj_module_t rxreg_module;
-#endif
-
 #if MICROPY_PY_PYB
 extern const struct _mp_obj_module_t pyb_module;
 #define PYB_BUILTIN_MODULE_CONSTANTS \
@@ -185,15 +178,20 @@ extern const struct _mp_obj_module_t pyb_module;
 #endif
 
 #if MICROPY_PY_RX
-#define RX_BUILTIN_MODULE_CONSTANTS         { MP_ROM_QSTR(MP_QSTR_rx), MP_ROM_PTR(&rx_module) },
+extern const struct _mp_obj_module_t rx_module;
+#define RX_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_rx), MP_ROM_PTR(&rx_module) },
 #else
 #define RX_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_RXREG
-#define RXREG_BUILTIN_MODULE                { MP_ROM_QSTR(MP_QSTR_rxreg), MP_ROM_PTR(&rxreg_module) },
+extern const struct _mp_obj_module_t rxreg_module;
+
+#define RXREG_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_rxreg), MP_ROM_PTR(&rxreg_module) },
 #else
-#define RXREG_BUILTIN_MODULE
+#define RXREG_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_MACHINE
@@ -352,6 +350,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
     MACHINE_BUILTIN_MODULE_CONSTANTS \
     PYB_BUILTIN_MODULE_CONSTANTS \
     RX_BUILTIN_MODULE_CONSTANTS \
+    RXREG_BUILTIN_MODULE_CONSTANTS \
 
 #ifndef MICROPY_BOARD_NETWORK_INTERFACES
 #define MICROPY_BOARD_NETWORK_INTERFACES

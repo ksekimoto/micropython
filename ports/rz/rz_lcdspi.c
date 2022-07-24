@@ -123,7 +123,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_cs].u_obj);
-        self->pins.pin_cs = pin->id;
+        self->pins.pin_cs = (uint32_t)pin->id;
     }
     /* clk */
     if (vals[ARG_clk].u_obj == MP_OBJ_NULL) {
@@ -132,7 +132,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_clk].u_obj);
-        self->pins.pin_clk = pin->id;
+        self->pins.pin_clk = (uint32_t)pin->id;
     }
     /* dout */
     if (vals[ARG_dout].u_obj == MP_OBJ_NULL) {
@@ -141,7 +141,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_dout].u_obj);
-        self->pins.pin_dout = pin->id;
+        self->pins.pin_dout = (uint32_t)pin->id;
     }
     /* reset */
     if (vals[ARG_reset].u_obj == MP_OBJ_NULL) {
@@ -150,7 +150,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_reset].u_obj);
-        self->pins.pin_reset = pin->id;
+        self->pins.pin_reset = (uint32_t)pin->id;
     }
     /* rs */
     if (vals[ARG_rs].u_obj == MP_OBJ_NULL) {
@@ -159,7 +159,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_rs].u_obj);
-        self->pins.pin_rs = pin->id;
+        self->pins.pin_rs = (uint32_t)pin->id;
     }
     /* din */
     if (vals[ARG_din].u_obj == MP_OBJ_NULL) {
@@ -414,15 +414,29 @@ STATIC mp_obj_t mod_lcdspi_font_id(mp_obj_t self_in, mp_obj_t idx) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_lcdspi_font_id_obj, mod_lcdspi_font_id);
 
-STATIC mp_obj_t mod_lcdspi_putxy(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mod_lcdspi_putc_xy(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     int x = mp_obj_get_int(args[1]);
     int y = mp_obj_get_int(args[2]);
     char *s = (char *)mp_obj_str_get_str(args[3]);
-    lcdspi_write_char(self->lcdspi, *s, x, y);
+    lcdspi_write_char_xy(self->lcdspi, *s, (uint32_t)x, (uint32_t)y);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_putxy_obj, 4, 4, mod_lcdspi_putxy);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_putc_xy_obj, 4, 4, mod_lcdspi_putc_xy);
+
+STATIC mp_obj_t mod_lcdspi_puts_xy(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    int x = mp_obj_get_int(args[1]);
+    int y = mp_obj_get_int(args[2]);
+    char *s = (char *)mp_obj_str_get_str(args[3]);
+    while (*s) {
+        lcdspi_write_char_xy(self->lcdspi, *s, (uint32_t)x, (uint32_t)y);
+        s++;
+        x += (int)font_fontUnitX(self->lcdspi->screen->font);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_puts_xy_obj, 4, 4, mod_lcdspi_puts_xy);
 
 STATIC mp_obj_t mod_lcdspi_putc(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -441,6 +455,27 @@ STATIC mp_obj_t mod_lcdspi_puts(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_puts_obj, 2, 2, mod_lcdspi_puts);
+
+STATIC mp_obj_t mod_lcdspi_pututf8_xy(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    int x = mp_obj_get_int(args[1]);
+    int y = mp_obj_get_int(args[2]);
+    char *s = (char *)mp_obj_str_get_str(args[3]);
+    uint16_t u;
+    int len;
+    while (*s) {
+        u = cnvUtf8ToUnicode((unsigned char *)s, (uint32_t *)&len);
+        lcdspi_write_unicode_xy(self->lcdspi, u, (uint32_t)x, (uint32_t)y);
+        s += len;
+        if  (u >= 0x0100) {
+            x += (int)font_fontUnitX(self->lcdspi->screen->font)*2;
+        } else {
+            x += (int)font_fontUnitX(self->lcdspi->screen->font);
+        }
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_pututf8_xy_obj, 4, 4, mod_lcdspi_pututf8_xy);
 
 STATIC mp_obj_t mod_lcdspi_pututf8(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -493,6 +528,13 @@ STATIC mp_obj_t mod_lcdspi_disp_jpeg_file(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_disp_jpeg_file_obj, 4, 4, mod_lcdspi_disp_jpeg_file);
 
+STATIC void lcdspi_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "LCDSPI(%u) name=%s width=%d height=%d\n",
+        self->lcdspi_id, self->lcdspi->lcd->name,
+        self->lcdspi->lcd->width, self->lcdspi->lcd->height);
+}
+
 STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_rddid), MP_ROM_PTR(&mod_lcdspi_rddid_obj) },
     { MP_ROM_QSTR(MP_QSTR_ili93xx_id), MP_ROM_PTR(&mod_lcdspi_ili93xx_ids_obj) },
@@ -510,10 +552,12 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_fcol), MP_ROM_PTR(&mod_lcdspi_fcol_obj) },
     { MP_ROM_QSTR(MP_QSTR_bcol), MP_ROM_PTR(&mod_lcdspi_bcol_obj) },
     { MP_ROM_QSTR(MP_QSTR_font_id), MP_ROM_PTR(&mod_lcdspi_font_id_obj) },
-    { MP_ROM_QSTR(MP_QSTR_putxy), MP_ROM_PTR(&mod_lcdspi_putxy_obj) },
     { MP_ROM_QSTR(MP_QSTR_putc), MP_ROM_PTR(&mod_lcdspi_putc_obj) },
+    { MP_ROM_QSTR(MP_QSTR_putc_xy), MP_ROM_PTR(&mod_lcdspi_putc_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_puts), MP_ROM_PTR(&mod_lcdspi_puts_obj) },
+    { MP_ROM_QSTR(MP_QSTR_puts_xy), MP_ROM_PTR(&mod_lcdspi_puts_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_pututf8), MP_ROM_PTR(&mod_lcdspi_pututf8_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pututf8_xy), MP_ROM_PTR(&mod_lcdspi_pututf8_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_bitblt), MP_ROM_PTR(&mod_lcdspi_bitblt_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_bmp_file), MP_ROM_PTR(&mod_lcdspi_disp_bmp_file_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_file), MP_ROM_PTR(&mod_lcdspi_disp_jpeg_file_obj) },
@@ -538,6 +582,12 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_M_ROBOT_LCD), MP_ROM_INT(ROBOT_LCD) },
     { MP_ROM_QSTR(MP_QSTR_M_AIDEEPEN22SPI), MP_ROM_INT(AIDEEPEN22SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_PIM543), MP_ROM_INT(PIM543) },
+    { MP_ROM_QSTR(MP_QSTR_M_WS_114SPI), MP_ROM_INT(WS_114SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_WS_13SPI), MP_ROM_INT(WS_13SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_WS_18SPI), MP_ROM_INT(WS_18SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_WS_28SPI), MP_ROM_INT(WS_28SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_WS_35SPI), MP_ROM_INT(WS_35SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_ST7735R_G130x161), MP_ROM_INT(ST7735R_G130x161) },
     { MP_ROM_QSTR(MP_QSTR_Black), MP_ROM_INT(Black) },
     { MP_ROM_QSTR(MP_QSTR_Navy), MP_ROM_INT(Navy) },
     { MP_ROM_QSTR(MP_QSTR_DarkGreen), MP_ROM_INT(DarkGreen) },
@@ -563,7 +613,7 @@ STATIC MP_DEFINE_CONST_DICT(lcdspi_locals_dict, lcdspi_locals_dict_table);
 const mp_obj_type_t rz_lcdspi_type = {
     { &mp_type_type },
     .name = MP_QSTR_LCDSPI,
-    // .print = lcdspi_obj_print,
+    .print = lcdspi_obj_print,
     .make_new = lcdspi_obj_make_new,
     .locals_dict = (mp_obj_dict_t *)&lcdspi_locals_dict,
 };

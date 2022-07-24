@@ -289,6 +289,14 @@ STATIC mp_obj_t mod_ili93xx_spihw_read_reg(size_t n_args, const mp_obj_t *args) 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_ili93xx_spihw_read_reg_obj, 2, 3, mod_ili93xx_spihw_read_reg);
 
+STATIC mp_obj_t mod_lcdspi_scroll(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    uint16_t dy = (uint16_t)mp_obj_get_int(args[1]);
+    lcdspi_scroll(self->lcdspi, dy);
+    return mp_obj_new_int((int)dy);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_scroll_obj, 1, 2, mod_lcdspi_scroll);
+
 STATIC mp_obj_t mod_lcdspi_clear(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     uint16_t col = 0;
@@ -430,15 +438,29 @@ STATIC mp_obj_t mod_lcdspi_font_id(mp_obj_t self_in, mp_obj_t idx) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_lcdspi_font_id_obj, mod_lcdspi_font_id);
 
-STATIC mp_obj_t mod_lcdspi_putxy(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mod_lcdspi_putc_xy(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     int x = mp_obj_get_int(args[1]);
     int y = mp_obj_get_int(args[2]);
     char *s = (char *)mp_obj_str_get_str(args[3]);
-    lcdspi_write_char(self->lcdspi, *s, x, y);
+    lcdspi_write_char_xy(self->lcdspi, *s, (uint32_t)x, (uint32_t)y);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_putxy_obj, 4, 4, mod_lcdspi_putxy);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_putc_xy_obj, 4, 4, mod_lcdspi_putc_xy);
+
+STATIC mp_obj_t mod_lcdspi_puts_xy(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    int x = mp_obj_get_int(args[1]);
+    int y = mp_obj_get_int(args[2]);
+    char *s = (char *)mp_obj_str_get_str(args[3]);
+    while (*s) {
+        lcdspi_write_char_xy(self->lcdspi, *s, (uint32_t)x, (uint32_t)y);
+        s++;
+        x += (int)font_fontUnitX(self->lcdspi->screen->font);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_puts_xy_obj, 4, 4, mod_lcdspi_puts_xy);
 
 STATIC mp_obj_t mod_lcdspi_putc(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -457,6 +479,27 @@ STATIC mp_obj_t mod_lcdspi_puts(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_puts_obj, 2, 2, mod_lcdspi_puts);
+
+STATIC mp_obj_t mod_lcdspi_pututf8_xy(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    int x = mp_obj_get_int(args[1]);
+    int y = mp_obj_get_int(args[2]);
+    char *s = (char *)mp_obj_str_get_str(args[3]);
+    uint16_t u;
+    int len;
+    while (*s) {
+        u = cnvUtf8ToUnicode((unsigned char *)s, (uint32_t *)&len);
+        lcdspi_write_unicode_xy(self->lcdspi, u, (uint32_t)x, (uint32_t)y);
+        s += len;
+        if  (u >= 0x0100) {
+            x += (int)font_fontUnitX(self->lcdspi->screen->font)*2;
+        } else {
+            x += (int)font_fontUnitX(self->lcdspi->screen->font);
+        }
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_pututf8_xy_obj, 4, 4, mod_lcdspi_pututf8_xy);
 
 STATIC mp_obj_t mod_lcdspi_pututf8(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -524,6 +567,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ili93xx_spisw_reg), MP_ROM_PTR(&mod_ili93xx_spisw_read_reg_obj) },
     { MP_ROM_QSTR(MP_QSTR_ili93xx_reg), MP_ROM_PTR(&mod_ili93xx_spihw_read_reg_obj) },
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&mod_lcdspi_clear_obj) },
+    { MP_ROM_QSTR(MP_QSTR_scroll), MP_ROM_PTR(&mod_lcdspi_scroll_obj) },
     { MP_ROM_QSTR(MP_QSTR_pset), MP_ROM_PTR(&mod_lcdspi_pset_obj) },
     { MP_ROM_QSTR(MP_QSTR_box), MP_ROM_PTR(&mod_lcdspi_box_obj) },
     { MP_ROM_QSTR(MP_QSTR_box_fill), MP_ROM_PTR(&mod_lcdspi_box_fill_obj) },
@@ -533,10 +577,12 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_fcol), MP_ROM_PTR(&mod_lcdspi_fcol_obj) },
     { MP_ROM_QSTR(MP_QSTR_bcol), MP_ROM_PTR(&mod_lcdspi_bcol_obj) },
     { MP_ROM_QSTR(MP_QSTR_font_id), MP_ROM_PTR(&mod_lcdspi_font_id_obj) },
-    { MP_ROM_QSTR(MP_QSTR_putxy), MP_ROM_PTR(&mod_lcdspi_putxy_obj) },
     { MP_ROM_QSTR(MP_QSTR_putc), MP_ROM_PTR(&mod_lcdspi_putc_obj) },
+    { MP_ROM_QSTR(MP_QSTR_putc_xy), MP_ROM_PTR(&mod_lcdspi_putc_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_puts), MP_ROM_PTR(&mod_lcdspi_puts_obj) },
+    { MP_ROM_QSTR(MP_QSTR_puts_xy), MP_ROM_PTR(&mod_lcdspi_puts_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_pututf8), MP_ROM_PTR(&mod_lcdspi_pututf8_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pututf8_xy), MP_ROM_PTR(&mod_lcdspi_pututf8_xy_obj) },
     { MP_ROM_QSTR(MP_QSTR_bitblt), MP_ROM_PTR(&mod_lcdspi_bitblt_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_bmp_file), MP_ROM_PTR(&mod_lcdspi_disp_bmp_file_obj) },
     { MP_ROM_QSTR(MP_QSTR_disp_jpeg_file), MP_ROM_PTR(&mod_lcdspi_disp_jpeg_file_obj) },
@@ -566,6 +612,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_M_WS_18SPI), MP_ROM_INT(WS_18SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_WS_28SPI), MP_ROM_INT(WS_28SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_WS_35SPI), MP_ROM_INT(WS_35SPI) },
+    { MP_ROM_QSTR(MP_QSTR_M_ST7735R_G130x161), MP_ROM_INT(ST7735R_G130x161) },
     { MP_ROM_QSTR(MP_QSTR_Black), MP_ROM_INT(Black) },
     { MP_ROM_QSTR(MP_QSTR_Navy), MP_ROM_INT(Navy) },
     { MP_ROM_QSTR(MP_QSTR_DarkGreen), MP_ROM_INT(DarkGreen) },

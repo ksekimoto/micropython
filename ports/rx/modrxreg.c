@@ -50,4 +50,6 @@ const mp_obj_module_t rxreg_module = {
     .globals = (mp_obj_dict_t *)&rxreg_module_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_rxreg, rxreg_module);
+
 #endif // MICROPY_PY_RXREG

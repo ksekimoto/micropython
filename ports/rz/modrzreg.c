@@ -50,4 +50,6 @@ const mp_obj_module_t rzreg_module = {
     .globals = (mp_obj_dict_t *)&rzreg_module_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_rzreg, rzreg_module);
+
 #endif // MICROPY_PY_RZREG
