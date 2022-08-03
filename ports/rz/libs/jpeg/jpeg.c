@@ -53,6 +53,9 @@
 #define DEBUG_JPEG
 #endif
 
+void *m_malloc(size_t n);
+void m_free(void *p);
+
 jpeg_src_t *g_jpeg_src;
 
 void jpeg_init(jpeg_t *jpeg) {
@@ -77,7 +80,7 @@ void jpeg_init(jpeg_t *jpeg) {
 void jpeg_deinit(jpeg_t *jpeg) {
     jpeg_src_close(g_jpeg_src);
     if (jpeg->pImage != (uint8_t *)NULL) {
-        free(jpeg->pImage);
+        m_free(jpeg->pImage);
         jpeg->pImage = (uint8_t *)NULL;
         #if defined(DEBUG_JPEG)
         debug_printf("pImage deallocated\r\n");
@@ -134,7 +137,7 @@ bool jpeg_decode(jpeg_t *jpeg, bool reduce) {
     debug_printf("MCUSPerCol: %d \r\n", jpeg->MCUSPerCol);
     #endif
     uint32_t ImageSize = (uint32_t)(MCUWidth * MCUHeight * jpeg->image_info.m_comps);
-    jpeg->pImage = (uint8_t *)malloc((size_t)ImageSize);
+    jpeg->pImage = (uint8_t *)m_malloc((size_t)ImageSize);
     if (!jpeg->pImage) {
         #if defined(DEBUG_JPEG)
         debug_printf("Memory allocation failed.\r\n");
@@ -166,7 +169,7 @@ bool jpeg_decode_mcu(jpeg_t *jpeg) {
             debug_printf("pjpeg_decode_mcu() failed with status %d\r\n", jpeg->err);
             #endif
             if (jpeg->pImage != (uint8_t *)NULL) {
-                free(jpeg->pImage);
+                m_free(jpeg->pImage);
                 jpeg->pImage = (uint8_t *)NULL;
                 #if defined(DEBUG_JPEG)
                 debug_printf("pImage deallocated\r\n");
@@ -188,7 +191,7 @@ bool jpeg_read(jpeg_t *jpeg) {
     if (jpeg->mcu_y >= (uint32_t)jpeg->image_info.m_MCUSPerCol) {
         jpeg_src_close(g_jpeg_src);
         if (jpeg->pImage != (uint8_t *)NULL) {
-            free(jpeg->pImage);
+            m_free(jpeg->pImage);
             jpeg->pImage = (uint8_t *)NULL;
             #if defined(DEBUG_JPEG)
             debug_printf("pImage deallocated\r\n");

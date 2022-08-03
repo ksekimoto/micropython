@@ -32,6 +32,7 @@
 // board specific definitions
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
+// #include "common.h"
 
 #ifndef MICROPY_CONFIG_ROM_LEVEL
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_EXTRA_FEATURES)
@@ -181,13 +182,6 @@
 // extern const struct _mp_obj_module_t mp_module_twitter;
 // #endif
 
-#if MICROPY_PY_RZ
-extern const struct _mp_obj_module_t rz_module;
-#endif
-#if MICROPY_PY_RZREG
-extern const struct _mp_obj_module_t rzreg_module;
-#endif
-
 #if MICROPY_PY_PYB
 extern const struct _mp_obj_module_t pyb_module;
 #define PYB_BUILTIN_MODULE_CONSTANTS \
@@ -197,15 +191,19 @@ extern const struct _mp_obj_module_t pyb_module;
 #endif
 
 #if MICROPY_PY_RZ
-#define RZ_BUILTIN_MODULE_CONSTANTS                   { MP_ROM_QSTR(MP_QSTR_rz), MP_ROM_PTR(&rz_module) },
+extern const struct _mp_obj_module_t rz_module;
+#define RZ_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_rz), MP_ROM_PTR(&rz_module) },
 #else
 #define RZ_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_RZREG
-#define RZREG_BUILTIN_MODULE                { MP_ROM_QSTR(MP_QSTR_rzreg), MP_ROM_PTR(&rzreg_module) },
+extern const struct _mp_obj_module_t rzreg_module;
+#define RZREG_BUILTIN_MODULE_CONSTANTS \
+    { MP_ROM_QSTR(MP_QSTR_rzreg), MP_ROM_PTR(&rzreg_module) },
 #else
-#define RZREG_BUILTIN_MODULE
+#define RZREG_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_MACHINE
@@ -366,6 +364,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
     MACHINE_BUILTIN_MODULE_CONSTANTS \
     PYB_BUILTIN_MODULE_CONSTANTS \
     RZ_BUILTIN_MODULE_CONSTANTS \
+    RZREG_BUILTIN_MODULE_CONSTANTS \
 
 #ifndef MICROPY_BOARD_NETWORK_INTERFACES
 #define MICROPY_BOARD_NETWORK_INTERFACES
@@ -381,12 +380,6 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_esp8266;
 
 #define MP_STATE_PORT MP_STATE_VM
 
-// #if MICROPY_SSL_MBEDTLS
-// #define MICROPY_PORT_ROOT_POINTER_MBEDTLS void **mbedtls_memory;
-// #else
-// #define MICROPY_PORT_ROOT_POINTER_MBEDTLS
-// #endif
-// 
 #if MICROPY_BLUETOOTH_NIMBLE
 struct _mp_bluetooth_nimble_root_pointers_t;
 struct _mp_bluetooth_nimble_malloc_t;

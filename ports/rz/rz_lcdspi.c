@@ -29,19 +29,24 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "modmachine.h"
+#include "extmod/machine_spi.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
 #include "font.h"
 #include "jpeg.h"
 #include "jpeg_disp.h"
 #include "lcdspi.h"
+// #include "common.h"
+#include "pin.h"
+
+#if MICROPY_HW_ENABLE_LCDSPI
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "extmod/machine_spi.h"
-#include "pin.h"
+#define DEF_SPI_ID      0
+#define DEF_BAUDRATE    115200
 
 typedef struct _mod_lcdspi_obj_t {
     mp_obj_base_t base;
@@ -75,7 +80,7 @@ static void lcdspi_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *
 /// Create an LCDSPI object
 ///
 STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din, ARG_polarity, ARG_phase };
+    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din, ARG_polarity, ARG_phase, ARG_dir };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_lcd_id,   MP_ARG_REQUIRED | MP_ARG_INT,   {.u_int = 0} },
         { MP_QSTR_font_id,  MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} },
@@ -88,7 +93,8 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         { MP_QSTR_rs,       MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_din,      MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_polarity, MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 1} },
-        { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} }
+        { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} },
+        { MP_QSTR_dir,      MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} }
     };
     // parse args
     mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
@@ -171,6 +177,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_din].u_obj);
         self->pins.pin_din = pin->id;
     }
+    int dir = vals[ARG_dir].u_int;
 
     m_args[0] = MP_OBJ_NEW_SMALL_INT(self->lcdspi->spi_ch);
     m_args[1] = MP_ROM_QSTR(MP_QSTR_baudrate);
@@ -182,9 +189,11 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     self->lcdspi->spi_init = (lcdspi_spi_init_t)lcdspi_spi_init_helper;
     self->lcdspi->spi_transfer = (lcdspi_spi_transfer_t)lcdspi_spi_transfer_helper;
     lcdspi_init(self->lcdspi, &self->screen, &self->pins, self->lcdspi_id, self->lcdspi->spi_ch);
+    lcdspi_set_screen_dir(self->lcdspi, (uint8_t)dir);
     return MP_OBJ_FROM_PTR(self);
 }
 
+#if READ_LCD_ID
 STATIC mp_obj_t mod_lcdspi_rddid(mp_obj_t self_in) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t val = self->lcdspi->did1;
@@ -272,6 +281,14 @@ STATIC mp_obj_t mod_ili93xx_spihw_read_reg(size_t n_args, const mp_obj_t *args) 
     return mod_lcdspi_read_reg(n_args, args, ILI93xx_SPIHW_READ_REG);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_ili93xx_spihw_read_reg_obj, 2, 3, mod_ili93xx_spihw_read_reg);
+#endif
+STATIC mp_obj_t mod_lcdspi_scroll(size_t n_args, const mp_obj_t *args) {
+    mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    uint16_t dy = (uint16_t)mp_obj_get_int(args[1]);
+    lcdspi_scroll(self->lcdspi, dy);
+    return mp_obj_new_int((int)dy);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_lcdspi_scroll_obj, 1, 2, mod_lcdspi_scroll);
 
 STATIC mp_obj_t mod_lcdspi_clear(size_t n_args, const mp_obj_t *args) {
     mod_lcdspi_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -536,13 +553,16 @@ STATIC void lcdspi_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print
 }
 
 STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
+#if READ_LCD_ID
     { MP_ROM_QSTR(MP_QSTR_rddid), MP_ROM_PTR(&mod_lcdspi_rddid_obj) },
     { MP_ROM_QSTR(MP_QSTR_ili93xx_id), MP_ROM_PTR(&mod_lcdspi_ili93xx_ids_obj) },
     { MP_ROM_QSTR(MP_QSTR_spisw_reg), MP_ROM_PTR(&mod_lcdspi_spisw_read_reg_obj) },
     { MP_ROM_QSTR(MP_QSTR_reg), MP_ROM_PTR(&mod_lcdspi_spihw_read_reg_obj) },
     { MP_ROM_QSTR(MP_QSTR_ili93xx_spisw_reg), MP_ROM_PTR(&mod_ili93xx_spisw_read_reg_obj) },
     { MP_ROM_QSTR(MP_QSTR_ili93xx_reg), MP_ROM_PTR(&mod_ili93xx_spihw_read_reg_obj) },
+#endif
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&mod_lcdspi_clear_obj) },
+    { MP_ROM_QSTR(MP_QSTR_scroll), MP_ROM_PTR(&mod_lcdspi_scroll_obj) },
     { MP_ROM_QSTR(MP_QSTR_pset), MP_ROM_PTR(&mod_lcdspi_pset_obj) },
     { MP_ROM_QSTR(MP_QSTR_box), MP_ROM_PTR(&mod_lcdspi_box_obj) },
     { MP_ROM_QSTR(MP_QSTR_box_fill), MP_ROM_PTR(&mod_lcdspi_box_fill_obj) },
@@ -607,6 +627,10 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Orange), MP_ROM_INT(Orange) },
     { MP_ROM_QSTR(MP_QSTR_GreenYellow), MP_ROM_INT(GreenYellow) },
     { MP_ROM_QSTR(MP_QSTR_Pink), MP_ROM_INT(Pink) },
+    { MP_ROM_QSTR(MP_QSTR_ROTATE_0), MP_ROM_INT(LCDSPI_ROTATE_0) },
+    { MP_ROM_QSTR(MP_QSTR_ROTATE_90), MP_ROM_INT(LCDSPI_ROTATE_90) },
+    { MP_ROM_QSTR(MP_QSTR_ROTATE_180), MP_ROM_INT(LCDSPI_ROTATE_180) },
+    { MP_ROM_QSTR(MP_QSTR_ROTATE_270), MP_ROM_INT(LCDSPI_ROTATE_270) },
 };
 STATIC MP_DEFINE_CONST_DICT(lcdspi_locals_dict, lcdspi_locals_dict_table);
 
@@ -617,3 +641,5 @@ const mp_obj_type_t rz_lcdspi_type = {
     .make_new = lcdspi_obj_make_new,
     .locals_dict = (mp_obj_dict_t *)&lcdspi_locals_dict,
 };
+
+#endif

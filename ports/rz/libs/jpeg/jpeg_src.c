@@ -27,6 +27,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "py/runtime.h"
+#include "py/mphal.h"
+
+#if MICROPY_HW_ENABLE_LCDSPI
+
 #if defined(_WIN32)
 #include "ff_wrap.h"
 #else
@@ -111,3 +116,5 @@ void jpeg_src_read(jpeg_src_t *jpeg_src, void *pBuf, uint32_t n, uint32_t *reade
     }
     #endif
 }
+
+#endif

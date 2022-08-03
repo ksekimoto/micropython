@@ -579,6 +579,7 @@ SRC_S += gchelper_a9.S
 SRC_C += help.c
 SRC_C += i2c.c
 SRC_C += irq.c
+SRC_C += lcd.c
 SRC_C += led.c
 SRC_C += machine_i2c.c
 SRC_C += machine_spi.c

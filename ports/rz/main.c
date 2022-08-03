@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013-2020 Damien P. George
- * Copyright (c) 2020 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,9 @@
 #include "servo.h"
 // #include "dac.h"
 // #include "can.h"
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcd.h"
+#endif
 #include "extmod/modnetwork.h"
 // #include "usb_entry.h"
 #include "mbed_timer.h"
@@ -377,6 +380,9 @@ void main(int reset_mode) {
     #endif
     uart_init0();
     // spi_init0();
+    #if MICROPY_HW_ENABLE_LCD_CONSOLE
+    lcd_init();
+    #endif
     #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
     // i2c_init0();
     #endif

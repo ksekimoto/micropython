@@ -32,6 +32,8 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 
+#if MICROPY_HW_ENABLE_LCDSPI
+
 #include "jpeg_debug.h"
 #include "lcdspi.h"
 #include "jpeg_src.h"
@@ -205,3 +207,5 @@ void jpeg_disp_data(lcdspi_t *lcdspi, uint32_t x, uint32_t y, const uint32_t *da
     jpeg_src_set_mem((jpeg_src_t *)&jpeg_src, (uint8_t *)data, (uint32_t)size);
     lcdspi_disp_jpeg(lcdspi, x, y, split_disp);
 }
+
+#endif

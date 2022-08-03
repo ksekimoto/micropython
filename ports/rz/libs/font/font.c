@@ -28,6 +28,7 @@
 #include <string.h>
 #include "py/runtime.h"
 #include "py/mphal.h"
+#include "mpconfigboard.h"
 #include "font.h"
 
 #if defined(USE_DBG_PRINT)
@@ -205,7 +206,6 @@ font_t *fontList[] = {
     #endif
 };
 
-#if 0
 typedef struct _pyb_font_obj_t {
     uint32_t font_id;
     const font_t *font;
@@ -230,7 +230,6 @@ static const pyb_font_obj_t pyb_font_obj[] = {
 void font_init(font_t *font, FONT_TBL *font_tbl) {
     font->_font_tbl = font_tbl;
 }
-#endif
 
 void font_deinit() {
 }
@@ -400,4 +399,15 @@ int get_font_by_name(char *name) {
         idx++;
     }
     return -1;
+}
+
+bool find_font_id(int font_id) {
+    bool find = false;
+    for (uint32_t i = 0; i < NUM_FONTS; i++) {
+        if (pyb_font_obj[i].font_id == (uint32_t)font_id) {
+            find = true;
+            break;
+        }
+    }
+    return find;
 }

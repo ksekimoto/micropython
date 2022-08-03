@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Kentaro Sekimoto
+ * Copyright (c) 2022, Kentaro Sekimoto
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,10 +103,9 @@ int font_fontBytes(font_t *font, int c);
 unsigned char *font_fontData(font_t *font, int idx);
 void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int dsize, int *dlen);
 int get_font_by_name(char *name);
+bool find_font_id(int font_id);
 bool find_font_idx_by_id(int font_id, int *idx);
 font_t *get_font_by_id(int font_id);
-
-// extern const mp_obj_type_t rz_font_type;
 
 #ifdef __cplusplus
 }
