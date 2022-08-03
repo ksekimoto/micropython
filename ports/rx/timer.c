@@ -82,7 +82,9 @@ void timer_deinit(void) {
     }
 }
 
+#if defined(TIMER_CHANNEL)
 STATIC const mp_obj_type_t pyb_timer_channel_type;
+#endif
 
 /*
  * Timer Class

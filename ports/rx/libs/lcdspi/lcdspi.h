@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "font.h"
@@ -51,6 +52,7 @@ extern "C" {
 #define ST7735   4
 #define ST7789   5
 #define ILI9488  6
+#define SSD1331  7
 
 /* LCD Model */
 #define NOKIA6100_0   0
@@ -67,13 +69,17 @@ extern "C" {
 #define ST7735R_G160x80     11
 #define ROBOT_LCD   8
 #define AIDEEPEN22SPI 12
-#define PIM543 13
+#define PIM543      13          // Pico Display Pack
 #define WS_114SPI   14          // Not Tested
 #define WS_13SPI    15          // Not Tested
 #define WS_18SPI    16
 #define WS_28SPI    17
 #define WS_35SPI    18
 #define ST7735R_G130x161    19
+#define GMT130      20          // GMT130 and IPS130
+#define IPS130      20          // GMT130 and IPS130
+#define QT095B      21          // OLED SSD1331 96x64
+#define PIM580      22          // Pico Display Pack2
 
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb
@@ -112,6 +118,7 @@ typedef struct {
     uint32_t pin_cs;
     uint32_t pin_reset;
     uint32_t pin_rs;
+    uint32_t pin_bl;
 } lcdspi_pins_t;
 
 /*
@@ -140,6 +147,8 @@ typedef struct {
     const uint16_t ex;
     const uint16_t sy;
     const uint16_t ey;
+    const uint8_t mode;     // spi mode: 0,1,2,3
+    const uint8_t madctl;
 } lcdspi_lcd_t;
 
 /*
@@ -153,6 +162,7 @@ typedef struct {
     uint16_t bcol;
     uint32_t unit_wx;
     uint32_t unit_wy;
+    bool hw_scroll;
     bool scroll;
     uint16_t dy;    // scroll start
 } lcdspi_screen_t;
@@ -163,6 +173,23 @@ typedef void (*lcdspi_gpio_write_t)(uint32_t pin_id, bool v);
 typedef bool (*lcdspi_gpio_read_t)(uint32_t pin_id);
 typedef void (*lcdspi_spi_init_t)(void);
 typedef void (*lcdspi_spi_transfer_t)(size_t len, const uint8_t *src, uint8_t *dest);
+
+// MADCTR
+// Display Data Direction
+#define MADCTR  0x36
+#define DDD_NORMAL              0 // MY:0, MX:0, MV:0
+#define DDD_X_Y_EX              1 // MY:0, MX:0, MV:1
+#define DDD_X_MIRROR            2 // MY:0, MX:1, MV:0
+#define DDD_X_Y_EX_X_MIRROR     3 // MY:0, MX:1, MV:1
+#define DDD_Y_MIRROR            4 // MY:1, MX:0, MV:0
+#define DDD_X_Y_EX_Y_MIRROR     5 // MY:1, MX:0, MV:1
+#define DDD_X_Y_MIRROR          6 // MY:1, MX:1, MV:0
+#define DDD_X_Y_EX_X_Y_MIRROR   7 // MY:1, MX:1, MV:1
+
+#define LCDSPI_ROTATE_0         0
+#define LCDSPI_ROTATE_90        1
+#define LCDSPI_ROTATE_180       2
+#define LCDSPI_ROTATE_270       3
 
 /*
  * LCD SPI information
@@ -178,11 +205,13 @@ typedef struct {
     lcdspi_gpio_read_t gpio_read;
     lcdspi_spi_init_t spi_init;
     lcdspi_spi_transfer_t spi_transfer;
+    uint8_t screen_dir;
     uint32_t baud;
     uint16_t spcmd;
     uint8_t spbr;
     uint8_t polarity;
     uint8_t phase;
+#if READ_LCD_ID
     uint32_t did1;
     uint32_t did2;
     uint8_t id1_1;
@@ -196,6 +225,7 @@ typedef struct {
     uint8_t id3_3;
     uint32_t ili93xx_id_spisw;
     uint32_t ili93xx_id_spihw;
+#endif
 } lcdspi_t;
 
 void lcdspi_reset_high(void);
@@ -205,6 +235,7 @@ void lcdspi_spisw_write(uint8_t dat);
 uint8_t lcdspi_spisw_xfer(uint8_t dat);
 void lcdspi_spi_write(uint8_t dat);
 uint8_t lcdspi_spi_xfer(uint8_t dat);
+void lcdspi_spisw_transfer(uint8_t *dst, const uint8_t *src, uint32_t count);
 void lcdspi_spi_transfer(uint8_t *dst, const uint8_t *src, uint32_t count);
 void lcdspi_spi_write_cmd9(uint8_t dat);
 void lcdspi_spi_write_dat9(uint8_t dat);
@@ -219,6 +250,7 @@ uint8_t lcdspi_spihw_read_reg(uint8_t addr, uint8_t idx);
 uint8_t ILI93xx_spisw_read_reg(uint8_t addr, uint8_t idx);
 uint8_t ILI93xx_spihw_read_reg(uint8_t addr, uint8_t idx);
 
+void lcdspi_set_screen_dir(lcdspi_t *lcdspi, uint8_t dir);
 void lcdspi_set_spi_ch(lcdspi_t *lcdspi, uint32_t spi_ch);
 void lcdspi_set_pins(lcdspi_t *lcdspi, lcdspi_pins_t *lcdspi_pins);
 void lcdspi_set_lcd(lcdspi_t *lcdspi, uint32_t lcd_id);

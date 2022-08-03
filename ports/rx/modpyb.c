@@ -46,6 +46,7 @@
 #include "storage.h"
 #include "sdcard.h"
 #include "accel.h"
+#include "pwm.h"
 #include "servo.h"
 #include "dac.h"
 #include "usb.h"
@@ -211,6 +212,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
     #if MICROPY_HW_ENABLE_SERVO
     { MP_ROM_QSTR(MP_QSTR_pwm), MP_ROM_PTR(&pyb_pwm_set_obj) },
+    { MP_ROM_QSTR(MP_QSTR_PWM), MP_ROM_PTR(&pyb_pwm_type) },
     { MP_ROM_QSTR(MP_QSTR_servo), MP_ROM_PTR(&pyb_servo_set_obj) },
     { MP_ROM_QSTR(MP_QSTR_Servo), MP_ROM_PTR(&pyb_servo_type) },
     #endif
@@ -258,9 +260,9 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Accel), MP_ROM_PTR(&pyb_accel_type) },
     #endif
 
-    #if MICROPY_HW_HAS_LCD
-    { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
-    #endif
+    // #if MICROPY_HW_HAS_LCD
+    // { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
+    // #endif
 
     #if MICROPY_PY_PYB_FONT
     { MP_ROM_QSTR(MP_QSTR_FONT), MP_ROM_PTR(&rx_font_type) },

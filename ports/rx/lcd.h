@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_LCD_H
-#define MICROPY_INCLUDED_STM32_LCD_H
+#ifndef MICROPY_INCLUDED_RX_LCD_H
+#define MICROPY_INCLUDED_RX_LCD_H
 
-extern const mp_obj_type_t pyb_lcd_type;
+void lcd_init(void);
+void lcd_print_strn(const char *str, unsigned int len);
 
-#endif // MICROPY_INCLUDED_STM32_LCD_H
+#endif // MICROPY_INCLUDED_RX_LCD_H

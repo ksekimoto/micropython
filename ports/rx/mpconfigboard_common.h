@@ -82,6 +82,11 @@
 #define MICROPY_HW_ENABLE_DAC (0)
 #endif
 
+// Whether to enable the DCMI peripheral
+#ifndef MICROPY_HW_ENABLE_DCMI
+#define MICROPY_HW_ENABLE_DCMI (0)
+#endif
+
 // Whether to enable USB support
 #ifndef MICROPY_HW_ENABLE_USB
 #define MICROPY_HW_ENABLE_USB (0)
@@ -137,9 +142,17 @@
 #define MICROPY_HW_HAS_MMA7660 (0)
 #endif
 
-// Whether to enable the LCD32MK driver, exposed as pyb.LCD
-#ifndef MICROPY_HW_HAS_LCD
-#define MICROPY_HW_HAS_LCD (0)
+// Whether to enable the LCDSPI driver, exposed as pyb.LCDSPI
+#ifndef MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_HW_ENABLE_LCDSPI (1)
+#endif
+
+#ifndef MICROPY_PY_PYB_LCDSPI
+#if MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_PY_PYB_LCDSPI 0
+#else
+#define MICROPY_PY_PYB_LCDSPI 1
+#endif
 #endif
 
 // Whether to automatically mount (and boot from) the flash filesystem
@@ -388,11 +401,11 @@
 #endif
 
 #ifndef MICROPY_HW_HAS_FONT
-#define MICROPY_HW_HAS_FONT (0)
+#define MICROPY_HW_HAS_FONT (1)
 #endif
 
-#ifndef MICROPY_HW_HAS_LCDSPI
-#define MICROPY_HW_HAS_LCDSPI   (0)
+#ifndef MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_HW_ENABLE_LCDSPI (1)
 #endif
 
 // Pin definition header file

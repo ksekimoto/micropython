@@ -11,7 +11,12 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_ETH_MDC          (1)
+#define MICROPY_HW_ESP8266              (1)
 #define MICROPY_HW_ENABLE_RNG       (1)
+#define MICROPY_HW_ENABLE_LCDSPI        (1)
+#if MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_HW_ENABLE_LCD_CONSOLE   (0)
+#endif
 
 // UART config
 #define MICROPY_HW_UART1_TX         (pin_P20)
@@ -92,6 +97,7 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
+#if MICROPY_HW_ESP8266
 #define MICROPY_HW_HAS_ESP8266          (1)
 #define MICROPY_HW_ESP8266_UART_CH      (4)
 #define MICROPY_HW_ESP8266_UART_BAUD    (115200)
@@ -99,18 +105,40 @@
 #define MICROPY_HW_ESP8266_RX           (pin_P25)
 #define MICROPY_HW_ESP8266_EN           (pin_P24)
 #define MICROPY_HW_ESP8266_RE           (pin_P17)
+#endif
 
 #define MICROPY_PY_PYB_TWITTER      (0)
+#if MICROPY_HW_ENABLE_LCDSPI
 #define MICROPY_PY_PYB_LCDSPI       (1)
+#endif
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
 
+#if MICROPY_HW_ENABLE_LCDSPI
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CH    (2)
 #define MICROPY_HW_LCDSPI_CLK   (pin_PE5)
 #define MICROPY_HW_LCDSPI_MOSI  (pin_PE6)
 #define MICROPY_HW_LCDSPI_MISO  (pin_PE7)
 #define MICROPY_HW_LCDSPI_CS    (pin_PE4)
 #define MICROPY_HW_LCDSPI_RESET (pin_P26)
 #define MICROPY_HW_LCDSPI_RS    (pin_P30)
+#endif
+
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_CON_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_CON_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CON_CH    (2)
+#define MICROPY_HW_LCDSPI_CON_CLK   (pin_PE5)
+#define MICROPY_HW_LCDSPI_CON_MOSI  (pin_PE6)
+#define MICROPY_HW_LCDSPI_CON_MISO  (pin_PE7)
+#define MICROPY_HW_LCDSPI_CON_CS    (pin_PE4)
+#define MICROPY_HW_LCDSPI_CON_RESET (pin_P26)
+#define MICROPY_HW_LCDSPI_CON_RS    (pin_P30)
+#endif
 
 #define BOARD_SERIAL1_CH    (0)
 #define BOARD_SERIAL2_CH    (2)

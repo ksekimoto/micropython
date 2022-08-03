@@ -11,6 +11,10 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_ETH_MDC          (1)
+#define MICROPY_HW_ENABLE_LCDSPI        (1)
+#if MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_HW_ENABLE_LCD_CONSOLE   (0)
+#endif
 
 // UART config
 #define MICROPY_HW_UART1_TX         (pin_P20)
@@ -99,16 +103,37 @@
 
 #define MICROPY_HW_HAS_ESP8266      (0)
 #define MICROPY_PY_PYB_TWITTER      (0)
+#if MICROPY_HW_ENABLE_LCDSPI
 #define MICROPY_PY_PYB_LCDSPI       (1)
+#endif
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (0)
 
-#define MICROPY_HW_LCDSPI_CLK   (pin_P33)
-#define MICROPY_HW_LCDSPI_MOSI  (pin_P32)
-#define MICROPY_HW_LCDSPI_MISO  (pin_P22)
-#define MICROPY_HW_LCDSPI_CS    (pin_P24)
-#define MICROPY_HW_LCDSPI_RESET (pin_P25)
-#define MICROPY_HW_LCDSPI_RS    (pin_P23)
+#if MICROPY_HW_ENABLE_LCDSPI
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CH    (1)
+#define MICROPY_HW_LCDSPI_CLK   (pin_PC5)
+#define MICROPY_HW_LCDSPI_MOSI  (pin_PC6)
+#define MICROPY_HW_LCDSPI_MISO  (pin_PC7)
+#define MICROPY_HW_LCDSPI_CS    (pin_PC4)
+#define MICROPY_HW_LCDSPI_RESET (pin_PC3)
+#define MICROPY_HW_LCDSPI_RS    (pin_PC2)
+#endif
+
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_CON_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_CON_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CON_CH    (1)
+#define MICROPY_HW_LCDSPI_CON_CLK   (pin_PC5)
+#define MICROPY_HW_LCDSPI_CON_MOSI  (pin_PC6)
+#define MICROPY_HW_LCDSPI_CON_MISO  (pin_PC7)
+#define MICROPY_HW_LCDSPI_CON_CS    (pin_PC4)
+#define MICROPY_HW_LCDSPI_CON_RESET (pin_PC3)
+#define MICROPY_HW_LCDSPI_CON_RS    (pin_PC2)
+#endif
 
 #define PYB_SERVO_NUM   (6)
 #define BOARD_SERVO1_PIN    (pin_P13)

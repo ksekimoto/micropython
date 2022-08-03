@@ -30,13 +30,13 @@
 #include "py/mphal.h"
 #include "font.h"
 
+const mp_obj_type_t rx_font_type;
+
 typedef struct _rx_font_obj_t {
     mp_obj_base_t base;
     uint32_t font_id;
     const font_t *font;
 } rx_font_obj_t;
-
-const mp_obj_type_t rx_font_type;
 
 static const rx_font_obj_t rx_font_obj[] = {
     #ifdef MISAKIFONT4X8
@@ -142,10 +142,16 @@ STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&rx_font_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_width), MP_ROM_PTR(&rx_font_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&rx_font_height_obj) },
+    #ifdef MISAKIFONT4X8
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_8), MP_ROM_INT(MISAKIFONT4X8) },
+    #endif
+    #ifdef MISAKIFONT6X12
     { MP_ROM_QSTR(MP_QSTR_MISAKIA_12), MP_ROM_INT(MISAKIFONT6X12) },
-    #if MICROPY_PY_PYB_UNICODE_FONT
+    #endif
+    #ifdef MISAKIFONT8X8
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_8), MP_ROM_INT(MISAKIFONT8X8) },
+    #endif
+    #ifdef MISAKIFONT12X12
     { MP_ROM_QSTR(MP_QSTR_MISAKIU_12), MP_ROM_INT(MISAKIFONT12X12) },
     #endif
     { MP_ROM_QSTR(MP_QSTR_fontdata), MP_ROM_PTR(&rx_font_data_obj) },

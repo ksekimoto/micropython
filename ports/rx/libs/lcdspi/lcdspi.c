@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Kentaro Sekimoto
+ * Copyright (c) 2022, Kentaro Sekimoto
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,20 @@
 // #include "mphalport.h"
 #include "extmod/machine_spi.h"
 
+// #if MICROPY_HW_ENABLE_LCDSPI
+
 #include "ILI9340.h"
 #include "font.h"
 #include "jpeg.h"
 #include "lcdspi_info.h"
 #include "lcdspi.h"
+// #include "common.h"
+
+#if READ_LCD_ID
+#define SPISW_READ_REGISTER   1
+#else
+#define SPISW_READ_REGISTER   0
+#endif
 
 #if defined(USE_DBG_PRINT)
 #define DEBUG_LCDSPI
@@ -115,6 +124,11 @@ static const lcdspi_pins_t lcdspi_pins_def = {
     #else
     (uint32_t)PIN_NONE,
     #endif
+#if defined(HW_LCDSPI_BL)
+    (uint32_t)HW_LCDSPI_BL,
+#else
+    (uint32_t)PIN_NONE,
+#endif
 };
 static lcdspi_pins_t *m_lcdspi_pins;
 static uint32_t m_lcdspi_ch = LCDSPI_CH;
@@ -157,6 +171,20 @@ void lcdspi_reset_low(void) {
     lcdspi_gpio_write(m_lcdspi_pins->pin_reset, false);
 }
 
+void lcdspi_backlight_on(void) {
+    if (m_lcdspi_pins->pin_bl != PIN_NONE) {
+        lcdspi_gpio_set_output(m_lcdspi_pins->pin_bl);
+        lcdspi_gpio_write(m_lcdspi_pins->pin_bl, true);
+    }
+}
+
+void lcdspi_backlight_off(void) {
+    if (m_lcdspi_pins->pin_bl != PIN_NONE) {
+        lcdspi_gpio_set_output(m_lcdspi_pins->pin_bl);
+        lcdspi_gpio_write(m_lcdspi_pins->pin_bl, false);
+    }
+}
+
 #define MHZ_COUNT   30
 
 static void delay_us(volatile uint32_t n) {
@@ -167,6 +195,7 @@ static void delay_us(volatile uint32_t n) {
     }
 }
 
+#if READ_LCD_ID
 static void delay_ms(volatile uint32_t n) {
     // mp_hal_delay_ms(n);
     while (n-- > 0) {
@@ -175,6 +204,7 @@ static void delay_ms(volatile uint32_t n) {
         }
     }
 }
+#endif
 
 /* ********************************************************************* */
 /* SPI                                                                   */
@@ -312,7 +342,7 @@ uint8_t lcdspi_spi_xfer(uint8_t dat) {
     return lcdspi_spi_xfer_sub(dat, m_spi_hw);
 }
 
-static void lcdspi_spisw_transfer(uint8_t *dst, const uint8_t *src, uint32_t count) {
+void lcdspi_spisw_transfer(uint8_t *dst, const uint8_t *src, uint32_t count) {
     while (count-- > 0) {
         *dst++ = lcdspi_spisw_xfer(*src++);
     }
@@ -539,17 +569,6 @@ uint8_t ILI93xx_spisw_read_reg(uint8_t addr, uint8_t idx) {
     return val;
 }
 
-static uint32_t ILI93xx_spisw_read_reg_n(uint8_t addr, uint8_t num) {
-    uint32_t val = 0;
-    uint8_t t = 0;
-    for (uint8_t i = 0; i < num; i++) {
-        t = ILI93xx_spisw_read_reg(addr, i);
-        val <<= 8;
-        val |= (uint32_t)t;
-    }
-    return val;
-}
-
 static uint8_t lcdspi_spihw_cmd_writeread_sub(uint8_t cmd, uint8_t bits, uint8_t dummy) {
     uint32_t count = bits / 8;
     uint8_t src[4] = {0};
@@ -592,6 +611,18 @@ uint8_t ILI93xx_spihw_read_reg(uint8_t addr, uint8_t idx) {
     return t;
 }
 
+#if READ_LCD_ID
+static uint32_t ILI93xx_spisw_read_reg_n(uint8_t addr, uint8_t num) {
+    uint32_t val = 0;
+    uint8_t t = 0;
+    for (uint8_t i = 0; i < num; i++) {
+        t = ILI93xx_spisw_read_reg(addr, i);
+        val <<= 8;
+        val |= (uint32_t)t;
+    }
+    return val;
+}
+
 static uint32_t ILI93xx_spihw_read_reg_n(uint8_t addr, uint8_t num) {
     uint32_t val = 0;
     uint8_t t = 0;
@@ -602,10 +633,63 @@ static uint32_t ILI93xx_spihw_read_reg_n(uint8_t addr, uint8_t num) {
     }
     return val;
 }
+#endif
 
 /* ********************************************************************* */
 /* LCDSPI                                                                */
 /* ********************************************************************* */
+
+uint8_t get_rotate_param(lcdspi_t *lcdspi, uint8_t dir) {
+    uint8_t d = 0;
+    switch(lcdspi->lcd->lcd_info_id) {
+    case ST7735R_G128x160:
+    case ST7735R_R128x160:
+    case ST7735R_G128x128:
+    case ST7735R_G160x80:
+    case ST7735R_G130x161:
+    case KMRTM24024SPI:
+        switch(dir) {
+        case LCDSPI_ROTATE_90:
+            d = DDD_X_Y_EX;
+            break;
+        case LCDSPI_ROTATE_180:
+            d = DDD_Y_MIRROR;
+            break;
+        case LCDSPI_ROTATE_270:
+            d = DDD_X_Y_EX_X_Y_MIRROR;
+            break;
+        default:
+            d = DDD_X_MIRROR;
+            break;
+        }
+        break;
+    default:
+        switch(dir) {
+        case LCDSPI_ROTATE_90:
+            d = DDD_X_Y_EX_X_MIRROR;
+            break;
+        case LCDSPI_ROTATE_180:
+            d = DDD_X_Y_MIRROR;
+            break;
+        case LCDSPI_ROTATE_270:
+            d = DDD_X_Y_EX_Y_MIRROR;
+            break;
+        default:
+            d = DDD_NORMAL;
+            break;
+        }
+    }
+    return d;
+}
+
+void lcdspi_set_screen_dir(lcdspi_t *lcdspi, uint8_t dir) {
+    lcdspi->screen_dir = dir;
+    if (dir == LCDSPI_ROTATE_0) {
+        lcdspi->screen->hw_scroll = true;
+    } else {
+        lcdspi->screen->hw_scroll = false;
+    }
+}
 
 void lcdspi_set_spi_ch(lcdspi_t *lcdspi, uint32_t spi_ch) {
     lcdspi->spi_ch = spi_ch;
@@ -649,6 +733,7 @@ void lcdspi_set_screen(lcdspi_t *lcdspi, lcdspi_screen_t *screen) {
     }
 }
 
+#if READ_LCD_ID
 static void lcdspi_spisw_swreset(lcdspi_t *lcdspi) {
     lcdspi_spisw_cmd_writeread_sub(0x01, 0, 0, false);
     delay_ms(150);
@@ -680,6 +765,7 @@ static void ILI93xx_spihw_read_ids(lcdspi_t *lcdspi) {
     lcdspi->id3_3 = (uint8_t)ILI93xx_spihw_read_reg(0xdc, 1);
     lcdspi->ili93xx_id_spisw = (uint32_t)ILI93xx_spihw_read_reg_n(0xd3, 4);
 }
+#endif
 
 void lcdspi_spi_init(lcdspi_t *lcdspi, bool spi_hw_mode) {
     if (spi_hw_mode) {
@@ -718,6 +804,22 @@ static void lcdspi_addrset(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
     lcdspi_spi_write_cmd8(ILI9340_RAMWR);
 }
 
+static void lcdspi_addrset_SSD1331(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+    lcdspi_spi_write_cmd8(0x15);
+    lcdspi_spi_write_cmd8(x1);
+    lcdspi_spi_write_cmd8(x2);
+    lcdspi_spi_write_cmd8(0x75);
+    lcdspi_spi_write_cmd8(y1);
+    lcdspi_spi_write_cmd8(y2);
+}
+
+static void swap_uint16(uint16_t *i, uint16_t *j) {
+    uint16_t t;
+    t = *j;
+    *j = *i;
+    *i = t;
+}
+
 static void swap_uint32(uint32_t *i, uint32_t *j) {
     uint32_t t;
     t = *j;
@@ -725,13 +827,69 @@ static void swap_uint32(uint32_t *i, uint32_t *j) {
     *i = t;
 }
 
+static void update_dir(lcdspi_t *lcdspi) {
+    uint8_t dir = get_rotate_param(lcdspi, lcdspi->screen_dir);
+    uint8_t madctl = (lcdspi->lcd->madctl & 0x1f) | (dir << 5);
+    uint32_t lcd_ctrl_id = (uint8_t)lcdspi->lcd->ctrl_info->id;
+    if (lcd_ctrl_id == SSD1331) {
+    } else if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
+        lcdspi_spi_write_cmd9(0x36);
+        lcdspi_spi_write_dat9(madctl);
+    } else {
+        lcdspi_spi_write_cmd8(0x36);
+        lcdspi_spi_write_dat8(madctl);
+    }
+}
+
+static void update_axis16(lcdspi_t *lcdspi, uint16_t *x, uint16_t *y) {
+    if ((lcdspi->screen_dir == LCDSPI_ROTATE_90) || (lcdspi->screen_dir == LCDSPI_ROTATE_270)) {
+        swap_uint16(x, y);
+    }
+    #if 0
+    switch (lcdspi->screen_dir) {
+    // virtical
+    case DDD_X_MIRROR:          // position 0
+    case DDD_Y_MIRROR:          // position 2
+    case DDD_NORMAL:
+    case DDD_X_Y_MIRROR:
+        break;
+    // horizontal
+    case DDD_X_Y_EX:            // position 1
+    case DDD_X_Y_EX_X_Y_MIRROR: // position 3
+    case DDD_X_Y_EX_Y_MIRROR:
+    case DDD_X_Y_EX_X_MIRROR:
+        swap_uint16(x, y);
+        break;
+    }
+#endif
+}
+
+#if 0
+static void update_axis32(lcdspi_t *lcdspi, uint32_t *x, uint32_t *y) {
+    if ((lcdspi->screen_dir == LCDSPI_ROTATE_90) || (lcdspi->screen_dir == LCDSPI_ROTATE_270)) {
+        swap_uint32(x, y);
+    }
+#if 0
+    switch (lcdspi->screen_dir) {
+    // virtical
+    case DDD_X_MIRROR:          // position 0
+    case DDD_Y_MIRROR:          // position 2
+    case DDD_NORMAL:
+    case DDD_X_Y_MIRROR:
+        break;
+    // horizontal
+    case DDD_X_Y_EX:            // position 1
+    case DDD_X_Y_EX_X_Y_MIRROR: // position 3
+    case DDD_X_Y_EX_Y_MIRROR:
+    case DDD_X_Y_EX_X_MIRROR:
+        swap_uint32(x, y);
+        break;
+    }
+#endif
+}
+#endif
+
 void lcdspi_box_fill(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t col) {
-    if (x1 > x2) {
-        swap_uint32(&x1, &x2);
-    }
-    if (y1 > y2) {
-        swap_uint32(&y1, &y2);
-    }
     uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;
     uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
     uint8_t RAMWR = lcdspi->lcd->ctrl_info->RAMWR;
@@ -740,6 +898,15 @@ void lcdspi_box_fill(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, ui
     uint16_t sx = lcdspi->lcd->sx;
     uint16_t sy = lcdspi->lcd->sy;
     uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
+    update_axis16(lcdspi, &width, &height);
+    if (x1 > x2) {
+        swap_uint32(&x1, &x2);
+    }
+    if (y1 > y2) {
+        swap_uint32(&y1, &y2);
+    }
     lcdspi_spi_start_xfer(lcdspi);
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         uint8_t v1 = (uint8_t)col & 0xff;
@@ -759,13 +926,14 @@ void lcdspi_box_fill(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, ui
             lcdspi_spi_write_dat9(b2);
             lcdspi_spi_write_dat9(b3);
         }
+    } else if (lcd_ctrl_id == SSD1331) {
+        lcdspi_addrset_SSD1331((uint16_t)(sx + x1), (uint16_t)(sy + y1), (uint16_t)(sx + x2), (uint16_t)(sy + y2));
+        lcdspi_spi_write_dat16_n(width * height * 2, col);
     } else {
         lcdspi_addrset((uint16_t)(sx + x1), (uint16_t)(sy + y1), (uint16_t)(sx + x2), (uint16_t)(sy + y2));
         lcdspi_spi_write_dat16_n(width * height * 2, col);
     }
     lcdspi_spi_end_xfer(lcdspi);
-    lcdspi->screen->cx = 0;
-    lcdspi->screen->cy = 0;
     return;
 }
 
@@ -810,6 +978,9 @@ void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col) {
     uint16_t sy = lcdspi->lcd->sy;
     uint16_t ey = lcdspi->lcd->ey;
     uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
+    update_axis16(lcdspi, &ex, &ey);
     lcdspi_spi_start_xfer(lcdspi);
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         uint8_t v1 = (uint8_t)col & 0xff;
@@ -829,6 +1000,9 @@ void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col) {
             lcdspi_spi_write_dat9(b2);
             lcdspi_spi_write_dat9(b3);
         }
+    } else if (lcd_ctrl_id == SSD1331) {
+        lcdspi_addrset_SSD1331((uint16_t)sx, (uint16_t)sy, (uint16_t)ex, (uint16_t)ey);
+        lcdspi_spi_write_dat16_n(width * height * 2, col);
     } else {
         // if (lcd_ctrl_id == ILI9340 || lcd_ctrl_id == ST7735 || lcd_ctrl_id == ST7789) {
         lcdspi_addrset((uint16_t)sx, (uint16_t)sy, (uint16_t)ex, (uint16_t)ey);
@@ -838,7 +1012,11 @@ void lcdspi_clear(lcdspi_t *lcdspi, uint16_t col) {
     lcdspi->screen->cx = 0;
     lcdspi->screen->cy = 0;
     lcdspi->screen->dy = 0;
-    lcdspi->screen->scroll = false;
+    if (lcdspi->screen_dir == LCDSPI_ROTATE_0) {
+        lcdspi->screen->hw_scroll = true;
+    } else {
+        lcdspi->screen->hw_scroll = false;
+    }
     return;
 }
 
@@ -862,21 +1040,29 @@ void lcdspi_init(lcdspi_t *lcdspi, lcdspi_screen_t *screen, lcdspi_pins_t *pins,
     if (is_lcdspi_reset_pin_used()) {
         lcdspi->lcd->lcdspi_reset();
     }
+#if READ_LCD_ID
     lcdspi_spi_init(lcdspi, false);
     lcdspi_spisw_swreset(lcdspi);
     ILI93xx_spisw_read_ids(lcdspi);
+#endif
     lcdspi_spi_init(lcdspi, (m_lcdspi_ch != SW_LCDSPI_CH));
+#if READ_LCD_ID
     if (m_spi_hw) {
         ILI93xx_spihw_read_ids(lcdspi);
     }
+#endif
+    lcdspi_backlight_on();
     lcdspi->lcd->lcdspi_init();
     lcdspi_clear(lcdspi, 0);
-    uint16_t uy = (uint16_t)font_fontUnitY(lcdspi->screen->font);
-    uint16_t wy = (lcdspi->lcd->ey - lcdspi->lcd->sy + 1)/uy * uy;
-    lcdspi_scroll_range(lcdspi,
+    if (lcdspi->screen->hw_scroll) {
+        uint16_t uy = (uint16_t)font_fontUnitY(lcdspi->screen->font);
+        uint16_t wy = (lcdspi->lcd->ey - lcdspi->lcd->sy + 1)/uy * uy;
+        lcdspi_scroll_range(lcdspi,
             (uint32_t)lcdspi->lcd->sy,
             (uint32_t)wy,
             (uint32_t)(lcdspi->lcd->ey - lcdspi->lcd->sy + 1 - wy));
+
+    }
 }
 
 void lcdspi_deinit(lcdspi_t *lcdspi) {
@@ -886,16 +1072,20 @@ void lcdspi_deinit(lcdspi_t *lcdspi) {
     }
 }
 
-void lcdspi_bitbltex565(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint16_t *data) {
+void lcdspi_bitbltex565(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t *data) {
     uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;  // @suppress("Type cannot be resolved")
     uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
     uint8_t RAMWR = lcdspi->lcd->ctrl_info->RAMWR;
     uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
     uint16_t sx = lcdspi->lcd->sx;
     uint16_t sy = lcdspi->lcd->sy;
+    uint16_t width = (uint16_t)w;
+    uint16_t height = (uint16_t)h;
     uint16_t i, j;
     uint16_t v1, v2;
     uint16_t *pdata = (uint16_t *)data;
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
     lcdspi_spi_start_xfer(lcdspi);
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         for (j = 0; j < height; j++) {
@@ -914,6 +1104,9 @@ void lcdspi_bitbltex565(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t width
                 lcdspi_spi_write_dat9(G4B4(v2));
             }
         }
+    } else if (lcd_ctrl_id == SSD1331) {
+        lcdspi_addrset_SSD1331((uint16_t)(sx + x), (uint16_t)(sy + y), (uint16_t)(sx + x + width - 1), (uint16_t)(sy + y + height - 1));
+        lcdspi_spi_write_buf_n((uint8_t *)pdata, width * height * 2);
     } else {
         lcdspi_addrset((uint16_t)(sx + x), (uint16_t)(sy + y), (uint16_t)(sx + x + width - 1), (uint16_t)(sy + y + height - 1));
         lcdspi_spi_write_buf_n((uint8_t *)pdata, width * height * 2);
@@ -936,6 +1129,8 @@ void lcdspi_pset(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint16_t col) {
     uint16_t sx = lcdspi->lcd->sx;
     uint16_t sy = lcdspi->lcd->sy;
     uint16_t v1, v2;
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
     lcdspi_spi_start_xfer(lcdspi);
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         lcdspi_spi_write_cmd9(PASET);
@@ -950,6 +1145,9 @@ void lcdspi_pset(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint16_t col) {
         lcdspi_spi_write_dat9(R4G4(v1));
         lcdspi_spi_write_dat9(B4R4(v1, v2));
         lcdspi_spi_write_dat9(G4B4(v2));
+    } else if (lcd_ctrl_id == SSD1331) {
+        lcdspi_addrset_SSD1331((uint16_t)(sx + x), (uint16_t)(sy + y), (uint16_t)(sx + x + 1), (uint16_t)(sy + y + 1));
+        lcdspi_spi_write_dat16(col);
     } else {
         lcdspi_addrset((uint16_t)(sx + x), (uint16_t)(sy + y), (uint16_t)(sx + x + 1), (uint16_t)(sy + y + 1));
         if (lcd_ctrl_id == ILI9488) {
@@ -962,10 +1160,8 @@ void lcdspi_pset(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint16_t col) {
     lcdspi_spi_end_xfer(lcdspi);
 }
 
-void lcdspi_hline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y, uint32_t x2, uint16_t col) {
-    if (x1 > x2) {
-        swap_uint32(&x1, &x2);
-    }
+static void lcdspi_simple_line(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t col) {
+    uint32_t z1, z2;
     uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;
     uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
     uint8_t RAMWR = lcdspi->lcd->ctrl_info->RAMWR;
@@ -974,29 +1170,49 @@ void lcdspi_hline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y, uint32_t x2, uint16
     uint16_t sy = lcdspi->lcd->sy;
     uint16_t v1, v2;
     lcdspi_spi_start_xfer(lcdspi);
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
+    if (x1 > x2) {
+        swap_uint32(&x1, &x2);
+    }
+    if (y1 > y2) {
+        swap_uint32(&y1, &y2);
+    }
+    if (x1 == x2) {
+        z1 = y1;
+        z2 = y2;
+    } else {
+        z1 = x1;
+        z2 = x2;
+    }
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
         lcdspi_spi_write_cmd9(PASET);
-        lcdspi_spi_write_dat9((uint8_t)(sy + y));
-        lcdspi_spi_write_dat9((uint8_t)(sy + y + 1));
+        lcdspi_spi_write_dat9((uint8_t)(sy + y1));
+        lcdspi_spi_write_dat9((uint8_t)(sy + y2 + 1));
         lcdspi_spi_write_cmd9(CASET);
         lcdspi_spi_write_dat9((uint8_t)(sx + x1));
         lcdspi_spi_write_dat9((uint8_t)(sx + x2 + 1));
         v1 = (uint8_t)(col & 0xff);
         v2 = (uint8_t)((col >> 8) & 0xff);
         lcdspi_spi_write_cmd9(RAMWR);
-        for (uint32_t i = x1; i <= x2; i += 2) {
+        for (uint32_t i = z1; i <= z2; i += 2) {
             lcdspi_spi_write_dat9(R4G4(v1));
             lcdspi_spi_write_dat9(B4R4(v1, v2));
             lcdspi_spi_write_dat9(G4B4(v2));
         }
+    } else if (lcd_ctrl_id == SSD1331) {
+        lcdspi_addrset_SSD1331((uint16_t)(sx + x1), (uint16_t)(sy + y1), (uint16_t)(sx + x2), (uint16_t)(sy + y2));
+        for (uint32_t i = z1; i <= z2; i += 1) {
+            lcdspi_spi_write_dat16(col);
+        }
     } else {
-        lcdspi_addrset((uint16_t)(sx + x1), (uint16_t)(sy + y), (uint16_t)(sx + x2), (uint16_t)(sy + y));
+        lcdspi_addrset((uint16_t)(sx + x1), (uint16_t)(sy + y1), (uint16_t)(sx + x2), (uint16_t)(sy + y2));
         if (lcd_ctrl_id == ILI9488) {
-            for (uint32_t i = x1; i <= x2; i += 1) {
+            for (uint32_t i = z1; i <= z2; i += 1) {
                 lcdspi_spi_write_dat16(col);
             }
         } else {
-            for (uint32_t i = x1; i <= x2; i += 1) {
+            for (uint32_t i = z1; i <= z2; i += 1) {
                 lcdspi_spi_write_dat8((uint8_t)(col >> 8));
                 lcdspi_spi_write_dat8((uint8_t)col);
             }
@@ -1005,54 +1221,19 @@ void lcdspi_hline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y, uint32_t x2, uint16
     lcdspi_spi_end_xfer(lcdspi);
 }
 
-void lcdspi_vline(lcdspi_t *lcdspi, uint32_t x, uint32_t y1, uint32_t y2, uint16_t col) {
-    if (y1 > y2) {
-        swap_uint32(&y1, &y2);
-    }
-    uint8_t PASET = lcdspi->lcd->ctrl_info->PASET;
-    uint8_t CASET = lcdspi->lcd->ctrl_info->CASET;
-    uint8_t RAMWR = lcdspi->lcd->ctrl_info->RAMWR;
-    uint32_t lcd_ctrl_id = lcdspi->lcd->ctrl_info->id;
-    uint16_t sx = lcdspi->lcd->sx;
-    uint16_t sy = lcdspi->lcd->sy;
-    uint16_t v1, v2;
-    lcdspi_spi_start_xfer(lcdspi);
-    if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
-        lcdspi_spi_write_cmd9(PASET);
-        lcdspi_spi_write_dat9((uint8_t)(sy + y1));
-        lcdspi_spi_write_dat9((uint8_t)(sy + y2 + 1));
-        lcdspi_spi_write_cmd9(CASET);
-        lcdspi_spi_write_dat9((uint8_t)(sx + x));
-        lcdspi_spi_write_dat9((uint8_t)(sx + x + 1));
-        v1 = (uint8_t)(col & 0xff);
-        v2 = (uint8_t)((col >> 8) & 0xff);
-        lcdspi_spi_write_cmd9(RAMWR);
-        for (uint32_t i = y1; i <= y2; i += 2) {
-            lcdspi_spi_write_dat9(R4G4(v1));
-            lcdspi_spi_write_dat9(B4R4(v1, v2));
-            lcdspi_spi_write_dat9(G4B4(v2));
-        }
-    } else {
-        lcdspi_addrset((uint16_t)(sx + x), (uint16_t)(sy + y1), (uint16_t)(sx + x), (uint16_t)(sy + y2));
-        if (lcd_ctrl_id == ILI9488) {
-            for (uint32_t i = y1; i <= y2; i += 1) {
-                lcdspi_spi_write_dat16(col);
-            }
-        } else {
-            for (uint32_t i = y1; i <= y2; i += 1) {
-                lcdspi_spi_write_dat8((uint8_t)(col >> 8));
-                lcdspi_spi_write_dat8((uint8_t)col);
-            }
-        }
-    }
-    lcdspi_spi_end_xfer(lcdspi);
+void lcdspi_hline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint16_t col) {
+    lcdspi_simple_line(lcdspi, x1, y1, x2, y1, col);
+}
+
+void lcdspi_vline(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t y2, uint16_t col) {
+    lcdspi_simple_line(lcdspi, x1, y1, x1, y2, col);
 }
 
 void lcdspi_box(lcdspi_t *lcdspi, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint16_t col) {
     lcdspi_hline(lcdspi, x1, y1, x2, col);
-    lcdspi_vline(lcdspi, x2, y1, y2, col);
     lcdspi_hline(lcdspi, x1, y2, x2, col);
     lcdspi_vline(lcdspi, x1, y1, y2, col);
+    lcdspi_vline(lcdspi, x2, y1, y2, col);
 }
 
 static inline int32_t _abs(int32_t x) {
@@ -1128,8 +1309,8 @@ static void lcdspi_circle_sub(lcdspi_t *lcdspi, uint32_t x, uint32_t y, uint32_t
 
     while (1) {
         if (fill) {
-            lcdspi_hline(lcdspi, (int32_t)x - xi, (int32_t)y - yi, (int32_t)x + xi, col);
-            lcdspi_hline(lcdspi, (int32_t)x - xi, (int32_t)y + yi, (int32_t)x + xi, col);
+                lcdspi_hline(lcdspi, (int32_t)x - xi, (int32_t)y - yi, (int32_t)x + xi, col);
+                lcdspi_hline(lcdspi, (int32_t)x - xi, (int32_t)y + yi, (int32_t)x + xi, col);
         } else {
             lcdspi_pset(lcdspi, (int32_t)x + xi, (int32_t)y + yi, col);
             lcdspi_pset(lcdspi, (int32_t)x - xi, (int32_t)y + yi, col);
@@ -1209,6 +1390,9 @@ void lcdspi_write_font_color_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, 
     data = (unsigned char *)font_fontData(font, (int)u);
     wx = (uint16_t)font_fontWidth(font, (int)u);
     wy = (uint16_t)font_fontHeight(font, (int)u);
+    update_dir(lcdspi);
+    update_axis16(lcdspi, &sx, &sy);
+    update_axis16(lcdspi, &width, &height);
     lcdspi_spi_start_xfer(lcdspi);
     off = 0;
     if (lcd_ctrl_id == PCF8833 || lcd_ctrl_id == S1D15G10) {
@@ -1240,6 +1424,26 @@ void lcdspi_write_font_color_xy(lcdspi_t *lcdspi, unsigned short u, uint32_t x, 
             }
             off++;
         }
+    } else if (lcd_ctrl_id == SSD1331) {
+        for (j = 0; j < wy; j++) {
+            lcdspi_addrset_SSD1331((uint16_t)(sx + x),
+                (uint16_t)(sy + y + j),
+                (uint16_t)(sx + width - 1),
+                (uint16_t)(sy + height - 1));
+            for (i = 0; i < wx; i++) {
+                if (i == 8) {
+                    off++;
+                }
+                if (data[off] & (0x80 >> (i & 0x7))) {
+                    col0 = fgcol;
+                } else {
+                    col0 = bgcol;
+                }
+                lcdspi_spi_write_dat16(col0);
+            }
+            off++;
+        }
+
     } else {
         for (j = 0; j < wy; j++) {
             lcdspi_addrset((uint16_t)(sx + x),
@@ -1321,6 +1525,7 @@ void lcdspi_write_formatted_font(lcdspi_t *lcdspi, unsigned short u) {
     uint16_t unit_y = (uint32_t)font_fontUnitY(screen->font);
     uint16_t width = lcdspi->lcd->width;
     uint16_t height = lcdspi->lcd->height;
+    update_axis16(lcdspi, &width, &height);
     if ((char)u == 0xc) {
         lcdspi_clear(lcdspi, 0);
         cx = 0;
@@ -1338,7 +1543,9 @@ void lcdspi_write_formatted_font(lcdspi_t *lcdspi, unsigned short u) {
             if (dy >= (height / unit_y * unit_y)) {
                 dy = 0;
             }
-            lcdspi_scroll(lcdspi, dy);
+            if (screen->hw_scroll) {
+                lcdspi_scroll(lcdspi, dy);
+            }
             for (uint16_t i = 0; i < (width / unit_x); i++) {
                 lcdspi_write_unicode(lcdspi, 0x20, i, cy);
             }
@@ -1365,7 +1572,9 @@ void lcdspi_write_formatted_font(lcdspi_t *lcdspi, unsigned short u) {
                 if (dy >= (height / unit_y * unit_y)) {
                     dy = 0;
                 }
-                lcdspi_scroll(lcdspi, dy);
+                if (screen->hw_scroll) {
+                    lcdspi_scroll(lcdspi, dy);
+                }
                 for (uint16_t i = 0; i < (width / unit_x); i++) {
                     lcdspi_write_unicode(lcdspi, 0x20, i, cy);
                 }
@@ -1423,3 +1632,5 @@ unsigned short cnvUtf8ToUnicode(unsigned char *str, uint32_t *size) {
     }
     return (unsigned short)u;
 }
+
+// #endif

@@ -28,6 +28,7 @@
 // Options to control how MicroPython is built for this port,
 // overriding defaults in py/mpconfig.h.
 
+#include <stdint.h>
 // board specific definitions
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"

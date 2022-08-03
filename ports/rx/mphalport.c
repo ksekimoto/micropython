@@ -3,8 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2020-2021 Damien P. George
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,9 @@
 #include "py/mphal.h"
 #include "extmod/misc.h"
 #include "usb.h"
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcd.h"
+#endif
 #include "uart.h"
 #include "usb_entry.h"
 #include "modmachine.h"
@@ -111,12 +114,12 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
 }
 
 MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
+    #if MICROPY_HW_ENABLE_LCD_CONSOLE
+    lcd_print_strn(str, len);
+    #endif
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
-    #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
-    lcd_print_strn(str, len);
-    #endif
     #if MICROPY_HW_ENABLE_USB
     if (usb_vcp_is_enabled()) {
         usb_vcp_send_strn(str, len);

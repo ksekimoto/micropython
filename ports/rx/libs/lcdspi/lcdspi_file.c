@@ -31,6 +31,8 @@
 #include "mpy_file.h"
 #include "lcdspi.h"
 
+#if MICROPY_HW_ENABLE_LCDSPI
+
 static int BYTEARRAY4_TO_INT(uint8_t *a) {
     // return (int)*(uint32_t *)a;
     return (int)((uint32_t)a[0] +
@@ -112,3 +114,5 @@ int lcdspi_disp_bmp_file(lcdspi_t *lcdspi, int x, int y, const char *filename) {
     }
     return 1;
 }
+
+#endif
