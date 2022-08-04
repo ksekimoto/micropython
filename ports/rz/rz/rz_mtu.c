@@ -612,13 +612,13 @@ void rz_pwm_stop(uint32_t pin) {
 
 static void rz_pwm_set_pin(uint32_t pin) {
     uint8_t af_no = rz_pwm_get_af(pin);
-    _gpio_mode_output(pin);
-    _gpio_mode_af(pin, af_no);
+    rz_gpio_mode_output(pin);
+    rz_gpio_mode_af(pin, af_no);
 }
 
 static void rz_pwm_reset_pin(uint32_t pin) {
-    _gpio_mode_output(pin);
-    _gpio_mode_af(pin, 0);
+    rz_gpio_mode_output(pin);
+    rz_gpio_mode_af(pin, 0);
 }
 
 void rz_pwm_pin_init(uint32_t pin) {

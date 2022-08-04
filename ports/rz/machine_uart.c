@@ -37,6 +37,7 @@
 #include "uart.h"
 #include "irq.h"
 #include "pendsv.h"
+#include "rz_sci.h"
 
 /// \moduleref pyb
 /// \class UART - duplex serial communication bus

@@ -47,7 +47,7 @@ typedef struct _rz_camera_obj_t {
 } rz_camera_obj_t;
 
 STATIC mp_obj_t rz_camera_type1_reg_write(size_t n_args, const mp_obj_t *args) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     uint8_t a = (uint8_t)mp_obj_get_int(args[1]);
     uint8_t r = (uint8_t)mp_obj_get_int(args[2]);
     uint8_t v = (uint8_t)mp_obj_get_int(args[3]);
@@ -57,17 +57,18 @@ STATIC mp_obj_t rz_camera_type1_reg_write(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_camera_type1_reg_write_obj, 4, 4, rz_camera_type1_reg_write);
 
 STATIC mp_obj_t rz_camera_type1_reg_read(mp_obj_t self_in, mp_obj_t addr, mp_obj_t reg) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t a = (uint8_t)mp_obj_get_int(addr);
     uint8_t r = (uint8_t)mp_obj_get_int(reg);
     uint8_t v;
     int ret = (int)camera_type1_reg_read(a, r, &v);
+    (void)ret;
     return mp_obj_new_int((int)v);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(rz_camera_type1_reg_read_obj, rz_camera_type1_reg_read);
 
 STATIC mp_obj_t rz_camera_type1_reg_tbl_write(mp_obj_t self_in, mp_obj_t addr, mp_obj_t ba) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t a;
     int len;
     mp_obj_t *o;
@@ -81,7 +82,7 @@ STATIC mp_obj_t rz_camera_type1_reg_tbl_write(mp_obj_t self_in, mp_obj_t addr, m
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(rz_camera_type1_reg_tbl_write_obj, rz_camera_type1_reg_tbl_write);
 
 STATIC mp_obj_t rz_camera_type2_reg_write(size_t n_args, const mp_obj_t *args) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     uint8_t a = (uint8_t)mp_obj_get_int(args[1]);
     uint8_t r = (uint8_t)mp_obj_get_int(args[2]);
     uint8_t v = (uint8_t)mp_obj_get_int(args[3]);
@@ -91,17 +92,18 @@ STATIC mp_obj_t rz_camera_type2_reg_write(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_camera_type2_reg_write_obj, 4, 4, rz_camera_type2_reg_write);
 
 STATIC mp_obj_t rz_camera_type2_reg_read(mp_obj_t self_in, mp_obj_t addr, mp_obj_t reg) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t a = (uint8_t)mp_obj_get_int(addr);
     uint16_t r = (uint8_t)mp_obj_get_int(reg);
     uint8_t v;
     int ret = (int)camera_type2_reg_read(a, r, &v);
+    (void)ret;
     return mp_obj_new_int((int)v);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(rz_camera_type2_reg_read_obj, rz_camera_type2_reg_read);
 
 STATIC mp_obj_t rz_camera_type2_reg_tbl_write(mp_obj_t self_in, mp_obj_t addr, mp_obj_t ba) {
-    rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_camera_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t a;
     int len;
     mp_obj_t *o;

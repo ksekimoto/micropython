@@ -99,10 +99,10 @@
 #include "rz_ostm2.h"
 #endif
 
-#if defined(USE_OCTA_RAM)
-#define OCTA_RAM_SIZE   0x00800000
-static __attribute((section("OCTA_BSS"),aligned(32))) uint8_t octa_ram[OCTA_RAM_SIZE];
-#endif
+// #if defined(USE_OCTA_RAM)
+// #define OCTA_RAM_SIZE   0x00800000
+// static __attribute((section("OCTA_BSS"),aligned(32))) uint8_t octa_ram[OCTA_RAM_SIZE];
+// #endif
 
 #if LVGL_ENABLE
 extern int lvrx_enable;
@@ -333,6 +333,7 @@ STATIC bool init_sdcard_fs(void) {
 }
 #endif
 
+#if 0
 #if MICROPY_KBD_EXCEPTION
 extern int mp_interrupt_char;
 
@@ -344,6 +345,7 @@ static int chk_kbd_interrupt(int d) {
         return 0;
     }
 }
+#endif
 #endif
 
 void main(int reset_mode) {

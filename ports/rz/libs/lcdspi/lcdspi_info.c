@@ -39,6 +39,8 @@
 #include "lcdspi.h"
 #include "lcdspi_info.h"
 
+#if MICROPY_HW_ENABLE_LCDSPI
+
 #ifdef HIGH
 #undef HIGH
 #endif
@@ -117,6 +119,8 @@ static const lcdspi_lcd_t lcdspi_lcd_NOKIA6100_0 = {
     129,
     2,
     129,
+    0,      // spi mode 0
+    0,      // default madctl
 };
 
 static void PCF8833_Reset() {
@@ -169,6 +173,8 @@ static const lcdspi_lcd_t lcdspi_lcd_NOKIA6100_1 = {
     129,
     2,
     129,
+    0,      // spi mode 0
+    0,      // no madctl
 };
 
 static void S1D15G10_Reset() {
@@ -228,6 +234,8 @@ static const lcdspi_lcd_t lcdspi_lcd_RASPI28LCDSPI = {
     239,
     0,
     319,
+    0,      // spi mode 0
+    0x48,   // default madctl
 };
 
 // http://www.lcdwiki.com/2.8inch_SPI_Module_ILI9341_SKU:MSP2807
@@ -247,6 +255,8 @@ static const lcdspi_lcd_t lcdspi_lcd_KMRTM24024SPI = {
     239,
     0,
     319,
+    0,      // spi mode 0
+    0x48,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_AIDEEPEN22SPI = {
@@ -262,6 +272,8 @@ static const lcdspi_lcd_t lcdspi_lcd_AIDEEPEN22SPI = {
     239,
     0,
     319,
+    0,      // spi mode 0
+    0x08,   // default madctl
 };
 
 static void ILI9341_Reset() {
@@ -364,6 +376,8 @@ static const lcdspi_lcd_t lcdspi_lcd_M022C9340SPI = {
     239,
     0,
     319,
+    0,      // spi mode 0
+    0x48,   // default madctl
 };
 
 static void ILI9340_Reset() {
@@ -454,6 +468,8 @@ static const lcdspi_lcd_t lcdspi_lcd_T180 = {
     127,
     0,
     191,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G128x160 = {
@@ -469,6 +485,8 @@ static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G128x160 = {
     127,
     0,
     159,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_ST7735R_R128x160 = {
@@ -484,6 +502,8 @@ static const lcdspi_lcd_t lcdspi_lcd_ST7735R_R128x160 = {
     127,
     0,
     159,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G128x128 = {
@@ -499,6 +519,8 @@ static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G128x128 = {
     127,
     0,
     127,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G160x80 = {
@@ -514,6 +536,8 @@ static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G160x80 = {
     127,
     0,
     127,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_KMR18SPI = {
@@ -529,6 +553,8 @@ static const lcdspi_lcd_t lcdspi_lcd_KMR18SPI = {
     127,
     0,
     159,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_WS_18SPI = {
@@ -544,6 +570,8 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_18SPI = {
     131,
     0,
     161,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G130x161 = {
@@ -559,6 +587,8 @@ static const lcdspi_lcd_t lcdspi_lcd_ST7735R_G130x161 = {
     131,
     1,
     161,
+    0,      // spi mode 0
+    0x00,   // default madctl
 };
 
 #if OLD_UL018_2P
@@ -769,6 +799,8 @@ static const lcdspi_lcd_t lcdspi_lcd_RASPI13LCDSPI = {
     239,
     0,
     239,
+    0,      // spi mode 0
+    0x10,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_WS_13SPI = {
@@ -784,6 +816,8 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_13SPI = {
     239,
     0,
     239,
+    0,      // spi mode 0
+    0x10,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_PIM543 = {
@@ -799,6 +833,8 @@ static const lcdspi_lcd_t lcdspi_lcd_PIM543 = {
     186,
     40,
     279,
+    0,      // spi mode 0
+    0x10,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_WS_114SPI = {
@@ -814,6 +850,8 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_114SPI = {
     186,
     40,
     279,
+    0,      // spi mode 0
+    0x10,   // default madctl
 };
 
 static const lcdspi_lcd_t lcdspi_lcd_WS_28SPI = {
@@ -829,30 +867,52 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_28SPI = {
     239,
     0,
     319,
+    0,      // spi mode 0
+    0x10,   // default madctl
+};
+
+static const lcdspi_lcd_t lcdspi_lcd_GMT130 = {
+    (const char *)"GMT130",
+    GMT130,
+    ST7789_Initialize,
+    ST7789_Reset,
+    32000000,
+    &lcdspi_ctrl_ST7789,
+    240,
+    240,
+    0,
+    239,
+    0,
+    239,
+    2,      // spi mode 2
+    0x10,   // default madctl
 };
 
 static void ST7789_Reset() {
     lcdspi_reset_high();
-    delay_ms(50);
+    delay_ms(100);
     lcdspi_reset_low();
-    delay_ms(50);
+    delay_ms(100);
     lcdspi_reset_high();
-    delay_ms(150);
+    delay_ms(200);
 }
 
 static const uint8_t lcdcmd_ST7789[] = {
     CMD8 + 0, 0x01,   // SWRESET
-    DLYMS, 50,
+    DLYMS, 150,
     CMD8 + 0, 0x11,   // SLPOUT
-    CMD8 + 1, 0x3a, 0x55, /* col mod 16 bits/pixel */
-    DLYMS, 50,
-    CMD8 + 1, 0x36, 0x10,
+    DLYMS, 10,
+    CMD8 + 1, 0x3a, 0x55,   // col mod 16 bits/pixel
+    DLYMS, 10,
+    CMD8 + 1, 0x36, 0x10,   // madctl
+    CMD8 + 4, 0x2a, 0, 0, 0, 240,
+    CMD8 + 4, 0x2b, 0, 0, 0, 240,
     CMD8 + 0, 0x21,   // INVON
     DLYMS, 10,
-    CMD8 + 0, 0x13,
+    CMD8 + 0, 0x13,         // NORON
     DLYMS, 10,
-    CMD8 + 0, 0x29,
-    DLYMS, 255,
+    CMD8 + 0, 0x29,         // DISPON
+    DLYMS, 10,
 };
 #define ST7789_CMD_SIZE   (sizeof(lcdcmd_ST7789) / sizeof(uint8_t))
 
@@ -884,6 +944,8 @@ static const lcdspi_lcd_t lcdspi_lcd_WS_35SPI = {
     319,
     0,
     479,
+    0,      // spi mode 0
+    0x48,   // default madctl
 };
 
 static void ILI9488_Reset() {
@@ -916,6 +978,91 @@ static void ILI9488_Initialize() {
     lcdspi_cmd_exec((uint8_t *)&lcdcmd_ILI9488, ILI9488_CMD_SIZE);
 }
 
+/* ********************************************************************* */
+/* LCD Controller: SSD1331                                               */
+/* ********************************************************************* */
+
+static void SSD1331_Reset();
+static void SSD1331_Initialize();
+
+static const lcdspi_ctrl_info_t lcdspi_ctrl_SSD1331 = {
+    SSD1331, 0x15, 0x75, 0
+};
+
+static const lcdspi_lcd_t lcdspi_lcd_QT095B = {
+    (const char *)"QT095B",
+    QT095B,
+    SSD1331_Initialize,
+    SSD1331_Reset,
+    12000000,
+    &lcdspi_ctrl_SSD1331,
+    96,
+    64,
+    0,
+    95,
+    0,
+    63,
+    3,      // spi mode 0
+    0x00,   // default madctl
+};
+
+static void SSD1331_Reset() {
+    lcdspi_reset_high();
+    delay_ms(50);
+    lcdspi_reset_low();
+    delay_ms(50);
+    lcdspi_reset_high();
+    delay_ms(150);
+}
+
+// lcdspi initialize command table
+static const uint8_t lcdcmd_SSD1331[] = {
+    CMD8 + 0, 0xae, /* display off */
+    CMD8 + 0, 0xa0, /* set remap */
+    CMD8 + 0, 0x72, /* RGB color */
+//     CMD8 + 0, 0x76, /* BGR color */
+    CMD8 + 0, 0xa1, /* start line */
+    CMD8 + 0, 0x00, /* 0 */
+    CMD8 + 0, 0xa2, /* display offset */
+    CMD8 + 0, 0x00, /* 0 */
+    CMD8 + 0, 0xa4, /* normal display */
+    CMD8 + 0, 0xa8, /* set multiplex */
+    CMD8 + 0, 0x3f, /* 1/64 duty */
+    CMD8 + 0, 0xad, /* set master */
+    CMD8 + 0, 0x8e, /* 0x8e */
+    CMD8 + 0, 0xb0, /* power mode */
+    CMD8 + 0, 0x0b, /* 0x0b */
+    CMD8 + 0, 0xb1, /* pre charge */
+    CMD8 + 0, 0x31, /* 0x31 */
+    CMD8 + 0, 0xb3, /* clock div */
+    CMD8 + 0, 0xf0, /* 0xf0 */
+    CMD8 + 0, 0x8a, /* pre charge A */
+    CMD8 + 0, 0x64, /* 0x64 */
+    CMD8 + 0, 0x8b, /* pre charge B */
+    CMD8 + 0, 0x78, /* 0x78 */
+    CMD8 + 0, 0x8c, /* pre charge C */
+    CMD8 + 0, 0x64, /* 0x64 */
+    CMD8 + 0, 0xbb, /* pre charge level */
+    CMD8 + 0, 0x64, /* 0x64 */
+    CMD8 + 0, 0xbe, /* VCOMH */
+    CMD8 + 0, 0x3e, /* 0x3e */
+    CMD8 + 0, 0x87, /* master current */
+    CMD8 + 0, 0x06, /* 0x06 */
+    CMD8 + 0, 0x81, /* contrast A */
+    CMD8 + 0, 0x91, /* 0x91 */
+    CMD8 + 0, 0x82, /* contrast B */
+    CMD8 + 0, 0x50, /* 0x50 */
+    CMD8 + 0, 0x83, /* contrast C */
+    CMD8 + 0, 0x7d, /* 0x7d */
+    CMD8 + 0, 0xaf, /* display on */
+    DLYMS, 120,
+};
+#define SSD1331_CMD_SIZE   (sizeof(lcdcmd_SSD1331) / sizeof(uint8_t))
+
+static void SSD1331_Initialize() {
+    lcdspi_cmd_exec((uint8_t *)&lcdcmd_SSD1331, SSD1331_CMD_SIZE);
+}
+
 // ===================================================================
 // lcdspi lcd info
 // ===================================================================
@@ -941,6 +1088,8 @@ const lcdspi_lcd_t *lcdspi_info[] = {
     &lcdspi_lcd_WS_28SPI,           // 17: WS_284SPI
     &lcdspi_lcd_WS_35SPI,           // 18: WS_135SPI
     &lcdspi_lcd_ST7735R_G130x161,   // 19: ST7735B
+    &lcdspi_lcd_GMT130,             // 20: GMT130
+    &lcdspi_lcd_QT095B,             // 21: QT095B
 };
 #define LCDSPI_MOD_SIZE (sizeof(lcdspi_info) / sizeof(lcdspi_lcd_t *))
 
@@ -983,3 +1132,5 @@ static void lcdspi_cmd_exec(uint8_t *cmdtbl, uint32_t size) {
         i += (2 + (uint32_t)num);
     }
 }
+
+#endif

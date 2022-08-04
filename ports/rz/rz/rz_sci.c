@@ -211,7 +211,6 @@ void rz_sci_tx_disable(int ch) {
 }
 
 static void rz_sci_isr_rx(uint32_t ch) {
-    int i;
     volatile struct st_scifa *sci = SCI[ch];
     if (((sci->FSR.WORD & 0x9c) != 0) || (sci->LSR.BIT.ORER == 1)) {
         sci->SCR.BIT.RE = 0;
@@ -273,7 +272,6 @@ static void rz_sci_isr_er(uint32_t ch) {
 }
 
 static void rz_sci_isr_tx(uint32_t ch) {
-    int i;
     volatile struct st_scifa *sci = SCI[ch];
     uint32_t size = tx_fifo[ch].size;
     sci_fifo *txfifo = (sci_fifo *)&tx_fifo[ch];
@@ -372,7 +370,7 @@ int rz_sci_tx_wait(uint32_t ch) {
 }
 
 void rz_sci_tx_break(uint32_t ch) {
-#if RZ_TODO
+    #if RZ_TODO
     volatile struct st_scifa *sci = SCI[ch];
     uint16_t scr = sci->SCR.WORD;
     uint16_t smr = sci->SMR.WORD;
@@ -387,7 +385,7 @@ void rz_sci_tx_break(uint32_t ch) {
         ;
     }
     sci->SMR.WORD = smr;
-#endif
+    #endif
     return;
 }
 
@@ -568,10 +566,10 @@ void rz_sci_init_with_flow(uint32_t ch, uint32_t tx_pin, uint32_t rx_pin, uint32
     } else {
         smr &= ~0x80;
     }
-#if RZ_TODO
+    #if RZ_TODO
     if (flow) {
     }
-#endif
+    #endif
     sci->SMR.WORD = smr;
     rz_sci_set_baud(ch, baud);
     sci->FCR.WORD = 0x0030;

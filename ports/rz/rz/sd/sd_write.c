@@ -181,7 +181,7 @@ int32_t _sd_write_sect(st_sdhndl_t *p_hndl, uint8_t *buff, uint32_t psn, int32_t
     int32_t  mode = SD_MODE_SW;
     uint8_t  wb[4];
     uint32_t writeblock;
-    uint64_t info1_back;
+    uint64_t info1_back = 0L;
     uint64_t opt_back;
 
     /* access area check */

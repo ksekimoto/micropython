@@ -454,7 +454,6 @@ void display_deinit(display_t *dp) {
 }
 
 int display_jpeg_save_xy(const char *filename, const char *buf, uint16_t wx, uint16_t wy, uint16_t format) {
-    const char *p_out;
     uint32_t size = (uint32_t)wx * (uint32_t)wy * 2;
     uint32_t written;
     char *jpeg_buf;
@@ -471,8 +470,6 @@ int display_jpeg_save_xy(const char *filename, const char *buf, uint16_t wx, uin
 }
 
 int display_jpeg_load_xy(const char *filename, const char *buf, uint16_t wx, uint16_t wy, uint16_t format) {
-    const char *p_out;
-    uint32_t size = (uint32_t)wx * (uint32_t)wy * 2;
     uint32_t readed;
     char *jpeg_buf;
     int err = 0;

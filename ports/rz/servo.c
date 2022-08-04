@@ -178,9 +178,9 @@ STATIC mp_obj_t pyb_servo_set(mp_obj_t port, mp_obj_t value) {
 MP_DEFINE_CONST_FUN_OBJ_2(pyb_servo_set_obj, pyb_servo_set);
 
 STATIC mp_obj_t pyb_pwm_set(mp_obj_t period, mp_obj_t pulse) {
-    // int pe = mp_obj_get_int(period);
+    #if defined(BOARD_SERVO1_PIN) || defined(BOARD_SERVO2_PIN)
     int pu = mp_obj_get_int(pulse);
-    // Not used?
+    #endif
     #if defined(BOARD_SERVO1_PIN)
     rz_servo_set_pulse(pyb_servo_obj[0].pin->id, pu);
     #endif
@@ -194,7 +194,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(pyb_pwm_set_obj, pyb_pwm_set);
 
 STATIC void pyb_servo_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pyb_servo_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "<Servo %u at %uus>", self - &pyb_servo_obj[0] + 1, 10 * self->pulse_cur);
+    mp_printf(print, "<Servo %u at %uus>", ((uint32_t *)self - (uint32_t *)&pyb_servo_obj) + 1, 10 * self->pulse_cur);
 }
 
 /// \classmethod \constructor(id)

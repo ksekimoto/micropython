@@ -124,6 +124,11 @@ static const lcdspi_pins_t lcdspi_pins_def = {
     #else
     (uint32_t)PIN_NONE,
     #endif
+#if defined(HW_LCDSPI_BL)
+    (uint32_t)HW_LCDSPI_BL->id,
+    #else
+    (uint32_t)PIN_NONE,
+    #endif
 };
 static lcdspi_pins_t *m_lcdspi_pins;
 static uint32_t m_lcdspi_ch = LCDSPI_CH;
@@ -164,6 +169,20 @@ void lcdspi_reset_high(void) {
 
 void lcdspi_reset_low(void) {
     lcdspi_gpio_write(m_lcdspi_pins->pin_reset, false);
+}
+
+void lcdspi_backlight_on(void) {
+    if (m_lcdspi_pins->pin_bl != PIN_NONE) {
+        lcdspi_gpio_set_output(m_lcdspi_pins->pin_bl);
+        lcdspi_gpio_write(m_lcdspi_pins->pin_bl, true);
+    }
+}
+
+void lcdspi_backlight_off(void) {
+    if (m_lcdspi_pins->pin_bl != PIN_NONE) {
+        lcdspi_gpio_set_output(m_lcdspi_pins->pin_bl);
+        lcdspi_gpio_write(m_lcdspi_pins->pin_bl, false);
+    }
 }
 
 #define MHZ_COUNT   30
@@ -622,12 +641,13 @@ static uint32_t ILI93xx_spihw_read_reg_n(uint8_t addr, uint8_t num) {
 
 uint8_t get_rotate_param(lcdspi_t *lcdspi, uint8_t dir) {
     uint8_t d = 0;
-    switch(lcdspi->lcd->ctrl_info->id) {
+    switch(lcdspi->lcd->lcd_info_id) {
     case ST7735R_G128x160:
     case ST7735R_R128x160:
     case ST7735R_G128x128:
     case ST7735R_G160x80:
     case ST7735R_G130x161:
+    case KMRTM24024SPI:
         switch(dir) {
         case LCDSPI_ROTATE_90:
             d = DDD_X_Y_EX;
@@ -1031,6 +1051,7 @@ void lcdspi_init(lcdspi_t *lcdspi, lcdspi_screen_t *screen, lcdspi_pins_t *pins,
         ILI93xx_spihw_read_ids(lcdspi);
     }
 #endif
+    lcdspi_backlight_on();
     lcdspi->lcd->lcdspi_init();
     lcdspi_clear(lcdspi, 0);
     if (lcdspi->screen->hw_scroll) {

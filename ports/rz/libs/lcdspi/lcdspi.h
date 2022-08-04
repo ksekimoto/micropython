@@ -69,7 +69,7 @@ extern "C" {
 #define ST7735R_G160x80     11
 #define ROBOT_LCD   8
 #define AIDEEPEN22SPI 12
-#define PIM543 13
+#define PIM543      13          // Pico Display Pack
 #define WS_114SPI   14          // Not Tested
 #define WS_13SPI    15          // Not Tested
 #define WS_18SPI    16
@@ -79,6 +79,7 @@ extern "C" {
 #define GMT130      20          // GMT130 and IPS130
 #define IPS130      20          // GMT130 and IPS130
 #define QT095B      21          // OLED SSD1331 96x64
+#define PIM580      22          // Pico Display Pack2
 
 // RGB 565 format x2 => RG BR GB 44 44 44 format
 // v1: rrrrrggg gggbbbbb
@@ -117,6 +118,7 @@ typedef struct {
     uint32_t pin_cs;
     uint32_t pin_reset;
     uint32_t pin_rs;
+    uint32_t pin_bl;
 } lcdspi_pins_t;
 
 /*

@@ -80,7 +80,7 @@ static void lcdspi_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *
 /// Create an LCDSPI object
 ///
 STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_din, ARG_polarity, ARG_phase, ARG_dir };
+    enum { ARG_lcd_id, ARG_font_id, ARG_spi_id, ARG_baud, ARG_cs, ARG_clk, ARG_dout, ARG_reset, ARG_rs, ARG_bl, ARG_din, ARG_polarity, ARG_phase, ARG_dir };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_lcd_id,   MP_ARG_REQUIRED | MP_ARG_INT,   {.u_int = 0} },
         { MP_QSTR_font_id,  MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} },
@@ -91,6 +91,7 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
         { MP_QSTR_dout,     MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_rs,       MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_bl,       MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_din,      MP_ARG_KW_ONLY | MP_ARG_OBJ,   {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_polarity, MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 1} },
         { MP_QSTR_phase,    MP_ARG_KW_ONLY | MP_ARG_INT,   {.u_int = 0} },
@@ -166,6 +167,15 @@ STATIC mp_obj_t lcdspi_obj_make_new(const mp_obj_type_t *type, size_t n_args, si
     } else {
         pin_obj_t *pin = (pin_obj_t *)(vals[ARG_rs].u_obj);
         self->pins.pin_rs = (uint32_t)pin->id;
+    }
+    /* bl */
+    if (vals[ARG_bl].u_obj == MP_OBJ_NULL) {
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("%q pin not specified"), allowed_args[ARG_bl].qst);
+    } else if (!mp_obj_is_type(vals[ARG_bl].u_obj, &pin_type)) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This is not Pin obj"));
+    } else {
+        pin_obj_t *pin = (pin_obj_t *)(vals[ARG_bl].u_obj);
+        self->pins.pin_bl = (uint32_t)pin->id;
     }
     /* din */
     if (vals[ARG_din].u_obj == MP_OBJ_NULL) {
@@ -608,6 +618,7 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_M_WS_28SPI), MP_ROM_INT(WS_28SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_WS_35SPI), MP_ROM_INT(WS_35SPI) },
     { MP_ROM_QSTR(MP_QSTR_M_ST7735R_G130x161), MP_ROM_INT(ST7735R_G130x161) },
+    { MP_ROM_QSTR(MP_QSTR_M_PIM580), MP_ROM_INT(PIM580) },
     { MP_ROM_QSTR(MP_QSTR_Black), MP_ROM_INT(Black) },
     { MP_ROM_QSTR(MP_QSTR_Navy), MP_ROM_INT(Navy) },
     { MP_ROM_QSTR(MP_QSTR_DarkGreen), MP_ROM_INT(DarkGreen) },

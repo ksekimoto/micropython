@@ -59,7 +59,7 @@ void rz_malloc_init(void) {
 
 static void split(struct block *fitting_slot, size_t size) {
     size_t chunk_size = size + sizeof(struct block);
-    struct block *new = (struct block *)((void *)fitting_slot + chunk_size);
+    struct block *new = (struct block *)((char *)fitting_slot + chunk_size);
     new->size = fitting_slot->size - chunk_size;
     new->free = 1;
     new->next = fitting_slot->next;

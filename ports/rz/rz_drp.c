@@ -58,7 +58,6 @@ static void  cb_int(uint8_t id) {
 
 STATIC mp_obj_t rz_drp_dk2_isp(size_t n_args, const mp_obj_t *args) {
     rz_drp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    rz_isp_obj_t *isp = self->isp;
     if (n_args == 2) {
         self->isp = MP_OBJ_TO_PTR(args[1]);
         return mp_const_none;
@@ -89,7 +88,7 @@ STATIC mp_obj_t rz_drp_dk2_load(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_drp_dk2_load_obj, 4, 4, rz_drp_dk2_load);
 
 STATIC void rz_drp_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    rz_drp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_drp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "DRP");
 }
 

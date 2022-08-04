@@ -84,7 +84,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_isp_height_obj, 1, 2, rz_isp_heigh
 
 STATIC mp_obj_t rz_isp_gain(size_t n_args, const mp_obj_t *args) {
     rz_isp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    uint32_t height;
     if (n_args != 1) {
         mp_obj_t *items;
         mp_obj_get_array_fixed_n(args[0], 3, &items);
@@ -103,7 +102,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_isp_gain_obj, 1, 2, rz_isp_gain);
 
 STATIC mp_obj_t rz_isp_bias(size_t n_args, const mp_obj_t *args) {
     rz_isp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    uint32_t height;
     if (n_args != 1) {
         mp_obj_t *items;
         mp_obj_get_array_fixed_n(args[0], 3, &items);
@@ -121,7 +119,7 @@ STATIC mp_obj_t rz_isp_bias(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rz_isp_bias_obj, 1, 2, rz_isp_bias);
 
 STATIC void rz_isp_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    rz_isp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // rz_isp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "ISP");
 }
 
