@@ -56,3 +56,12 @@
 [submodule "lib/micropython-lib"]
 	path = lib/micropython-lib
 	url = https://github.com/micropython/micropython-lib.git
+[submodule "lib/lv_bindings"]
+	path = lib/lv_bindings
+	url = https://github.com/littlevgl/lv_bindings.git
+[submodule "lib/mbed-gr-libs"]
+	path = lib/mbed-gr-libs
+	url = https://github.com/ksekimoto/mbed-gr-libs.git
+[submodule "lib/mbed-os"]
+	path = lib/mbed-os
+	url = https://github.com/ARMmbed/mbed-os.git
