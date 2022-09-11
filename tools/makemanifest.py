@@ -178,27 +178,30 @@ def main():
     mpy_files = []
     ts_newest = 0
     for result in manifest.files():
+        # replace backslash with slash for file path for Windows
+        full_path=result.full_path.replace("\\", "/")
+        target_path=result.target_path.replace("\\", "/")
         if result.kind == manifestfile.KIND_FREEZE_AS_STR:
             str_paths.append(
                 (
-                    result.full_path,
-                    result.target_path,
+                    full_path,
+                    target_path,
                 )
             )
             ts_outfile = result.timestamp
         elif result.kind == manifestfile.KIND_FREEZE_AS_MPY:
-            outfile = "{}/frozen_mpy/{}.mpy".format(args.build_dir, result.target_path[:-3])
+            outfile = "{}/frozen_mpy/{}.mpy".format(args.build_dir, target_path[:-3])
             ts_outfile = get_timestamp(outfile, 0)
             if result.timestamp >= ts_outfile:
-                print("MPY", result.target_path)
+                print("MPY", target_path)
                 mkdir(outfile)
                 # Add __version__ to the end of the file before compiling.
-                with manifestfile.tagged_py_file(result.full_path, result.metadata) as tagged_path:
+                with manifestfile.tagged_py_file(full_path, result.metadata) as tagged_path:
                     try:
                         mpy_cross.compile(
                             tagged_path,
                             dest=outfile,
-                            src_path=result.target_path,
+                            src_path=target_path,
                             opt=result.opt,
                             mpy_cross=MPY_CROSS,
                             extra_args=args.mpy_cross_flags.split(),

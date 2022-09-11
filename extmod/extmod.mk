@@ -206,6 +206,7 @@ CFLAGS_MOD += -DMICROPY_PY_LWIP=1
 $(BUILD)/$(LWIP_DIR)/core/ipv4/dhcp.o: CFLAGS_MOD += -Wno-address
 SRC_MOD += shared/netutils/netutils.c
 SRC_MOD += $(addprefix $(LWIP_DIR)/,\
+	apps/sntp/sntp.c \
 	apps/mdns/mdns.c \
 	core/def.c \
 	core/dns.c \

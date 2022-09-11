@@ -1,0 +1,774 @@
+/*
+ * This file is part of the MicroPython project, http://micropython.org/
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Damien P. George
+ * Copyright (c) 2019 Kentaro Sekimoto
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#ifndef _SYS_TYPES_FD_SET
+#include <sys/select.h>
+#endif
+
+// ESP defines its own ENOBUFS (different to standard one!)
+#undef ENOBUFS
+
+#include "py/objtuple.h"
+#include "py/objlist.h"
+#include "py/stream.h"
+#include "py/runtime.h"
+#include "py/mperrno.h"
+#include "py/mphal.h"
+#include "shared/netutils/netutils.h"
+#include "extmod/modnetwork.h"
+
+#if MICROPY_HW_ESP
+
+#if defined(RZA2M) || defined(RX63N) || defined(RX65N)
+#include "pin.h"
+#include "spi.h"
+#endif
+
+#include "esp_driver.h"
+
+// #define DEBUG_MODNWESP
+
+#define ESP_EXPORT(name) esp_##name
+
+// #define MAX_ADDRSTRLEN      (128)
+// #define MAX_RX_PACKET       (ESP_RX_BUFFER_SIZE-ESP_MINIMAL_RX_SIZE-1)
+// #define MAX_TX_PACKET       (ESP_TX_BUFFER_SIZE-ESP_MINIMAL_TX_SIZE-1)
+
+#define MAKE_SOCKADDR(addr, ip, port) \
+    sockaddr addr; \
+    addr.sa_family = AF_INET; \
+    addr.sa_data[0] = port >> 8; \
+    addr.sa_data[1] = port; \
+    addr.sa_data[2] = ip[0]; \
+    addr.sa_data[3] = ip[1]; \
+    addr.sa_data[4] = ip[2]; \
+    addr.sa_data[5] = ip[3];
+
+#define UNPACK_SOCKADDR(addr, ip, port) \
+    port = (addr.sa_data[0] << 8) | addr.sa_data[1]; \
+    ip[0] = addr.sa_data[2]; \
+    ip[1] = addr.sa_data[3]; \
+    ip[2] = addr.sa_data[4]; \
+    ip[3] = addr.sa_data[5];
+
+STATIC int mod_esp_socket_ioctl(mod_network_socket_obj_t *socket, mp_uint_t request, mp_uint_t arg, int *_errno);
+
+// int ESP_EXPORT(errno); // for esp driver
+
+STATIC volatile uint32_t fd_closed_state = 0;
+STATIC volatile bool wlan_connected = false;
+STATIC volatile bool ip_obtained = false;
+
+STATIC int esp_get_fd_closed_state(int fd) {
+    return fd_closed_state & (1 << fd);
+}
+#pragma GCC diagnostic pop
+
+// STATIC void esp_set_fd_closed_state(int fd) {
+//    fd_closed_state |= 1 << fd;
+// }
+
+// STATIC void esp_reset_fd_closed_state(int fd) {
+//    fd_closed_state &= ~(1 << fd);
+// }
+
+STATIC int mod_esp_gethostbyname(mp_obj_t nic, const char *name, mp_uint_t len, uint8_t *out_ip) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_gethostbyname\r\n");
+    #endif
+    uint32_t ip = 0;
+    bool ret = esp_gethostbyname(name, out_ip);
+    ip += ((uint32_t)out_ip[0] << 24);
+    ip += ((uint32_t)out_ip[1] << 16);
+    ip += ((uint32_t)out_ip[2] << 8);
+    ip += ((uint32_t)out_ip[3]);
+    if (ret == false || ip == 0) {
+        // unknown host
+        return -2;
+    }
+    return 0;
+}
+
+STATIC int mod_esp_socket_socket(mod_network_socket_obj_t *socket, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_socket\r\n");
+    #endif
+    // if (socket->u_param.domain != MOD_NETWORK_AF_INET) {
+    //    *_errno = MP_EAFNOSUPPORT;
+    //    return -1;
+    // }
+    // mp_uint_t type;
+    // switch (socket->u_param.type) {
+    //    case MOD_NETWORK_SOCK_STREAM: type = SOCK_STREAM; break;
+    //    case MOD_NETWORK_SOCK_DGRAM: type = SOCK_DGRAM; break;
+    //    case MOD_NETWORK_SOCK_RAW: type = SOCK_RAW; break;
+    //    default: *_errno = MP_EINVAL; return -1;
+    // }
+    // open socket
+    void *handle;
+    int errno = esp_socket_open(&handle, ESP_TCP);
+    if (errno < 0) {
+        return -1;
+    }
+    // int fd = ESP_EXPORT(socket_open)(AF_INET, type, 0);
+    // if (fd < 0) {
+    //    *_errno = ESP_EXPORT(errno);
+    //    return -1;
+    // }
+
+    // clear socket state
+    // esp_reset_fd_closed_state(fd);
+
+    // store state of this socket
+    // socket->handle = fd;
+    socket->handle = (mp_uint_t)handle;
+
+    // make accept blocking by default
+    int optval = SOCK_OFF;
+    unsigned optlen = sizeof(optval);
+    // ESP_EXPORT(setsockopt)(socket->handle, ESP_SOCKET, ESP_ACCEPT_NONBLOCK, &optval, optlen);
+    esp_setsockopt(socket->handle, ESP_SOCKET, ESP_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+    return 0;
+}
+
+STATIC void mod_esp_socket_close(mod_network_socket_obj_t *socket) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_close\r\n");
+    #endif
+    esp_socket_close((void *)socket->handle);
+}
+
+STATIC int mod_esp_socket_bind(mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_bind\r\n");
+    #endif
+    // MAKE_SOCKADDR(addr, ip, port)
+    esp_socket_address_t socket_addr;
+    socket_addr._addr.bytes[0] = ip[0];
+    socket_addr._addr.bytes[1] = ip[1];
+    socket_addr._addr.bytes[2] = ip[2];
+    socket_addr._addr.bytes[3] = ip[3];
+    socket_addr._port = (uint16_t)port;
+    int ret = esp_socket_bind((void *)socket->handle, (const esp_socket_address_t *)&socket_addr);
+    if (ret != 0) {
+        *_errno = ret;
+        return -1;
+    }
+    return 0;
+}
+
+STATIC int mod_esp_socket_listen(mod_network_socket_obj_t *socket, mp_int_t backlog, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_listen\r\n");
+    #endif
+    bool ret = esp_socket_listen((void *)socket->handle, (int)backlog);
+    if (!ret) {
+        *_errno = ret;
+        return -1;
+    }
+    return 0;
+}
+
+STATIC int mod_esp_socket_accept(mod_network_socket_obj_t *socket, mod_network_socket_obj_t *socket2, byte *ip, mp_uint_t *port, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_accept\r\n");
+    #endif
+    // accept incoming connection
+    bool ret;
+    void *sock;
+    esp_socket_address_t socket_addr;
+    // sockaddr addr;
+    // socklen_t addr_len = sizeof(addr);
+    ret = esp_socket_accept((void *)socket->handle, &sock, &socket_addr);
+    // if ((fd = ESP_EXPORT(accept)(socket->handle, &addr, &addr_len)) < 0) {
+    //    if (fd == SOC_IN_PROGRESS) {
+    //        *_errno = MP_EAGAIN;
+    //    } else {
+    //        *_errno = -fd;
+    //    }
+    //    return -1;
+    // }
+
+    // clear socket state
+    // esp_reset_fd_closed_state(fd);
+
+    // store state in new socket object
+    socket2->handle = (mp_uint_t)sock;
+    ip[3] = socket_addr._addr.bytes[3];
+    ip[2] = socket_addr._addr.bytes[2];
+    ip[1] = socket_addr._addr.bytes[1];
+    ip[0] = socket_addr._addr.bytes[0];
+    *port = socket_addr._port;
+    return (ret)? 0:1;
+}
+
+STATIC int mod_esp_socket_connect(mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_connect\r\n");
+    #endif
+    esp_socket_address_t socket_addr;
+    socket_addr._addr.bytes[0] = ip[0];
+    socket_addr._addr.bytes[1] = ip[1];
+    socket_addr._addr.bytes[2] = ip[2];
+    socket_addr._addr.bytes[3] = ip[3];
+    socket_addr._port = (uint16_t)port;
+    socket_addr._port = port;
+    bool ret = esp_socket_connect((void *)socket->handle, (const esp_socket_address_t *)&socket_addr);
+    if (ret) {
+        *_errno = 0;
+    } else {
+        *_errno = -1;
+    }
+    return ret? 0 : -1;
+}
+
+#define MAX_TX_PACKET 2048
+#define MAX_RX_PACKET 2048
+
+STATIC mp_uint_t mod_esp_socket_send(mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_send\r\n");
+    #endif
+    mp_int_t bytes = 0;
+    while (bytes < len) {
+        int n = MIN((len - bytes), MAX_TX_PACKET);
+        // n = ESP_EXPORT(send)(socket->handle, (uint8_t*)buf + bytes, n, 0);
+        n = esp_socket_send((void *)socket->handle, (const void *)(buf + bytes), (unsigned)n);
+        if (n <= 0) {
+            // *_errno = ESP_EXPORT(errno);
+            return -1;
+        }
+        bytes += n;
+    }
+    return bytes;
+}
+
+STATIC mp_uint_t mod_esp_socket_sendall(mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_sendall\r\n");
+    #endif
+    mp_int_t bytes = 0;
+    while (bytes < len) {
+        int n = MIN((len - bytes), MAX_TX_PACKET);
+        n = esp_socket_send((void *)socket->handle, (const void *)(buf + bytes), (unsigned)n);
+        if (n <= 0) {
+            // *_errno = ESP_EXPORT(errno);
+            return -1;
+        }
+        bytes += n;
+    }
+    return bytes;
+}
+
+STATIC mp_uint_t mod_esp_socket_recv(mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, int *_errno) {
+    // check the socket is open
+    // if (esp_get_fd_closed_state(socket->handle)) {
+    //    // socket is closed, but ESP may have some data remaining in buffer, so check
+    //    fd_set rfds;
+    //    FD_ZERO(&rfds);
+    //    FD_SET(socket->handle, &rfds);
+    //    esp_timeval tv;
+    //    tv.tv_sec = 0;
+    //    tv.tv_usec = 1;
+    //    int nfds = ESP_EXPORT(select)(socket->handle + 1, &rfds, NULL, NULL, &tv);
+    //    if (nfds == -1 || !FD_ISSET(socket->handle, &rfds)) {
+    //        // no data waiting, so close socket and return 0 data
+    //        ESP_EXPORT(closesocket)(socket->handle);
+    //        return 0;
+    //    }
+    // }
+    // cap length at MAX_RX_PACKET
+    len = MIN(len, MAX_RX_PACKET);
+
+    // do the recv
+    // int ret = ESP_EXPORT(recv)(socket->handle, buf, len, 0);
+    int ret = esp_socket_recv((void *)socket->handle, (void *)buf, (unsigned)len);
+    if (ret < 0) {
+        // *_errno = ESP_EXPORT(errno);
+        return -1;
+    }
+
+    return ret;
+}
+
+STATIC mp_uint_t mod_esp_socket_sendto(mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, byte *ip, mp_uint_t port, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_sendto\r\n");
+    #endif
+    // ToDo:
+    esp_socket_address_t socket_addr;
+    // MAKE_SOCKADDR(addr, ip, port)
+    // int ret = ESP_EXPORT(sendto)(socket->handle, (byte*)buf, len, 0, (sockaddr*)&addr, sizeof(addr));
+    int ret = esp_socket_sendto((void *)socket->handle, (const esp_socket_address_t *)&socket_addr, (const void *)buf, (unsigned)len);
+    if (ret < 0) {
+        // *_errno = ESP_EXPORT(errno);
+        return -1;
+    }
+    return ret;
+}
+
+STATIC mp_uint_t mod_esp_socket_recvfrom(mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, byte *ip, mp_uint_t *port, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_recvfrom\r\n");
+    #endif
+    // ToDo:
+    esp_socket_address_t socket_addr;
+    // sockaddr addr;
+    // socklen_t addr_len = sizeof(addr);
+    // mp_int_t ret = ESP_EXPORT(recvfrom)(socket->handle, buf, len, 0, &addr, &addr_len);
+    mp_int_t ret = esp_socket_recvfrom((void *)socket->handle, &socket_addr, (void *)buf, (unsigned)len);
+    if (ret < 0) {
+        // *_errno = ESP_EXPORT(errno);
+        return -1;
+    }
+    // UNPACK_SOCKADDR(addr, ip, *port);
+    return ret;
+}
+
+STATIC int mod_esp_socket_setsockopt(mod_network_socket_obj_t *socket, mp_uint_t level, mp_uint_t opt, const void *optval, mp_uint_t optlen, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_setsockopt\r\n");
+    #endif
+    // int ret = ESP_EXPORT(setsockopt)(socket->handle, level, opt, optval, optlen);
+    int ret = esp_setsockopt((int)socket->handle, (int)level, (int)opt, (const void *)optval, (unsigned)optlen);
+    if (ret < 0) {
+        // *_errno = ESP_EXPORT(errno);
+        return -1;
+    }
+    return 0;
+}
+
+STATIC int mod_esp_socket_settimeout(mod_network_socket_obj_t *socket, mp_uint_t timeout_ms, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_settimeout\r\n");
+    #endif
+    int ret;
+    if (timeout_ms == 0 || timeout_ms == -1) {
+        int optval;
+        unsigned optlen = sizeof(optval);
+        if (timeout_ms == 0) {
+            // set non-blocking mode
+            optval = SOCK_ON;
+        } else {
+            // set blocking mode
+            optval = SOCK_OFF;
+        }
+        // ret = ESP_EXPORT(setsockopt)(socket->handle, ESP_SOCKET, ESP_RECV_NONBLOCK, &optval, optlen);
+        ret = esp_setsockopt(socket->handle, ESP_SOCKET, ESP_RECV_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+        if (ret == 0) {
+            // ret = ESP_EXPORT(setsockopt)(socket->handle, ESP_SOCKET, ESP_ACCEPT_NONBLOCK, &optval, optlen);
+            ret = esp_setsockopt(socket->handle, ESP_SOCKET, ESP_ACCEPT_NONBLOCK, (const void *)&optval, (unsigned)optlen);
+        }
+    } else {
+        unsigned optlen = sizeof(timeout_ms);
+        ret = ESP_EXPORT(setsockopt)(socket->handle, ESP_SOCKET, ESP_RECV_TIMEOUT, &timeout_ms, optlen);
+    }
+    if (ret != 0) {
+        // *_errno = ESP_EXPORT(errno);
+        return -1;
+    }
+    return 0;
+}
+
+STATIC int mod_esp_socket_ioctl(mod_network_socket_obj_t *socket, mp_uint_t request, mp_uint_t arg, int *_errno) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("mod_esp_socket_ioctl\r\n");
+    #endif
+    mp_uint_t ret = 0;
+    if (request == MP_STREAM_POLL) {
+        mp_uint_t flags = arg;
+        ret = 0;
+        int fd = socket->handle;
+
+        // init fds
+        fd_set rfds, wfds, xfds;
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+        FD_ZERO(&xfds);
+
+        // set fds if needed
+        if (flags & MP_STREAM_POLL_RD) {
+            FD_SET(fd, &rfds);
+
+            // A socked that just closed is available for reading.  A call to
+            // recv() returns 0 which is consistent with BSD.
+            if (esp_get_fd_closed_state(fd)) {
+                ret |= MP_STREAM_POLL_RD;
+            }
+        }
+        if (flags & MP_STREAM_POLL_WR) {
+            FD_SET(fd, &wfds);
+        }
+        if (flags & MP_STREAM_POLL_HUP) {
+            FD_SET(fd, &xfds);
+        }
+
+        // call esp select with minimum timeout
+        // esp_timeval tv;
+        // tv.tv_sec = 0;
+        // tv.tv_usec = 1;
+        // int nfds = ESP_EXPORT(select)(fd + 1, &rfds, &wfds, &xfds, &tv);
+
+        // check for error
+        // if (nfds == -1) {
+        //    //*_errno = ESP_EXPORT(errno);
+        //    return -1;
+        // }
+
+        // check return of select
+        if (FD_ISSET(fd, &rfds)) {
+            ret |= MP_STREAM_POLL_RD;
+        }
+        if (FD_ISSET(fd, &wfds)) {
+            ret |= MP_STREAM_POLL_WR;
+        }
+        if (FD_ISSET(fd, &xfds)) {
+            ret |= MP_STREAM_POLL_HUP;
+        }
+    } else {
+        *_errno = MP_EINVAL;
+        ret = -1;
+    }
+    return ret;
+}
+
+/******************************************************************************/
+// MicroPython bindings; ESP class
+
+typedef struct _esp_obj_t {
+    mp_obj_base_t base;
+} esp_obj_t;
+
+STATIC const esp_obj_t esp_obj = {{(mp_obj_type_t *)&mod_network_nic_type_esp}};
+
+#if defined(RZA2M) || defined(RX63N) || defined(RX65N)
+// \classmethod \constructor()
+STATIC mp_obj_t esp_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+    enum { ARG_ch, ARG_baudrate, ARG_en, ARG_reset };
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 115200} },
+        { MP_QSTR_en,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+    };
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);    // check arguments
+    uint32_t uart_id = 0;
+    uint32_t baud = 115200;
+    #if defined(MICROPY_HW_ESP_UART_CH)
+    uart_id = MICROPY_HW_ESP_UART_CH;
+    #endif
+    #if defined(MICROPY_HW_ESP_UART_BAUD)
+    baud = MICROPY_HW_ESP_UART_BAUD;
+    #endif
+    if (n_args == 0) {
+        #if defined(MICROPY_HW_ESP_RE)
+        mp_hal_pin_config(MICROPY_HW_ESP_RE, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+        mp_hal_pin_low(MICROPY_HW_ESP_RE);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_high(MICROPY_HW_ESP_RE);
+        #endif
+        #if defined(MICROPY_HW_ESP_EN)
+        mp_hal_pin_config(MICROPY_HW_ESP_EN, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+        mp_hal_pin_low(MICROPY_HW_ESP_EN);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_high(MICROPY_HW_ESP_EN);
+        #endif
+    } else if (n_args >= 1 || n_args <= 4) {
+        if (args[ARG_ch].u_int > 0) {
+            uart_id = args[ARG_ch].u_int;
+        }
+        if (args[ARG_baudrate].u_int > 0) {
+            baud = args[ARG_ch].u_int;
+        }
+        if (args[ARG_reset].u_obj != MP_OBJ_NULL) {
+            const pin_obj_t *pin_reset = pin_find(args[ARG_reset].u_obj);
+            mp_hal_pin_config(pin_reset, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+            mp_hal_pin_low(pin_reset);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_high(pin_reset);
+        }
+        if (args[ARG_en].u_obj != MP_OBJ_NULL) {
+            const pin_obj_t *pin_en = pin_find(args[ARG_en].u_obj);
+            mp_hal_pin_config(pin_en, MP_HAL_PIN_MODE_OUTPUT, MP_HAL_PIN_PULL_NONE, 0);
+            mp_hal_pin_low(pin_en);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_high(pin_en);
+        }
+    }
+#define AT_MAX 32
+#define SDK_MAX 32
+    char at_ver[AT_MAX];
+    char sdk_ver[SDK_MAX];
+    esp_driver_init(uart_id, 0, 0, baud, false);
+    if (!esp_driver_reset()) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP module\n"));
+    }
+    if (esp_AT_GMR(at_ver, sizeof(at_ver), sdk_ver, sizeof(sdk_ver))) {
+        printf("AT ver=%s\n", at_ver);
+        printf("SDK ver=%s\n", sdk_ver);
+    } else {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("can't get ESP vesions\n"));
+    }
+    esp_AT_CWQAP();
+    esp_set_AT_CWMODE(3);
+    // register with network module
+    mod_network_register_nic((mp_obj_t)&esp_obj);
+    return (mp_obj_t)&esp_obj;
+}
+#elif defined(PICO_BOARD)
+// \classmethod \constructor()
+STATIC mp_obj_t esp_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+    enum { ARG_ch, ARG_tx, ARG_rx, ARG_baudrate, ARG_en, ARG_reset, ARG_debug };
+    static const mp_arg_t allowed_args[] = {
+        #if defined(MICROPY_HW_ESP_UART_CH)
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = MICROPY_HW_ESP_UART_CH} },
+        #else
+        { MP_QSTR_ch,       MP_ARG_INT, {.u_int = 1} },
+        #endif
+        { MP_QSTR_tx,       MP_ARG_INT, {.u_int = 8} },
+        { MP_QSTR_rx,       MP_ARG_INT, {.u_int = 9} },
+        #if defined(MICROPY_HW_ESP_UART_BAUD)
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = MICROPY_HW_ESP_UART_BAUD} },
+        #else
+        { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 11520} },
+        #endif
+        { MP_QSTR_en,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_reset,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_debug,    MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false} },
+    };
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);    // check arguments
+    uint32_t ch = args[ARG_ch].u_int;
+    uint32_t baud = args[ARG_baudrate].u_int;
+    uint32_t tx = args[ARG_tx].u_int;
+    uint32_t rx = args[ARG_rx].u_int;
+    bool debug = args[ARG_debug].u_bool;
+    if (n_args == 0) {
+        #if defined(MICROPY_HW_ESP_RE)
+        mp_hal_pin_obj_t pin_reset = (mp_hal_pin_obj_t)MICROPY_HW_ESP_RE;
+        mp_hal_pin_write(pin_reset, 0);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_write(pin_reset, 1);
+        #endif
+        #if defined(MICROPY_HW_ESP_EN)
+        mp_hal_pin_obj_t pin_en = (mp_hal_pin_obj_t)MICROPY_HW_ESP_EN;
+        mp_hal_pin_write(pin_en, 0);
+        mp_hal_delay_ms(100);
+        mp_hal_pin_write(pin_en, 1);
+        #endif
+    } else if (n_args >= 1 || n_args <= 4) {
+        if (args[ARG_ch].u_int != -1) {
+            ch = args[ARG_ch].u_int;
+            (void)ch;
+        }
+        if (args[ARG_baudrate].u_int != -1) {
+            baud = args[ARG_ch].u_int;
+            (void)baud;
+        }
+        if (args[ARG_reset].u_obj != MP_OBJ_NULL) {
+            mp_hal_pin_obj_t pin_reset = (mp_hal_pin_obj_t)args[ARG_reset].u_int;
+            mp_hal_pin_write(pin_reset, 0);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_write(pin_reset, 1);
+        }
+        if (args[ARG_en].u_obj != MP_OBJ_NULL) {
+            mp_hal_pin_obj_t pin_en = (mp_hal_pin_obj_t)(args[ARG_en].u_obj);
+            mp_hal_pin_write(pin_en, 0);
+            mp_hal_delay_ms(100);
+            mp_hal_pin_write(pin_en, 1);
+        }
+    }
+#define AT_MAX 32
+#define SDK_MAX 32
+    char at_ver[AT_MAX];
+    char sdk_ver[SDK_MAX];
+    esp_driver_init(ch, tx, rx, baud, debug);
+    if (!esp_driver_reset()) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("failed to init ESP module\n"));
+    }
+    if (esp_AT_GMR(at_ver, sizeof(at_ver), sdk_ver, sizeof(sdk_ver))) {
+        mp_printf(MP_PYTHON_PRINTER, "AT ver=%s\n", at_ver);
+        mp_printf(MP_PYTHON_PRINTER, "SDK ver=%s\n", sdk_ver);
+    } else {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("can't get ESP vesions\n"));
+    }
+    esp_AT_CWQAP();
+    esp_set_AT_CWMODE(3);
+    // register with network module
+    mod_network_register_nic((mp_obj_t)&esp_obj);
+    return (mp_obj_t)&esp_obj;
+}
+#else
+#endif
+
+// method connect(ssid, key=None, *, security=WPA2, bssid=None)
+STATIC mp_obj_t esp_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_ssid, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_key, MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_security, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = WLAN_SEC_WPA2} },
+        { MP_QSTR_bssid, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+    };
+
+    // parse args
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    // get ssid
+    size_t ssid_len;
+    const char *ssid = mp_obj_str_get_data(args[0].u_obj, &ssid_len);
+    // get key and sec
+    size_t key_len = 0;
+    const char *key = NULL;
+    // ToDo: implement security and bssid
+    // mp_uint_t sec = WLAN_SEC_UNSEC;
+    if (args[1].u_obj != mp_const_none) {
+        key = mp_obj_str_get_data(args[1].u_obj, &key_len);
+        // sec = args[2].u_int;
+    }
+    // get bssid
+    // const char *bssid = NULL;
+    // if (args[3].u_obj != mp_const_none) {
+    //    bssid = mp_obj_str_get_str(args[3].u_obj);
+    // }
+    if (!esp_set_AT_CWJAP(ssid, key)) {
+        mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not connect to ssid=%s, key=%s\n"), ssid, key);
+    }
+    esp_set_AT_CIPMUX(1);
+    // esp_AT_CWAUTOCONN_0();
+    esp_set_AT_CIPDINFO(1);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(esp_connect_obj, 1, esp_connect);
+
+STATIC mp_obj_t esp_disconnect(mp_obj_t self_in) {
+    // should we check return value?
+    // disconnects from the AP
+    esp_AT_CWQAP();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp_disconnect_obj, esp_disconnect);
+
+STATIC mp_obj_t esp_isconnected(mp_obj_t self_in) {
+    #if defined(DEBUG_MODNWESP)
+    debug_printf("esp_isconnected\r\n");
+    #endif
+    return mp_obj_new_bool(wlan_connected && ip_obtained);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp_isconnected_obj, esp_isconnected);
+
+STATIC mp_obj_t esp_ifconfig(size_t n_args, const mp_obj_t *args) {
+    const char *dns_str = "8.8.8.8";
+    uint8_t ip[4];
+    uint8_t gw[4];
+    uint8_t mask[4];
+    uint8_t dns[4] = { 0, 0, 0, 0 };
+    if (n_args == 1) {
+        esp_get_AT_CIPSTA(ip, gw, mask);
+        esp_get_AT_CIPDNS_CUR(dns);
+        uint32_t *dnsp = (uint32_t *)&dns;
+        if (*dnsp == 0) {
+            bool ret = esp_set_AT_CIPDNS_CUR(dns_str, true);
+            if (!ret) {
+                mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure dns=%s\n"), dns_str);
+            }
+        }
+        mp_obj_t tuple[4] = {
+            netutils_format_ipv4_addr(ip, NETUTILS_BIG),
+            netutils_format_ipv4_addr(gw, NETUTILS_BIG),
+            netutils_format_ipv4_addr(mask, NETUTILS_BIG),
+            netutils_format_ipv4_addr(dns, NETUTILS_BIG),
+        };
+        return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
+    } else if (n_args == 2) {
+        mp_obj_t *items;
+        mp_obj_get_array_fixed_n(args[1], 4, &items);
+        size_t ip_len;
+        size_t gw_len;
+        size_t mask_len;
+        size_t dns_len;
+        const char *ip_str = mp_obj_str_get_data(items[0], &ip_len);
+        const char *gw_str = mp_obj_str_get_data(items[1], &gw_len);
+        const char *mask_str = mp_obj_str_get_data(items[2], &mask_len);
+        const char *dns_str = mp_obj_str_get_data(items[3], &dns_len);
+        if ((ip_len <= 0) || (gw_len <= 0) || (mask_len <= 0) || (dns_len <= 0)) {
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("ip, gw, mask should be properly inputted.\n"));
+        }
+        bool ret = esp_set_AT_CIPSTA(ip_str, gw_str, mask_str);
+        if (!ret) {
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure ip=%s, gw=%s, mask=%s\n"), ip_str, gw_str, mask_str);
+        }
+        ret = esp_set_AT_CIPDNS_CUR(dns_str, true);
+        if (!ret) {
+            mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("could not configure dns=%s\n"), dns_str);
+        }
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(esp_ifconfig_obj, 1, 2, esp_ifconfig);
+
+STATIC const mp_rom_map_elem_t esp_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&esp_connect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&esp_disconnect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_isconnected), MP_ROM_PTR(&esp_isconnected_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ifconfig), MP_ROM_PTR(&esp_ifconfig_obj) },
+
+    // class constants
+    { MP_ROM_QSTR(MP_QSTR_WEP), MP_ROM_INT(WLAN_SEC_WEP) },
+    { MP_ROM_QSTR(MP_QSTR_WPA), MP_ROM_INT(WLAN_SEC_WPA) },
+    { MP_ROM_QSTR(MP_QSTR_WPA2), MP_ROM_INT(WLAN_SEC_WPA2) },
+};
+STATIC MP_DEFINE_CONST_DICT(esp_locals_dict, esp_locals_dict_table);
+
+const mod_network_nic_type_t mod_network_nic_type_esp = {
+    .base = {
+        { &mp_type_type },
+        .name = MP_QSTR_ESP,
+        .make_new = esp_make_new,
+        .locals_dict = (mp_obj_dict_t *)&esp_locals_dict,
+    },
+    .gethostbyname = mod_esp_gethostbyname,
+    .socket = mod_esp_socket_socket,
+    .close = mod_esp_socket_close,
+    .bind = mod_esp_socket_bind,
+    .listen = mod_esp_socket_listen,
+    .accept = mod_esp_socket_accept,
+    .connect = mod_esp_socket_connect,
+    .send = mod_esp_socket_send,
+    .sendall = mod_esp_socket_sendall,
+    .recv = mod_esp_socket_recv,
+    .sendto = mod_esp_socket_sendto,
+    .recvfrom = mod_esp_socket_recvfrom,
+    .setsockopt = mod_esp_socket_setsockopt,
+    .settimeout = mod_esp_socket_settimeout,
+    .ioctl = mod_esp_socket_ioctl,
+};
+
+#endif

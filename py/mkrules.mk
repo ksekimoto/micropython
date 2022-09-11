@@ -43,16 +43,19 @@ QSTR_GEN_CXXFLAGS += $(QSTR_GEN_FLAGS)
 
 vpath %.S . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.S
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
-	$(Q)$(AS) -o $@ $<
+	$(Q)$(AS) -g -o $@ $<
 
 define compile_c
 $(ECHO) "CC $<"
+@dirname $@ | xargs mkdir -p
 $(Q)$(CC) $(CFLAGS) -c -MD -o $@ $<
 @# The following fixes the dependency file.
 @# See http://make.paulandlesley.org/autodep.html for details.

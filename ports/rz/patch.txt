@@ -1,0 +1,41 @@
+To successfully build rz port, please modify the following files after git cloning before starting build!
+
+lib/lv_bindings/lv-conf.h
+[before]
+lib/lv_bindings/lv_conf.h
+[after]
+lib/lv_bindings/lv_conf_org.h
+
+lib/mbed-gr-libs/components/CAMERA/OV7725_config.h
+[before]
+        ThisThread::sleep_for(1);
+[after]
+        //ThisThread::sleep_for(1);
+        wait_ms(10);
+
+lib/mbed-gr-libs/GR-PEACH_video/targets/TARGET_RZ_A2XX/TARGET_RZA2M/rz_a2m_evb_vdc.c
+[before]
+    if( drv_error == DRV_GRAPHICS_OK ) {
+        /* Stop process */
+        error = R_VDC_StopProcess ( ch, vdc_layer_id );
+        if (error != VDC_OK) {
+            drv_error = DRV_GRAPHICS_VDC5_ERR;
+        }
+[after]
+    if( drv_error == DRV_GRAPHICS_OK ) {
+        /* Stop process */
+        error = R_VDC_StopProcess ( ch, vdc_layer_id );
+        if (error != VDC_OK) {
+            drv_error = DRV_GRAPHICS_VDC5_ERR;
+        }
+        error = R_VDC_ReleaseDataControl( ch, vdc_layer_id );
+        if (error != VDC_OK) {
+            drv_error = DRV_GRAPHICS_VDC5_ERR;
+        }
+    }
+
+lib/mbed-os/hal/mbed_critical_section_api.c
+[before]
+    MBED_ASSERT(!are_interrupts_enabled());
+[after]
+    //MBED_ASSERT(!are_interrupts_enabled());

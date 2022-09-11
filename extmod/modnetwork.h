@@ -57,7 +57,6 @@ struct netif;
 void mod_network_lwip_init(void);
 void mod_network_lwip_poll_wrapper(uint32_t ticks_ms);
 mp_obj_t mod_network_nic_ifconfig(struct netif *netif, size_t n_args, const mp_obj_t *args);
-#else
 
 struct _mod_network_socket_obj_t;
 
@@ -75,6 +74,7 @@ typedef struct _mod_network_nic_type_t {
     int (*accept)(struct _mod_network_socket_obj_t *socket, struct _mod_network_socket_obj_t *socket2, byte *ip, mp_uint_t *port, int *_errno);
     int (*connect)(struct _mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno);
     mp_uint_t (*send)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
+    mp_uint_t (*sendall)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
     mp_uint_t (*recv)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, int *_errno);
     mp_uint_t (*sendto)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, byte *ip, mp_uint_t port, int *_errno);
     mp_uint_t (*recvfrom)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, byte *ip, mp_uint_t *port, int *_errno);
@@ -98,6 +98,59 @@ typedef struct _mod_network_socket_obj_t {
     #if MICROPY_PY_USOCKET_EXTENDED_STATE
     // Extended socket state for NICs/ports that need it.
     void *_private;
+    #endif
+    #if MICROPY_HW_ESP
+    mp_uint_t handle;
+    #endif
+} mod_network_socket_obj_t;
+
+#else
+
+struct _mod_network_socket_obj_t;
+
+typedef struct _mod_network_nic_type_t {
+    mp_obj_type_t base;
+
+    // API for non-socket operations
+    int (*gethostbyname)(mp_obj_t nic, const char *name, mp_uint_t len, uint8_t *ip_out);
+
+    // API for socket operations; return -1 on error
+    int (*socket)(struct _mod_network_socket_obj_t *socket, int *_errno);
+    void (*close)(struct _mod_network_socket_obj_t *socket);
+    int (*bind)(struct _mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno);
+    int (*listen)(struct _mod_network_socket_obj_t *socket, mp_int_t backlog, int *_errno);
+    int (*accept)(struct _mod_network_socket_obj_t *socket, struct _mod_network_socket_obj_t *socket2, byte *ip, mp_uint_t *port, int *_errno);
+    int (*connect)(struct _mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno);
+    mp_uint_t (*send)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
+    #if MICROPY_HW_ESP
+    mp_uint_t (*sendall)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, int *_errno);
+    #endif
+    mp_uint_t (*recv)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, int *_errno);
+    mp_uint_t (*sendto)(struct _mod_network_socket_obj_t *socket, const byte *buf, mp_uint_t len, byte *ip, mp_uint_t port, int *_errno);
+    mp_uint_t (*recvfrom)(struct _mod_network_socket_obj_t *socket, byte *buf, mp_uint_t len, byte *ip, mp_uint_t *port, int *_errno);
+    int (*setsockopt)(struct _mod_network_socket_obj_t *socket, mp_uint_t level, mp_uint_t opt, const void *optval, mp_uint_t optlen, int *_errno);
+    int (*settimeout)(struct _mod_network_socket_obj_t *socket, mp_uint_t timeout_ms, int *_errno);
+    int (*ioctl)(struct _mod_network_socket_obj_t *socket, mp_uint_t request, mp_uint_t arg, int *_errno);
+} mod_network_nic_type_t;
+
+typedef struct _mod_network_socket_obj_t {
+    mp_obj_base_t base;
+    mp_obj_t nic;
+    mod_network_nic_type_t *nic_type;
+    uint32_t domain : 5;
+    uint32_t type   : 5;
+    uint32_t proto  : 5;
+    uint32_t bound  : 1;
+    int32_t fileno  : 16;
+    int32_t timeout;
+    mp_obj_t callback;
+    int32_t state   : 8;
+    #if MICROPY_PY_USOCKET_EXTENDED_STATE
+    // Extended socket state for NICs/ports that need it.
+    void *_private;
+    #endif
+    #if MICROPY_HW_ESP
+    mp_uint_t handle;
     #endif
 } mod_network_socket_obj_t;
 

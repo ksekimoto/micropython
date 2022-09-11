@@ -700,3 +700,54 @@ function ci_zephyr_build {
     docker exec zephyr-ci west build -p auto -b mimxrt1050_evk
     docker exec zephyr-ci west build -p auto -b nucleo_wb55rg # for bluetooth
 }
+
+########################################################################################
+# ports/rx
+
+function ci_gcc_rx_setup {
+    wget "https://github.com/ksekimoto/cross-gcc-build_bin/raw/master/rx/9.2.0/rx-elf-gcc-9.2.0.tar.gz"
+    tar xvf rx-elf-gcc-9.2.0.tar.gz
+    sudo mv ./rx-elf-gcc-9.2.0 /opt
+    sudo chmod 777 /opt/rx-elf-gcc-9.2.0
+    export PATH=/opt/rx-elf-gcc-9.2.0/bin:$PATH
+    rx-elf-gcc --version
+}
+
+function ci_rx_setup {
+    ci_gcc_rx_setup
+}
+
+function ci_rx_mpy_cross_build {
+    git submodule update --init --recursive
+    make ${MAKEOPTS} -C mpy-cross
+}
+
+function ci_rx_gr_rose_build {
+    export PATH=/opt/rx-elf-gcc-9.2.0/bin:$PATH
+    export BOARD="GR_ROSE_DD"
+    make ${MAKEOPTS} -C ports/rx BOARD=${BOARD} clean
+    make ${MAKEOPTS} -C ports/rx BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+}
+
+########################################################################################
+# ports/rz
+
+function ci_rz_setup {
+    sudo apt-get update -qq
+    sudo apt-get install -y build-essential curl wget
+    ci_gcc_arm_setup
+}
+
+function ci_rz_mpy_cross_build {
+    git submodule update --init --recursive
+    make ${MAKEOPTS} -C mpy-cross
+}
+
+function ci_rz_gr_mango_build {
+    export BOARD="GR_MANGO_DD"
+    if [ -f 'lib/lv_bindings/lv_conf.h' ];then mv lib/lv_bindings/lv_conf.h lib/lv_bindings/lv_conf.h_ ;fi
+    cd ports/rz
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} clean
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} clean-mbed
+    make ${MAKEOPTS} DEBUG=1 BOARD=${BOARD} MICROPY_PY_ESP8266=1 MICROPY_PY_LWIP=1 MICROPY_SSL_MBEDTLS=1 MICROPY_PY_USSL=1
+}

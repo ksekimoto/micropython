@@ -214,7 +214,7 @@ def gen_rst(results):
             if i >= len(class_) or section[i] != class_[i]:
                 if i == 0:
                     filename = section[i].replace(" ", "_").lower()
-                    rst = open(DOCPATH + filename + ".rst", "w")
+                    rst = open(DOCPATH + filename + ".rst", "w", encoding="UTF-8")
                     rst.write(HEADER)
                     rst.write(section[i] + "\n")
                     rst.write(RSTCHARS[0] * len(section[i]))

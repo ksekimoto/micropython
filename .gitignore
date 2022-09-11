@@ -46,3 +46,26 @@ genrst/
 # MacOS desktop metadata files
 ######################
 .DS_Store
+
+# renesas related files
+######################
+/.cproject
+/.project
+/.settings
+/*.jlink
+/docs/_build
+/mpy-cross/lextab.py
+/mpy-cross/yacctab.py
+/ports/rx/build-GR_CITRUS
+/ports/rx/build-GR_SAKURA
+/ports/rx/build-GR_SAKURA_DD
+/ports/rx/build-GR_CITRUS_DD
+/ports/rx/build-GR_ROSE
+/ports/rx/build-GR_ROSE_DD
+/ports/rz/boards/.pydevproject
+/ports/rz/boards/.project
+/ports/rz/lextab.py
+/ports/rz/yacctab.py
+/ports/ra/_logs
+/rx_releases/gr_sakura
+
