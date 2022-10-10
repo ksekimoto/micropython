@@ -63,6 +63,11 @@ STATIC uint emit_opt = MP_EMIT_OPT_NONE;
 long heap_size = 1024 * 1024 * (sizeof(mp_uint_t) / 4);
 #endif
 
+// Number of heaps to assign by default if MICROPY_GC_SPLIT_HEAP=1
+#ifndef MICROPY_GC_SPLIT_HEAP_N_HEAPS
+#define MICROPY_GC_SPLIT_HEAP_N_HEAPS (1)
+#endif
+
 STATIC void stderr_print_strn(void *env, const char *str, size_t len) {
     (void)env;
     ssize_t ret;
@@ -513,7 +518,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     {
         // Mount the host FS at the root of our internal VFS
         mp_obj_t args[2] = {
-            mp_type_vfs_posix.make_new(&mp_type_vfs_posix, 0, 0, NULL),
+            MP_OBJ_TYPE_GET_SLOT(&mp_type_vfs_posix, make_new)(&mp_type_vfs_posix, 0, 0, NULL),
             MP_OBJ_NEW_QSTR(MP_QSTR__slash_),
         };
         mp_vfs_mount(2, args, (mp_map_t *)&mp_const_empty_map);

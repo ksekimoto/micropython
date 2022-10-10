@@ -829,18 +829,19 @@ STATIC const mp_rom_map_elem_t framebuf_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(framebuf_locals_dict, framebuf_locals_dict_table);
 
-STATIC const mp_obj_type_t mp_type_framebuf = {
-    { &mp_type_type },
-    .name = MP_QSTR_FrameBuffer,
-    .make_new = framebuf_make_new,
-    .buffer_p = { .get_buffer = framebuf_get_buffer },
-    .locals_dict = (mp_obj_dict_t *)&framebuf_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(
+    mp_type_framebuf,
+    MP_QSTR_FrameBuffer,
+    MP_TYPE_FLAG_NONE,
+    make_new, framebuf_make_new,
+    buffer, framebuf_get_buffer,
+    locals_dict, &framebuf_locals_dict
+    );
 #endif
 
 // this factory function is provided for backwards compatibility with old FrameBuffer1 class
 STATIC mp_obj_t legacy_framebuffer1(size_t n_args, const mp_obj_t *args_in) {
-    mp_obj_framebuf_t *o = mp_obj_malloc(mp_obj_framebuf_t, &mp_type_framebuf);
+    mp_obj_framebuf_t *o = mp_obj_malloc(mp_obj_framebuf_t, (mp_obj_type_t *)&mp_type_framebuf);
 
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(args_in[0], &bufinfo, MP_BUFFER_WRITE);

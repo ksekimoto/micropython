@@ -476,6 +476,13 @@ class Pyboard:
         t = str(self.eval("pyb.RTC().datetime()"), encoding="utf8")[1:-1].split(", ")
         return int(t[4]) * 3600 + int(t[5]) * 60 + int(t[6])
 
+    def fs_exists(self, src):
+        try:
+            self.exec_("import uos\nuos.stat(%s)" % (("'%s'" % src) if src else ""))
+            return True
+        except PyboardError:
+            return False
+
     def fs_ls(self, src):
         cmd = (
             "import uos\nfor f in uos.ilistdir(%s):\n"
@@ -582,12 +589,12 @@ def filesystem_command(pyb, args, progress_callback=None, verbose=False):
         return src
 
     def fname_cp_dest(src, dest):
-        src = src.rsplit("/", 1)[-1]
+        _, src = os.path.split(src)
         if dest is None or dest == "":
             dest = src
         elif dest == ".":
-            dest = "./" + src
-        elif dest.endswith("/"):
+            dest = os.path.join(".", src)
+        elif dest.endswith(os.path.sep):
             dest += src
         return dest
 
@@ -614,23 +621,28 @@ def filesystem_command(pyb, args, progress_callback=None, verbose=False):
                 dest2 = fname_cp_dest(src2, fname_remote(dest))
                 op(src2, dest2, progress_callback=progress_callback)
         else:
-            op = {
+            ops = {
                 "cat": pyb.fs_cat,
                 "ls": pyb.fs_ls,
                 "mkdir": pyb.fs_mkdir,
                 "rm": pyb.fs_rm,
                 "rmdir": pyb.fs_rmdir,
                 "touch": pyb.fs_touch,
-            }[cmd]
+            }
+            if cmd not in ops:
+                raise PyboardError("'{}' is not a filesystem command".format(cmd))
             if cmd == "ls" and not args:
                 args = [""]
             for src in args:
                 src = fname_remote(src)
                 if verbose:
                     print("%s :%s" % (cmd, src))
-                op(src)
+                ops[cmd](src)
     except PyboardError as er:
-        print(str(er.args[2], "ascii"))
+        if len(er.args) > 1:
+            print(str(er.args[2], "ascii"))
+        else:
+            print(er)
         pyb.exit_raw_repl()
         pyb.close()
         sys.exit(1)
