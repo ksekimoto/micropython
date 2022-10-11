@@ -117,13 +117,14 @@ STATIC const mp_rom_map_elem_t ILI9341_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ILI9341_locals_dict, ILI9341_locals_dict_table);
 
-STATIC const mp_obj_type_t ILI9341_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_ILI9341,
-    // .print = ILI9341_print,
-    .make_new = ILI9341_make_new,
-    .locals_dict = (mp_obj_dict_t *)&ILI9341_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_type_type,
+    MP_QSTR_ILI9341,
+    MP_TYPE_FLAG_NONE,
+    make_new, ILI9341_make_new,
+    /* print, ILI9341_print, */
+    locals_dict, &ILI9341_locals_dict
+    );
 
 STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
     size_t n_args,

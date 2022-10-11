@@ -90,13 +90,14 @@ STATIC const mp_rom_map_elem_t rzlcd_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(rzlcd_locals_dict, rzlcd_locals_dict_table);
 
-STATIC const mp_obj_type_t rzlcd_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_rzlcd,
-    // .print = rzlcd_print,
-    .make_new = rzlcd_make_new,
-    .locals_dict = (mp_obj_dict_t *)&rzlcd_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_type_type,
+    MP_QSTR_RZLCD,
+    MP_TYPE_FLAG_NONE,
+    make_new, rzlcd_make_new,
+    /* print, rzlcd_print, */
+    locals_dict, &rzlcd_locals_dict
+    );
 
 STATIC mp_obj_t rzlcd_make_new(const mp_obj_type_t *type,
     size_t n_args,

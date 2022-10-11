@@ -128,15 +128,6 @@ static void m_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest)
 
 static volatile uint8_t m_dir = MICROPY_HW_LCDSPI_CON_DIR;
 
-#if 0
-uint32_t pin_clk;
-uint32_t pin_dout;
-uint32_t pin_din;
-uint32_t pin_cs;
-uint32_t pin_reset;
-uint32_t pin_rs;
-#endif
-
 void lcd_init(void) {
     #if defined(MICROPY_HW_LCDSPI_CON_CLK)
     m_pins.pin_clk = (uint32_t)(MICROPY_HW_LCDSPI_CON_CLK)->id;
@@ -167,6 +158,11 @@ void lcd_init(void) {
     m_pins.pin_rs = (uint32_t)(MICROPY_HW_LCDSPI_CON_RS)->id;
     #else
     m_pins.pin_rs = (uint32_t)PIN_NONE;
+    #endif
+    #if defined(MICROPY_HW_LCDSPI_CON_BL)
+    m_pins.pin_bl = (uint32_t)(MICROPY_HW_LCDSPI_CON_BL)->id;
+    #else
+    m_pins.pin_bl = (uint32_t)PIN_NONE;
     #endif
     #if MICROPY_HW_LCDSPI_CON_CH != -1
     #if defined(MICROPY_HW_LCDSPI_CON_MOSI)

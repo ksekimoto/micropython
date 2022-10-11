@@ -489,10 +489,11 @@ STATIC const mp_rom_map_elem_t rz_display_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(rz_display_locals_dict, rz_display_locals_dict_table);
 
-const mp_obj_type_t rz_display_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_DISPLAY,
-    .print = rz_display_obj_print,
-    .make_new = rz_display_obj_make_new,
-    .locals_dict = (mp_obj_dict_t *)&rz_display_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    rz_display_type,
+    MP_QSTR_DISPLAY,
+    MP_TYPE_FLAG_NONE,
+    make_new, rz_display_obj_make_new,
+    print, rz_display_obj_print,
+    locals_dict, &rz_display_locals_dict
+    );

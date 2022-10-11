@@ -197,13 +197,14 @@ STATIC const mp_rom_map_elem_t xpt2046_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(xpt2046_locals_dict, xpt2046_locals_dict_table);
 
-STATIC const mp_obj_type_t xpt2046_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_xpt2046,
-    // .print = xpt2046_print,
-    .make_new = xpt2046_make_new,
-    .locals_dict = (mp_obj_dict_t *)&xpt2046_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_type_type,
+    MP_QSTR_XPT2046,
+    MP_TYPE_FLAG_NONE,
+    make_new, xpt2046_make_new,
+    /* print, xpt2046_print, */
+    locals_dict, &xpt2046_locals_dict
+    );
 
 STATIC const mp_rom_map_elem_t xpt2046_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_xpt2046) },

@@ -159,10 +159,10 @@ STATIC const mp_rom_map_elem_t font_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(font_locals_dict, font_locals_dict_table);
 
-const mp_obj_type_t rz_font_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_FONT,
-    .print = font_obj_print,
-    .make_new = font_obj_make_new,
-    .locals_dict = (mp_obj_dict_t *)&font_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    rz_font_type,
+    MP_QSTR_FONT,
+    MP_TYPE_FLAG_NONE,
+    make_new, font_obj_make_new,
+    locals_dict, &font_locals_dict
+    );

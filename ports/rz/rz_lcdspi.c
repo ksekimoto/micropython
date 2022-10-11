@@ -32,6 +32,7 @@
 #include "extmod/machine_spi.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_fat.h"
+#include "spi.h"
 #include "font.h"
 #include "jpeg.h"
 #include "jpeg_disp.h"
@@ -58,7 +59,6 @@ typedef struct _mod_lcdspi_obj_t {
 
 static lcdspi_t m_lcdspi;
 
-extern const mp_obj_type_t machine_hard_spi_type;
 static mp_obj_t m_spi_obj;
 static mp_machine_spi_p_t *machine_spi_p;
 static mp_obj_t m_args[] = {
@@ -68,8 +68,8 @@ static mp_obj_t m_args[] = {
 };
 
 static void lcdspi_spi_init_helper(void) {
-    m_spi_obj = (mp_obj_t)machine_hard_spi_type.make_new(&machine_hard_spi_type, 1, 1, (const mp_obj_t *)m_args);
-    machine_spi_p = (mp_machine_spi_p_t *)machine_hard_spi_type.protocol;
+    m_spi_obj = MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, make_new)(&machine_hard_spi_type, 1, 1, (const mp_obj_t *)m_args);
+    machine_spi_p = (mp_machine_spi_p_t *)MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, protocol);
 }
 
 static void lcdspi_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest) {
@@ -645,12 +645,13 @@ STATIC const mp_rom_map_elem_t lcdspi_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(lcdspi_locals_dict, lcdspi_locals_dict_table);
 
-const mp_obj_type_t rz_lcdspi_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_LCDSPI,
-    .print = lcdspi_obj_print,
-    .make_new = lcdspi_obj_make_new,
-    .locals_dict = (mp_obj_dict_t *)&lcdspi_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    rz_lcdspi_type,
+    MP_QSTR_LCDSPI,
+    MP_TYPE_FLAG_NONE,
+    make_new, lcdspi_obj_make_new,
+    print, lcdspi_obj_print,
+    locals_dict, &lcdspi_locals_dict
+    );
 
 #endif

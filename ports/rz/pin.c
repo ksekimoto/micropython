@@ -229,9 +229,9 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
             mp_uint_t af_idx = pin_get_af(self);
             const pin_af_obj_t *af_obj = pin_find_af_by_index(self, af_idx);
             if (af_obj == NULL) {
-                mp_printf(print, ", af=%d)", af_idx);
+                mp_printf(print, ", alt=%d)", af_idx);
             } else {
-                mp_printf(print, ", af=Pin.%q)", af_obj->name);
+                mp_printf(print, ", alt=Pin.%q)", af_obj->name);
             }
         } else {
             mp_print_str(print, ")");
@@ -324,7 +324,7 @@ STATIC mp_obj_t pin_debug(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pin_debug_fun_obj, 1, 2, pin_debug);
 STATIC MP_DEFINE_CONST_CLASSMETHOD_OBJ(pin_debug_obj, MP_ROM_PTR(&pin_debug_fun_obj));
 
-// init(mode, pull=None, af=-1, *, value, alt)
+// init(mode, pull=None, alt=-1, *, value, alt)
 STATIC mp_obj_t pin_obj_init_helper(const pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT },
@@ -558,7 +558,6 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AF_OD),     MP_ROM_INT(GPIO_MODE_AF_OD) },
     { MP_ROM_QSTR(MP_QSTR_PULL_NONE), MP_ROM_INT(GPIO_NOPULL) },
 
-// #include "genhdr/pins_ad_const.h"
 // #include "genhdr/pins_af_const.h"
 };
 
@@ -584,68 +583,16 @@ STATIC const mp_pin_p_t pin_pin_p = {
     .ioctl = pin_ioctl,
 };
 
-const mp_obj_type_t pin_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_Pin,
-    .print = pin_print,
-    .make_new = mp_pin_make_new,
-    .call = pin_call,
-    .protocol = &pin_pin_p,
-    .locals_dict = (mp_obj_dict_t *)&pin_locals_dict,
-};
-
-// ====================================================================
-// PinAD
-// ====================================================================
-
-/// \moduleref pyb
-/// \class PinAD - Analog to Digital
-///
-
-/// \method __str__()
-/// Return a string describing the alternate function.
-STATIC void pin_ad_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pin_ad_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Pin.%q", self->name);
-}
-
-/// \method name()
-/// Return the name of the alternate function.
-STATIC mp_obj_t pin_ad_name(mp_obj_t self_in) {
-    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_QSTR(ad->name);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_name_obj, pin_ad_name);
-
-STATIC mp_obj_t pin_ad_bit(mp_obj_t self_in) {
-    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT((uintptr_t)ad->bit);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_bit_obj, pin_ad_bit);
-
-STATIC mp_obj_t pin_ad_channel(mp_obj_t self_in) {
-    pin_ad_obj_t *ad = MP_OBJ_TO_PTR(self_in);
-    return MP_OBJ_NEW_SMALL_INT((uintptr_t)ad->channel);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_ad_channel_obj, pin_ad_channel);
-
-STATIC const mp_rom_map_elem_t pin_ad_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pin_ad_name_obj) },
-    { MP_ROM_QSTR(MP_QSTR_bit), MP_ROM_PTR(&pin_ad_bit_obj) },
-    { MP_ROM_QSTR(MP_QSTR_channel), MP_ROM_PTR(&pin_ad_channel_obj) },
-};
-STATIC MP_DEFINE_CONST_DICT(pin_ad_locals_dict, pin_ad_locals_dict_table);
-
-const mp_obj_type_t pin_ad_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_PinAD,
-    .print = pin_ad_obj_print,
-    .locals_dict = (mp_obj_dict_t *)&pin_ad_locals_dict,
-};
-
-// ====================================================================
-// PinAF
-// ====================================================================
+MP_DEFINE_CONST_OBJ_TYPE(
+    pin_type,
+    MP_QSTR_Pin,
+    MP_TYPE_FLAG_NONE,
+    make_new, mp_pin_make_new,
+    print, pin_print,
+    call, pin_call,
+    protocol, &pin_pin_p,
+    locals_dict, &pin_locals_dict
+    );
 
 /// \moduleref pyb
 /// \class PinAF - Pin Alternate Functions
@@ -670,9 +617,9 @@ const mp_obj_type_t pin_ad_type = {
 /// is desired.
 ///
 /// To configure X3 to expose TIM2_CH3, you could use:
-///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, af=pyb.Pin.AF1_TIM2)
+///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, alt=pyb.Pin.AF1_TIM2)
 /// or:
-///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, af=1)
+///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, alt=1)
 
 /// \method __str__()
 /// Return a string describing the alternate function.
@@ -710,12 +657,13 @@ STATIC const mp_rom_map_elem_t pin_af_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(pin_af_locals_dict, pin_af_locals_dict_table);
 
-const mp_obj_type_t pin_af_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_PinAF,
-    .print = pin_af_obj_print,
-    .locals_dict = (mp_obj_dict_t *)&pin_af_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    pin_af_type,
+    MP_QSTR_PinAF,
+    MP_TYPE_FLAG_NONE,
+    print, pin_af_obj_print,
+    locals_dict, &pin_af_locals_dict
+    );
 
 MP_REGISTER_ROOT_POINTER(mp_obj_t pin_class_mapper);
 MP_REGISTER_ROOT_POINTER(mp_obj_t pin_class_map_dict);

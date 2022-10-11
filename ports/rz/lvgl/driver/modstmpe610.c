@@ -198,13 +198,14 @@ STATIC const mp_rom_map_elem_t stmpe610_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(stmpe610_locals_dict, stmpe610_locals_dict_table);
 
-STATIC const mp_obj_type_t stmpe610_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_stmpe610,
-    // .print = stmpe610_print,
-    .make_new = stmpe610_make_new,
-    .locals_dict = (mp_obj_dict_t *)&stmpe610_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_type_type,
+    MP_QSTR_STMPE610,
+    MP_TYPE_FLAG_NONE,
+    make_new, stmpe610_make_new,
+    /* print, stmpe610_print, */
+    locals_dict, &stmpe610_locals_dict
+    );
 
 STATIC const mp_rom_map_elem_t stmpe610_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_stmpe610) },
