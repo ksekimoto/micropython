@@ -747,13 +747,16 @@ STATIC const mp_rom_map_elem_t esp_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(esp_locals_dict, esp_locals_dict_table);
 
+STATIC MP_DEFINE_CONST_OBJ_FULL_TYPE(
+    mod_network_nic_type_esp_base,
+    MP_QSTR_ESP,
+    MP_TYPE_FLAG_NONE,
+    make_new, esp_make_new,
+    locals_dict, &esp_locals_dict
+    );
+
 const mod_network_nic_type_t mod_network_nic_type_esp = {
-    .base = {
-        { &mp_type_type },
-        .name = MP_QSTR_ESP,
-        .make_new = esp_make_new,
-        .locals_dict = (mp_obj_dict_t *)&esp_locals_dict,
-    },
+    .base = mod_network_nic_type_esp_base,
     .gethostbyname = mod_esp_gethostbyname,
     .socket = mod_esp_socket_socket,
     .close = mod_esp_socket_close,

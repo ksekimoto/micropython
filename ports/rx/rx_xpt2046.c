@@ -30,6 +30,7 @@
 #include "py/mphal.h"
 #include "modmachine.h"
 #include "extmod/machine_spi.h"
+#include "spi.h"
 #include "xpt2046.h"
 #include "common.h"
 
@@ -43,8 +44,6 @@
 #define DEF_SPI_ID  0
 #define DEF_BAUDRATE 2000000
 
-extern const mp_obj_type_t pin_type;
-extern const mp_obj_type_t machine_hard_spi_type;
 static mp_obj_t m_spi_obj;
 static mp_machine_spi_p_t *machine_spi_p;
 
@@ -65,8 +64,8 @@ static mp_obj_t m_args[] = {
 };
 
 static void xpt2046_spi_init_helper(void) {
-    m_spi_obj = machine_hard_spi_type.make_new(&machine_hard_spi_type, 1, 4, (const mp_obj_t *)m_args);
-    machine_spi_p = (mp_machine_spi_p_t *)machine_hard_spi_type.protocol;
+    m_spi_obj = MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, make_new)(&machine_hard_spi_type, 1, 4, (const mp_obj_t *)m_args);
+    machine_spi_p = (mp_machine_spi_p_t *)MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, protocol);
 }
 
 static void xpt2046_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest) {
@@ -223,10 +222,10 @@ STATIC const mp_rom_map_elem_t xpt2046_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(xpt2046_locals_dict, xpt2046_locals_dict_table);
 
-const mp_obj_type_t rx_xpt2046_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_xpt2046,
-    .print = xpt2046_obj_print,
-    .make_new = xpt2046_make_new,
-    .locals_dict = (mp_obj_dict_t *)&xpt2046_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    rx_xpt2046_type,
+    MP_QSTR_XPT2046,
+    MP_TYPE_FLAG_NONE,
+    make_new, xpt2046_make_new,
+    locals_dict, &xpt2046_locals_dict
+    );

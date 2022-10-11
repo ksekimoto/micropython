@@ -159,7 +159,7 @@ void lcd_init(void) {
     #else
     m_pins.pin_rs = (uint32_t)PIN_NONE;
     #endif
-    #if defined(MICROPY_HW_LCDSPI_CON_RS)
+    #if defined(MICROPY_HW_LCDSPI_CON_BL)
     m_pins.pin_bl = (uint32_t)(MICROPY_HW_LCDSPI_CON_BL)->id;
     #else
     m_pins.pin_bl = (uint32_t)PIN_NONE;

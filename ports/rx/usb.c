@@ -493,13 +493,14 @@ STATIC const mp_stream_p_t pyb_usb_hid_stream_p = {
     .ioctl = pyb_usb_hid_ioctl,
 };
 
-const mp_obj_type_t pyb_usb_hid_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_USB_HID,
-    .make_new = pyb_usb_hid_make_new,
-    .protocol = &pyb_usb_hid_stream_p,
-    .locals_dict = (mp_obj_dict_t *)&pyb_usb_hid_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    pyb_usb_hid_type,
+    MP_QSTR_USB_HID,
+    MP_TYPE_FLAG_NONE,
+    make_new, pyb_usb_hid_make_new,
+    protocol, &pyb_usb_hid_stream_p,
+    locals_dict, &pyb_usb_hid_locals_dict
+    );
 
 #endif // MICROPY_HW_USB_HID
 

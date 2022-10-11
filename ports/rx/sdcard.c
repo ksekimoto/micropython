@@ -642,12 +642,13 @@ STATIC const mp_rom_map_elem_t pyb_sdcard_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(pyb_sdcard_locals_dict, pyb_sdcard_locals_dict_table);
 
-const mp_obj_type_t pyb_sdcard_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_SDCard,
-    .make_new = pyb_sdcard_make_new,
-    .locals_dict = (mp_obj_dict_t *)&pyb_sdcard_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    pyb_sdcard_type,
+    MP_QSTR_SDCard,
+    MP_TYPE_FLAG_NONE,
+    make_new, pyb_sdcard_make_new,
+    locals_dict, &pyb_sdcard_locals_dict
+    );
 
 void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->base.type = &mp_fat_vfs_type;

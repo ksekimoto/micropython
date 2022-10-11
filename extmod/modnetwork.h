@@ -110,7 +110,7 @@ typedef struct _mod_network_socket_obj_t {
 struct _mod_network_socket_obj_t;
 
 typedef struct _mod_network_nic_type_t {
-    mp_obj_type_t base;
+    mp_obj_full_type_t base;
 
     // API for non-socket operations
     int (*gethostbyname)(mp_obj_t nic, const char *name, mp_uint_t len, uint8_t *ip_out);
