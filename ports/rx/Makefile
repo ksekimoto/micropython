@@ -36,7 +36,7 @@ include ../../py/mkenv.mk
 include $(BOARD_DIR)/mpconfigboard.mk
 
 # Files that are generated and needed before the QSTR build.
-QSTR_GENERATED_HEADERS = $(BUILD)/pins_qstr.h
+QSTR_GENERATED_HEADERS = $(GEN_PINS_QSTR)
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS += qstrdefsport.h $(QSTR_GENERATED_HEADERS)
@@ -52,7 +52,7 @@ FROZEN_MANIFEST ?= boards/manifest.py
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
-GIT_SUBMODULES += lib/lwip lib/mbedtls
+GIT_SUBMODULES += lib/libhydrogen
 
 query-variants:
 	$(ECHO) "VARIANTS:" $(BOARD_VARIANTS)
@@ -60,6 +60,33 @@ query-variants:
 LD_DIR=boards
 
 include renesas-rx.mk
+
+# PLLVALUES = boards/pllvalues.py
+MAKE_PINS = boards/make-pins.py
+BOARD_PINS = $(BOARD_DIR)/pins.csv
+AF_FILE = boards/$(MCU_SERIES_LOWER)_af.csv
+PREFIX_FILE = boards/$(MCU_SERIES_LOWER)_prefix.c
+GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
+GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
+GEN_PINS_QSTR = $(BUILD)/pins_qstr.h
+GEN_PINS_AD_CONST = $(HEADER_BUILD)/pins_ad_const.h
+GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
+# GEN_PINS_AF_DEFS = $(HEADER_BUILD)/pins_af_defs.h
+GEN_PINS_AF_PY = $(BUILD)/pins_af.py
+
+INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
+FILE2H = $(TOP)/tools/file2h.py
+
+USB_IDS_FILE = mpconfigboard_common.h
+CDCINF_TEMPLATE = pybcdc.inf_template
+GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
+GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
+
+# GEN_PLLFREQTABLE_HDR = $(HEADER_BUILD)/pllfreqtable.h
+# GEN_STMCONST_HDR = $(HEADER_BUILD)/modstm_const.h
+# GEN_STMCONST_QSTR = $(BUILD)/modstm_qstr.h
+# GEN_STMCONST_MPZ = $(HEADER_BUILD)/modstm_mpz.h
+# CMSIS_MCU_HDR = $(STM32LIB_CMSIS_ABS)/Include/$(CMSIS_MCU_LOWER).h
 
 # Select the cross compile prefix
 CROSS_COMPILE ?= rx-elf-
@@ -136,7 +163,7 @@ ifeq ($(MICROPY_PY_LVGL),1)
 CFLAGS += -DLVGL_ENABLE
 endif
 
-LDFLAGS = -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Wl,-Map=$(@:.elf=.map) -Wl,--cref
+LDFLAGS += -nostdlib -L $(LD_DIR) $(addprefix -T,$(LD_FILES)) -Wl,-Map=$(@:.elf=.map) -Wl,--cref
 LDFLAGS += -Wl,--defsym=_estack_reserve=8
 LIBS += "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
@@ -159,8 +186,9 @@ endif
 
 # Flags for optional C++ source code
 CXXFLAGS += $(filter-out -Wmissing-prototypes -Wold-style-definition -std=gnu99,$(CFLAGS))
-CXXFLAGS += $(CXXFLAGS_MOD)
-ifneq ($(SRC_CXX)$(SRC_MOD_CXX),)
+
+# TODO make this common -- shouldn't be using these "private" vars from py.mk
+ifneq ($(SRC_CXX)$(SRC_USERMOD_CXX)$(SRC_USERMOD_LIB_CXX),)
 LIBSTDCPP_FILE_NAME = "$(shell $(CXX) $(CXXFLAGS) -print-file-name=libstdc++.a)"
 LDFLAGS += -L"$(shell dirname $(LIBSTDCPP_FILE_NAME))"
 endif
@@ -272,12 +300,6 @@ LIBM_O = $(addprefix $(BUILD)/, $(LIBM_SRC_C:.c=.o))
 ifeq ($(MICROPY_FLOAT_IMPL),double)
 $(LIBM_O): CFLAGS := $(filter-out -Wdouble-promotion -Wfloat-conversion, $(CFLAGS))
 endif
-
-EXTMOD_SRC_C += $(addprefix extmod/,\
-	modonewire.c \
-	modnetwork.c \
-	modusocket.c \
-	)
 
 DRIVERS_SRC_C += $(addprefix drivers/,\
 	bus/softspi.c \
@@ -401,9 +423,6 @@ ifeq ($(MICROPY_PY_LWIP),1)
 SRC_MOD += lwip_utils/sntp_client.c
 endif
 
-SRC_CXX += \
-	$(SRC_MOD_CXX)
-
 SRC_O += \
 	$(STARTUP_FILE) \
 	$(SYSTEM_FILE)
@@ -430,45 +449,12 @@ HAL_SRC_C += \
 	rx/rx_tpu.c \
 	rx/rx_utils.c
 
-ifeq ($(MICROPY_PY_BLUETOOTH),1)
-CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH=1
-CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE=1
-endif
-
-ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
-CFLAGS_MOD += -DMICROPY_PY_NETWORK_CYW43=1
-SRC_C += sdio.c
-EXTMOD_SRC_C += extmod/network_cyw43.c
-DRIVERS_SRC_C += drivers/cyw43/cyw43_ctrl.c drivers/cyw43/cyw43_lwip.c
-LIBS += $(TOP)/drivers/cyw43/libcyw43.a
-endif
-
-ifneq ($(MICROPY_PY_NETWORK_WIZNET5K),0)
-WIZNET5K_DIR=lib/wiznet5k
-GIT_SUBMODULES += lib/wiznet5k
-INC += -I$(TOP)/$(WIZNET5K_DIR) -I$(TOP)/$(WIZNET5K_DIR)/Ethernet
-CFLAGS_MOD += -DMICROPY_PY_NETWORK_WIZNET5K=$(MICROPY_PY_NETWORK_WIZNET5K) -D_WIZCHIP_=$(MICROPY_PY_NETWORK_WIZNET5K)
-CFLAGS_MOD += -DWIZCHIP_PREFIXED_EXPORTS=1
-ifeq ($(MICROPY_PY_LWIP),1)
-# When using MACRAW mode (with lwIP), maximum buffer space must be used for the raw socket
-CFLAGS_MOD += -DWIZCHIP_USE_MAX_BUFFER
-endif
-SRC_MOD += extmod/network_wiznet5k.c
-SRC_MOD += $(addprefix $(WIZNET5K_DIR)/,\
-	Ethernet/W$(MICROPY_PY_NETWORK_WIZNET5K)/w$(MICROPY_PY_NETWORK_WIZNET5K).c \
-	Ethernet/wizchip_conf.c \
-	Ethernet/socket.c \
-	Internet/DNS/dns.c \
-	Internet/DHCP/dhcp.c \
-	)
-endif
-
 # for ESP module
 ifeq ($(MICROPY_PY_ESP),1)
 ESP_DIR=drivers/esp
 INC += -I$(TOP)/$(ESP_DIR)
 CFLAGS += -DMICROPY_PY_ESP=1
-EXTMOD_SRC_C += extmod/network_esp.c
+SRC_C += extmod/network_esp.c
 DRIVERS_SRC_C += $(addprefix $(ESP_DIR)/,\
 	esp_driver.c \
 	mpy_uart.c \
@@ -479,37 +465,8 @@ DRIVERS_SRC_C += $(addprefix $(ESP_DIR)/,\
 endif
 
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
-CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
-SRC_MOD += mbedtls/mbedtls_port.c
-endif
-
-ifeq ($(MICROPY_PY_BLUETOOTH),1)
-
-SRC_C += mpbthciport.c
-
-ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
-ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
-$(error Cannot enable both NimBLE and BTstack at the same time)
-endif
-endif
-
-ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
-GIT_SUBMODULES += lib/mynewt-nimble
-CFLAGS_MOD += -DMICROPY_PY_BLUETOOTH_ENABLE_L2CAP_CHANNELS=1
-include $(TOP)/extmod/nimble/nimble.mk
-SRC_C += mpnimbleport.c
-endif
-
-ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
-GIT_SUBMODULES += lib/btstack
-MICROPY_BLUETOOTH_BTSTACK_H4 ?= 1
-include $(TOP)/extmod/btstack/btstack.mk
-SRC_C += mpbtstackport.c
-endif
-
-ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
-DRIVERS_SRC_C += drivers/cyw43/cywbt.c
-endif
+CFLAGS += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
+LIB_SRC_C += mbedtls/mbedtls_port.c
 endif
 
 ifeq ($(USE_FONT),1)
@@ -555,13 +512,11 @@ OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(LIBM_O)
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
-OBJ += $(BUILD)/pins_$(BOARD).o
+OBJ += $(GEN_PINS_SRC:.c=.o)
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
 
 # This file contains performance critical functions so turn up the optimisation
@@ -616,27 +571,8 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 $(BUILD)/firmware.elf: $(OBJ)  $(LIB_LVGL)
 	$(call GENERATE_ELF,$@,$^)
 
-MAKE_PINS = boards/make-pins.py
-BOARD_PINS = $(BOARD_DIR)/pins.csv
-AF_FILE = boards/$(MCU_SERIES_LOWER)_af.csv
-PREFIX_FILE = boards/$(MCU_SERIES_LOWER)_prefix.c
-GEN_PINS_SRC = $(BUILD)/pins_$(BOARD).c
-GEN_PINS_HDR = $(HEADER_BUILD)/pins.h
-GEN_PINS_QSTR = $(BUILD)/pins_qstr.h
-GEN_PINS_AD_CONST = $(HEADER_BUILD)/pins_ad_const.h
-GEN_PINS_AF_CONST = $(HEADER_BUILD)/pins_af_const.h
-GEN_PINS_AF_PY = $(BUILD)/pins_af.py
-
-INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
-FILE2H = $(TOP)/tools/file2h.py
-
-USB_IDS_FILE = mpconfigboard_common.h
-CDCINF_TEMPLATE = pybcdc.inf_template
-GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
-GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
-
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SRC_MOD) $(SHARED_SRC_C) $(EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SHARED_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS += $(GEN_CDCINF_HEADER)

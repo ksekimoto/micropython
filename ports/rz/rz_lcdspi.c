@@ -68,8 +68,8 @@ static mp_obj_t m_args[] = {
 };
 
 static void lcdspi_spi_init_helper(void) {
-    m_spi_obj = MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, make_new)(&machine_hard_spi_type, 1, 1, (const mp_obj_t *)m_args);
-    machine_spi_p = (mp_machine_spi_p_t *)MP_OBJ_TYPE_GET_SLOT(&machine_hard_spi_type, protocol);
+    m_spi_obj = MP_OBJ_TYPE_GET_SLOT(&machine_spi_type, make_new)(&machine_spi_type, 1, 1, (const mp_obj_t *)m_args);
+    machine_spi_p = (mp_machine_spi_p_t *)MP_OBJ_TYPE_GET_SLOT(&machine_spi_type, protocol);
 }
 
 static void lcdspi_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest) {
