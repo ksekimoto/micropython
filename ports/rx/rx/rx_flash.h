@@ -57,7 +57,8 @@ uint32_t sector_size(uint32_t addr) FLASH_SECTION;
 uint32_t sector_start(uint32_t addr) FLASH_SECTION;
 uint32_t sector_index(uint32_t addr) FLASH_SECTION;
 
-bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) FLASH_SECTION;
+void internal_flash_init(void) FLASH_SECTION;
+bool internal_flash_read(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) FLASH_SECTION;
 bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite) FLASH_SECTION;
 bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr) FLASH_SECTION;
 bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes) FLASH_SECTION;

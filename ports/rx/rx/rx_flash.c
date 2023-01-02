@@ -591,7 +591,7 @@ uint32_t FLASH_SECTION sector_index(uint32_t addr) {
 #error "RX MCU Series is not specified."
 #endif
 
-bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) {
+bool internal_flash_read(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) {
     #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_Read)
     debug_printf("Read(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
     #endif
@@ -608,6 +608,7 @@ bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSect
 }
 
 bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr) {
+    (void)ReadModifyWrite;
     #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     // debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
     // debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
@@ -637,9 +638,9 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
         }
         // overwrite data from src addr to flash buffer
         if (fIncrementDataPtr) {
-            lmemcpy(flash_buf + offset, pSectorBuff, count);
+            lmemcpy((void *)&flash_buf[offset], (const void *)pSectorBuff, (size_t)count);
         } else {
-            lmemset(flash_buf + offset, (int)*pSectorBuff, count);
+            lmemset((void *)&flash_buf[offset], (int)*pSectorBuff, (size_t)count);
         }
         #if defined(RX63N)
         command_addr = (unsigned char *)((uint32_t)startaddr & 0x00FFFFFF);
@@ -711,7 +712,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             goto WriteX_exit;
         }
         if (fIncrementDataPtr) {
-            flag = (lmemcmp((void *)(startaddr + offset), flash_buf + offset, count) == 0);
+            flag = (lmemcmp((void *)(startaddr + offset), (const void *)&flash_buf[offset], (size_t)count) == 0);
             if (!flag) {
                 error_code = 6;
                 break;
@@ -732,7 +733,7 @@ WriteX_exit:
         return true;
     }
     #if defined(DEBUG_FLASH_ERROR)
-    debug_printf("Flash Write Fail:%x\r\n", error_code);
+    debug_printf("Flash Write Fail at %x: err=%x\r\n", startaddr + offset, error_code);
     #endif
     return false;
 }
@@ -862,7 +863,7 @@ EraseBlock_exit:
         return true;
     }
     #if defined(DEBUG_FLASH_ERROR)
-    debug_printf("Flash Erase Fail:%x\r\n", error_code);
+    debug_printf("Flash Erase Fail at %x: size=%x err=%x\r\n", addr, block_size, error_code);
     #endif
     return false;
 }

@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include "rx_gpio.h"
+
 #define SCI_IDX_MAX (11)
 
 #if defined(GRCITRUS)
