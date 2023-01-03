@@ -27,6 +27,7 @@
 
 #include "py/mpconfig.h"
 #include "py/misc.h"
+#include "rx_flash.h"
 #include "flash.h"
 
 typedef struct {

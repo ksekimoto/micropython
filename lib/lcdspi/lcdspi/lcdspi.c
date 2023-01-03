@@ -50,6 +50,7 @@
 #endif
 
 #if defined(USE_DBG_PRINT)
+#include "debug_printf.h"
 #define DEBUG_LCDSPI
 #endif
 
@@ -687,7 +688,6 @@ uint8_t get_rotate_param(lcdspi_t *lcdspi, uint8_t dir) {
         case ST7735R_R128x160:
         case ST7735R_G128x128:
         case ST7735R_G160x80:
-        // case ST7735R_G130x161:
         case KMRTM24024SPI:
             switch (dir) {
                 case LCDSPI_ROTATE_90:

@@ -32,7 +32,7 @@
 #include "extmod/machine_spi.h"
 #include "spi.h"
 #include "xpt2046.h"
-#include "common.h"
+#include "rx_gpio.h"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-variable"

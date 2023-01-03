@@ -31,7 +31,7 @@
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "timer.h"
-#include "common.h"
+#include "rx_timer.h"
 
 #define TIMER_SIZE  3
 // #define TIMER_CHANNEL
@@ -367,7 +367,7 @@ STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args) {
         // get
         uint32_t prescaler = cmt_timer_get_prescale(ch);
         uint32_t counter = cmt_timer_get_counter(ch);
-        uint32_t freq = PCLK / (prescaler * counter);
+        uint32_t freq = MICROPY_HW_MCU_PCLK / (prescaler * counter);
         return mp_obj_new_int(freq);
     } else {
         // set
@@ -393,7 +393,7 @@ STATIC mp_obj_t pyb_timer_freq(size_t n_args, const mp_obj_t *args) {
         } else {
             prescaler = 512;
         }
-        counter = PCLK / (prescaler * freq);
+        counter = MICROPY_HW_MCU_PCLK / (prescaler * freq);
         cmt_timer_disable_clk(ch);
         cmt_timer_set_prescale(ch, prescaler);
         cmt_timer_set_counter(ch, counter);

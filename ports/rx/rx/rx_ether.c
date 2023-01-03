@@ -71,6 +71,7 @@
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
+#include "rx_utils.h"
 #include "rx_ether.h"
 #include "phy.h"
 

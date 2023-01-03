@@ -38,7 +38,6 @@
 #include "irq.h"
 #include "pendsv.h"
 #include "systick.h"
-#include "common.h"
 #include "rz_sci.h"
 
 typedef int (*KEYEX_CB)(uint32_t d);

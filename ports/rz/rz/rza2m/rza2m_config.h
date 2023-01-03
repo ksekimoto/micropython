@@ -31,12 +31,15 @@
 extern "C" {
 #endif
 
-#define SCI_CH  4
-#define SCI_BAUD 115200
-#define UART_CH SCI_CH
-#define UART_TxStr sci_tx_str
-#define PCLK    66000000
-#define ETH_CH  1
+void rz_init(void);
+void bootstrap(void);
+
+// #define SCI_CH  4
+// #define SCI_BAUD 115200
+// #define UART_CH SCI_CH
+// #define UART_TxStr sci_tx_str
+// #define PCLK    66000000
+// #define ETH_CH  1
 
 // #define PRI_ETH     (14)
 // #define PRI_SCI     (3)
@@ -46,6 +49,7 @@ extern "C" {
 // #define PRI_TIM3    (12)
 // #define PRI_USB     (14)  defined in usb_hal.h
 
+#if 0
 #if defined(USE_DBG_PRINT)
 #if !defined(DEBUG_CH)
 #define DEBUG_CH SCI_CH
@@ -55,6 +59,11 @@ extern "C" {
 #else
 #define DEBUG_TXSTR(s)
 #define DEBUG_TXCH(c)
+#endif
+#endif
+
+#if !defined(__WEAK)
+#define __WEAK __attribute__((weak))
 #endif
 
 void rza2m_init(void);

@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -66,15 +66,6 @@ extern const mp_obj_type_t rx_lcdspi_type;
 char pyb_country_code[2];
 
 #if MICROPY_PY_PYB
-
-#if 0
-/* Only debugging for STM32 Hard Fault */
-STATIC mp_obj_t pyb_fault_debug(mp_obj_t value) {
-    pyb_hard_fault_debug = mp_obj_is_true(value);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_fault_debug_obj, pyb_fault_debug);
-#endif
 
 #if MICROPY_PY_PYB_LEGACY
 
@@ -179,13 +170,13 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     // { MP_ROM_QSTR(MP_QSTR_USB_VCP), MP_ROM_PTR(&pyb_usb_vcp_type) },
     { MP_ROM_QSTR(MP_QSTR_USB_HID), MP_ROM_PTR(&pyb_usb_hid_type) },
     #endif
-    // #if MICROPY_PY_PYB_LEGACY
+    #if MICROPY_PY_PYB_LEGACY
     // these 2 are deprecated; use USB_VCP.isconnected and USB_HID.send instead
     // { MP_ROM_QSTR(MP_QSTR_have_cdc), MP_ROM_PTR(&pyb_have_cdc_obj) },
     #if MICROPY_HW_USB_HID
     { MP_ROM_QSTR(MP_QSTR_hid), MP_ROM_PTR(&pyb_hid_send_report_obj) },
     #endif
-    // #endif
+    #endif
     // #endif
     #if MICROPY_PY_PYB_LEGACY
     { MP_ROM_QSTR(MP_QSTR_millis), MP_ROM_PTR(&mp_utime_ticks_ms_obj) },

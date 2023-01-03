@@ -32,7 +32,6 @@
 #include "led.h"
 #include "flash.h"
 #include "storage.h"
-#include "common.h"
 
 #if MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
 
@@ -131,13 +130,13 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
     }
     flash_flags |= FLASH_FLAG_DIRTY;
     led_state(PYB_LED_RED, 1); // indicate a dirty cache with LED on
-    flash_tick_counter_last_write = (long)mtick();
+    flash_tick_counter_last_write = (long)mp_hal_ticks_ms();
     return (uint8_t *)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
 }
 
 void flash_cache_commit(void) {
     if (flash_flags & FLASH_FLAG_DIRTY) {
-        if (((long)mtick() - flash_tick_counter_last_write) > 1000) {
+        if (((long)mp_hal_ticks_ms() - flash_tick_counter_last_write) > 1000) {
             flash_bdev_irq_handler();
         }
     }
@@ -204,7 +203,7 @@ void flash_bdev_irq_handler(void) {
 
     // If not a forced write, wait at least 5 seconds after last write to flush
     // On file close and flash unmount we get a forced write, so we can afford to wait a while
-    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || ((long)mtick() - flash_tick_counter_last_write) >= 3000L) {
+    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || ((long)mp_hal_ticks_ms() - flash_tick_counter_last_write) >= 3000L) {
         // sync the cache RAM buffer by writing it to the flash page
         flash_tick_counter_last_write = 0x7fffffffL;
         flash_write(flash_cache_sector_start, (const uint32_t *)CACHE_MEM_START_ADDR, flash_cache_sector_size);

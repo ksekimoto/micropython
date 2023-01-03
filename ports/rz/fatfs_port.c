@@ -28,9 +28,9 @@
 #include "py/runtime.h"
 #include "lib/oofatfs/ff.h"
 #if MICROPY_HW_ENABLE_RTC
+#include "rz_rtc.h"
 #include "rtc.h"
 #endif
-#include "rz_rtc.h"
 
 MP_WEAK DWORD get_fattime(void) {
     #if MICROPY_HW_ENABLE_RTC

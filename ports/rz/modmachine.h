@@ -29,7 +29,6 @@
 
 #include "py/obj.h"
 
-// extern const mp_obj_type_t machine_adc_type;
 extern const mp_obj_type_t machine_timer_type;
 extern const mp_obj_type_t machine_hard_i2c_type;
 

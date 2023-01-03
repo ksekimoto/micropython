@@ -33,12 +33,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" int _debug_printf(int ch, const char *format, ...);
-#else
-int _debug_printf(int ch, const char *format, ...);
-#endif
+#include "rz_gpio.h"
 
 #undef CH_COM
 #undef CH_LCD

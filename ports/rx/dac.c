@@ -31,9 +31,9 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "timer.h"
-#include "dac.h"
-// #include "dma.h"
 #include "pin.h"
+#include "rx_dac.h"
+#include "dac.h"
 
 /// \moduleref pyb
 /// \class DAC - digital to analog conversion

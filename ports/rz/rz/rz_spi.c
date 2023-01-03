@@ -29,6 +29,7 @@
 #include "common.h"
 #include "rspi_iodefine.h"
 #include "rz_gpio.h"
+#include "rz_utils.h"
 #include "rz_spi.h"
 
 // typedef unsigned int uint32_t;

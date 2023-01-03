@@ -10,7 +10,7 @@ extern "C" {
 #include <stdio.h>
 
 #if defined(USE_DBG_PRINT)
-#define DEBUG_LCDSPI
+#include "debug_printf.h"
 #define DEBUG_JPEG
 #define DEBUG_JPEG_SRC
 #endif

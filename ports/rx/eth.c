@@ -29,14 +29,12 @@
 #include "py/mphal.h"
 #include "py/mperrno.h"
 #include "shared/netutils/netutils.h"
-// #include "pin_static_af.h"
 #include "extmod/modnetwork.h"
-// #include "mpu.h"
 #include "eth.h"
 
 #if MICROPY_HW_ETH_MDC
 
-#include "common.h"
+#include "rx_ether.h"
 #include "phy.h"
 
 #include "lwip/etharp.h"

@@ -27,7 +27,7 @@
 #include "mbed.h"
 #include "flash_api.h"
 #include "mbed_flash.h"
-#include "common.h"
+#include "rz_utils.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // For Debugging

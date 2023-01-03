@@ -26,7 +26,7 @@
 
 #include "py/obj.h"
 #include "pin.h"
-#include "common.h"
+#include "rz_gpio.h"
 
 // Returns the pin mode. This value returned by this macro should be one of:
 // GPIO_MODE_INPUT, GPIO_MODE_OUTPUT_PP, GPIO_MODE_OUTPUT_OD,

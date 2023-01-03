@@ -33,7 +33,7 @@
 #include "adc.h"
 #include "pin.h"
 #include "timer.h"
-#include "common.h"
+#include "rx_adc.h"
 
 #if MICROPY_HW_ENABLE_ADC
 

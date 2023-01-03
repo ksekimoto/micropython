@@ -37,6 +37,7 @@
 #include "pin.h"
 #include "pin_static_af.h"
 #include "bufhelper.h"
+#include "rz_spi.h"
 
 // #if MICROPY_HW_ENABLE_SDCARD
 

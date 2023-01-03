@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013-2017 Damien P. George
- * Copyright (c) 2021 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@
 // board specific definitions
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
-#include "common.h"
 
 #ifndef MICROPY_CONFIG_ROM_LEVEL
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_EXTRA_FEATURES)
@@ -249,7 +248,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_wiznet5k;
 #endif
 
 #if MICROPY_HW_ESP
-extern const struct _mod_network_nic_type_t mod_network_nic_type_esp;
+extern const struct _mp_obj_type_t mod_network_nic_type_esp;
 #define MICROPY_HW_NIC_ESP              { MP_ROM_QSTR(MP_QSTR_WLAN), MP_ROM_PTR(&mod_network_nic_type_esp) },
 #else
 #define MICROPY_HW_NIC_ESP
@@ -309,7 +308,7 @@ typedef unsigned int mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-#define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
+// #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
 static inline void __WFI(void) {
     __asm__ ("wait");

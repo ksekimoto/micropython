@@ -29,6 +29,10 @@
 #include "rza2m_config.h"
 #include "rz_rtc.h"
 #include "rz_init.h"
+#include "rz_timer.h"
+#ifdef USE_DBG_PRINT
+#include "rz_sci.h"
+#endif
 
 void internal_flash_init(void);
 
@@ -52,7 +56,7 @@ void rz_init(void) {
     // udelay_init();
     rz_rtc_init();
     #ifdef USE_DBG_PRINT
-    sci_init_default(DEBUG_CH, SCI_BAUD);
+    sci_init_default(DEBUG_CH, DEBUG_BAUD);
     sci_tx_str(DEBUG_CH, (uint8_t *)"\r\n*** USE_DBG_PRINT ***\r\n");
     sci_tx_str(DEBUG_CH, (uint8_t *)"rza2m_init\r\n");
     #endif

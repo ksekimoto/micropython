@@ -24,8 +24,10 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/runtime.h"
 #include "i2c.h"
 
 #if MICROPY_HW_ENABLE_HW_I2C

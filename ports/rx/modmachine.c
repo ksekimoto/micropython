@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013-2015 Damien P. George
- * Copyright (c) 2018 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@
 #include "modmachine.h"
 #include "py/gc.h"
 #include "py/runtime.h"
-#include "py/objstr.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "extmod/machine_mem.h"
@@ -50,15 +49,13 @@
 #include "storage.h"
 #include "pin.h"
 #include "timer.h"
-#include "adc.h"
 #include "usb.h"
 #include "rtc.h"
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
 #include "wdt.h"
-#include "pwm.h"
-#include "common.h"
+#include "rx_init.h"
 
 #define PYB_RESET_SOFT      (0)
 #define PYB_RESET_POWER_ON  (1)
@@ -187,13 +184,11 @@ NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
     storage_flush();
     #endif
 
-    // HAL_RCC_DeInit();
-    // HAL_DeInit();
+    // ToDo: implement bootloader support
+    // __disable_irq();
 
-    #if (__MPU_PRESENT == 1)
-    // MPU must be disabled for bootloader to function correctly
-    HAL_MPU_Disable();
-    #endif
+    // MICROPY_BOARD_ENTER_BOOTLOADER(n_args, args);
+
 
     while (1) {
         ;
@@ -211,6 +206,7 @@ STATIC mp_obj_t machine_freq(size_t n_args, const mp_obj_t *args) {
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(tuple), tuple);
     } else {
+        // ToDo: implement machine freq set function
         mp_raise_NotImplementedError(MP_ERROR_TEXT("machine.freq set not supported yet"));
         return mp_const_none;
 

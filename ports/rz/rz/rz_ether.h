@@ -31,6 +31,9 @@
 extern "C" {
 #endif
 
+#include "iodefine.h"
+#include "common.h"
+
 #define TX_DESC_SECTION   __attribute__((section("_TX_DEDC")))
 #define RX_DESC_SECTION   __attribute__((section("_RX_DESC")))
 

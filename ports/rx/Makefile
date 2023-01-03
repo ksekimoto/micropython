@@ -11,7 +11,7 @@ $(error Invalid BOARD specified: $(BOARD_DIR))
 endif
 
 # enable debug_printf
-USE_DBG_PRINT = 0
+USE_DBG_PRINT = 1
 
 # enable micropython debug flag
 #MICROPY_DEBUG_VERBOSE = 1

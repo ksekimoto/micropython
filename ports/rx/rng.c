@@ -24,13 +24,13 @@
  * THE SOFTWARE.
  */
 
+#include "py/mphal.h"
 #include "rng.h"
-#include "common.h"
 
 #if MICROPY_HW_ENABLE_RNG
 
 uint32_t rng_get(void) {
-    return (uint32_t)mtick();
+    return (uint32_t)mp_hal_ticks_ms();
 }
 
 // Return a 30-bit hardware generated random number.
@@ -53,7 +53,7 @@ STATIC uint32_t pyb_rng_yasmarang(void) {
     static uint32_t pad = 0, n = 0, d = 0;
     static uint8_t dat = 0;
 
-    pad += dat + d * n + (uint32_t)mtick();
+    pad += dat + d * n + (uint32_t)mp_hal_ticks_ms();
     pad = (pad << 3) + (pad >> 29);
     n = pad | 2;
     d ^= (pad << 31) + (pad >> 1);

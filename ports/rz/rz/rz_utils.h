@@ -26,6 +26,9 @@
 
 #ifndef RZ_RZ_UTILS_H_
 #define RZ_RZ_UTILS_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdint.h>
 
@@ -45,6 +48,10 @@ static inline uint32_t rz_disable_irq(void) {
 #if RZ_TODO
 __attribute__((always_inline)) uint32_t rz_get_PRIMASK(void);
 __attribute__((always_inline)) void rz_set_PRIMASK(uint32_t priMask);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* RZ_RZ_UTILS_H_ */

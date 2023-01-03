@@ -5,7 +5,7 @@
 
 #define MICROPY_HW_HAS_SWITCH           (0)
 #define MICROPY_HW_HAS_FLASH            (1)
-#define MICROPY_HW_ENABLE_SDCARD        (1)
+#define MICROPY_HW_ENABLE_SDCARD        (0)
 #define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_ENABLE_RTC           (1)
 #define MICROPY_HW_ENABLE_SERVO         (1)
@@ -27,16 +27,19 @@
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
-//#define MICROPY_HW_I2C0_SCL (pin_P13)
-//#define MICROPY_HW_I2C0_SDA (pin_P12)
-//#define MICROPY_HW_I2C1_SCL (pin_P20)
-//#define MICROPY_HW_I2C1_SDA (pin_P21)
-//#define MICROPY_HW_I2C2_SCL (pin_PC4)
-//#define MICROPY_HW_I2C2_SDA (pin_PC6)
-//#define MICROPY_HW_I2C3_SCL (pin_P50)
-//#define MICROPY_HW_I2C3_SDA (pin_P52)
-//#define MICROPY_HW_I2C4_SCL (pin_PC7)
-//#define MICROPY_HW_I2C4_SDA (pin_PC6)
+// For 100 pin, P21/P20 and PC0/PC1 are not available for RII
+#define MICROPY_HW_I2C1_NAME "X"
+#define MICROPY_HW_I2C1_SCL (pin_P12)
+#define MICROPY_HW_I2C1_SDA (pin_P13)
+// #define MICROPY_HW_I2C2_NAME "Y"
+// #define MICROPY_HW_I2C2_SCL (pin_P21)
+// #define MICROPY_HW_I2C2_SDA (pin_P20)
+// #define MICROPY_HW_I2C3_NAME "Z"
+// #define MICROPY_HW_I2C3_SCL (pin_P16)
+// #define MICROPY_HW_I2C3_SDA (pin_P17)
+// #define MICROPY_HW_I2C4_NAME "W"
+// #define MICROPY_HW_I2C4_SCL (pin_PC0)
+// #define MICROPY_HW_I2C4_SDA (pin_PC1)
 
 // MMA accelerometer config
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
@@ -59,15 +62,15 @@
 #define MICROPY_HW_LED_OFF(pin)     mp_hal_pin_low(pin)
 #define MICROPY_HW_LED_TOGGLE(pin)  mp_hal_pin_toggle(pin)
 // SD card detect switch
-#define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P13)
-#define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
-#define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
-#define MICROPY_HW_SDCARD_SPI_CH    (0)
-//#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC0)   /* Default */
-#define MICROPY_HW_SDCARD_SPI_CS    (pin_PC2)   /* Jtag configuration */
-#define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
-#define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
-#define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
+// #define MICROPY_HW_SDCARD_DETECT_PIN        (pin_P13)
+// #define MICROPY_HW_SDCARD_DETECT_PULL       (GPIO_PULLUP)
+// #define MICROPY_HW_SDCARD_DETECT_PRESENT    (0)
+// #define MICROPY_HW_SDCARD_SPI_CH    (0)
+// #define MICROPY_HW_SDCARD_SPI_CS    (pin_PC0)   /* Default */
+// #define MICROPY_HW_SDCARD_SPI_CS    (pin_PC2)   /* Jtag configuration */
+// #define MICROPY_HW_SDCARD_SPI_CK    (pin_PC5)
+// #define MICROPY_HW_SDCARD_SPI_MOSI  (pin_PC6)
+// #define MICROPY_HW_SDCARD_SPI_MISO  (pin_PC7)
 
 //#define MICROPY_PY_LWIP (1)
 #define MICROPY_HW_ETH_MAC_ADDRESS_0    0x00
@@ -128,3 +131,5 @@
 #define BOARD_SERVO6_PIN    (pin_PB5)
 
 #define MICROPY_PY_PYB_LEGACY   1   // if flash rom is short, shoule be 0
+#define MICROPY_PY_NETWORK      1
+#define MICROPY_PY_USOCKET      1

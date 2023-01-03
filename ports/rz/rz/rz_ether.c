@@ -72,6 +72,7 @@
 #include "RZ_A2M.h"
 #include "iodefine.h"
 #include "edmac_iodefine.h"
+#include "rz_utils.h"
 #include "rz_ether.h"
 #include "phy.h"
 #if defined(MBED_OS_EMAC)

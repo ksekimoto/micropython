@@ -27,7 +27,6 @@
 #include <stdint.h>
 #include "common.h"
 #include "iodefine.h"
-// #include "interrupt_handlers.h"
 #include "gpio_addrdefine.h"
 #include "rz_gpio.h"
 

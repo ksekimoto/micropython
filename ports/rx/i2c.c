@@ -24,66 +24,74 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "rx_i2c.h"
 #include "i2c.h"
 
 #if MICROPY_HW_ENABLE_HW_I2C
 
-STATIC uint16_t i2c_timeout_ms[MICROPY_HW_MAX_I2C];
-
-int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout_ms) {
-
-    // ToDo implement
-    uint32_t i2c_id = 0;
-    // Init pins
-    // if (!mp_hal_pin_config_alt(scl, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
-    //    return -MP_EPERM;
-    // }
-    // if (!mp_hal_pin_config_alt(sda, MP_HAL_PIN_MODE_ALT_OPEN_DRAIN, MP_HAL_PIN_PULL_UP, AF_FN_I2C, i2c_id + 1)) {
-    //    return -MP_EPERM;
-    // }
-    // Save timeout value
-    i2c_timeout_ms[i2c_id] = timeout_ms;
-
-
-    return 0;
-}
-
-#if 0
-STATIC int i2c_wait_sr1_set(i2c_t *i2c, uint32_t mask) {
-    // ToDo implement
-    return 0;
-}
-
-STATIC int i2c_wait_stop(i2c_t *i2c) {
-    // ToDo implement
-    return 0;
-}
+#ifdef USE_DBG_PRINT
+#include "debug_printf.h"
+// #define DEBUG_I2C
 #endif
 
-// For write: len = 0, 1 or N
-// For read: len = 1, 2 or N; stop = true
+#define TIMEOUT 10  // 10ms
+
+i2c_t i2c_obj[] = {
+    {0, 8, 100000, 10},
+    {1, 8, 100000, 10},
+    {2, 8, 100000, 10},
+    {3, 8, 100000, 10},
+};
+
+int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout_ms) {
+    (void)timeout_ms;
+    rx_i2c_init(i2c->ch, (uint32_t)scl->id, (uint32_t)sda->id, freq, timeout_ms);
+    return 0;
+}
+
 int i2c_start_addr(i2c_t *i2c, int rd_wrn, uint16_t addr, size_t next_len, bool stop) {
-    // ToDo implement
+    i2c->addr = addr;
     return 0;
 }
 
 // next_len = 0 or N (>=2)
 int i2c_read(i2c_t *i2c, uint8_t *dest, size_t len, size_t next_len) {
-    // ToDo implement
-    return 0;
+    (void)next_len;
+    bool flag = false;
+    xaction_t action;
+    xaction_unit_t unit;
+    rx_i2c_unit_init(&unit, (uint8_t *)dest, (uint32_t)len, true, (void *)NULL);
+    rx_i2c_xaction_init(&action, (xaction_unit_t *)&unit, 1, i2c->ch, i2c->freq, (uint32_t)i2c->addr, true);
+    flag = rx_i2c_action_execute(&action, false, TIMEOUT);
+    return flag? 1:0;
 }
 
 // next_len = 0 or N
 int i2c_write(i2c_t *i2c, const uint8_t *src, size_t len, size_t next_len) {
-    // ToDo implement
-    // Write out the data
-    int num_acks = 0;
-    return num_acks;
+    (void)next_len;
+    bool flag = false;
+    xaction_t action;
+    xaction_unit_t unit;
+    rx_i2c_unit_init(&unit, (uint8_t *)src, (uint32_t)len, false, (void *)NULL);
+    rx_i2c_xaction_init(&action, (xaction_unit_t *)&unit, 1, i2c->ch, i2c->freq, (uint32_t)i2c->addr, true);
+    flag = rx_i2c_action_execute(&action, false, TIMEOUT);
+    return flag? 0:1;
 }
 
+bool i2c_ready(i2c_t *i2c, uint16_t i2c_addr) {
+    uint8_t dummy;
+    i2c->addr = i2c_addr;
+    int ret = i2c_read(i2c, (uint8_t *)&dummy, (size_t)1, (size_t)0);
+    if (ret != 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 int i2c_readfrom(i2c_t *i2c, uint16_t addr, uint8_t *dest, size_t len, bool stop) {
     int ret;

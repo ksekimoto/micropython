@@ -31,25 +31,71 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+#include <stdbool.h>
 #include "iodefine.h"
 
 typedef volatile struct st_riic riic_t;
 
+#define RX_I2C_DEF_TIMEOUT              1000    // 1000 ms
+#define RX_I2C_TIMEOUT_STOP_CONDITION   100000  // counts
+#define RX_I2C_TIMEOUT_BUS_BUSY         100000  // counts
+#define RX_I2C_CLOCK_MAX                1000000 // counts
+
+typedef enum
+{
+    RX_I2C_STATUS_Idle = 1,
+    RX_I2C_STATUS_Started = 2,
+    RX_I2C_STATUS_AddrWriteCompleted = 3,
+    RX_I2C_STATUS_DataWriteCompleted = 4,
+    RX_I2C_STATUS_DataSendCompleted = 5,
+    RX_I2C_STATUS_FirstReceiveCompleted = 5,
+    RX_I2C_STATUS_LastReceiveCompleted = 6,
+    RX_I2C_STATUS_Stopped = 7,
+} xaction_status_t;
+
+typedef enum
+{
+    RX_I2C_ERROR_OK = 0,
+    RX_I2C_ERROR_TMOF = 1,
+    RX_I2C_ERROR_AL = 2,
+    RX_I2C_ERROR_NACK = 3,
+    RX_I2C_ERROR_BUSY = 4,
+} xaction_error_t;
+
 typedef struct {
-    uint32_t m_bytes_transferred;
-    uint32_t m_bytes_transfer;
+    volatile uint32_t m_bytes_transferred;
+    volatile uint32_t m_bytes_transfer;
     bool m_fread;
     uint8_t *buf;
+    void *next;
 } xaction_unit_t;
 
 typedef struct {
     xaction_unit_t *units;
     uint32_t m_num_of_units;
     uint32_t m_current;
-    uint32_t m_clock;
+    uint32_t m_ch;
+    uint32_t m_baudrate;
     uint32_t m_address;
-    uint32_t m_status;
+    volatile xaction_status_t m_status;
+    xaction_error_t m_error;
+    bool m_stop;
 } xaction_t;
+
+void rx_i2c_set_baudrate(uint32_t ch, uint32_t baudrate);
+void rx_i2c_init(uint32_t ch, uint32_t scl, uint32_t sda, uint32_t baudrate, uint32_t timeout);
+void rx_i2c_deinit(uint32_t ch);
+void rx_i2c_read_last_byte(uint32_t ch);
+void rx_i2c_stop_condition(uint32_t ch);
+void rx_i2c_abort(uint32_t ch);
+void rx_i2c_xaction_start(xaction_t *xaction, bool repeated_start);
+void rx_i2c_xaction_stop(void);
+void rx_i2c_unit_write_byte(uint32_t ch, xaction_unit_t *unit);
+void rx_i2c_unit_read_byte(uint32_t ch, xaction_unit_t *unit);
+void rx_i2c_unit_init(xaction_unit_t *unit, uint8_t *buf, uint32_t size, bool fread, void *next);
+void rx_i2c_xaction_init(xaction_t *action, xaction_unit_t *units, uint32_t size, uint32_t ch, uint32_t baudrate, uint32_t address, bool stop);
+bool rx_i2c_action_execute(xaction_t *action, bool repeated_start, uint32_t timeout_ms);
 
 #ifdef __cplusplus
 }

@@ -52,7 +52,7 @@ STATIC int soft_timer_lt(mp_pairheap_t *n1, mp_pairheap_t *n2) {
 
 STATIC void soft_timer_schedule_systick(uint32_t ticks_ms) {
     uint32_t irq_state = disable_irq();
-    uint32_t uw_tick = (uint32_t)mtick();
+    uint32_t uw_tick = (uint32_t)mp_hal_ticks_ms();
     if (TICKS_DIFF(ticks_ms, uw_tick) <= 0) {
         soft_timer_next = uw_tick + 1;
     } else {
@@ -79,7 +79,7 @@ void soft_timer_deinit(void) {
 
 // Must be executed at IRQ_PRI_PENDSV
 void soft_timer_handler(void) {
-    uint32_t ticks_ms = (uint32_t)mtick();
+    uint32_t ticks_ms = (uint32_t)mp_hal_ticks_ms();
     soft_timer_entry_t *heap = soft_timer_heap;
     while (heap != NULL && TICKS_DIFF(heap->expiry_ms, ticks_ms) <= 0) {
         soft_timer_entry_t *entry = heap;
@@ -97,7 +97,7 @@ void soft_timer_handler(void) {
     soft_timer_heap = heap;
     if (heap == NULL) {
         // No more timers left, set largest delay possible
-        soft_timer_next = (uint32_t)mtick();
+        soft_timer_next = (uint32_t)mp_hal_ticks_ms();
     } else {
         // Set soft_timer_next so SysTick calls us back at the correct time
         soft_timer_schedule_systick(heap->expiry_ms);

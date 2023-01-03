@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016-2018 Damien P. George
+ * Copyright (c) 2022 Renesas Electronics Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +48,28 @@ typedef struct _machine_hard_i2c_obj_t {
     mp_hal_pin_obj_t sda;
 } machine_hard_i2c_obj_t;
 
+
+#if defined(MICROPY_HW_I2C1_SCL)
+static i2c_t I2C1 = {
+    1, 0, 400000, 10
+};
+#endif
+#if defined(MICROPY_HW_I2C2_SCL)
+static i2c_t I2C2 = {
+    2, 0, 400000, 10
+};
+#endif
+#if defined(MICROPY_HW_I2C3_SCL)
+static i2c_t I2C3 = {
+    3, 0, 400000, 10
+};
+#endif
+#if defined(MICROPY_HW_I2C4_SCL)
+static i2c_t I2C4 = {
+    4, 0, 400000, 10
+};
+#endif
+
 STATIC const machine_hard_i2c_obj_t machine_hard_i2c_obj[MICROPY_HW_MAX_I2C] = {
     #if defined(MICROPY_HW_I2C1_SCL)
     [0] = {{&machine_i2c_type}, I2C1, MICROPY_HW_I2C1_SCL, MICROPY_HW_I2C1_SDA},
@@ -65,36 +88,9 @@ STATIC const machine_hard_i2c_obj_t machine_hard_i2c_obj[MICROPY_HW_MAX_I2C] = {
 STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     machine_hard_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    #if defined(STM32F4)
-
-    uint32_t freq = self->i2c->CR2 & 0x3f;
-    uint32_t ccr = self->i2c->CCR;
-    if (ccr & 0x8000) {
-        // Fast mode, assume duty cycle of 16/9
-        freq = freq * 40000 / (ccr & 0xfff);
-    } else {
-        // Standard mode
-        freq = freq * 500000 / (ccr & 0xfff);
-    }
-
-    mp_printf(print, "I2C(%u, scl=%q, sda=%q, freq=%u)",
+    mp_printf(print, "I2C(%u, scl=%q, sda=%q)",
         self - &machine_hard_i2c_obj[0] + 1,
-        mp_hal_pin_name(self->scl), mp_hal_pin_name(self->sda),
-        freq);
-
-    #else
-
-    uint32_t timingr = self->i2c->TIMINGR;
-    uint32_t presc = timingr >> 28;
-    uint32_t sclh = timingr >> 8 & 0xff;
-    uint32_t scll = timingr & 0xff;
-    uint32_t freq = HAL_RCC_GetPCLK1Freq() / (presc + 1) / (sclh + scll + 2);
-    mp_printf(print, "I2C(%u, scl=%q, sda=%q, freq=%u, timingr=0x%08x)",
-        self - &machine_hard_i2c_obj[0] + 1,
-        mp_hal_pin_name(self->scl), mp_hal_pin_name(self->sda),
-        freq, timingr);
-
-    #endif
+        self->scl->name, self->sda->name);
 }
 
 void machine_hard_i2c_init(machine_hard_i2c_obj_t *self, uint32_t freq, uint32_t timeout_us) {
@@ -128,7 +124,6 @@ int machine_hard_i2c_transfer(mp_obj_base_t *self_in, uint16_t addr, size_t n, m
         }
         num_acks += ret;
     }
-
     return num_acks;
 }
 
@@ -186,12 +181,6 @@ STATIC void machine_hard_i2c_init(machine_hard_i2c_obj_t *self, uint32_t freq, u
 /******************************************************************************/
 /* MicroPython bindings for machine API                                       */
 
-#if defined(STM32F0) || defined(STM32F7)
-#define MACHINE_I2C_TIMINGR (1)
-#else
-#define MACHINE_I2C_TIMINGR (0)
-#endif
-
 mp_obj_t machine_hard_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     MP_MACHINE_I2C_CHECK_FOR_LEGACY_SOFTI2C_CONSTRUCTION(n_args, n_kw, all_args);
 
@@ -203,9 +192,6 @@ mp_obj_t machine_hard_i2c_make_new(const mp_obj_type_t *type, size_t n_args, siz
         { MP_QSTR_sda, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_freq, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 400000} },
         { MP_QSTR_timeout, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = I2C_POLL_DEFAULT_TIMEOUT_US} },
-        #if MACHINE_I2C_TIMINGR
-        { MP_QSTR_timingr, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
-        #endif
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -221,13 +207,6 @@ mp_obj_t machine_hard_i2c_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     // initialise the I2C peripheral
     machine_hard_i2c_init(self, args[ARG_freq].u_int, args[ARG_timeout].u_int);
-
-    #if MACHINE_I2C_TIMINGR
-    // If given, explicitly set the TIMINGR value
-    if (args[ARG_timingr].u_obj != mp_const_none) {
-        self->i2c->TIMINGR = mp_obj_get_int_truncated(args[ARG_timingr].u_obj);
-    }
-    #endif
 
     return MP_OBJ_FROM_PTR(self);
 }

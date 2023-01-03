@@ -566,8 +566,8 @@ int32_t packet_read(uint8_t *buf, int amount, uint32_t timeout) {
     #if defined(DEBUG_ESP_PACKET)
     MPY_DEBUG_PRINTF("packet_read(): buf=%x, amount=%d\r\n", buf, amount);
     #endif
-    s = (uint32_t)mtick();
-    while ((uint32_t)mtick() - s < timeout) {
+    s = (uint32_t)mp_hal_ticks_ms();
+    while ((uint32_t)mp_hal_ticks_ms() - s < timeout) {
         while (esp_serial_available() > 0) {
             #if defined(DEBUG_ESP_RAW_DATA_RD) || defined(DEBUG_ESP_DRIVER_PACKET_READ)
             mpy_uart_debug_read(true);
@@ -1117,8 +1117,8 @@ uint32_t esp_read(uint32_t timeout) {
     #endif
     memset((void *)data, 0, sizeof(recv_buf));
     i = 0;
-    s = (uint32_t)mtick();
-    while ((uint32_t)mtick() - s < timeout) {
+    s = (uint32_t)mp_hal_ticks_ms();
+    while ((uint32_t)mp_hal_ticks_ms() - s < timeout) {
         if (esp_serial_available() > 0) {
             uint8_t c = (uint8_t)esp_serial_read_ch();
             #if defined(DEBUG_ESP_DRIVER)

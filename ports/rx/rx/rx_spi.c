@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "common.h"
+#include "rx_gpio.h"
 #include "rx_spi.h"
 
 #define SPI_DEFAULT_POLARITY 0
@@ -284,65 +285,11 @@ void rx_spi_write_bytes32(uint32_t ch, uint32_t *buf, uint32_t count) {
 
 void rx_spi_write_bytes(uint32_t ch, uint32_t bits, uint8_t *buf, uint32_t count) {
     if (bits == 8) {
-        rx_spi_write_bytes8(ch, (uint8_t *)buf, count);
+        rx_spi_write_bytes8(ch, buf, count);
     } else if (bits == 16) {
         rx_spi_write_bytes16(ch, (uint16_t *)buf, count >> 1);
     } else if (bits == 32) {
         rx_spi_write_bytes32(ch, (uint32_t *)buf, count >> 2);
-    }
-}
-
-void rx_spi_read_bytes8(uint32_t ch, uint8_t data, uint8_t *buf, uint32_t count) {
-    vp_rspi prspi = g_rspi[ch];
-    rx_spi_set_bits(ch, 8);
-    while (count--) {
-        rx_spi_set_ir(ch, 0);
-        prspi->SPDR.LONG = (uint32_t)data;
-        while (rx_spi_chk_ir(ch, 0)) {
-            ;
-        }
-        *buf = (uint8_t)(prspi->SPDR.LONG);
-        buf++;
-    }
-}
-
-void rx_spi_read_bytes16(uint32_t ch, uint16_t data, uint16_t *buf, uint32_t count) {
-    vp_rspi prspi = g_rspi[ch];
-    rx_spi_set_bits(ch, 16);
-    while (count--) {
-        rx_spi_set_ir(ch, 0);
-        prspi->SPDR.LONG = (uint32_t)data;
-        while (rx_spi_chk_ir(ch, 0)) {
-            ;
-        }
-        *buf = (uint16_t)(prspi->SPDR.LONG);
-        buf++;
-    }
-    rx_spi_set_bits(ch, 8);
-}
-
-void rx_spi_read_bytes32(uint32_t ch, uint32_t data, uint32_t *buf, uint32_t count) {
-    vp_rspi prspi = g_rspi[ch];
-    rx_spi_set_bits(ch, 32);
-    while (count--) {
-        rx_spi_set_ir(ch, 0);
-        prspi->SPDR.LONG = (uint32_t)data;
-        while (rx_spi_chk_ir(ch, 0)) {
-            ;
-        }
-        *buf = (uint32_t)(prspi->SPDR.LONG);
-        buf++;
-    }
-    rx_spi_set_bits(ch, 8);
-}
-
-void rx_spi_read_bytes(uint32_t ch, uint32_t bits, uint32_t data, uint8_t *buf, uint32_t count) {
-    if (bits == 8) {
-        rx_spi_read_bytes8(ch, (uint8_t)data, (uint8_t *)buf, count);
-    } else if (bits == 16) {
-        rx_spi_read_bytes16(ch, (uint16_t)data, (uint16_t *)buf, count >> 1);
-    } else if (bits == 32) {
-        rx_spi_read_bytes32(ch, (uint32_t)data, (uint32_t *)buf, count >> 2);
     }
 }
 
@@ -394,8 +341,6 @@ void rx_spi_transfer32(uint32_t ch, uint32_t *dst, uint32_t *src, uint32_t count
 }
 
 void rx_spi_transfer(uint32_t ch, uint32_t bits, uint8_t *dst, uint8_t *src, uint32_t count, uint32_t timeout) {
-    (void)timeout;
-    // ToDo: implement timeout;
     if (bits == 8) {
         rx_spi_transfer8(ch, dst, src, count);
     } else if (bits == 16) {
@@ -414,8 +359,6 @@ void rx_spi_start_xfer(uint32_t ch, uint16_t spcmd, uint8_t spbr) {
 }
 
 void rx_spi_end_xfer(uint32_t ch) {
-    (void)ch;
-    // ToDo: implement end action
 }
 
 void rx_spi_get_conf(uint32_t ch, uint16_t *spcmd, uint8_t *spbr) {
@@ -436,10 +379,6 @@ void rx_spi_init(uint32_t ch, uint32_t cs, uint32_t baud, uint32_t bits, uint32_
 }
 
 void rx_spi_init_with_pin(uint32_t ch, uint32_t mosi, uint32_t miso, uint32_t clk, uint32_t cs, uint32_t baud, uint32_t bits, uint32_t mode) {
-    (void)mosi;
-    (void)miso;
-    (void)clk;
-    // ToDo: implement pin selection
     rx_spi_init(ch, cs, baud, bits, mode);
 }
 

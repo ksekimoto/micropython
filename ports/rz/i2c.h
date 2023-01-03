@@ -26,14 +26,12 @@
 #ifndef MICROPY_INCLUDED_RZ_I2C_H
 #define MICROPY_INCLUDED_RZ_I2C_H
 
-// #include "dma.h"
-
 #define MICROPY_HW_MAX_I2C 4
 // use this for OwnAddress1 to configure I2C in master mode
 #define PYB_I2C_MASTER_ADDRESS (0xfe)
 
 typedef struct {
-    uint32_t ic2_id;
+    uint32_t i2c_id;
 } I2C_TypeDef;
 
 typedef struct {

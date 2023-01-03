@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013-2017 Damien P. George
- * Copyright (c) 2021 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@
 // board specific definitions
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
-// #include "common.h"
 
 #ifndef MICROPY_CONFIG_ROM_LEVEL
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_EXTRA_FEATURES)
@@ -236,7 +235,7 @@ extern void lv_deinit(void);
 #define MICROPY_PORT_RTCH_DEF
 #endif
 
-#if defined(MICROPY_HW_ETH_MDC)
+#if MICROPY_HW_ETH_MDC
 extern const struct _mp_obj_type_t network_lan_type;
 #define MICROPY_HW_NIC_ETH                  { MP_ROM_QSTR(MP_QSTR_LAN), MP_ROM_PTR(&network_lan_type) },
 #else
@@ -262,7 +261,7 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_wiznet5k;
 #endif
 
 #if MICROPY_HW_ESP
-extern const struct _mod_network_nic_type_t mod_network_nic_type_esp;
+extern const struct _mp_obj_type_t mod_network_nic_type_esp;
 #define MICROPY_HW_NIC_ESP              { MP_ROM_QSTR(MP_QSTR_WLAN), MP_ROM_PTR(&mod_network_nic_type_esp) },
 #else
 #define MICROPY_HW_NIC_ESP

@@ -49,10 +49,6 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 
-#if defined(USE_DBG_PRINT)
-#define DEBUG_JPEG
-#endif
-
 void *m_malloc(size_t n);
 void m_free(void *p);
 

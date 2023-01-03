@@ -27,46 +27,11 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#ifndef TRUE
-#define TRUE    1
-#endif
-
-#ifndef FALSE
-#define FALSE   0
-#endif
-
-#define SUCCESS  0
-#define ERROR    -1
-
-#ifndef NULL
-#define NULL 0
-#endif
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "iodefine.h"
 #include "rx65n_config.h"
-#include "rx_adc.h"
-#include "rx_dac.h"
-#include "rx_ether.h"
-#include "rx_exti.h"
-#include "rx_ether.h"
-#include "rx_flash.h"
-#include "rx_gpio.h"
-#include "rx_i2c.h"
-#include "rx_init.h"
-#include "rx_int.h"
-#include "rx_pwm.h"
-#include "rx_rtc.h"
-#include "rx_sci.h"
-#include "rx_spi.h"
-#include "rx_servo.h"
-#include "rx_timer.h"
-#include "rx_tpu.h"
-#include "rx_utils.h"
-#ifdef USE_DBG_PRINT
-#include "debug_printf.h"
-#endif
+#include "board_conf.h"
 
 #endif /* COMMON_H_ */

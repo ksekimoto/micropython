@@ -34,7 +34,6 @@
 #include "extmod/misc.h"
 #include "usb.h"
 #include "uart.h"
-// #include "usb_entry.h"
 #include "modmachine.h"
 
 typedef enum

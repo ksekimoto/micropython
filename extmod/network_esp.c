@@ -465,7 +465,7 @@ STATIC int mod_esp_socket_ioctl(mod_network_socket_obj_t *socket, mp_uint_t requ
 typedef struct _esp_obj_t {
     mp_obj_base_t base;
 } esp_obj_t;
-
+const mp_obj_type_t mod_network_nic_type_esp;
 STATIC const esp_obj_t esp_obj = {{(mp_obj_type_t *)&mod_network_nic_type_esp}};
 
 #if defined(RZA2M) || defined(RX63N) || defined(RX65N)
@@ -747,16 +747,7 @@ STATIC const mp_rom_map_elem_t esp_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(esp_locals_dict, esp_locals_dict_table);
 
-STATIC MP_DEFINE_CONST_OBJ_FULL_TYPE(
-    mod_network_nic_type_esp_base,
-    MP_QSTR_ESP,
-    MP_TYPE_FLAG_NONE,
-    make_new, esp_make_new,
-    locals_dict, &esp_locals_dict
-    );
-
-const mod_network_nic_type_t mod_network_nic_type_esp = {
-    .base = mod_network_nic_type_esp_base,
+const mod_network_nic_protocol_t mod_network_nic_protocol_esp = {
     .gethostbyname = mod_esp_gethostbyname,
     .socket = mod_esp_socket_socket,
     .close = mod_esp_socket_close,
@@ -773,5 +764,14 @@ const mod_network_nic_type_t mod_network_nic_type_esp = {
     .settimeout = mod_esp_socket_settimeout,
     .ioctl = mod_esp_socket_ioctl,
 };
+
+MP_DEFINE_CONST_OBJ_TYPE(
+    mod_network_nic_type_esp,
+    MP_QSTR_ESP,
+    MP_TYPE_FLAG_NONE,
+    make_new, esp_make_new,
+    locals_dict, &esp_locals_dict,
+    protocol, &mod_network_nic_protocol_esp
+    );
 
 #endif

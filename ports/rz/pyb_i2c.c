@@ -32,11 +32,14 @@
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
-// #include "dma.h"
 #include "i2c.h"
 
 #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
 
+#ifdef USE_DBG_PRINT
+#include "debug_printf.h"
+// #define DEBUG_I2C
+#endif
 // dummmy definition
 typedef int HAL_StatusTypeDef;
 #define HAL_OK  0

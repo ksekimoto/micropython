@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "rz_gpio.h"
 
 #define RZ_SCI_FLOW_START_NUM   (16)
 

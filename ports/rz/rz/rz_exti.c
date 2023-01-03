@@ -29,6 +29,8 @@
 #include "iodefine.h"
 #include "rz_exti.h"
 #include "rz_gpio.h"
+#include "rz_timer.h"
+#include "rz_exti.h"
 
 unsigned long mtick(void);
 

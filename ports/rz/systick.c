@@ -31,9 +31,6 @@
 #include "pendsv.h"
 #include "systick.h"
 #include "softtimer.h"
-#if RZ_TODO
-#include "pybthread.h"
-#endif
 #include "mbed_wait_api.h"
 #include "hal/us_ticker_api.h"
 #include "mbed_timer.h"

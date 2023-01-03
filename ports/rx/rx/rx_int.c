@@ -31,6 +31,10 @@
 #include "common.h"
 #include "iodefine.h"
 #include "usb_hal.h"
+#include "rx_ether.h"
+#include "rx_gpio.h"
+#include "rx_sci.h"
+#include "rx_int.h"
 
 #if (defined(RX64M) || defined(RX65N))
 // extern void sci_isr_te(int ch);

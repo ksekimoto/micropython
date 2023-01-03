@@ -33,8 +33,8 @@
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
+#include "rx_spi.h"
 #include "spi.h"
-#include "common.h"
 
 /// \moduleref pyb
 /// \class SPI - a master-driven serial protocol

@@ -51,18 +51,12 @@
 #include "pin.h"
 #include "timer.h"
 #include "adc.h"
-#if RZ_TODO
-#include "usb.h"
-#endif
 #include "rtc.h"
 #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
-#if RZ_TODO
-#include "wdt.h"
-#endif
 #include "pwm.h"
-#include "common.h"
+#include "rz_init.h"
 
 #define PYB_RESET_SOFT      (0)
 #define PYB_RESET_POWER_ON  (1)

@@ -32,7 +32,7 @@
 #include "usb_hal.h"
 #include "usb_cdc.h"
 #include "usb_msc.h"
-#include "common.h"
+#include "rx_timer.h"
 #include "pendsv.h"
 #include "usbdescriptors.h"
 #include "usb_entry.h"

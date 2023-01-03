@@ -37,7 +37,7 @@
 #include "jpeg.h"
 #include "jpeg_disp.h"
 #include "lcdspi.h"
-#include "common.h"
+#include "rx_gpio.h"
 
 #if MICROPY_HW_ENABLE_LCDSPI
 

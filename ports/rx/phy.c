@@ -31,10 +31,10 @@
 #include "py/stream.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "rx_ether.h"
 
 #if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
-#include "common.h"
 #include "phy.h"
 
 // typedef __uint32_t uint32_t;

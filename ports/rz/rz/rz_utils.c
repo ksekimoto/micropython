@@ -24,6 +24,10 @@
  * THE SOFTWARE.
  */
 
+#include <stdint.h>
+#include <stdbool.h>
+#include "common.h"
+#include "iodefine.h"
 #include "rz_utils.h"
 
 #if RZ_TODO

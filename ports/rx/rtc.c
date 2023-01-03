@@ -111,7 +111,7 @@ void rtc_init_start(bool force_init) {
         // or rtc_info |= 0x80000;
         return;
     }
-    rtc_startup_tick = mtick();
+    rtc_startup_tick = mp_hal_ticks_ms();
     rtc_info = 0x3f000000 | (rtc_startup_tick & 0xffffff);
     PYB_RTC_MspInit_Kick();
 }
@@ -123,7 +123,7 @@ void rtc_init_finalise(void) {
     rtc_info = 0x20000000;
     PYB_RTC_Init();
     RTC_CalendarConfig();
-    rtc_info |= (mtick() - rtc_startup_tick) & 0xffff;
+    rtc_info |= (mp_hal_ticks_ms() - rtc_startup_tick) & 0xffff;
     rtc_need_init_finalise = false;
 }
 

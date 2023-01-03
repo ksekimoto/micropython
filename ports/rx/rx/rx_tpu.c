@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include "common.h"
+#include "rx_gpio.h"
 #include "rx_tpu.h"
 
 typedef struct st_tpu0 *tpu_reg_t;

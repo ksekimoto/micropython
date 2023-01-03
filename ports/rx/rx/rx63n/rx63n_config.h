@@ -31,31 +31,6 @@
 extern "C" {
 #endif
 
-#define SCI_CH  0
-#define SCI_BAUD 115200
-#define UART_CH SCI_CH
-#define UART_TxStr rx_sci_tx_str
-#define PCLK    48000000
-
-#if defined(USE_DBG_PRINT)
-#if !defined(DEBUG_CH)
-#define DEBUG_CH SCI_CH
-#endif
-#if !defined(DEBUG_CH_TX)
-#define DEBUG_CH_TX P20
-#endif
-#if !defined(DEBUG_CH_RX)
-#define DEBUG_CH_RX P21
-#endif
-#define DEBUG_TXSTR(s)  rx_sci_tx_str(DEBUG_CH, (unsigned char *)s)
-#define DEBUG_TXCH(c)   rx_sci_tx_ch(DEBUG_CH, c)
-// #define DEBUG_TXSTR(S)  printf("%s", S)
-// #define DEBUG_TXCH(C)   printf("%c", C)
-#else
-#define DEBUG_TXSTR(s)
-#define DEBUG_TXCH(c)
-#endif
-
 void rx_init(void);
 void bootstrap(void);
 

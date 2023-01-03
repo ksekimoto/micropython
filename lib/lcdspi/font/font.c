@@ -32,7 +32,8 @@
 #include "font.h"
 
 #if defined(USE_DBG_PRINT)
-#define DEBUG_LCDSPI
+#include "debug_printf.h"
+// #define DEBUG_FONT
 #endif
 
 #ifdef MISAKIFONT4X8
@@ -284,14 +285,14 @@ unsigned char *font_fontData(font_t *font, int idx) {
     }
     if (idx < 0x100) {
         idx &= 0xff;
-        #if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_FONT)
         debug_printf("font8 idx: ", idx);
         #endif
         p = font->_font_tbl->ascii_font_tbl->ascii_font_data;
         p += (idx * font_fontBytes(font, idx));
         return p;
     } else {
-        #if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_FONT)
         debug_printf("font16 idx: ", idx);
         #endif
         int i;
@@ -310,13 +311,13 @@ unsigned char *font_fontData(font_t *font, int idx) {
                     fidx++;
                 }
             }
-            #if defined(DEBUG_LCDSPI)
+            #if defined(DEBUG_FONT)
             debug_printf("font16 fidx: ", fidx);
             #endif
             p = font->_font_tbl->unicode_font_tbl->unicode_font_data;
             p += (fidx * font_fontBytes(font, idx));
         } else {
-            #if defined(DEBUG_LCDSPI)
+            #if defined(DEBUG_FONT)
             debug_printf("font16 fidx: ", -1);
             #endif
             // space fidx = 228
@@ -367,7 +368,7 @@ void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int dsize, 
             src++;
             slen--;
         }
-        #if defined(DEBUG_LCDSPI)
+        #if defined(DEBUG_FONT)
         debug_printf("unicode: %x\r\n", u);
         #endif
         if ((0x10000 <= u) && (u <= 0x10FFFF)) {
@@ -383,7 +384,7 @@ void cnv_u8_to_u16(unsigned char *src, int slen, unsigned char *dst, int dsize, 
             idst++;
         }
     }
-    #if defined(DEBUG_LCDSPI)
+    #if defined(DEBUG_FONT)
     debug_printf("len: %d\r\n", idst);
     #endif
     *dlen = idst;

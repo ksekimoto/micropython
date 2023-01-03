@@ -35,13 +35,17 @@
 #include "led.h"
 #include "storage.h"
 #include "irq.h"
-#include "common.h"
+#if defined(USE_DBG_PRINT)
+#include "debug_printf.h"
+#endif
 
 #if MICROPY_HW_ENABLE_STORAGE
 
+#if defined(USE_DBG_PRINT)
 /* debug */
 // #define DEBUG_STORAGE
 // #define DEBUG_STORAGE_W_MEM
+#endif
 
 #if defined(DEBUG_USE_RAMDISK)
 #include "ram_disk.h"

@@ -591,7 +591,7 @@ uint32_t FLASH_SECTION sector_index(uint32_t addr) {
 #error "RX MCU Series is not specified."
 #endif
 
-bool internal_flash_read(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) {
+bool internal_flash_read(void *context, unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff) {
     #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_Read)
     debug_printf("Read(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
     #endif
@@ -600,15 +600,14 @@ bool internal_flash_read(unsigned char *addr, uint32_t NumBytes, uint8_t *pSecto
     while (startaddr < endaddr) {
         *pSectorBuff++ = *startaddr++;
     }
-    return TRUE;
+    return true;
 }
 
 bool internal_flash_write(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite) {
-    return internal_flash_writex(addr, NumBytes, pSectorBuff, ReadModifyWrite, TRUE);
+    return internal_flash_writex(addr, NumBytes, pSectorBuff, ReadModifyWrite, true);
 }
 
 bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSectorBuff, bool ReadModifyWrite, bool fIncrementDataPtr) {
-    (void)ReadModifyWrite;
     #if defined(DEBUG_FLASH) || defined(DEBUG_FLASH_WriteX)
     // debug_printf("WriteX(addr=%x, num=%x, psec=%x)\r\n", addr, NumBytes, pSectorBuff);
     // debug_printf("WriteX(addr=%x, num=%x)\r\n", addr, NumBytes);
@@ -638,9 +637,9 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
         }
         // overwrite data from src addr to flash buffer
         if (fIncrementDataPtr) {
-            lmemcpy((void *)&flash_buf[offset], (const void *)pSectorBuff, (size_t)count);
+            lmemcpy(flash_buf + offset, pSectorBuff, count);
         } else {
-            lmemset((void *)&flash_buf[offset], (int)*pSectorBuff, (size_t)count);
+            lmemset(flash_buf + offset, (int)*pSectorBuff, count);
         }
         #if defined(RX63N)
         command_addr = (unsigned char *)((uint32_t)startaddr & 0x00FFFFFF);
@@ -712,7 +711,7 @@ bool internal_flash_writex(unsigned char *addr, uint32_t NumBytes, uint8_t *pSec
             goto WriteX_exit;
         }
         if (fIncrementDataPtr) {
-            flag = (lmemcmp((void *)(startaddr + offset), (const void *)&flash_buf[offset], (size_t)count) == 0);
+            flag = (lmemcmp((void *)(startaddr + offset), flash_buf + offset, count) == 0);
             if (!flag) {
                 error_code = 6;
                 break;
@@ -733,7 +732,7 @@ WriteX_exit:
         return true;
     }
     #if defined(DEBUG_FLASH_ERROR)
-    debug_printf("Flash Write Fail at %x: err=%x\r\n", startaddr + offset, error_code);
+    debug_printf("Flash Write Fail:%x\r\n", error_code);
     #endif
     return false;
 }
@@ -744,7 +743,7 @@ bool internal_flash_memset(unsigned char *addr, uint8_t Data, uint32_t NumBytes)
     #endif
     CHIP_WORD chipData;
     lmemset(&chipData, Data, sizeof(CHIP_WORD));
-    return internal_flash_writex(addr, NumBytes, (uint8_t *)&chipData, TRUE, FALSE);
+    return internal_flash_writex(addr, NumBytes, (uint8_t *)&chipData, true, false);
 }
 
 bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bool debug) {
@@ -754,26 +753,26 @@ bool _internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength, bo
         debug_printf("FLI:%x,%x,", addr, BlockLength);
         #endif
     }
-    bool flag = TRUE;
+    bool flag = true;
     CHIP_WORD *startaddr = (CHIP_WORD *)addr;
     CHIP_WORD *endaddr = (CHIP_WORD *)(addr + BlockLength);
     while (startaddr < endaddr) {
         if (*startaddr++ != (CHIP_WORD)0xFFFFFFFF) {
-            flag = FALSE;
+            flag = false;
             break;
         }
     }
     if (debug) {
         #if defined(DEBUG_FLASH)
-        // debug_printf("IsEraseBlock() error_code=%x\r\n", (flag == TRUE)? 0:1);
-        debug_printf("%x\r\n", (flag == TRUE)? 0:1);
+        // debug_printf("IsEraseBlock() error_code=%x\r\n", (flag == true)? 0:1);
+        debug_printf("%x\r\n", (flag == true)? 0:1);
         #endif
     }
     return flag;
 }
 
 bool internal_flash_isblockerased(unsigned char *addr, uint32_t BlockLength) {
-    return _internal_flash_isblockerased(addr, BlockLength, TRUE);
+    return _internal_flash_isblockerased(addr, BlockLength, true);
 }
 
 // erase one page
@@ -863,7 +862,7 @@ EraseBlock_exit:
         return true;
     }
     #if defined(DEBUG_FLASH_ERROR)
-    debug_printf("Flash Erase Fail at %x: size=%x err=%x\r\n", addr, block_size, error_code);
+    debug_printf("Flash Erase Fail:%x\r\n", error_code);
     #endif
     return false;
 }

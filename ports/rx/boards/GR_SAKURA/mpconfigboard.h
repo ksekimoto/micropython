@@ -33,16 +33,19 @@
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
-//#define MICROPY_HW_I2C0_SCL (pin_P13)
-//#define MICROPY_HW_I2C0_SDA (pin_P12)
-//#define MICROPY_HW_I2C1_SCL (pin_P20)
-//#define MICROPY_HW_I2C1_SDA (pin_P21)
-//#define MICROPY_HW_I2C2_SCL (pin_PC4)
-//#define MICROPY_HW_I2C2_SDA (pin_PC6)
-//#define MICROPY_HW_I2C3_SCL (pin_P50)
-//#define MICROPY_HW_I2C3_SDA (pin_P52)
-//#define MICROPY_HW_I2C4_SCL (pin_PC7)
-//#define MICROPY_HW_I2C4_SDA (pin_PC6)
+// For 100 pin, P21/P20 and PC0/PC1 are not available for RII
+#define MICROPY_HW_I2C1_NAME "X"
+#define MICROPY_HW_I2C1_SCL (pin_P12)
+#define MICROPY_HW_I2C1_SDA (pin_P13)
+// #define MICROPY_HW_I2C2_NAME "Y"
+// #define MICROPY_HW_I2C2_SCL (pin_P21)
+// #define MICROPY_HW_I2C2_SDA (pin_P20)
+#define MICROPY_HW_I2C3_NAME "Z"
+#define MICROPY_HW_I2C3_SCL (pin_P16)
+#define MICROPY_HW_I2C3_SDA (pin_P17)
+// #define MICROPY_HW_I2C4_NAME "W"
+// #define MICROPY_HW_I2C4_SCL (pin_PC0)
+// #define MICROPY_HW_I2C4_SDA (pin_PC1)
 
 // MMA accelerometer config
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)

@@ -50,10 +50,10 @@ void rx_gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
             _PMR(port) &= ~mask; /* GPIO */
             _PDR(port) |= mask; /* output */
             mask = ((uint8_t)(1 << ((pin & 3) << 1)));
-            if (pin & 0x4) {
-                _ODR1(port) |= mask;
+            if ((pin & 7) >= 4) {
+                _ODR1(port) |= mask;    // Pm4, Pm5, Pm6, Pm7
             } else {
-                _ODR0(port) |= mask;
+                _ODR0(port) |= mask;    // Pm0, Pm1, Pm2, Pm3
             }
             break;
         case GPIO_MODE_AF_PP:
@@ -64,29 +64,37 @@ void rx_gpio_config(uint8_t pin, uint8_t mode, uint8_t pull, uint8_t alt) {
             _PMR(port) |= mask; /* AF */
             _PDR(port) |= mask; /* output */
             mask = ((uint8_t)(1 << ((pin & 3) << 1)));
-            if (pin & 0x4) {
-                _ODR1(port) |= mask;
+            if ((pin & 7) >= 4) {
+                _ODR1(port) |= mask;    // Pm4, Pm5, Pm6, Pm7
             } else {
-                _ODR0(port) |= mask;
+                _ODR0(port) |= mask;    // Pm0, Pm1, Pm2, Pm3
             }
             break;
+        case GPIO_MODE_ANALOG:
+            _PMR(port) |= mask; /* AF */
+            _PDR(port) &= ~mask; /* input */
+            _PXXPFS(port, pin & 7) |= 0x80;
+            break;
     }
-    if (mode == GPIO_MODE_INPUT) {
-        switch (pull) {
-            case GPIO_NOPULL:
-                // assumption GPIO input mode
-                _PCR(port) &= ~mask;
-                break;
-            case GPIO_PULLUP:
-                // assumption GPIO input mode
-                _PCR(port) |= mask;
-                break;
-        }
+    // if (mode == GPIO_MODE_INPUT) {
+    switch (pull) {
+        case GPIO_NOPULL:
+            // assumption GPIO input mode
+            _PCR(port) &= ~mask;
+            break;
+        case GPIO_PULLUP:
+            // assumption GPIO input mode
+            _PCR(port) |= mask;
+            break;
     }
+    // }
     if (alt != 0) {
+        MPC.PWPR.BIT.B0WI = 0;
+        MPC.PWPR.BIT.PFSWE = 1;
         _PMR(port) |= mask; /* AF */
-        uint8_t v = (_PXXPFS(port, pin & 7) & ~0x2f) | (uint8_t)(alt & 0x2f);
+        uint8_t v = (_PXXPFS(port, pin & 7) & ~0x3f) | (uint8_t)(alt & 0x3f);
         _PXXPFS(port, pin & 7) = v;
+        MPC.PWPR.BIT.PFSWE = 0;
     }
 }
 

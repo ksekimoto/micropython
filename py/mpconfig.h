@@ -510,6 +510,11 @@
 #define MICROPY_DEBUG_VM_STACK_OVERFLOW (0)
 #endif
 
+// Whether to enable extra instrumentation for valgrind
+#ifndef MICROPY_DEBUG_VALGRIND
+#define MICROPY_DEBUG_VALGRIND (0)
+#endif
+
 /*****************************************************************************/
 /* Optimisations                                                             */
 
@@ -1311,6 +1316,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_CMATH (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
 #endif
 
+// Whether to provide "micropython" module
+#ifndef MICROPY_PY_MICROPYTHON
+#define MICROPY_PY_MICROPYTHON (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
+#endif
+
 // Whether to provide "gc" module
 #ifndef MICROPY_PY_GC
 #define MICROPY_PY_GC (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
@@ -1629,6 +1639,11 @@ typedef double mp_float_t;
 // Whether to provide the "machine.SoftSPI" class
 #ifndef MICROPY_PY_MACHINE_SOFTSPI
 #define MICROPY_PY_MACHINE_SOFTSPI (0)
+#endif
+
+// Whether to provide the "machine.Timer" class
+#ifndef MICROPY_PY_MACHINE_TIMER
+#define MICROPY_PY_MACHINE_TIMER (0)
 #endif
 
 // The default backlog value for socket.listen(backlog)

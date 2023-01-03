@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2018 Damien P. George
- * Copyright (c) 2021 Kentaro Sekimoto
+ * Copyright (c) 2022 Kentaro Sekimoto
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

@@ -37,7 +37,7 @@
 #include "uart.h"
 #include "irq.h"
 #include "pendsv.h"
-#include "common.h"
+#include "rx_sci.h"
 
 typedef int (*KEYEX_CB)(uint32_t d);
 
@@ -432,12 +432,12 @@ mp_uint_t uart_tx_avail(pyb_uart_obj_t *self) {
 // Returns true if something available, false if not.
 bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
     int ch = (int)self->uart_id - 1;
-    uint32_t start = mtick();
+    uint32_t start = mp_hal_ticks_ms();
     for (;;) {
         if (rx_sci_rx_any(ch)) {
             return true;
         }
-        if (mtick() - start >= timeout) {
+        if (mp_hal_ticks_ms() - start >= timeout) {
             return false; // timeout
         }
         MICROPY_EVENT_POLL_HOOK
@@ -453,12 +453,12 @@ int uart_rx_char(pyb_uart_obj_t *self) {
 // Waits at most timeout milliseconds for TX register to become empty.
 // Returns true if can write, false if can't.
 bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
-    uint32_t start = mtick();
+    uint32_t start = mp_hal_ticks_ms();
     for (;;) {
         if (uart_tx_avail(self)) {
             return true;
         }
-        if (mtick() - start >= timeout) {
+        if (mp_hal_ticks_ms() - start >= timeout) {
             return false; // timeout
         }
         MICROPY_EVENT_POLL_HOOK

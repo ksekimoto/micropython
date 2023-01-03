@@ -31,7 +31,7 @@
 #include "py/runtime.h"
 #include "py/gc.h"
 #include "timer.h"
-#include "common.h"
+#include "rz_timer.h"
 
 #define TIMER_SIZE  3
 // #define TIMER_CHANNEL

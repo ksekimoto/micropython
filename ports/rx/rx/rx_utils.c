@@ -30,14 +30,6 @@
 #include "iodefine.h"
 #include "rx_utils.h"
 
-extern void *HardwareVectors[];
-
-void rx_reset(void) {
-    void (*rx_start)(void);
-    rx_start = (void *)((uint32_t *)HardwareVectors[0]); // PowerON_Reset
-    rx_start();
-}
-
 __attribute__((weak)) int32_t
 __popcountsi2(int32_t a) {
     uint32_t x = (uint32_t)a;

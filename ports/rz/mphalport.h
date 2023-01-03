@@ -57,7 +57,7 @@ static inline mp_uint_t mp_hal_ticks_cpu(void) {
 #define mp_hal_pin_name(p)      ((p)->name)
 #define mp_hal_pin_input(p)     rz_gpio_mode_input((p)->id)
 #define mp_hal_pin_output(p)    rz_gpio_mode_output((p)->id)
-#define mp_hal_pin_open_drain(p)
+#define mp_hal_pin_open_drain(p)    rz_gpio_config((p)->id, GPIO_MODE_OUTPUT_OD, 0, 0)
 #define mp_hal_pin_high(p)      rz_gpio_write((p)->id, 1)
 #define mp_hal_pin_low(p)       rz_gpio_write((p)->id, 0)
 #define mp_hal_pin_toggle(p)    rz_gpio_toggle((p)->id)
@@ -80,3 +80,4 @@ enum {
 void mp_hal_get_mac(int idx, uint8_t buf[6]);
 
 void mp_hal_set_interrupt_char(int c); // -1 to disable
+mp_uint_t mp_hal_ticks_ms(void);

@@ -30,6 +30,8 @@
 #include "py/mphal.h"
 #include "pin.h"
 #include "timer.h"
+#include "rx_servo.h"
+#include "rx_tpu.h"
 #include "servo.h"
 
 #if MICROPY_HW_ENABLE_SERVO

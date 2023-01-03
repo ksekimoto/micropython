@@ -39,6 +39,7 @@
 // #endif
 
 #include "rng.h"
+#include "rx_rtc.h"
 #include "posix_helpers.h"
 
 // #define DEBUG_TIME

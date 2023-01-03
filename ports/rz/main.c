@@ -56,7 +56,7 @@
 #endif
 
 #include "boardctrl.h"
-#include "mpu.h"
+// #include "mpu.h"
 #include "systick.h"
 #include "pendsv.h"
 // #include "powerctrl.h"
@@ -65,7 +65,6 @@
 #include "factoryreset.h"
 #include "modmachine.h"
 #include "softtimer.h"
-// #include "i2c.h"
 #include "spi.h"
 #include "uart.h"
 #include "timer.h"
@@ -77,15 +76,8 @@
 #include "rtc.h"
 #include "storage.h"
 #include "sdcard.h"
-// #include "sdram.h"
-// #include "rng.h"
-// #include "accel.h"
 #include "servo.h"
-// #include "dac.h"
-// #include "can.h"
-#if MICROPY_HW_ENABLE_LCD_CONSOLE
 #include "lcd.h"
-#endif
 #include "extmod/modnetwork.h"
 // #include "usb_entry.h"
 #include "mbed_timer.h"

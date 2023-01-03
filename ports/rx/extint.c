@@ -34,7 +34,7 @@
 #include "py/mphal.h"
 #include "pin.h"
 #include "extint.h"
-#include "common.h"
+#include "rx_exti.h"
 
 /// \moduleref pyb
 /// \class ExtInt - configure I/O pins to interrupt on external events

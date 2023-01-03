@@ -32,6 +32,8 @@
 // #include "pendsv.h"
 #include "rz_sci.h"
 #include "rz_gpio.h"
+#include "rz_utils.h"
+#include "rz_sci.h"
 
 /* rx interrupt */
 void sci_isr_rx0(void);

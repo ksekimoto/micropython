@@ -29,7 +29,7 @@
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "mphalport.h"
-#include "common.h"
+#include "rx_pwm.h"
 
 // Forward dec'l
 extern const mp_obj_type_t pyb_pwm_type;

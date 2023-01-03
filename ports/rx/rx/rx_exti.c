@@ -28,8 +28,9 @@
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
-#include "rx_exti.h"
 #include "rx_gpio.h"
+#include "rx_timer.h"
+#include "rx_exti.h"
 
 #define EXTI_DEFAULT_PRIORITY   (1)
 #define IRQ_NUM (16)

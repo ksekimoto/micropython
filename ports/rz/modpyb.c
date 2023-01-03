@@ -45,19 +45,12 @@
 #include "adc.h"
 #include "storage.h"
 #include "sdcard.h"
-#if RZ_TODO
-#include "accel.h"
-#endif
 #include "servo.h"
-#if RZ_TODO
-#include "dac.h"
-#include "lcd.h"
-#include "usb.h"
-#endif
 #include "portmodules.h"
 #include "modmachine.h"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
+
 // #if MICROPY_PY_PYB_FONT
 // #include "font.h"
 // #endif

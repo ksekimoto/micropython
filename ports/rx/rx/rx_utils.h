@@ -52,7 +52,6 @@ static inline uint32_t rx_get_int(void) {
 }
 
 static inline void rx_enable_irq(uint32_t state) {
-    (void)state;
     __asm__ __volatile__ ("setpsw i");
 }
 
@@ -61,8 +60,6 @@ static inline uint32_t rx_disable_irq(void) {
     __asm__ __volatile__ ("clrpsw i");
     return state;
 }
-
-void rx_reset(void);
 
 #ifdef __cplusplus
 }

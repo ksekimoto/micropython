@@ -28,6 +28,7 @@
 #include "py/runtime.h"
 #include "lib/oofatfs/ff.h"
 #if MICROPY_HW_ENABLE_RTC
+#include "rx_rtc.h"
 #include "rtc.h"
 #endif
 

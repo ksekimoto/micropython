@@ -44,10 +44,6 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#if defined(USE_DBG_PRINT)
-// #define DEBUG_LCDSPI
-#endif
-
 static bool lcdspi_disp_jpeg(lcdspi_t *lcdspi, uint32_t x, uint32_t y, bool split_disp) {
     jpeg_t m_jpeg;
     bool ret = true;

@@ -31,9 +31,7 @@
 #include "pendsv.h"
 #include "systick.h"
 #include "softtimer.h"
-// #include "pybthread.h"
-
-// ToDo: implement the same functionality
+#include "rx_timer.h"
 
 #if MICROPY_HW_MCU_PCLK
 #else

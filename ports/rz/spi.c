@@ -33,6 +33,7 @@
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
+#include "rz_spi.h"
 #include "spi.h"
 #include "mbed_spi.h"
 
