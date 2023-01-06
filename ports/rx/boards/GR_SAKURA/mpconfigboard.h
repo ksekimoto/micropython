@@ -3,6 +3,10 @@
 #define MICROPY_HW_MCU_SYSCLK       96000000
 #define MICROPY_HW_MCU_PCLK         48000000
 
+#define MICROPY_PY_NETWORK              (1)
+#define MICROPY_PY_USOCKET              (1)
+#define MICROPY_PY_NETWORK_ESP          (0)
+
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (1)
@@ -104,7 +108,6 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#define MICROPY_HW_HAS_ESP      (0)
 #define MICROPY_PY_PYB_TWITTER      (0)
 #if MICROPY_HW_ENABLE_LCDSPI
 #define MICROPY_PY_PYB_LCDSPI       (1)

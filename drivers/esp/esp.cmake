@@ -1,16 +1,20 @@
 # CMake fragment for MicroPython esp component
+set(ESP_DRIVER_DIR "${MICROPY_DIR}/drivers/esp")
 
-set(MICROPY_SOURCE_ESP
-    ${CMAKE_CURRENT_LIST_DIR}/esp_driver.c
-    ${CMAKE_CURRENT_LIST_DIR}/tinymalloc.c
-    ${CMAKE_CURRENT_LIST_DIR}/vector.c
+add_library(micropy_driver_esp INTERFACE)
+
+target_sources(micropy_driver_esp INTERFACE
+    ${ESP_DRIVER_DIR}/esp_driver.c
+    ${ESP_DRIVER_DIR}/tinymalloc.c
+    ${ESP_DRIVER_DIR}/vector.c
+    ${ESP_DRIVER_DIR}/mpy_uart.c
+    ${ESP_DRIVER_DIR}/mpy_debug.c
     ${MICROPY_DIR}/extmod/network_esp.c
 )
 
-set(MICROPY_INC_ESP
-    ${CMAKE_CURRENT_LIST_DIR}
-)
-
-list(APPEND MICROPY_INC_CORE
-    ${CMAKE_CURRENT_LIST_DIR}
+target_include_directories(micropy_driver_esp INTERFACE
+    ${MICROPY_DIR}/
+    ${MICROPY_PORT_DIR}/
+    ${MICROPY_BOARD_DIR}/
+    ${ESP_DRIVER_DIR}/
 )

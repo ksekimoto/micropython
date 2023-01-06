@@ -398,9 +398,9 @@
 #define MICROPY_HW_SDMMC2_CK (1)
 #endif
 
-#ifndef MICROPY_HW_HAS_ESP
-#define MICROPY_HW_HAS_ESP (0)
-#endif
+// #ifndef MICROPY_HW_HAS_ESP
+// #define MICROPY_HW_HAS_ESP (0)
+// #endif
 
 #ifndef MICROPY_HW_HAS_TWITTER
 #define MICROPY_HW_HAS_TWITTER (0)

@@ -44,7 +44,7 @@
 #include "shared/netutils/netutils.h"
 #include "extmod/modnetwork.h"
 
-#if MICROPY_HW_ESP
+#if MICROPY_PY_NETWORK && MICROPY_PY_NETWORK_ESP
 
 #if defined(RZA2M) || defined(RX63N) || defined(RX65N)
 #include "pin.h"

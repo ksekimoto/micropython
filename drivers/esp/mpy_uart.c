@@ -177,8 +177,8 @@ void esp_serial_begin(int uart_id, int baud) {
         MP_ROM_QSTR(MP_QSTR_rx),
         MP_ROM_PTR(&rx_pin),
     };
-    uart_obj = machine_uart_type.make_new(&machine_uart_type, 1, 3, (const mp_obj_t *)args);
-    uart_stream_p = (mp_stream_p_t *)machine_uart_type.protocol;
+    uart_obj = MP_OBJ_TYPE_GET_SLOT(&machine_uart_type, make_new)(&machine_uart_type, 1, 3, (const mp_obj_t *)args);
+    uart_stream_p = (mp_stream_p_t *)MP_OBJ_TYPE_GET_SLOT(&machine_uart_type, protocol);
 }
 
 bool esp_serial_available(void) {

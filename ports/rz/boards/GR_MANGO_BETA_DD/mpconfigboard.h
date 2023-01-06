@@ -6,6 +6,10 @@
 #define MICROPY_HW_MCU_PCLK1C       66000000
 #define MICROPY_HW_MCU_PCLK         (MICROPY_HW_MCU_PCLK0)
 
+#define MICROPY_PY_NETWORK              (1)
+#define MICROPY_PY_USOCKET              (1)
+#define MICROPY_PY_NETWORK_ESP          (1)
+
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (1)
@@ -14,8 +18,11 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RZ_USB    (0)
 #define MICROPY_HW_ETH_MDC          (1)
-#define MICROPY_HW_ESP              (1)
 #define MICROPY_HW_ENABLE_RNG       (1)
+#define MICROPY_HW_ENABLE_LCDSPI        (1)
+#if MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_HW_ENABLE_LCD_CONSOLE   (0)
+#endif
 
 // UART config
 #define MICROPY_HW_UART1_RX         (pin_P41)
@@ -83,27 +90,47 @@
 #define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
-#if MICROPY_HW_ESP
-#define MICROPY_HW_HAS_ESP          (1)  // SCI0
+#if MICROPY_PY_NETWORK_ESP
 #define MICROPY_HW_ESP_UART_CH      (1)
 #define MICROPY_HW_ESP_UART_BAUD    115200
 #define MICROPY_HW_ESP_RE           (pin_P44)
 #endif
 
+#define MICROPY_PY_PYB_TWITTER      (0)
+#if MICROPY_HW_ENABLE_LCDSPI
+#define MICROPY_PY_PYB_LCDSPI       (1)
+#endif
 #define MICROPY_PY_PYB_FONT         (1)
 #define MICROPY_PY_PYB_UNICODE_FONT (1)
-#define MICROPY_PY_PYB_LCDSPI       (1)
 
+#if MICROPY_HW_ENABLE_LCDSPI
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CH    (1)
 #define MICROPY_HW_LCDSPI_CLK   (pin_P87)   // GPIO11 Header23
 #define MICROPY_HW_LCDSPI_MOSI  (pin_P86)   // GPIO10 Header19
 #define MICROPY_HW_LCDSPI_MISO  (pin_P85)   // GPIO9  Header21
 #define MICROPY_HW_LCDSPI_CS    (pin_P84)   // GPIO8  Header24
 #define MICROPY_HW_LCDSPI_RESET (pin_P45)   // GPIO27 Header13
 #define MICROPY_HW_LCDSPI_RS    (pin_PH6)   // GPIO25 Header22
+#endif
 
-#define PYB_SERVO_NUM       (1)
-#define BOARD_SERVO1_PIN    (pin_PH0)
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcdspi.h"
+#define MICROPY_HW_LCDSPI_CON_ID    (AIDEEPEN22SPI)
+#define MICROPY_HW_LCDSPI_CON_DIR   (LCDSPI_ROTATE_0)
+#define MICROPY_HW_LCDSPI_CON_CH    (1)
+#define MICROPY_HW_LCDSPI_CON_CLK   (pin_P87)   // GPIO11 Header23
+#define MICROPY_HW_LCDSPI_CON_MOSI  (pin_P86)   // GPIO10 Header19
+#define MICROPY_HW_LCDSPI_CON_MISO  (pin_P85)   // GPIO9  Header21
+#define MICROPY_HW_LCDSPI_CON_CS    (pin_P84)   // GPIO8  Header24
+#define MICROPY_HW_LCDSPI_CON_RESET (pin_P45)   // GPIO27 Header13
+#define MICROPY_HW_LCDSPI_CON_RS    (pin_PH6)   // GPIO25 Header22
+#endif
+
+//#define PYB_SERVO_NUM       (1)
+//#define BOARD_SERVO1_PIN    (pin_PH0)
 
 #define MICROPY_PY_PYB_CAMERA_DV    (1)
 #define MICROPY_PY_PYB_CAMERA_MIPI  (1)
-

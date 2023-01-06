@@ -6,6 +6,10 @@
 #define MICROPY_HW_MCU_PCLK1C       66000000
 #define MICROPY_HW_MCU_PCLK         (MICROPY_HW_MCU_PCLK0)
 
+#define MICROPY_PY_NETWORK              (1)
+#define MICROPY_PY_USOCKET              (1)
+#define MICROPY_PY_NETWORK_ESP          (1)
+
 #define MICROPY_HW_HAS_SWITCH           (1)
 #define MICROPY_HW_HAS_FLASH            (1)
 #define MICROPY_HW_ENABLE_SDCARD        (1)
@@ -14,7 +18,6 @@
 #define MICROPY_HW_ENABLE_SERVO         (1)
 #define MICROPY_HW_ENABLE_RZ_USB        (0)
 #define MICROPY_HW_ETH_MDC              (1)
-#define MICROPY_HW_ESP                  (1)
 #define MICROPY_HW_ENABLE_RNG           (1)
 #define MICROPY_HW_ENABLE_LCDSPI        (1)
 #if MICROPY_HW_ENABLE_LCDSPI
@@ -87,8 +90,7 @@
 #define MICROPY_HW_ENABLE_ADC   (1)
 #define MICROPY_HW_ENABLE_DAC   (0)
 
-#if MICROPY_HW_ESP
-#define MICROPY_HW_HAS_ESP          (1)  // SCI0
+#if MICROPY_PY_NETWORK_ESP
 #define MICROPY_HW_ESP_UART_CH      (1)
 #define MICROPY_HW_ESP_UART_BAUD    115200
 // ESP Reset pin connects GR-MANGO Extension pin11 (P40).
@@ -134,4 +136,3 @@
 
 #define MICROPY_PY_PYB_CAMERA_DV    (1)
 #define MICROPY_PY_PYB_CAMERA_MIPI  (1)
-

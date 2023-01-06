@@ -3,6 +3,10 @@
 #define MICROPY_HW_MCU_SYSCLK       96000000
 #define MICROPY_HW_MCU_PCLK         48000000
 
+#define MICROPY_PY_NETWORK              (1)
+#define MICROPY_PY_USOCKET              (1)
+#define MICROPY_PY_NETWORK_ESP          (1)
+
 #define MICROPY_HW_HAS_SWITCH           (0)
 #define MICROPY_HW_HAS_FLASH            (1)
 #define MICROPY_HW_ENABLE_SDCARD        (0)
@@ -11,7 +15,6 @@
 #define MICROPY_HW_ENABLE_SERVO         (1)
 #define MICROPY_HW_ENABLE_RX_USB        (1)
 #define MICROPY_HW_ETH_MDC              (0)
-#define MICROPY_HW_ESP                  (1)
 #define MICROPY_HW_ENABLE_RNG           (1)
 #define MICROPY_HW_ENABLE_LCDSPI        (1)
 #if MICROPY_HW_ENABLE_LCDSPI
@@ -82,8 +85,7 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#if MICROPY_HW_ESP
-#define MICROPY_HW_HAS_ESP          (0)
+#if MICROPY_PY_NETWORK_ESP
 #define MICROPY_HW_ESP_UART_CH      7   // CH=6
 #define MICROPY_HW_ESP_UART_BAUD    115200
 #define MICROPY_HW_ESP_EN           (pin_P50)
@@ -131,5 +133,3 @@
 #define BOARD_SERVO6_PIN    (pin_PB5)
 
 #define MICROPY_PY_PYB_LEGACY   1   // if flash rom is short, shoule be 0
-#define MICROPY_PY_NETWORK      1
-#define MICROPY_PY_USOCKET      1

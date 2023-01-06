@@ -247,20 +247,20 @@ extern const struct _mod_network_nic_type_t mod_network_nic_type_wiznet5k;
 #define MICROPY_HW_NIC_WIZNET5K
 #endif
 
-#if MICROPY_HW_ESP
+#if MICROPY_PY_NETWORK_ESP
 extern const struct _mp_obj_type_t mod_network_nic_type_esp;
 #define MICROPY_HW_NIC_ESP              { MP_ROM_QSTR(MP_QSTR_WLAN), MP_ROM_PTR(&mod_network_nic_type_esp) },
 #else
 #define MICROPY_HW_NIC_ESP
 #endif
 
-#if MICROPY_HW_HAS_ESP
+#if MICROPY_PY_NETWORK_ESP
 #define WIFI_BUILTIN_MODULE                 { MP_ROM_QSTR(MP_QSTR_wifi), MP_ROM_PTR(&mp_module_wifi) },
 #else
 #define WIFI_BUILTIN_MODULE
 #endif
 
-#if MICROPY_PY_PYB_TWITTER && (MICROPY_PY_NETWORK || MICROPY_HW_HAS_ESP)
+#if MICROPY_PY_PYB_TWITTER && MICROPY_PY_NETWORK_ESP
 #define TWITTER_BUILTIN_MODULE              { MP_ROM_QSTR(MP_QSTR_twitter), MP_ROM_PTR(&mp_module_twitter) },
 #else
 #define TWITTER_BUILTIN_MODULE

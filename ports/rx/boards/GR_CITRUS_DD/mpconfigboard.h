@@ -3,6 +3,10 @@
 #define MICROPY_HW_MCU_SYSCLK       96000000
 #define MICROPY_HW_MCU_PCLK         48000000
 
+#define MICROPY_PY_NETWORK              (1)
+#define MICROPY_PY_USOCKET              (1)
+#define MICROPY_PY_NETWORK_ESP          (1)
+
 #define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_SDCARD    (1)
@@ -11,7 +15,6 @@
 #define MICROPY_HW_ENABLE_SERVO     (1)
 #define MICROPY_HW_ENABLE_RX_USB    (1)
 #define MICROPY_HW_ETH_MDC          (0)
-#define MICROPY_HW_ESP              (1)
 #define MICROPY_HW_ENABLE_RNG           (1)
 #define MICROPY_HW_ENABLE_LCDSPI        (1)
 #if MICROPY_HW_ENABLE_LCDSPI
@@ -27,16 +30,19 @@
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
-//#define MICROPY_HW_I2C0_SCL (pin_P13)
-//#define MICROPY_HW_I2C0_SDA (pin_P12)
-//#define MICROPY_HW_I2C1_SCL (pin_P20)
-//#define MICROPY_HW_I2C1_SDA (pin_P21)
-//#define MICROPY_HW_I2C2_SCL (pin_PC4)
-//#define MICROPY_HW_I2C2_SDA (pin_PC6)
-//#define MICROPY_HW_I2C3_SCL (pin_P50)
-//#define MICROPY_HW_I2C3_SDA (pin_P52)
-//#define MICROPY_HW_I2C4_SCL (pin_PC7)
-//#define MICROPY_HW_I2C4_SDA (pin_PC6)
+// For 100 pin, P21/P20 and PC0/PC1 are not available for RII
+#define MICROPY_HW_I2C1_NAME "X"
+#define MICROPY_HW_I2C1_SCL (pin_P12)
+#define MICROPY_HW_I2C1_SDA (pin_P13)
+// #define MICROPY_HW_I2C2_NAME "Y"
+// #define MICROPY_HW_I2C2_SCL (pin_P21)
+// #define MICROPY_HW_I2C2_SDA (pin_P20)
+// #define MICROPY_HW_I2C3_NAME "Z"
+// #define MICROPY_HW_I2C3_SCL (pin_P16)
+// #define MICROPY_HW_I2C3_SDA (pin_P17)
+// #define MICROPY_HW_I2C4_NAME "W"
+// #define MICROPY_HW_I2C4_SCL (pin_PC0)
+// #define MICROPY_HW_I2C4_SDA (pin_PC1)
 
 // MMA accelerometer config
 //#define MICROPY_HW_MMA_AVDD_PIN     (pin_P43)
@@ -79,8 +85,7 @@
 
 #define MICROPY_HW_ENABLE_DAC   (1)
 
-#if MICROPY_HW_ESP
-#define MICROPY_HW_HAS_ESP          (0)
+#if MICROPY_PY_NETWORK_ESP
 #define MICROPY_HW_ESP_UART_CH      7   // CH=6
 #define MICROPY_HW_ESP_UART_BAUD    115200
 #define MICROPY_HW_ESP_EN           (pin_P50)
