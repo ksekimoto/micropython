@@ -86,6 +86,7 @@
 #if MICROPY_HW_ENABLE_LCD_CONSOLE
 #include "lcd.h"
 #endif
+#include "rx_init.h"
 
 #if LVGL_ENABLE
 extern int lvrx_enable;

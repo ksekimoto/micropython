@@ -25,7 +25,6 @@
  */
 
 #include "common.h"
-#include "bootstrap.h"
 #include "rx_exti.h"
 #include "rx_flash.h"
 #include "rx_rtc.h"
@@ -43,7 +42,6 @@ void rx_software_reset(void) {
 }
 
 void rx_init(void) {
-    bootstrap();
     rx_exti_init();
     rx_exti_deinit();
     udelay_init();

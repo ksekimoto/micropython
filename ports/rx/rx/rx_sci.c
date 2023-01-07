@@ -29,12 +29,10 @@
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
-#include "pendsv.h"
 #include "rx_gpio.h"
 #include "rx_int.h"
 #include "rx_utils.h"
 #include "rx_sci.h"
-#include "py/runtime.h"
 
 typedef struct st_sci0 ST_SCI0;
 

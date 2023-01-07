@@ -122,11 +122,12 @@ INC += -Ilvgl
 INC += -Ilib/lv_bindings/lvgl
 endif
 
-CFLAGS += $(INC) -Wall -Wpointer-arith -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(INC) -Wall -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += $(COPT)
+CFLAGS += -DMPY_RX
 CFLAGS += -I$(BOARD_DIR)
 CFLAGS += -fomit-frame-pointer
-CFLAGS += -Wno-nonnull-compare
+# CFLAGS += -Wno-nonnull-compare
 
 CFLAGS += -D$(MCU_SERIES_UPPER)
 CFLAGS += -DCONFIG_$(MCU_SERIES_UPPER)
@@ -361,7 +362,6 @@ SRC_C += \
 	modrxreg.c \
 	mpy_file.c \
 	phy.c \
-	posix_helpers.c \
 	pwm.c \
 	softtimer.c \
 	$(wildcard $(BOARD_DIR)/*.c)
@@ -412,8 +412,6 @@ SRC_C += rx_xpt2046.c
 endif
 
 SRC_C += sd/sd.c
-SRC_C += strftime.c
-SRC_C += time_utils.c
 
 SRC_S = rx/$(MCU_SERIES_LOWER)/startup_$(MCU_SERIES_LOWER).S
 SRC_S += setjmp.S

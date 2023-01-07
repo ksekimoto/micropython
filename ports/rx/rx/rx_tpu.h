@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 #define TPU_UNIT_SIZE   2
 #define TPU_CHANNEL_SIZE    12
 #define TPU_DEFAULT_FREQ    (1000.0f)

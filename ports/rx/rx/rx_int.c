@@ -26,8 +26,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "py/runtime.h"
-#include "py/mphal.h"
+// #include "py/runtime.h"
+// #include "py/mphal.h"
 #include "common.h"
 #include "iodefine.h"
 #include "usb_hal.h"

@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "iodefine.h"
 
 #define IRQ0    0
 #define IRQ1    1

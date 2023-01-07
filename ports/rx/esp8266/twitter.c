@@ -40,7 +40,6 @@
 #include "hmac.h"
 #include "wifi.h"
 #include "ntp.h"
-#include "posix_helpers.h"
 #include "twitter.h"
 
 #if MICROPY_PY_PYB_TWITTER

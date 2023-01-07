@@ -317,6 +317,18 @@ static char *strch2(const char *str, const char *ch) {
     return NULL;
 }
 
+static int latoi(const char *s) {
+    int result = 0, sign = 1;
+    if (*s == -1) {
+        sign = -1;
+        s++;
+    }
+    while (*s >= '0' && *s <= '9') {
+        result = result * 10 + (*(s++) - '0');
+    }
+    return result * sign;
+}
+
 /*
  * parse integer value between tokens
  */
@@ -334,7 +346,7 @@ static char *parse_int(const char *str, char *token, int *val) {
     }
     strncpy(tmpbuf, (const char *)start, (size_t)len);
     tmpbuf[len] = 0;
-    *val = atoi(tmpbuf);
+    *val = latoi(tmpbuf);
     return end;
 }
 

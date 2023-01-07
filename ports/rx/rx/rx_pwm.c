@@ -450,22 +450,27 @@ void rx_pwm_channel_init(int channel) {
             MTU0.TIORL.BIT.IOD = 0x6; // compare match high - high
             break;
         case 1:
-            MTU1.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
             #if defined(RX63N)
+            MTU1.TCR.BIT.CCLR = 0x2; // compare match clear by TGRD
             MTU1.TMDR.BIT.MD = 0x2; // PWM mode 1
             #endif
             #if defined(RX65N)
+            // ToDo check CCLR2 value for RX65N
+            MTU1.TCR.BIT.CCLR = 0x2; // compare match clear by TGRD
             MTU1.TMDR1.BIT.MD = 0x2; // PWM mode 1
             #endif
             MTU1.TIOR.BIT.IOA = 0x5; // compare match high - low
             MTU1.TIOR.BIT.IOB = 0x6; // compare match high - high
             break;
         case 2:
-            MTU2.TCR.BIT.CCLR = 0x6; // compare match clear by TGRD
             #if defined(RX63N)
+            MTU2.TCR.BIT.CCLR = 0x2; // compare match clear by TGRD
+            MTU2.TCR.BIT.CCLR = 0x2; // compare match clear by TGRD
             MTU2.TMDR.BIT.MD = 0x2; // PWM mode 1
             #endif
             #if defined(RX65N)
+            // ToDo check CCLR2 value for RX65N
+            MTU2.TCR.BIT.CCLR = 0x2; // compare match clear by TGRD
 //        MTU2.TMDR1.BIT.MD = 0x2;     // PWM mode 1
             #endif
             MTU2.TIOR.BIT.IOA = 0x5; // compare match high - low

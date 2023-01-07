@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include "iodefine.h"
 
 #define PWM_CHANNEL_SIZE    5

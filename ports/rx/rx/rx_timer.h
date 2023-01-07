@@ -31,9 +31,7 @@
 extern "C" {
 #endif
 
-// #ifndef MICROPY_HW_MCU_PCLK
-// #define MICROPY_HW_MCU_PCLK 60000000
-// #endif
+#include <stdint.h>
 
 #define DEF_CLKDEV  8
 #define TENUSEC_COUNT   (MICROPY_HW_MCU_PCLK / DEF_CLKDEV / 100000)
@@ -66,7 +64,6 @@ extern "C" {
  * freq = 100000(1/s) = 10(us) -> 75
  */
 
-#include <stdint.h>
 typedef void (*CMT_TIMER_FUNC)(void *);
 
 void cmt_timer_init(unsigned int ch, unsigned int prescale);

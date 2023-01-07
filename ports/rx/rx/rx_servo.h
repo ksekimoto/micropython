@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 typedef int (*rx_servo_cb_t)();
 
 void rx_servo_set_callback(rx_servo_cb_t cb);

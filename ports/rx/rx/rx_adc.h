@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 enum ADC_PIN
 {
     AN0 = 0,

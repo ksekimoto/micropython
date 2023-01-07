@@ -49,9 +49,9 @@ volatile struct st_cmt0 *CMTN[4] = {
     (volatile struct st_cmt0 *)0x88018
 };
 
-volatile static unsigned long cmt_count[4] = { 0L, 0L, 0L, 0L };
-volatile static unsigned long cmt_compare[4] = { 0L, 0L, 0L, 0L };
-volatile static unsigned long cmt_period[4] = { 0L, 0L, 0L, 0L };
+static volatile unsigned long cmt_count[4] = { 0L, 0L, 0L, 0L };
+static volatile unsigned long cmt_compare[4] = { 0L, 0L, 0L, 0L };
+static volatile unsigned long cmt_period[4] = { 0L, 0L, 0L, 0L };
 
 static CMT_TIMER_FUNC cmt_timer_func[4] = {0};
 static void *cmt_timer_param[4] = {0};

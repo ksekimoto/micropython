@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include "rx_gpio.h"
 
 #define SCI_IDX_MAX (11)

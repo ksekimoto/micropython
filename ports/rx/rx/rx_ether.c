@@ -67,15 +67,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "py/runtime.h"
 #include "common.h"
 #include "iodefine.h"
 #include "interrupt_handlers.h"
 #include "rx_utils.h"
 #include "rx_ether.h"
 #include "phy.h"
-
-#if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 
 typedef struct st_etherc etherc_t;
 typedef struct st_edmac edmac_t;
@@ -545,5 +542,3 @@ void rx_ether_input_callback(void) {
         (*rx_ether_input_cb)();
     }
 }
-
-#endif // ICROPY_HW_HAS_ETHERNET && MICROPY_PY_LWIP

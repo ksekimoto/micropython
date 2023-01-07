@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-void bootstrap(void);
+void clock_init(void);
 
 #ifdef __cplusplus
 }

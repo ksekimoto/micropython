@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 uint8_t rx_dac_get_channel(uint8_t pin_idx);
 void rx_dac_write(uint8_t pin_idx, uint16_t value);
 void rx_dac_init(uint8_t pin_idx);

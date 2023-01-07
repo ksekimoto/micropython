@@ -28,165 +28,6 @@
 #include <stdint.h>
 #include "iodefine.h"
 
-#if defined(GRROSE)
-static inline void rx_ethernet_enable(void) {
-    SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
-    SYSTEM.MSTPCRB.BIT.MSTPB15 = 0;     /* EtherC, EDMAC */
-    // BSC.BEREN.BIT.TOEN = 1;
-    SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
-}
-
-static inline void rx_ethernet_disable(void) {
-    SYSTEM.PRCR.WORD = 0xA502;          /* protect off */
-    SYSTEM.MSTPCRB.BIT.MSTPB15 = 1;     /* EtherC, EDMAC */
-    SYSTEM.PRCR.WORD = 0xA500;          /* protect on */
-}
-
-static inline void rx_ethernet_RMII_mode(void) {
-    /* ==== RMII Pins setting ==== */
-    /*
-    Pin Functions : Port
-    --------------------
-    ET0_MDIO       : PA3
-    ET0_MDC        : PA4
-    ET0_LINKSTA    : PA5
-    RMII0_RXD1     : PB0    P74
-    RMII0_RXD0     : PB1    P75
-    REF50CK0       : PB2    P76
-    RMII0_RX_ER    : PB3    P77
-    RMII0_TXD_EN   : PB4    P80
-    RMII0_TXD0     : PB5    P81
-    RMII0_TXD1     : PB6    P82
-    RMII0_CRS_DV   : PB7    P83
-    */
-    /* Clear PDR and PMR */
-    PORTA.PDR.BIT.B3 = 0;
-    PORTA.PDR.BIT.B4 = 0;
-    PORTA.PDR.BIT.B5 = 0;
-    PORTB.PDR.BIT.B0 = 0;
-    PORTB.PDR.BIT.B1 = 0;
-    PORTB.PDR.BIT.B2 = 0;
-    PORTB.PDR.BIT.B3 = 0;
-    PORTB.PDR.BIT.B4 = 0;
-    PORTB.PDR.BIT.B5 = 0;
-    PORTB.PDR.BIT.B6 = 0;
-    PORTB.PDR.BIT.B7 = 0;
-
-    PORTA.PMR.BIT.B3 = 0;
-    PORTA.PMR.BIT.B4 = 0;
-    PORTA.PMR.BIT.B5 = 0;
-    PORTB.PMR.BIT.B0 = 0;
-    PORTB.PMR.BIT.B1 = 0;
-    PORTB.PMR.BIT.B2 = 0;
-    PORTB.PMR.BIT.B3 = 0;
-    PORTB.PMR.BIT.B4 = 0;
-    PORTB.PMR.BIT.B5 = 0;
-    PORTB.PMR.BIT.B6 = 0;
-    PORTB.PMR.BIT.B7 = 0;
-    /* Write protect off */
-    MPC.PWPR.BYTE = 0x00;       /* PWPR.PFSWE write protect off */
-    MPC.PWPR.BYTE = 0x40;       /* PFS register write protect off */
-    MPC.PA3PFS.BYTE = 0x11;
-    MPC.PA4PFS.BYTE = 0x11;
-    MPC.PA5PFS.BYTE = 0x11;
-    MPC.PB0PFS.BYTE = 0x12;
-    MPC.PB1PFS.BYTE = 0x12;
-    MPC.PB2PFS.BYTE = 0x12;
-    MPC.PB3PFS.BYTE = 0x12;
-    MPC.PB4PFS.BYTE = 0x12;
-    MPC.PB5PFS.BYTE = 0x12;
-    MPC.PB6PFS.BYTE = 0x12;
-    MPC.PB7PFS.BYTE = 0x12;
-    /* Write protect on */
-    MPC.PWPR.BYTE = 0x80;       /* PFS register write protect on */
-    /* Select ethernet mode */
-    MPC.PFENET.BIT.PHYMODE0 = 0; /* RMII mode */
-    /* Switch to the selected input/output function */
-    PORTA.PMR.BIT.B3 = 1;
-    PORTA.PMR.BIT.B4 = 1;
-    PORTA.PMR.BIT.B5 = 1;
-    PORTB.PMR.BIT.B0 = 1;
-    PORTB.PMR.BIT.B1 = 1;
-    PORTB.PMR.BIT.B2 = 1;
-    PORTB.PMR.BIT.B3 = 1;
-    PORTB.PMR.BIT.B4 = 1;
-    PORTB.PMR.BIT.B5 = 1;
-    PORTB.PMR.BIT.B6 = 1;
-    PORTB.PMR.BIT.B7 = 1;
-}
-#endif
-
-#if defined(RX63N)
-static void clock_init(void) {
-    volatile int i;
-    SYSTEM.PRCR.WORD = 0xA503;              // Protect register (protect off)
-    if (SYSTEM.RSTSR0.BIT.DPSRSTF == 1) {   // Reset status register (Deep software standby reset check)
-        if (SYSTEM.DPSIFR2.BIT.DUSBIF == 1) { // Deep standby interrupt flag register2
-            SYSTEM.DPSIFR2.BIT.DUSBIF = 0;  // Clear USB Request
-        }
-        PORT3.PMR.BIT.B6 = 1;               // Port mode register
-        PORT3.PMR.BIT.B7 = 1;               // Port mode register
-        SYSTEM.MOSCCR.BYTE = 0x00;          // Main clock oscillator is operated
-        SYSTEM.MOSCWTCR.BYTE = 0x0D;        // 131072 state
-        SYSTEM.SOSCCR.BYTE = 0x01;          // Sub clock Oscillator is stopped
-        SYSTEM.PLLCR.WORD = 0x0F00;         // PLIDIV = 12MHz(/1), STC = 192MHz(*16)
-        SYSTEM.PLLCR2.BYTE = 0x00;          // PLL enable
-        // SYSTEM.PLLWTCR.BYTE = 0x0F;         // 4194304cycle(Default)
-        for (i = 0; i < 600; i++) {
-        }
-        SYSTEM.SCKCR.LONG = 0x21032222;     // ICK(96MHz)=PLL/2,BCK(24MHz)=PLL/8,FCK,PCK(48MHz)=PLL/4
-        SYSTEM.SCKCR3.WORD = 0x0400;        // PLL
-        SYSTEM.SCKCR2.BIT.UCK = 3;          // USB clock : 48MHz
-        SYSTEM.MSTPCRA.LONG = 0x7FFFFFFF;   // Module stop control register (Disable ACSE)
-        SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;    // Enable USB0 module
-        SYSTEM.SYSCR0.WORD = 0x5A03;        // External Bus Enable
-        PORT5.PMR.BIT.B3 = 1;
-        SYSTEM.BCKCR.BIT.BCLKDIV = 1;       // BCLK * 1/2
-        SYSTEM.SCKCR.BIT.PSTOP1 = 0;        // BCLK Pin output enable
-        SYSTEM.DPSBYCR.BIT.IOKEEP = 0;      // IO status keep disable
-        SYSTEM.RSTSR0.BIT.DPSRSTF = 0;      // Deep software standby reset
-    } else {
-        PORT3.PMR.BIT.B6 = 1;
-        PORT3.PMR.BIT.B7 = 1;
-        SYSTEM.MOSCWTCR.BYTE = 0x0D;        // 131072 state
-        SYSTEM.PLLCR.WORD = 0x0F00;
-        SYSTEM.MOSCCR.BYTE = 0x00;          // EXTAL ON
-        SYSTEM.PLLCR2.BYTE = 0x00;          // PLL ON
-        // SYSTEM.PLLWTCR.BYTE = 0x0F;
-        for (i = 0; i < 300; i++) {
-        }
-        SYSTEM.SCKCR.LONG = 0x21832222;
-        SYSTEM.SCKCR3.WORD = 0x0400;
-        SYSTEM.SCKCR2.BIT.UCK = 3;
-        SYSTEM.MSTPCRA.LONG = 0x7FFFFFFF;
-        SYSTEM.MSTPCRB.BIT.MSTPB19 = 0u;    //  Enable USB0 module
-        SYSTEM.SYSCR0.WORD = 0x5A03;
-        PORT5.PMR.BIT.B3 = 1;
-        SYSTEM.BCKCR.BIT.BCLKDIV = 1;
-        SYSTEM.SCKCR.BIT.PSTOP1 = 0;
-    }
-}
-
-void bootstrap(void) {
-    // SYSTEM.SCKCR.LONG = 0x21032200;     /* clock init: ICK=PLL/2, BCLK=PLL/8, PCLK=PLL/4 */
-    clock_init();
-    MPC.PWPR.BIT.B0WI = 0;
-    MPC.PWPR.BIT.PFSWE = 1;
-
-    MPC.PFCSE.BIT.CS3E = 1;
-    MPC.PFCSS0.BIT.CS3S = 2;
-    MPC.PFAOE1.BIT.A17E = 1;
-
-    BSC.CS3CR.WORD = 0x0001 | (2 << 4);
-    BSC.CS3MOD.WORD = 0x8001;
-    BSC.CS3WCR1.LONG = 0x01010101;
-    BSC.CS3WCR2.LONG = 0x11110111;
-    BSC.CS3REC.WORD = 0x0000;
-}
-
-#endif
-
-#if defined(RX65N)
 /***********************************************************************************************************************
 * DISCLAIMER
 * This software is supplied by Renesas Electronics Corporation and is only intended for use with Renesas products. No
@@ -369,7 +210,7 @@ USB Clock Frequency..............  48 MHz */
 #define BSP_CFG_CLOCK_SOURCE            (4) // PLL
 #define BSP_CFG_ROM_CACHE_ENABLE        (0) // disable rom cache
 
-static void clock_init(void) {
+void clock_init(void) {
 
     SYSTEM.PRCR.WORD = 0xA50B;
     clock_source_select();
@@ -407,16 +248,6 @@ static void clock_init(void) {
     SYSTEM.PRCR.WORD = 0xA500;
 }
 
-void bootstrap(void) {
+void __attribute__((weak)) HardwareSetup(void) {
     clock_init();
-    /* Initialize MCU interrupt callbacks. */
-    // bsp_interrupt_open();
-    /* Initialize register protection functionality. */
-    // bsp_register_protect_open();
-    #if defined(GRROSE)
-    rx_ethernet_enable();
-    rx_ethernet_RMII_mode();
-    #endif
 }
-
-#endif

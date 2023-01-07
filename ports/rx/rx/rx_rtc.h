@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 #define RTC_PERIOD_MINUTE   0x00
 #define RTC_PERIOD_SECOND   0x01
 

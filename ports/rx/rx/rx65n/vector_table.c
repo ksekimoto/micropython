@@ -1,13 +1,12 @@
 /************************************************************************/
-/*    File Version: V0.50                                               */
-/*    Date Modified: 25/12/2015                                         */
+/*    File Version: V1.00                                               */
+/*    Date Modified: 04/04/2019                                         */
 /************************************************************************/
 
 #include "interrupt_handlers.h"
 
 typedef void (*fp)(void);
-// extern void PowerON_Reset (void);
-extern void startup(void);
+extern void PowerON_Reset (void);
 extern void stack(void);
 
 #define EXVECT_SECT    __attribute__ ((section(".exvectors")))
@@ -83,12 +82,16 @@ const void *HardwareVectors[] FVECT_SECT = {
 // ;0xfffffffc  RESET
 // ;<<VECTOR DATA START (POWER ON RESET)>>
 // ;Power On Reset PC
-    // PowerON_Reset
-    startup
+    PowerON_Reset                                                                                                                 
 // ;<<VECTOR DATA END (POWER ON RESET)>>
 };
 
 #define RVECT_SECT          __attribute__ ((section(".rvectors")))
+
+#if FREERTOS
+void __attribute__((interrupt)) vTickISR(void);
+void __attribute__((interrupt)) vSoftwareInterruptISR(void);
+#endif
 
 const fp RelocatableVectors[] RVECT_SECT = {
 // ;0x0000  Reserved
@@ -146,9 +149,17 @@ const fp RelocatableVectors[] RVECT_SECT = {
 // ;0x0068  ICU_SWINT2
     (fp)INT_Excep_ICU_SWINT2,
 // ;0x006C  ICU_SWINT
+#if FREERTOS
+    (fp)vSoftwareInterruptISR,
+#else
     (fp)INT_Excep_ICU_SWINT,
+#endif
 // ;0x0070  CMT0_CMI0
+#if FREERTOS
+    (fp)vTickISR,
+#else
     (fp)INT_Excep_CMT0_CMI0,
+#endif
 // ;0x0074  CMT1_CMI1
     (fp)INT_Excep_CMT1_CMI1,
 // ;0x0078  CMTW0_CMWI0
@@ -609,11 +620,12 @@ const fp RelocatableVectors[] RVECT_SECT = {
 
 #define OFS_REG   __attribute__ ((section(".ofs1")))  /* 0xFE7F5D00 */ /* MDE, OFS0, OFS1 */
 #define OFS_TMINF __attribute__ ((section(".ofs2")))  /* 0xFE7F5D10 */
-#define OFS_SPCC  __attribute__ ((section(".ofs3")))  /* 0xFE7F5D40 */
-#define OFS_TMEF  __attribute__ ((section(".ofs4")))  /* 0xFE7F5D48 */
-#define OFS_OSIS  __attribute__ ((section(".ofs5")))  /* 0xFE7F5D50 */
-#define OFS_FAW   __attribute__ ((section(".ofs6")))  /* 0xFE7F5D64 */
-#define OFS_RCP   __attribute__ ((section(".ofs7")))  /* 0xFE7F5D70 */
+#define OFS_BANKSEL __attribute__ ((section (".ofs3"))) /* 0xFE7F5D20 */
+#define OFS_SPCC    __attribute__ ((section (".ofs4"))) /* 0xFE7F5D40 */
+#define OFS_TMEF    __attribute__ ((section (".ofs5"))) /* 0xFE7F5D48 */
+#define OFS_OSIS    __attribute__ ((section (".ofs6"))) /* 0xFE7F5D50 */
+#define OFS_FAW     __attribute__ ((section (".ofs7"))) /* 0xFE7F5D64 */
+#define OFS_RCP     __attribute__ ((section (".ofs8"))) /* 0xFE7F5D70 */
 
 // MDE register (Single Chip Mode)
 #ifdef __RX_BIG_ENDIAN__
@@ -630,6 +642,9 @@ const unsigned long __OFS1reg OFS_REG = 0xffffffff;
 
 // TMINF register
 const unsigned long __TMINFreg OFS_TMINF = 0xffffffff;
+
+// BANKSEL register
+const unsigned long __BANKSELreg OFS_BANKSEL = 0xffffffff;
 
 // SPCC register
 const unsigned long __SPCCreg OFS_SPCC = 0xffffffff;

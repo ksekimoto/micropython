@@ -31,9 +31,6 @@
 extern "C" {
 #endif
 
-void rx_init(void);
-void bootstrap(void);
-
 #if !defined(RX_PRI_UART)
 #define RX_PRI_UART (6)
 #endif
