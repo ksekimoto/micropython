@@ -26,11 +26,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-// #include "py/runtime.h"
-// #include "py/mphal.h"
 #include "common.h"
 #include "iodefine.h"
-#include "usb_hal.h"
 #include "rx_ether.h"
 #include "rx_gpio.h"
 #include "rx_sci.h"
@@ -178,11 +175,9 @@ void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL0(void) {
 // ICU GROUPAL1
 // vec: 113
 void __attribute__ ((interrupt)) INT_Excep_ICU_GROUPAL1(void) {
-    #if MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
     if (1 == ICU.GRPAL1.BIT.IS4) {
         rx_ether_input_callback();
     }
-    #endif // MICROPY_HW_ETH_MDC && MICROPY_PY_LWIP
 }
 
 void __attribute__ ((interrupt)) INT_Excep_PERIB_INTB110(void) {

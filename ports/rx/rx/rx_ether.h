@@ -156,8 +156,7 @@ struct ei_device {
 #define ALIGN(X, Y) ((X + Y - 1) / Y * Y)
 #define ALIGNED_BUFSIZE ALIGN(ETH_BUF_SIZE, 32)
 
-void rx_ether_int(void);
-void rx_ether_init(uint8_t *hwaddr);
+bool rx_ether_init(uint8_t *hwaddr);
 void rx_ether_start(void);
 void rx_ether_deinit(void);
 bool rx_ether_phy_write(uint32_t phy_addr, uint32_t reg_addr, uint32_t data, uint32_t retry);

@@ -70,6 +70,7 @@ enum AF_INDEX {
     AF_TM = 5,
     AF_PO1 = 6,
     AF_PO2 = 7,
+    AF_MTU3 = 8,
     AF_ADT = 9,
     AF_SCI1 = 10,
     AF_SCI2 = 11,

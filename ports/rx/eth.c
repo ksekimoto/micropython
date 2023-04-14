@@ -43,8 +43,8 @@
 #include "netif/ethernet.h"
 
 // #define DEBUG_ETH_FUNC_TRACE
-// #define DEBUG_ETH_PACKET_READ
-// #define DEBUG_ETH_PACKET_WRITE
+#define DEBUG_ETH_PACKET_READ
+#define DEBUG_ETH_PACKET_WRITE
 #define DEBUG_ETH_FATAL_ERROR
 
 /* Define those to better describe your network interface. */
@@ -107,8 +107,6 @@ STATIC int eth_mac_init(eth_t *self) {
     #if defined(DEBUG_ETH_FUNC_TRACE)
     printf("eth_mac_init\r\n");
     #endif
-    // self->netif.mtu = 1500;
-    // self->netif.flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP | NETIF_FLAG_ETHERNET;
     rx_ether_init((uint8_t *)&self->netif.hwaddr);
     rx_ether_input_set_callback((RX_ETHER_INPUT_CB)ethernetif_input_cb);
     rx_ether_start();

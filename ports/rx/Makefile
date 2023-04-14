@@ -361,7 +361,6 @@ SRC_C += \
 	adc.c \
 	modrxreg.c \
 	mpy_file.c \
-	phy.c \
 	pwm.c \
 	softtimer.c \
 	$(wildcard $(BOARD_DIR)/*.c)

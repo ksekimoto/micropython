@@ -72,7 +72,6 @@
 #include "interrupt_handlers.h"
 #include "rx_utils.h"
 #include "rx_ether.h"
-#include "phy.h"
 
 typedef struct st_etherc etherc_t;
 typedef struct st_edmac edmac_t;
@@ -417,11 +416,13 @@ int32_t rx_ether_fifo_read(ethfifo *p, uint8_t buf[]) {
 ////////////////////////////////////////////////////////////////////////////
 
 bool rx_ether_phy_write(uint32_t phy_addr, uint32_t reg_addr, uint32_t data, uint32_t retry) {
+    (void)retry;
     rx_phy_write((uint16_t)phy_addr, (uint16_t)reg_addr, (uint16_t)data);
     return true;
 }
 
 bool rx_ether_phy_read(uint32_t phy_addr, uint32_t reg_addr, uint32_t *data, uint32_t retry) {
+    (void)retry;
     *data = (uint32_t)rx_phy_read((uint16_t)phy_addr, (uint16_t)reg_addr);
     return true;
 }
@@ -439,7 +440,175 @@ void rx_ether_set_link_speed(bool speed, bool fullduplex) {
     }
 }
 
-void rx_ether_init(uint8_t *hwaddr) {
+/* Phy Address */
+#define ICS1894_ADDR    0x10        // PHY device address for Wakamatsu FM3 LAN board
+#define LAN8187_ADDR    0x06        // PHY device address for Wakamatsu ARM LAN board
+#define DP83848_ADDR    0x01        // PHY device address for DP83848
+#define LAN8700_ADDR    0x1F        // PHY device address for Will Electronics WX-PHY
+#define LAN8720_ADDR    0x00        // PHY device address for GR-SAKURA and GR-ROSE
+
+#define PHY_ADDR        LAN8720_ADDR    // Default Phy Address
+
+#define PHY_REG_BMCR    0x00        // Basic Mode Control Register
+#define PHY_REG_BMSR    0x01        // Basic Mode Status Register
+#define PHY_REG_IDR1    0x02        // PHY Identifier 1
+#define PHY_REG_IDR2    0x03        // PHY Identifier 2
+#define PHY_REG_STS     0x10        // Status Register
+
+#define BMCR_RESET      0x8000
+#define BMSR_AUTO_DONE  0x0020
+#define PHY_AUTO_NEG    0x3000      // Select Auto Negotiation
+
+#define STS_LINK_ON     0x1
+#define STS_10_MBIT     0x2
+#define STS_FULL_DUP    0x4
+
+#define MII_WR_TOUT     1000        // MII Write timeout count
+#define MII_RD_TOUT     1000        // MII Read timeout count
+
+// PHY Address
+static char PhyAddr[] = {
+    LAN8720_ADDR,
+    ICS1894_ADDR,
+    LAN8187_ADDR,
+    DP83848_ADDR,
+    LAN8700_ADDR
+};
+
+static uint32_t s_phy_addr = PHY_ADDR;
+#define PHY_MAX (sizeof(PhyAddr) / sizeof(char))
+
+bool phy_read(uint32_t reg_addr, uint32_t *data) {
+    return rx_ether_phy_read(s_phy_addr, reg_addr, data, MII_RD_TOUT);
+}
+
+bool phy_write(uint32_t reg_addr, uint32_t data) {
+    return rx_ether_phy_write(s_phy_addr, reg_addr, data, MII_WR_TOUT);
+}
+
+static bool _phy_reset(uint32_t phy_addr) {
+    uint32_t i;
+    uint32_t data;
+    if (!rx_ether_phy_write(phy_addr, PHY_REG_BMCR, BMCR_RESET, MII_WR_TOUT)) {
+        return false;
+    }
+    for (i = 0; i < MII_WR_TOUT; i++) {
+        if (!rx_ether_phy_read(phy_addr, PHY_REG_BMCR, &data, MII_RD_TOUT)) {
+            return false;
+        }
+        if (!(data & BMCR_RESET)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool phy_reset(void) {
+    return _phy_reset(s_phy_addr);
+}
+
+static bool phy_verify_id(void) {
+    uint32_t id1, id2;
+
+    if (!phy_read(PHY_REG_IDR1, &id1)) {
+        return false;
+    }
+    if (!phy_read(PHY_REG_IDR2, &id2)) {
+        return false;
+    }
+    return true;
+}
+
+static bool phy_set_auto_negotiate(void) {
+    uint32_t reg;
+    volatile uint32_t count;
+    phy_write(AN_ADVERTISEMENT_REG, 0x01E1);
+    phy_write(BASIC_MODE_CONTROL_REG, 0x1200);
+    count = 0;
+    do {
+        phy_read(BASIC_MODE_STATUS_REG, &reg);
+        phy_read(BASIC_MODE_STATUS_REG, &reg);
+        count++;
+    } while (!(reg & 0x0020) && count < PHY_AUTO_NEGOTIATON_WAIT);
+
+    if (count >= PHY_AUTO_NEGOTIATON_WAIT) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool phy_set_link_speed(void) {
+    uint32_t data;
+    bool full_duplex, mbit_100;
+
+    if (!phy_set_auto_negotiate()) {
+        #if defined(DEBUG_PHY)
+        debug_printf("PHY AN NG\r\n");
+        #endif
+        mbit_100 = true;
+        full_duplex = true;
+    } else {
+        if (!phy_read(PHY_REG_BMSR, &data)) {
+            return false;
+        }
+        if (data & STS_FULL_DUP) {
+            full_duplex = true;
+        } else {
+            full_duplex = false;
+        }
+        if (data & STS_10_MBIT) {
+            mbit_100 = false;
+        } else {
+            mbit_100 = true;
+        }
+        #if defined(DEBUG_PHY)
+        debug_printf("PHY AN FD:%d SP:%d\r\n", full_duplex, mbit_100);
+        #endif
+    }
+    rx_ether_set_link_speed(mbit_100, full_duplex);
+    return true;
+}
+
+static bool phy_find_id(uint32_t *addr) {
+    uint32_t i;
+    for (i = 0; i < PHY_MAX; i++) {
+        if (_phy_reset((uint32_t)PhyAddr[i])) {
+            *addr = (uint32_t)PhyAddr[i];
+            return true;
+        }
+    }
+    return false;
+}
+
+bool phy_init(void) {
+    s_phy_addr = PHY_ADDR;
+    if (!phy_find_id(&s_phy_addr)) {
+        return false;
+    }
+    if (!phy_reset()) {
+        return false;
+    }
+    if (!phy_verify_id()) {
+        return false;
+    }
+    if (!phy_set_link_speed()) {
+        return false;
+    }
+    return true;
+}
+
+bool phy_get_link_status(void) {
+    uint32_t data = 0;
+    bool link_status = false;
+
+    if (phy_read(PHY_REG_BMSR, &data)) {
+        link_status = ((data & 0x0004) == 0x0004);
+    }
+    return link_status;
+}
+
+bool rx_ether_init(uint8_t *hwaddr) {
     le0.open = 1;
     rx_ether_fifo_init(rxdesc, (uint32_t)ACT);
     rx_ether_fifo_init(txdesc, (uint32_t)0);
@@ -486,7 +655,8 @@ void rx_ether_init(uint8_t *hwaddr) {
     edmac_reg->EDMR.BIT.DE = 1;
 
     // Initialize PHY
-    phy_init();
+    bool flag = phy_init();
+    return flag;
 }
 
 void rx_ether_start(void) {
