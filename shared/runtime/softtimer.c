@@ -30,7 +30,7 @@
 #include "py/runtime.h"
 #include "softtimer.h"
 
-extern __IO uint32_t MICROPY_SOFT_TIMER_TICKS_MS;
+extern volatile uint32_t MICROPY_SOFT_TIMER_TICKS_MS;
 
 volatile uint32_t soft_timer_next;
 

@@ -1,0 +1,14 @@
+---
+BasedOnStyle: 'Google'
+AccessModifierOffset: -4
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+ColumnLimit: 0
+IndentWidth: 4
+SpacesBeforeTrailingComments: 2
+TabWidth: 4
+UseTab: 'Never'
+Cpp11BracedListStyle: false
+SortIncludes: false

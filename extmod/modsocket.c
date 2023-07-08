@@ -33,7 +33,8 @@
 #include "py/stream.h"
 #include "py/mperrno.h"
 
-#if MICROPY_PY_NETWORK && MICROPY_PY_SOCKET && !MICROPY_PY_LWIP
+// #if MICROPY_PY_NETWORK && MICROPY_PY_SOCKET && !MICROPY_PY_LWIP
+#if MICROPY_PY_NETWORK && MICROPY_PY_SOCKET
 
 #include "shared/netutils/netutils.h"
 #include "modnetwork.h"
@@ -653,6 +654,13 @@ const mp_obj_module_t mp_module_socket = {
     .globals = (mp_obj_dict_t *)&mp_module_socket_globals,
 };
 
+#if !MICROPY_PY_LWIP
+MP_REGISTER_EXTENSIBLE_MODULE(MP_QSTR_socket, mp_module_socket);
+#else
+MP_REGISTER_EXTENSIBLE_MODULE(MP_QSTR_wsocket, mp_module_socket);
+#endif
+
 MP_REGISTER_EXTENSIBLE_MODULE(MP_QSTR_socket, mp_module_socket);
 
-#endif // MICROPY_PY_NETWORK && MICROPY_PY_SOCKET && !MICROPY_PY_LWIP
+// #endif // MICROPY_PY_NETWORK && MICROPY_PY_SOCKET && !MICROPY_PY_LWIP
+#endif // MICROPY_PY_NETWORK && MICROPY_PY_SOCKET

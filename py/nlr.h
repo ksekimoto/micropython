@@ -88,6 +88,10 @@
 #elif defined(__mips__)
     #define MICROPY_NLR_MIPS (1)
     #define MICROPY_NLR_NUM_REGS (MICROPY_NLR_NUM_REGS_MIPS)
+// ToDo
+//#elif defined (__RX__)
+//    #define MICROPY_NLR_RX (1)
+//    #define MICROPY_NLR_NUM_REGS (20)
 #else
     #define MICROPY_NLR_SETJMP (1)
     //#warning "No native NLR support for this arch, using setjmp implementation"
