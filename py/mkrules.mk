@@ -22,7 +22,7 @@ endif
 
 # QSTR generation uses the same CFLAGS, with these modifications.
 QSTR_GEN_FLAGS = -DNO_QSTR
-# Note: := to force evalulation immediately.
+# Note: := to force evaluation immediately.
 QSTR_GEN_CFLAGS := $(CFLAGS)
 QSTR_GEN_CFLAGS += $(QSTR_GEN_FLAGS)
 QSTR_GEN_CXXFLAGS := $(CXXFLAGS)
@@ -46,11 +46,13 @@ QSTR_GEN_CXXFLAGS += $(QSTR_GEN_FLAGS)
 
 vpath %.S . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.S
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "CC $<"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 
 vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
+	@dirname $@ | xargs mkdir -p
 	$(ECHO) "AS $<"
 	$(Q)$(AS) $(AFLAGS) -o $@ $<
 
@@ -212,7 +214,9 @@ $(BUILD)/$(PROG): $(OBJ)
 # we may want to compile using Thumb, but link with non-Thumb libc.
 	$(Q)$(CC) -o $@ $^ $(LIB) $(LDFLAGS)
 ifndef DEBUG
+ifdef STRIP
 	$(Q)$(STRIP) $(STRIPFLAGS_EXTRA) $@
+endif
 endif
 	$(Q)$(SIZE) $$(find $(BUILD) -path "$(BUILD)/build/frozen*.o") $@
 

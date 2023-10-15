@@ -99,7 +99,10 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
     uint32_t nss = args[7].u_int;
     // ToDo
     // init the SPI bus
-    _spi_init(self->spi, nss != SPI_NSS_SOFT);
+    int ret = _spi_init(self->spi, nss != SPI_NSS_SOFT);
+    if (ret != 0) {
+        mp_raise_OSError(-ret);
+    }
     spi_set_params(self->spi, args[2].u_int, args[1].u_int, args[3].u_int, args[4].u_int,
         args[6].u_int, args[8].u_int);
 

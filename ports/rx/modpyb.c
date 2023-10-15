@@ -31,7 +31,6 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "shared/runtime/pyexec.h"
-#include "drivers/dht/dht.h"
 #include "irq.h"
 #include "led.h"
 #include "timer.h"
@@ -63,8 +62,6 @@ extern const mp_obj_type_t rx_xpt2046_type;
 #if MICROPY_PY_PYB_LCDSPI
 extern const mp_obj_type_t rx_lcdspi_type;
 #endif
-
-char pyb_country_code[2];
 
 #if MICROPY_PY_PYB
 
@@ -169,7 +166,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_hid_keyboard), MP_ROM_PTR(&pyb_usb_hid_keyboard_obj) },
     { MP_ROM_QSTR(MP_QSTR_USB_HID), MP_ROM_PTR(&pyb_usb_hid_type) },
     #endif
-    // { MP_ROM_QSTR(MP_QSTR_USB_VCP), MP_ROM_PTR(&pyb_usb_vcp_type) },
     #if MICROPY_PY_PYB_LEGACY
     // these 2 are deprecated; use USB_VCP.isconnected and USB_HID.send instead
     // { MP_ROM_QSTR(MP_QSTR_have_cdc), MP_ROM_PTR(&pyb_have_cdc_obj) },
@@ -204,6 +200,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
     #if MICROPY_HW_ENABLE_SERVO
     { MP_ROM_QSTR(MP_QSTR_pwm), MP_ROM_PTR(&pyb_pwm_set_obj) },
+    { MP_ROM_QSTR(MP_QSTR_PWM), MP_ROM_PTR(&pyb_pwm_type) },
     { MP_ROM_QSTR(MP_QSTR_servo), MP_ROM_PTR(&pyb_servo_set_obj) },
     { MP_ROM_QSTR(MP_QSTR_Servo), MP_ROM_PTR(&pyb_servo_type) },
     #endif
@@ -263,7 +260,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LCDSPI), MP_ROM_PTR(&rx_lcdspi_type) },
     { MP_ROM_QSTR(MP_QSTR_XPT2046), MP_ROM_PTR(&rx_xpt2046_type) },
     #endif
-
 };
 
 STATIC MP_DEFINE_CONST_DICT(pyb_module_globals, pyb_module_globals_table);

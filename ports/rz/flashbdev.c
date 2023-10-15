@@ -52,7 +52,6 @@ STATIC byte flash_cache_mem[0x4000] __attribute__((aligned(16))) RAM_CODE_SEC; /
 #define FLASH_MEM_SEG1_NUM_BLOCKS (2048)            // sectors 1,2,...,64: 256K
 
 #if !defined(FLASH_MEM_SEG2_START_ADDR)
-#define FLASH_MEM_SEG2_START_ADDR (0) // no second segment
 #define FLASH_MEM_SEG2_NUM_BLOCKS (0) // no second segment
 #endif
 
@@ -63,9 +62,9 @@ static volatile uint8_t flash_flags = 0;
 static uint32_t flash_cache_sector_id;
 static uint32_t flash_cache_sector_start;
 static uint32_t flash_cache_sector_size;
-static long flash_tick_counter_last_write;
+static uint32_t flash_tick_counter_last_write;
 
-void flash_bdev_irq_handler(void);
+static void flash_bdev_irq_handler(void);
 
 int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
     (void)arg;
@@ -73,34 +72,36 @@ int32_t flash_bdev_ioctl(uint32_t op, uint32_t arg) {
         case BDEV_IOCTL_INIT:
             flash_flags = 0;
             flash_cache_sector_id = 0;
-            flash_tick_counter_last_write = 0L;
+            flash_tick_counter_last_write = 0;
             return 0;
 
         case BDEV_IOCTL_NUM_BLOCKS:
+            // Units are FLASH_BLOCK_SIZE
             return FLASH_MEM_SEG1_NUM_BLOCKS + FLASH_MEM_SEG2_NUM_BLOCKS;
 
         case BDEV_IOCTL_IRQ_HANDLER:
             flash_bdev_irq_handler();
             return 0;
 
-        case BDEV_IOCTL_SYNC:
+        case BDEV_IOCTL_SYNC: {
+            // uint32_t basepri = raise_irq_pri(IRQ_PRI_FLASH); // prevent cache flushing and USB access
             if (flash_flags & FLASH_FLAG_DIRTY) {
                 flash_flags |= FLASH_FLAG_FORCE_WRITE;
-                flash_bdev_irq_handler();
-                // while (flash_flags & FLASH_FLAG_DIRTY) {
-                //   NVIC->STIR = FLASH_IRQn;
-                // }
+                while (flash_flags & FLASH_FLAG_DIRTY) {
+                    flash_bdev_irq_handler();
+                }
             }
+            // restore_irq_pri(basepri);
             return 0;
+        }
     }
-    // return -MP_EINVAL;
-    return -1;
+    return -MP_EINVAL;
 }
 
 static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
     uint32_t flash_sector_start;
     uint32_t flash_sector_size;
-    uint32_t flash_sector_id = flash_get_sector_info(flash_addr, &flash_sector_start, &flash_sector_size);
+    int32_t flash_sector_id = flash_get_sector_info(flash_addr, &flash_sector_start, &flash_sector_size);
     if (flash_sector_size > FLASH_SECTOR_SIZE_MAX) {
         flash_sector_size = FLASH_SECTOR_SIZE_MAX;
     }
@@ -113,13 +114,13 @@ static uint8_t *flash_cache_get_addr_for_write(uint32_t flash_addr) {
     }
     flash_flags |= FLASH_FLAG_DIRTY;
     led_state(PYB_LED_RED, 1); // indicate a dirty cache with LED on
-    flash_tick_counter_last_write = (long)mtick();
+    flash_tick_counter_last_write = mp_hal_ticks_ms();
     return (uint8_t *)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
 }
 
 void flash_cache_commit(void) {
     if (flash_flags & FLASH_FLAG_DIRTY) {
-        if (((long)mtick() - flash_tick_counter_last_write) > 1000) {
+        if (((long)mp_hal_ticks_ms() - flash_tick_counter_last_write) > 1000) {
             flash_bdev_irq_handler();
         }
     }
@@ -128,7 +129,7 @@ void flash_cache_commit(void) {
 static uint8_t *flash_cache_get_addr_for_read(uint32_t flash_addr) {
     uint32_t flash_sector_start;
     uint32_t flash_sector_size;
-    uint32_t flash_sector_id = flash_get_sector_info(flash_addr, &flash_sector_start, &flash_sector_size);
+    int32_t flash_sector_id = flash_get_sector_info(flash_addr, &flash_sector_start, &flash_sector_size);
     if (flash_cache_sector_id == flash_sector_id) {
         // in cache, copy from there
         return (uint8_t *)CACHE_MEM_START_ADDR + flash_addr - flash_sector_start;
@@ -141,19 +142,18 @@ static uint32_t convert_block_to_flash_addr(uint32_t block) {
     if (block < FLASH_MEM_SEG1_NUM_BLOCKS) {
         return FLASH_MEM_SEG1_START_ADDR + block * FLASH_BLOCK_SIZE;
     }
+    #ifdef FLASH_MEM_SEG2_START_ADDR
     if (block < FLASH_MEM_SEG1_NUM_BLOCKS + FLASH_MEM_SEG2_NUM_BLOCKS) {
         return FLASH_MEM_SEG2_START_ADDR + (block - FLASH_MEM_SEG1_NUM_BLOCKS) * FLASH_BLOCK_SIZE;
     }
+    #endif
     // can add more flash segments here if needed, following above pattern
 
     // bad block
     return -1;
 }
 
-void flash_bdev_irq_handler(void) {
-    #if defined(DEBUG_FLASH_BDEV)
-    // debug_printf("FLASH IRQ\r\n");
-    #endif
+static void flash_bdev_irq_handler(void) {
     if (!(flash_flags & FLASH_FLAG_DIRTY)) {
         return;
     }
@@ -179,17 +179,16 @@ void flash_bdev_irq_handler(void) {
 
     // This code erases the flash directly, waiting for it to finish
     if (!(flash_flags & FLASH_FLAG_ERASED)) {
-        flash_erase(flash_cache_sector_start, flash_cache_sector_size);
+        flash_erase(flash_cache_sector_start, flash_cache_sector_size / 4);
         flash_flags |= FLASH_FLAG_ERASED;
-        // return;
+        return;
     }
 
     // If not a forced write, wait at least 5 seconds after last write to flush
     // On file close and flash unmount we get a forced write, so we can afford to wait a while
-    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || ((long)mtick() - flash_tick_counter_last_write) >= 3000L) {
+    if ((flash_flags & FLASH_FLAG_FORCE_WRITE) || (mp_hal_ticks_ms() - flash_tick_counter_last_write) >= 3000L) {
         // sync the cache RAM buffer by writing it to the flash page
-        flash_tick_counter_last_write = 0x7fffffffL;
-        flash_write(flash_cache_sector_start, (const uint32_t *)CACHE_MEM_START_ADDR, flash_cache_sector_size);
+        flash_write(flash_cache_sector_start, (const uint32_t *)CACHE_MEM_START_ADDR, flash_cache_sector_size / 4);
         // clear the flash flags now that we have a clean cache
         flash_flags = 0;
         // indicate a clean cache with LED off
@@ -209,25 +208,6 @@ bool flash_bdev_readblock(uint8_t *dest, uint32_t block) {
     return true;
 }
 
-bool flash_bdev_is_erased(uint32_t block) {
-    uint32_t *start;
-    uint32_t *end;
-    bool ret = true;
-    uint32_t flash_addr = convert_block_to_flash_addr(block);
-    start = (uint32_t *)flash_addr;
-    end = (uint32_t *)(flash_addr + FLASH_BLOCK_SIZE);
-    while (start < end) {
-        if (*start++ != 0xffffffff) {
-            ret = false;
-            break;
-        }
-    }
-    #if defined(DEBUG_FLASH_BDEV)
-    debug_printf("is_erased block=%x ret=%x\r\n", block, ret);
-    #endif
-    return ret;
-}
-
 bool flash_bdev_writeblock(const uint8_t *src, uint32_t block) {
     // non-MBR block, copy to cache
     uint32_t flash_addr = convert_block_to_flash_addr(block);
@@ -235,10 +215,10 @@ bool flash_bdev_writeblock(const uint8_t *src, uint32_t block) {
         // bad block number
         return false;
     }
+    // uint32_t basepri = raise_irq_pri(IRQ_PRI_FLASH); // prevent cache flushing and USB access
     uint8_t *dest = flash_cache_get_addr_for_write(flash_addr);
     memcpy(dest, src, FLASH_BLOCK_SIZE);
-    // flash_flags |= FLASH_FLAG_FORCE_WRITE;
-    // flash_bdev_irq_handler();
+    // restore_irq_pri(basepri);
     return true;
 }
 
@@ -270,10 +250,10 @@ int flash_bdev_writeblocks_ext(const uint8_t *src, uint32_t block, uint32_t offs
             // bad block number
             return -1;
         }
-//        uint32_t basepri = raise_irq_pri(IRQ_PRI_FLASH); // prevent cache flushing and USB access
+        // uint32_t basepri = raise_irq_pri(IRQ_PRI_FLASH); // prevent cache flushing and USB access
         uint8_t *dest = flash_cache_get_addr_for_write(flash_addr + offset);
         memcpy(dest, src, l);
-//        restore_irq_pri(basepri);
+        // restore_irq_pri(basepri);
         src += l;
         block += 1;
         offset = 0;

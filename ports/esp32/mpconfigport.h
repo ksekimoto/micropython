@@ -68,9 +68,12 @@
 #define MICROPY_PY_THREAD_GIL               (1)
 #define MICROPY_PY_THREAD_GIL_VM_DIVISOR    (32)
 
+#define MICROPY_GC_SPLIT_HEAP               (1)
+#define MICROPY_GC_SPLIT_HEAP_AUTO          (1)
+
 // extended modules
-#ifndef MICROPY_ESPNOW
-#define MICROPY_ESPNOW                      (1)
+#ifndef MICROPY_PY_ESPNOW
+#define MICROPY_PY_ESPNOW                   (1)
 #endif
 #ifndef MICROPY_PY_BLUETOOTH
 #define MICROPY_PY_BLUETOOTH                (1)
@@ -136,11 +139,9 @@
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE     (esp_rom_get_cpu_ticks_per_us() * 1000000 / 200) // roughly
 #define MICROPY_PY_SSL                      (1)
 #define MICROPY_SSL_MBEDTLS                 (1)
-#define MICROPY_PY_SSL_FINALISER            (1)
 #define MICROPY_PY_WEBSOCKET                (1)
 #define MICROPY_PY_WEBREPL                  (1)
 #define MICROPY_PY_ONEWIRE                  (1)
-#define MICROPY_PY_PLATFORM                 (1)
 #define MICROPY_PY_SOCKET_EVENTS            (MICROPY_PY_WEBREPL)
 #define MICROPY_PY_BLUETOOTH_RANDOM_ADDR    (1)
 #define MICROPY_PY_BLUETOOTH_DEFAULT_GAP_NAME ("ESP32")
@@ -150,6 +151,11 @@
 #define MICROPY_FATFS_RPATH                 (2)
 #define MICROPY_FATFS_MAX_SS                (4096)
 #define MICROPY_FATFS_LFN_CODE_PAGE         437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
+
+// task size
+#ifndef MICROPY_TASK_STACK_SIZE
+#define MICROPY_TASK_STACK_SIZE             (16 * 1024)
+#endif
 
 #define MP_STATE_PORT MP_STATE_VM
 
@@ -221,11 +227,15 @@ typedef long mp_off_t;
 #endif
 
 #ifndef MICROPY_HW_ENABLE_MDNS_QUERIES
-#define MICROPY_HW_ENABLE_MDNS_QUERIES      (0)
+#define MICROPY_HW_ENABLE_MDNS_QUERIES      (1)
 #endif
 
 #ifndef MICROPY_HW_ENABLE_MDNS_RESPONDER
-#define MICROPY_HW_ENABLE_MDNS_RESPONDER    (0)
+#define MICROPY_HW_ENABLE_MDNS_RESPONDER    (1)
+#endif
+
+#ifndef MICROPY_BOARD_ENTER_BOOTLOADER
+#define MICROPY_BOARD_ENTER_BOOTLOADER(nargs, args)
 #endif
 
 #ifndef MICROPY_BOARD_STARTUP

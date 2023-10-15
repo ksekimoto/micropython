@@ -71,6 +71,7 @@ int spi_bdev_writeblocks(spi_bdev_t *bdev, const uint8_t *src, uint32_t block_nu
 // These raw functions bypass the cache and go directly to SPI flash
 int spi_bdev_readblocks_raw(spi_bdev_t *bdev, uint8_t *dest, uint32_t block_num, uint32_t block_offset, uint32_t num_bytes);
 int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t block_num, uint32_t block_offset, uint32_t num_bytes);
+int spi_bdev_eraseblocks_raw(spi_bdev_t *bdev, uint32_t block_num, uint32_t num_bytes);
 
 extern const struct _mp_obj_type_t pyb_flash_type;
 extern const struct _pyb_flash_obj_t pyb_flash_obj;

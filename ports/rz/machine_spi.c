@@ -31,13 +31,10 @@
 /******************************************************************************/
 // Implementation of hard SPI for machine module
 
-STATIC machine_hard_spi_obj_t machine_hard_spi_obj[] = {
+STATIC const machine_hard_spi_obj_t machine_hard_spi_obj[] = {
     {{&machine_spi_type}, &spi_obj[0]},
     {{&machine_spi_type}, &spi_obj[1]},
     {{&machine_spi_type}, &spi_obj[2]},
-    {{&machine_spi_type}, &spi_obj[3]},
-    {{&machine_spi_type}, &spi_obj[4]},
-    {{&machine_spi_type}, &spi_obj[5]},
 };
 
 STATIC void machine_hard_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -82,7 +79,10 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
 
     self->spi->bits = args[ARG_bits].u_int;
     // init the SPI bus
-    _spi_init(self->spi, false);
+    int ret = _spi_init(self->spi, false);
+    if (ret != 0) {
+        mp_raise_OSError(-ret);
+    }
     // set configurable paramaters
     spi_set_params(self->spi, 0xffffffff, args[ARG_baudrate].u_int,
         args[ARG_polarity].u_int, args[ARG_phase].u_int, args[ARG_bits].u_int,
@@ -105,7 +105,10 @@ STATIC void machine_hard_spi_init(mp_obj_base_t *self_in, size_t n_args, const m
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // re-init the SPI bus
-    _spi_init(self->spi, false);
+    int ret = _spi_init(self->spi, false);
+    if (ret != 0) {
+        mp_raise_OSError(-ret);
+    }
     // set the SPI configuration values
     spi_set_params(self->spi, 0xffffffff, args[ARG_baudrate].u_int,
         args[ARG_polarity].u_int, args[ARG_phase].u_int, args[ARG_bits].u_int,

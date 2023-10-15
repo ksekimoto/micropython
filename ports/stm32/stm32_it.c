@@ -320,7 +320,7 @@ void USB_IRQHandler(void) {
 }
 #endif
 
-#elif defined(STM32G4) || defined(STM32WB)
+#elif defined(STM32G4) || defined(STM32L1) || defined(STM32WB)
 
 #if MICROPY_HW_USB_FS
 void USB_LP_IRQHandler(void) {
@@ -786,7 +786,7 @@ void TIM8_UP_TIM13_IRQHandler(void) {
     IRQ_EXIT(TIM8_UP_TIM13_IRQn);
 }
 
-#if defined(STM32G4) || defined(STM32L4)
+#if defined(STM32G4) || defined(STM32H5) || defined(STM32L4)
 void TIM8_UP_IRQHandler(void) {
     IRQ_ENTER(TIM8_UP_IRQn);
     timer_irq_handler(8);
@@ -1012,6 +1012,14 @@ void UART10_IRQHandler(void) {
     IRQ_ENTER(UART10_IRQn);
     uart_irq_handler(10);
     IRQ_EXIT(UART10_IRQn);
+}
+#endif
+
+#if defined(USART10)
+void USART10_IRQHandler(void) {
+    IRQ_ENTER(USART10_IRQn);
+    uart_irq_handler(10);
+    IRQ_EXIT(USART10_IRQn);
 }
 #endif
 

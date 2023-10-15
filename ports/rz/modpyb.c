@@ -48,7 +48,6 @@
 #include "servo.h"
 #include "portmodules.h"
 #include "modmachine.h"
-#include "extmod/modnetwork.h"
 #include "extmod/vfs.h"
 #include "extmod/modtime.h"
 
@@ -59,18 +58,7 @@
 // #include "lcdspi.h"
 // #endif
 
-char pyb_country_code[2];
-
 #if MICROPY_PY_PYB
-
-#if 0
-/* Only debugging for STM32 Hard Fault */
-STATIC mp_obj_t pyb_fault_debug(mp_obj_t value) {
-    pyb_hard_fault_debug = mp_obj_is_true(value);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_fault_debug_obj, pyb_fault_debug);
-#endif
 
 #if MICROPY_PY_PYB_LEGACY
 
@@ -163,9 +151,6 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_main), MP_ROM_PTR(&pyb_main_obj) },
     { MP_ROM_QSTR(MP_QSTR_repl_uart), MP_ROM_PTR(&pyb_repl_uart_obj) },
 
-    // Deprecated (use network.country instead).
-    { MP_ROM_QSTR(MP_QSTR_country), MP_ROM_PTR(&mod_network_country_obj) },
-
     #if RZ_TODO
     #if MICROPY_HW_ENABLE_USB
     { MP_ROM_QSTR(MP_QSTR_usb_mode), MP_ROM_PTR(&pyb_usb_mode_obj) },
@@ -194,10 +179,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&mp_vfs_mount_obj) },
     #endif
 
-    // This function is not intended to be public and may be moved elsewhere
     #if RZ_TODO
-    { MP_ROM_QSTR(MP_QSTR_dht_readinto), MP_ROM_PTR(&dht_readinto_obj) },
-
     { MP_ROM_QSTR(MP_QSTR_Timer), MP_ROM_PTR(&pyb_timer_type) },
     #endif
 

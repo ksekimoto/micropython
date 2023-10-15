@@ -29,6 +29,10 @@
 #include "drivers/bus/spi.h"
 
 // #define SPI_NUM_CH  3
+#define SPI_DIRECTION_2LINES 0
+#define SPI_NSS_SOFT    1
+#define SPI_MODE_MASTER    0x00000000
+#define SPI_MODE_SLAVE     0x00000004
 
 typedef struct _spi_t {
     uint32_t ch;
@@ -54,11 +58,6 @@ typedef struct _machine_hard_spi_obj_t {
     spi_t *spi;
 } machine_hard_spi_obj_t;
 
-#define SPI_DIRECTION_2LINES 0
-#define SPI_NSS_SOFT    1
-#define SPI_MODE_MASTER    0x00000000
-#define SPI_MODE_SLAVE     0x00000004
-
 extern spi_t spi_obj[];
 
 extern const mp_spi_proto_t spi_proto;
@@ -71,7 +70,7 @@ extern const mp_obj_type_t machine_spi_type;
 #define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
 void spi_init0(void);
-void spi_init(const spi_t *spi, bool enable_nss_pin);
+int spi_init(const spi_t *spi, bool enable_nss_pin);
 void spi_deinit(const spi_t *spi_obj);
 int spi_find_index(mp_obj_t id);
 void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baudrate,

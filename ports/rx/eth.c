@@ -43,8 +43,8 @@
 #include "netif/ethernet.h"
 
 // #define DEBUG_ETH_FUNC_TRACE
-#define DEBUG_ETH_PACKET_READ
-#define DEBUG_ETH_PACKET_WRITE
+// #define DEBUG_ETH_PACKET_READ
+// #define DEBUG_ETH_PACKET_WRITE
 #define DEBUG_ETH_FATAL_ERROR
 
 /* Define those to better describe your network interface. */
@@ -93,7 +93,7 @@ STATIC uint32_t eth_phy_read(uint32_t reg) {
 
 void eth_init(eth_t *self, int mac_idx) {
     #if defined(DEBUG_ETH_FUNC_TRACE)
-	mp_printf(MICROPY_ERROR_PRINTER, "eth_init\r\n");
+    mp_printf(MICROPY_ERROR_PRINTER, "eth_init\r\n");
     #endif
     mp_hal_get_mac(mac_idx, &self->netif.hwaddr[0]);
     self->netif.hwaddr_len = 6;
@@ -357,7 +357,7 @@ STATIC void eth_lwip_init(eth_t *self) {
     n->name[0] = 'e';
     n->name[1] = '0';
     netif_add(n, &ipconfig[0], &ipconfig[1], &ipconfig[2], self, eth_netif_init, ethernet_input);
-    netif_set_hostname(n, "MPY");
+    netif_set_hostname(n, mod_network_hostname_data);
     netif_set_default(n);
     netif_set_up(n);
 

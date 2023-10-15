@@ -51,7 +51,7 @@
 ///     val = adc.read_core_vbat()      # read MCU VBAT
 ///     val = adc.read_core_vref()      # read MCU VREF
 
-/* ADC defintions */
+/* ADC definitions */
 
 typedef struct _pyb_obj_adc_t {
     mp_obj_base_t base;
@@ -220,8 +220,7 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
 
     // make ADCAll object
-    pyb_adc_all_obj_t *o = m_new_obj(pyb_adc_all_obj_t);
-    o->base.type = &pyb_adc_all_type;
+    pyb_adc_all_obj_t *o = mp_obj_malloc(pyb_adc_all_obj_t, &pyb_adc_all_type);
     mp_int_t res = mp_obj_get_int(args[0]);
     uint32_t en_mask = 0xffffffff;
     if (n_args > 1) {

@@ -129,7 +129,8 @@ STATIC int execute_from_lexer(int source_kind, const void *source, mp_parse_inpu
             const vstr_t *vstr = source;
             lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, vstr->buf, vstr->len, false);
         } else if (source_kind == LEX_SRC_FILENAME) {
-            lex = mp_lexer_new_from_file((const char *)source);
+            const char *filename = (const char *)source;
+            lex = mp_lexer_new_from_file(qstr_from_str(filename));
         } else { // LEX_SRC_STDIN
             lex = mp_lexer_new_from_fd(MP_QSTR__lt_stdin_gt_, 0, false);
         }
@@ -296,10 +297,10 @@ STATIC int do_repl(void) {
         }
 
         int ret = execute_from_lexer(LEX_SRC_STR, line, MP_PARSE_SINGLE_INPUT, true);
+        free(line);
         if (ret & FORCED_EXIT) {
             return ret;
         }
-        free(line);
     }
 
     #endif

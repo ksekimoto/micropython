@@ -95,6 +95,6 @@ void m_tracked_free(void *ptr);
 #define MBEDTLS_PLATFORM_STD_FREE m_tracked_free
 #define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
-#include "mbedtls/check_config.h"
+// #include "mbedtls/check_config.h"
 
 #endif /* MICROPY_INCLUDED_MBEDTLS_CONFIG_H */

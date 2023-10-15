@@ -25,7 +25,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <string.h>
 
 #include "modmachine.h"
@@ -88,37 +87,38 @@ void machine_deinit(void) {
 // Print out lots of information about the board.
 STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     const mp_print_t *print = &mp_plat_print;
+
     // get and print unique id; 128 bits
     #if RZ_TODO
     {
         uint8_t id[16];
         get_unique_id((uint8_t *)&id);
-        mp_printf(print, "ID=%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x\n",
+        mp_printf(print,"ID=%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x:%02x%02x%02x%02x\n",
             id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7],
             id[8], id[9], id[10], id[11], id[12], id[13], id[14], id[15]);
     }
     #endif
     // to print info about memory
     {
-        mp_printf(print, "_etext=%p\n", &_etext);
-        mp_printf(print, "_sidata=%p\n", &_sidata);
-        mp_printf(print, "_sdata=%p\n", &_sdata);
-        mp_printf(print, "_edata=%p\n", &_edata);
-        mp_printf(print, "_sbss=%p\n", &_sbss);
-        mp_printf(print, "_ebss=%p\n", &_ebss);
-        mp_printf(print, "_sstack=%p\n", &_sstack);
-        mp_printf(print, "_estack=%p\n", &_estack);
-        mp_printf(print, "_ram_start=%p\n", &_ram_start);
-        mp_printf(print, "_heap_start=%p\n", &_heap_start);
-        mp_printf(print, "_heap_end=%p\n", &_heap_end);
-        mp_printf(print, "_ram_end=%p\n", &_ram_end);
+        mp_printf(print,"_etext=%p\n", &_etext);
+        mp_printf(print,"_sidata=%p\n", &_sidata);
+        mp_printf(print,"_sdata=%p\n", &_sdata);
+        mp_printf(print,"_edata=%p\n", &_edata);
+        mp_printf(print,"_sbss=%p\n", &_sbss);
+        mp_printf(print,"_ebss=%p\n", &_ebss);
+        mp_printf(print,"_sstack=%p\n", &_sstack);
+        mp_printf(print,"_estack=%p\n", &_estack);
+        mp_printf(print,"_ram_start=%p\n", &_ram_start);
+        mp_printf(print,"_heap_start=%p\n", &_heap_start);
+        mp_printf(print,"_heap_end=%p\n", &_heap_end);
+        mp_printf(print,"_ram_end=%p\n", &_ram_end);
     }
 
     // qstr info
     {
         size_t n_pool, n_qstr, n_str_data_bytes, n_total_bytes;
         qstr_pool_info(&n_pool, &n_qstr, &n_str_data_bytes, &n_total_bytes);
-        mp_printf(print, "qstr:\n  n_pool=%u\n  n_qstr=%u\n  n_str_data_bytes=%u\n  n_total_bytes=%u\n",
+        mp_printf(print,"qstr:\n  n_pool=%u\n  n_qstr=%u\n  n_str_data_bytes=%u\n  n_total_bytes=%u\n",
             (int)n_pool, (int)n_qstr, (int)n_str_data_bytes, (int)n_total_bytes);
     }
 
@@ -126,10 +126,10 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     {
         gc_info_t info;
         gc_info(&info);
-        mp_printf(print, "GC:\n");
-        mp_printf(print, "  %u total\n", (int)info.total);
-        mp_printf(print, "  %u : %u\n", (int)info.used, (int)info.free);
-        mp_printf(print, "  1=%u 2=%u m=%u\n", (int)info.num_1block, (int)info.num_2block, (int)info.max_block);
+        mp_printf(print,"GC:\n");
+        mp_printf(print,"  %u total\n", (int)info.total);
+        mp_printf(print,"  %u : %u\n", (int)info.used, (int)info.free);
+        mp_printf(print,"  1=%u 2=%u m=%u\n", (int)info.num_1block, (int)info.num_2block, (int)info.max_block);
     }
 
     // free space on flash
@@ -141,7 +141,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
                 fs_user_mount_t *vfs_fat = MP_OBJ_TO_PTR(vfs->obj);
                 DWORD nclst;
                 f_getfree(&vfs_fat->fatfs, &nclst);
-                mp_printf(print, "LFS free: %u bytes\n", (uint)(nclst * vfs_fat->fatfs.csize * 512));
+                mp_printf(print,"LFS free: %u bytes\n", (uint)(nclst * vfs_fat->fatfs.csize * 512));
                 break;
             }
         }
@@ -196,10 +196,6 @@ NORETURN mp_obj_t machine_bootloader(size_t n_args, const mp_obj_t *args) {
 
     // MICROPY_BOARD_ENTER_BOOTLOADER(n_args, args);
 
-    #if (__MPU_PRESENT == 1)
-    // MPU must be disabled for bootloader to function correctly
-    HAL_MPU_Disable();
-    #endif
 
     while (1) {
         ;
@@ -260,7 +256,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(machine_deepsleep_obj, 0, 1, machine_deepsle
 STATIC mp_obj_t machine_reset_cause(void) {
     return MP_OBJ_NEW_SMALL_INT(reset_cause);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_cause_obj, machine_reset_cause);
+MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_cause_obj, machine_reset_cause);
 #endif
 
 #if MICROPY_PY_MACHINE

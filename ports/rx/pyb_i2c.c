@@ -40,11 +40,6 @@
 // #define DEBUG_I2C
 #endif
 
-// dummmy definition
-// typedef int HAL_StatusTypeDef;
-// #define HAL_OK  0
-//
-
 /// \moduleref pyb
 /// \class I2C - a two-wire serial protocol
 ///
@@ -187,12 +182,12 @@ void i2c_deinit(i2c_t *i2c) {
     rx_i2c_deinit((uint32_t)i2c->ch);
 }
 
-void pyb_i2c_init_freq(const pyb_i2c_obj_t *self, mp_int_t freq) {
+int pyb_i2c_init_freq(const pyb_i2c_obj_t *self, mp_int_t freq) {
     // ToDo implement
     // baudrate configuration
     // init the I2C bus
     i2c_deinit(self->i2c);
-    pyb_i2c_init(self->i2c);
+    return pyb_i2c_init(self->i2c);
 }
 
 /******************************************************************************/

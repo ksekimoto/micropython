@@ -25,8 +25,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "py/runtime.h"
 #include "shared/timeutils/timeutils.h"
 #include "extint.h"

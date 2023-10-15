@@ -24,17 +24,16 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <string.h>
-
 #include "py/runtime.h"
+#include "py/mperrno.h"
 #include "py/mphal.h"
+#include "spi.h"
 #include "extmod/machine_spi.h"
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
 #include "rx_spi.h"
-#include "spi.h"
 
 /// \moduleref pyb
 /// \class SPI - a master-driven serial protocol
@@ -117,7 +116,7 @@ void spi_set_params(const spi_t *spi_obj, uint32_t prescale, int32_t baudrate,
 }
 
 // TODO allow to take a list of pins to use
-void spi_init(const spi_t *self, bool enable_nss_pin) {
+int spi_init(const spi_t *self, bool enable_nss_pin) {
     // ToDo: implement using pins definition
     const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
@@ -172,8 +171,10 @@ void spi_init(const spi_t *self, bool enable_nss_pin) {
     #endif
     } else {
         // SPI does not exist for this board (shouldn't get here, should be checked by caller)
-        return;
+        return -MP_EINVAL;
     }
+
+    return 0; // success
 }
 
 void spi_deinit(const spi_t *spi_obj) {

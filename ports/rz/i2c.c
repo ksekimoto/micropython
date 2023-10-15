@@ -52,18 +52,6 @@ int _i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t f
     return 0;
 }
 
-#if 0
-STATIC int i2c_wait_sr1_set(i2c_t *i2c, uint32_t mask) {
-    // ToDo implement
-    return 0;
-}
-
-STATIC int i2c_wait_stop(i2c_t *i2c) {
-    // ToDo implement
-    return 0;
-}
-#endif
-
 // For write: len = 0, 1 or N
 // For read: len = 1, 2 or N; stop = true
 int i2c_start_addr(i2c_t *i2c, int rd_wrn, uint16_t addr, size_t next_len, bool stop) {

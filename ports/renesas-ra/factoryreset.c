@@ -55,6 +55,10 @@ typedef struct _factory_file_t {
 static const factory_file_t factory_files[] = {
     {"boot.py", sizeof(fresh_boot_py) - 1, fresh_boot_py},
     {"main.py", sizeof(fresh_main_py) - 1, fresh_main_py},
+    #if MICROPY_HW_ENABLE_USB
+    {"pybcdc.inf", sizeof(fresh_pybcdc_inf) - 1, fresh_pybcdc_inf},
+    {"README.txt", sizeof(fresh_readme_txt) - 1, fresh_readme_txt},
+    #endif
 };
 
 MP_WEAK void factory_reset_make_files(FATFS *fatfs) {

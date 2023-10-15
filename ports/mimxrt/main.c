@@ -43,7 +43,16 @@
 #if MICROPY_PY_LWIP
 #include "lwip/init.h"
 #include "lwip/apps/mdns.h"
+#if MICROPY_PY_NETWORK_CYW43
+#include "lib/cyw43-driver/src/cyw43.h"
 #endif
+#endif
+
+#if MICROPY_PY_BLUETOOTH
+#include "mpbthciport.h"
+#include "extmod/modbluetooth.h"
+#endif
+
 #include "systick.h"
 #include "extmod/modnetwork.h"
 
@@ -68,9 +77,23 @@ int main(void) {
 
     systick_enable_dispatch(SYSTICK_DISPATCH_LWIP, mod_network_lwip_poll_wrapper);
     #endif
+    #if MICROPY_PY_BLUETOOTH
+    mp_bluetooth_hci_init();
+    #endif
+
+    #if MICROPY_PY_NETWORK_CYW43
+    {
+        cyw43_init(&cyw43_state);
+        uint8_t buf[8];
+        memcpy(&buf[0], "PYBD", 4);
+        mp_hal_get_mac_ascii(MP_HAL_MAC_WLAN0, 8, 4, (char *)&buf[4]);
+        cyw43_wifi_ap_set_ssid(&cyw43_state, 8, buf);
+        cyw43_wifi_ap_set_password(&cyw43_state, 8, (const uint8_t *)"pybd0123");
+    }
+    #endif
 
     for (;;) {
-        #if defined(MICROPY_HW_LED1)
+        #if defined(MICROPY_HW_LED1_PIN)
         led_init();
         #endif
 
@@ -121,9 +144,13 @@ int main(void) {
         #if MICROPY_PY_MACHINE_I2S
         machine_i2s_deinit_all();
         #endif
+        #if MICROPY_PY_BLUETOOTH
+        mp_bluetooth_deinit();
+        #endif
         #if MICROPY_PY_NETWORK
         mod_network_deinit();
         #endif
+        machine_uart_deinit_all();
         machine_pwm_deinit_all();
         soft_timer_deinit();
         gc_sweep_all();

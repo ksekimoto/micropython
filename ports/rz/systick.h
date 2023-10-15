@@ -56,7 +56,5 @@ static inline void systick_disable_dispatch(size_t slot) {
 
 void systick_wait_at_least(uint32_t stc, uint32_t delay_ms);
 bool systick_has_passed(uint32_t stc, uint32_t delay_ms);
-unsigned long mtick(void);
-unsigned long utick(void);
 
 #endif // MICROPY_INCLUDED_RZ_SYSTICK_H

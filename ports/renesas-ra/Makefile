@@ -44,7 +44,7 @@ FROZEN_MANIFEST ?= boards/manifest.py
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
-GIT_SUBMODULES += lib/fsp
+GIT_SUBMODULES += lib/fsp lib/tinyusb
 
 MCU_SERIES_UPPER = $(shell echo $(MCU_SERIES) | tr '[:lower:]' '[:upper:]')
 CMSIS_MCU_LOWER = $(shell echo $(CMSIS_MCU) | tr '[:upper:]' '[:lower:]')
@@ -69,7 +69,10 @@ INC += -I$(TOP)/$(HAL_DIR)/ra/fsp/inc
 INC += -I$(TOP)/$(HAL_DIR)/ra/fsp/inc/api
 INC += -I$(TOP)/$(HAL_DIR)/ra/fsp/inc/instances
 INC += -I$(TOP)/$(HAL_DIR)/ra/fsp/src/bsp/cmsis/Device/RENESAS/Include
-#INC += -Ilwip_inc
+INC += -I$(TOP)/lib/tinyusb/hw
+INC += -I$(TOP)/lib/tinyusb/src
+INC += -I$(TOP)/shared/tinyusb
+INC += -Ilwip_inc
 ifeq ($(CMSIS_MCU),$(filter $(CMSIS_MCU),RA4M1 RA4W1 RA6M1 RA6M2 RA6M5))
 INC += -Ira
 endif
@@ -82,6 +85,7 @@ INC += -Idebug
 CFLAGS += -D$(CMSIS_MCU)
 CFLAGS += -DRA_HAL_H='<$(CMSIS_MCU)_hal.h>'
 CFLAGS += -DRA_CFG_H='<$(FSP_BOARD_NAME)_conf.h>'
+CFLAGS += -DCFG_TUSB_MCU=OPT_MCU_RAXXX
 
 # Basic Cortex-M flags
 CFLAGS_CORTEX_M = -mthumb
@@ -171,6 +175,27 @@ SHARED_SRC_C += $(addprefix shared/,\
 	runtime/stdout_helpers.c \
 	runtime/sys_stdio_mphal.c \
 	timeutils/timeutils.c \
+	tinyusb/mp_cdc_common.c \
+	tinyusb/mp_usbd.c \
+	tinyusb/mp_usbd_descriptor.c \
+	)
+
+# TinyUSB Stack source
+TINYUSB_SRC_C += $(addprefix lib/tinyusb/,\
+	src/class/cdc/cdc_device.c \
+	src/class/dfu/dfu_rt_device.c \
+	src/class/hid/hid_device.c \
+	src/class/midi/midi_device.c \
+	src/class/msc/msc_device.c \
+	src/class/usbtmc/usbtmc_device.c \
+	src/class/vendor/vendor_device.c \
+	src/common/tusb_fifo.c \
+	src/device/usbd.c \
+	src/device/usbd_control.c \
+	src/portable/renesas/rusb2/dcd_rusb2.c \
+	src/portable/renesas/rusb2/hcd_rusb2.c \
+	src/portable/renesas/rusb2/rusb2_common.c \
+	src/tusb.c \
 	)
 
 ifeq ($(MICROPY_FLOAT_IMPL),double)
@@ -278,7 +303,9 @@ SRC_C += \
 	main.c \
 	ra_hal.c \
 	ra_it.c \
+	rng.c \
 	mphalport.c \
+	mpnetworkport.c \
 	mpthreadport.c \
 	irq.c \
 	pendsv.c \
@@ -307,6 +334,7 @@ SRC_C += \
 	flashbdev.c \
 	storage.c \
 	fatfs_port.c \
+	usbd.c \
 	$(wildcard $(BOARD_DIR)/*.c)
 
 SRC_C += $(addprefix $(BOARD_DIR)/ra_gen/,\
@@ -315,6 +343,18 @@ SRC_C += $(addprefix $(BOARD_DIR)/ra_gen/,\
 	pin_data.c \
 	vector_data.c \
 	)
+
+ifeq ($(MICROPY_SSL_MBEDTLS),1)
+LIB_SRC_C += mbedtls/mbedtls_port.c
+endif
+
+ifeq ($(MICROPY_PY_BLUETOOTH),1)
+SRC_C += mpbthciport.c
+endif
+
+ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+SRC_C += mpnimbleport.c
+endif
 
 SRC_O += \
 	$(STARTUP_FILE) \
@@ -395,12 +435,50 @@ HAL_SRC_C += $(addprefix ra/,\
 
 endif
 
+ifeq ($(MICROPY_HW_ENABLE_RNG),1)
+CRYPTO_DIR = ra/fsp/src/r_sce_protected/crypto_procedures_protected/src/sce9/
+
+INC += -I$(TOP)/$(HAL_DIR)/$(CRYPTO_DIR)/inc
+INC += -I$(TOP)/$(HAL_DIR)/$(CRYPTO_DIR)/inc/api
+INC += -I$(TOP)/$(HAL_DIR)/$(CRYPTO_DIR)/private/inc
+INC += -I$(TOP)/$(HAL_DIR)/$(CRYPTO_DIR)/inc/instances
+
+# The following FSP files are required for the random number generator.
+HAL_SRC_C += $(addprefix $(HAL_DIR)/$(CRYPTO_DIR)/,\
+	public/r_sce.c \
+	public/r_sce_ecc.c \
+	public/r_sce_sha.c \
+	public/r_sce_aes.c \
+	private/r_sce_private.c \
+	primitive/r_sce_p00.c \
+	primitive/r_sce_p20.c \
+	primitive/r_sce_p26.c \
+	primitive/r_sce_p81.c \
+	primitive/r_sce_p82.c \
+	primitive/r_sce_p92.c \
+	primitive/r_sce_p40.c \
+	primitive/r_sce_func050.c \
+	primitive/r_sce_func051.c \
+	primitive/r_sce_func052.c \
+	primitive/r_sce_func053.c \
+	primitive/r_sce_func054.c \
+	primitive/r_sce_func100.c \
+	primitive/r_sce_func101.c \
+	primitive/r_sce_func040.c \
+	primitive/r_sce_func048.c \
+	primitive/r_sce_func102.c \
+	primitive/r_sce_func103.c \
+	primitive/r_sce_subprc01.c\
+	)
+endif
+
 OBJ += $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(LIBM_O)
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(TINYUSB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_O))
@@ -427,7 +505,7 @@ $(PY_BUILD)/formatfloat.o: COPT += -Os
 $(PY_BUILD)/parsenum.o: COPT += -Os
 $(PY_BUILD)/mpprint.o: COPT += -Os
 
-all: $(TOP)/lib/fsp/README.md $(BUILD)/firmware.hex
+all: $(TOP)/lib/fsp/README.md $(BUILD)/firmware.hex $(BUILD)/firmware.bin
 
 # For convenience, automatically fetch required submodules if they don't exist
 $(TOP)/lib/fsp/README.md:
@@ -442,7 +520,7 @@ endef
 
 define GENERATE_BIN
 	$(ECHO) "GEN $(1)"
-	$(Q)$(OBJCOPY) -O binary $(addprefix -j ,$(3)) $(2) $(1)
+	$(Q)$(OBJCOPY) -I ihex -O binary $(2) $(1)
 endef
 
 define GENERATE_HEX
@@ -450,19 +528,10 @@ define GENERATE_HEX
 	$(Q)$(OBJCOPY) -O ihex $(2) $(1)
 endef
 
-.PHONY: 
+.PHONY:
 
-# A board should specify TEXT0_ADDR if to use a different location than the
-# default for the firmware memory location.  A board can also optionally define
-# TEXT1_ADDR to split the firmware into two sections; see below for details.
-TEXT0_ADDR ?= 0x00000000
-
-# No TEXT1_ADDR given so put all firmware at TEXT0_ADDR location
-
-TEXT0_SECTIONS ?= .isr_vector .text .data
-
-$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(call GENERATE_BIN,$@,$^,$(TEXT0_SECTIONS))
+$(BUILD)/firmware.bin: $(BUILD)/firmware.hex
+	$(call GENERATE_BIN,$@,$^)
 
 $(BUILD)/firmware.hex: $(BUILD)/firmware.elf
 	$(call GENERATE_HEX,$@,$^)

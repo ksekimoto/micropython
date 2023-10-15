@@ -89,7 +89,7 @@ static bool rx_gpio_read(uint32_t pin) {
 
 #if MICROPY_HW_LCDSPI_CON_CH != -1
 extern const mp_obj_type_t machine_pin_type;
-extern const mp_obj_type_t machine_hard_spi_type;
+extern const mp_obj_type_t machine_spi_type;
 static mp_obj_t m_spi_obj;
 static mp_machine_spi_p_t *machine_spi_p;
 
@@ -109,8 +109,8 @@ static mp_obj_t m_args[] = {
 };
 
 static void m_spi_init_helper(void) {
-    m_spi_obj = machine_hard_spi_type.make_new(&machine_hard_spi_type, 1, 4, (const mp_obj_t *)m_args);
-    machine_spi_p = (mp_machine_spi_p_t *)machine_hard_spi_type.protocol;
+    m_spi_obj = machine_spi_type.make_new(&machine_spi_type, 1, 4, (const mp_obj_t *)m_args);
+    machine_spi_p = (mp_machine_spi_p_t *)machine_spi_type.protocol;
 }
 
 static void m_spi_transfer_helper(size_t len, const uint8_t *src, uint8_t *dest) {

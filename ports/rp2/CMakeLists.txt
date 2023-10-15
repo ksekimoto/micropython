@@ -26,7 +26,7 @@ set(MICROPY_PORT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 # Set the board if it's not already set.
 if(NOT MICROPY_BOARD)
-    set(MICROPY_BOARD PICO)
+    set(MICROPY_BOARD RPI_PICO)
 endif()
 
 # Set the board directory and check that it exists.
@@ -406,6 +406,7 @@ target_include_directories(${MICROPY_TARGET} PRIVATE
 target_compile_options(${MICROPY_TARGET} PRIVATE
     -Wall
     -Werror
+    -g  # always include debug information in the ELF
 )
 
 target_link_options(${MICROPY_TARGET} PRIVATE

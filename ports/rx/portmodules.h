@@ -28,6 +28,7 @@
 
 extern const mp_obj_module_t pyb_module;
 extern const mp_obj_module_t rx_module;
+extern const mp_obj_module_t mp_module_time;
 extern const mp_obj_module_t mp_module_socket;
 
 // additional helper functions exported by the modules

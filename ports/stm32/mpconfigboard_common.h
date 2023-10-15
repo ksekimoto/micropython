@@ -32,9 +32,14 @@
 /*****************************************************************************/
 // Feature settings with defaults
 
-// Whether to include the stm module, with peripheral register constants
+// Whether to include the stm module
 #ifndef MICROPY_PY_STM
 #define MICROPY_PY_STM (1)
+#endif
+
+// Whether to include named register constants in the stm module
+#ifndef MICROPY_PY_STM_CONST
+#define MICROPY_PY_STM_CONST (MICROPY_PY_STM)
 #endif
 
 // Whether to include the pyb module
@@ -249,6 +254,21 @@
 
 #ifndef MICROPY_HW_USB_INTERFACE_FS_STRING
 #define MICROPY_HW_USB_INTERFACE_FS_STRING      "Pyboard Interface"
+#endif
+
+// Must be 8 bytes.
+#ifndef MICROPY_HW_USB_MSC_INQUIRY_VENDOR_STRING
+#define MICROPY_HW_USB_MSC_INQUIRY_VENDOR_STRING "MicroPy "
+#endif
+
+// Must be 16 bytes.
+#ifndef MICROPY_HW_USB_MSC_INQUIRY_PRODUCT_STRING
+#define MICROPY_HW_USB_MSC_INQUIRY_PRODUCT_STRING "pyboard Flash   "
+#endif
+
+// Must be 4 bytes.
+#ifndef MICROPY_HW_USB_MSC_INQUIRY_REVISION_STRING
+#define MICROPY_HW_USB_MSC_INQUIRY_REVISION_STRING "1.00"
 #endif
 
 // Amount of incoming buffer space for each CDC instance.
@@ -471,7 +491,11 @@
 #define MICROPY_HW_RCC_HSI_STATE (RCC_HSI_OFF)
 #define MICROPY_HW_RCC_FLAG_HSxRDY (RCC_FLAG_HSERDY)
 #if MICROPY_HW_CLK_USE_BYPASS
+#if !defined(STM32WL)
 #define MICROPY_HW_RCC_HSE_STATE (RCC_HSE_BYPASS)
+#else
+#define MICROPY_HW_RCC_HSE_STATE (RCC_HSE_BYPASS_PWR)
+#endif
 #else
 #define MICROPY_HW_RCC_HSE_STATE (RCC_HSE_ON)
 #endif
@@ -586,7 +610,7 @@
 // Whether the USB peripheral is device-only, or multiple OTG
 // For STM32G0 and STM32H5 the USB peripheral supports device and host mode,
 // but otherwise acts like a non-multi-OTG peripheral.
-#if defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32L0) || defined(STM32L432xx) || defined(STM32WB)
+#if defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32L0) || defined(STM32L1) || defined(STM32L432xx) || defined(STM32WB)
 #define MICROPY_HW_USB_IS_MULTI_OTG (0)
 #else
 #define MICROPY_HW_USB_IS_MULTI_OTG (1)

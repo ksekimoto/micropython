@@ -42,6 +42,10 @@
 #include "esp_wifi.h"
 #include "esp_log.h"
 
+#ifndef NO_QSTR
+#include "mdns.h"
+#endif
+
 #if MICROPY_PY_NETWORK_WLAN
 
 #if (WIFI_MODE_STA & WIFI_MODE_AP != WIFI_MODE_NULL || WIFI_MODE_STA | WIFI_MODE_AP != WIFI_MODE_APSTA)
@@ -72,7 +76,7 @@ static bool mdns_initialised = false;
 #endif
 
 static uint8_t conf_wifi_sta_reconnects = 0;
-static volatile uint8_t wifi_sta_reconnects;
+static uint8_t wifi_sta_reconnects;
 
 // This function is called by the system-event task and so runs in a different
 // thread to the main MicroPython task.  It must not raise any Python exceptions.
@@ -80,7 +84,12 @@ static void network_wlan_wifi_event_handler(void *event_handler_arg, esp_event_b
     switch (event_id) {
         case WIFI_EVENT_STA_START:
             ESP_LOGI("wifi", "STA_START");
+            wlan_sta_obj.active = true;
             wifi_sta_reconnects = 0;
+            break;
+
+        case WIFI_EVENT_STA_STOP:
+            wlan_sta_obj.active = false;
             break;
 
         case WIFI_EVENT_STA_CONNECTED:
@@ -136,6 +145,15 @@ static void network_wlan_wifi_event_handler(void *event_handler_arg, esp_event_b
             }
             break;
         }
+
+        case WIFI_EVENT_AP_START:
+            wlan_ap_obj.active = true;
+            break;
+
+        case WIFI_EVENT_AP_STOP:
+            wlan_ap_obj.active = false;
+            break;
+
         default:
             break;
     }
@@ -151,8 +169,8 @@ static void network_wlan_ip_event_handler(void *event_handler_arg, esp_event_bas
             if (!mdns_initialised) {
                 mdns_init();
                 #if MICROPY_HW_ENABLE_MDNS_RESPONDER
-                mdns_hostname_set(mod_network_hostname);
-                mdns_instance_name_set(mod_network_hostname);
+                mdns_hostname_set(mod_network_hostname_data);
+                mdns_instance_name_set(mod_network_hostname_data);
                 #endif
                 mdns_initialised = true;
             }
@@ -180,10 +198,12 @@ void esp_initialise_wifi(void) {
         wlan_sta_obj.base.type = &esp_network_wlan_type;
         wlan_sta_obj.if_id = ESP_IF_WIFI_STA;
         wlan_sta_obj.netif = esp_netif_create_default_wifi_sta();
+        wlan_sta_obj.active = false;
 
         wlan_ap_obj.base.type = &esp_network_wlan_type;
         wlan_ap_obj.if_id = ESP_IF_WIFI_AP;
         wlan_ap_obj.netif = esp_netif_create_default_wifi_ap();
+        wlan_ap_obj.active = false;
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         ESP_LOGD("modnetwork", "Initializing WiFi");
@@ -233,15 +253,14 @@ STATIC mp_obj_t network_wlan_active(size_t n_args, const mp_obj_t *args) {
         } else {
             esp_exceptions(esp_wifi_set_mode(mode));
             if (!wifi_started) {
-                // WIFI_EVENT_STA_START must be received before esp_wifi_connect() can be called.
-                // Use the `wifi_sta_reconnects` variable to detect that event.
-                wifi_sta_reconnects = 1;
                 esp_exceptions(esp_wifi_start());
                 wifi_started = true;
-                while (wifi_sta_reconnects != 0) {
-                    MICROPY_EVENT_POLL_HOOK;
-                }
             }
+        }
+
+        // Wait for the interface to be in the correct state.
+        while (self->active != active) {
+            MICROPY_EVENT_POLL_HOOK;
         }
     }
 
@@ -286,7 +305,7 @@ STATIC mp_obj_t network_wlan_connect(size_t n_args, const mp_obj_t *pos_args, mp
         esp_exceptions(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_sta_config));
     }
 
-    esp_exceptions(esp_netif_set_hostname(wlan_sta_obj.netif, mod_network_hostname));
+    esp_exceptions(esp_netif_set_hostname(wlan_sta_obj.netif, mod_network_hostname_data));
 
     wifi_sta_reconnects = 0;
     // connect to the WiFi AP
@@ -503,12 +522,7 @@ STATIC mp_obj_t network_wlan_config(size_t n_args, const mp_obj_t *args, mp_map_
                     case MP_QSTR_hostname:
                     case MP_QSTR_dhcp_hostname: {
                         // TODO: Deprecated. Use network.hostname(name) instead.
-                        size_t len;
-                        const char *str = mp_obj_str_get_data(kwargs->table[i].value, &len);
-                        if (len >= MICROPY_PY_NETWORK_HOSTNAME_MAX_LEN) {
-                            mp_raise_ValueError(NULL);
-                        }
-                        strcpy(mod_network_hostname, str);
+                        mod_network_hostname(1, &kwargs->table[i].value);
                         break;
                     }
                     case MP_QSTR_max_clients: {
@@ -603,11 +617,15 @@ STATIC mp_obj_t network_wlan_config(size_t n_args, const mp_obj_t *args, mp_map_
             val = MP_OBJ_NEW_SMALL_INT(channel);
             break;
         }
+        case MP_QSTR_ifname: {
+            val = esp_ifname(self->netif);
+            break;
+        }
         case MP_QSTR_hostname:
         case MP_QSTR_dhcp_hostname: {
             // TODO: Deprecated. Use network.hostname() instead.
             req_if = ESP_IF_WIFI_STA;
-            val = mp_obj_new_str(mod_network_hostname, strlen(mod_network_hostname));
+            val = mod_network_hostname(0, NULL);
             break;
         }
         case MP_QSTR_max_clients: {

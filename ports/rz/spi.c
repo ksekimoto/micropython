@@ -24,17 +24,16 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <string.h>
-
 #include "py/runtime.h"
+#include "py/mperrno.h"
 #include "py/mphal.h"
+#include "spi.h"
 #include "extmod/machine_spi.h"
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
 #include "rz_spi.h"
-#include "spi.h"
 #include "mbed_spi.h"
 
 // #define MBED_SPI_WRAPPER
@@ -141,7 +140,7 @@ void spi_set_params(const mspi_t *spi_obj, uint32_t prescale, int32_t baudrate,
 }
 
 // TODO allow to take a list of pins to use
-void _spi_init(const mspi_t *self, bool enable_nss_pin) {
+int _spi_init(const mspi_t *self, bool enable_nss_pin) {
     // ToDo: implement using pins definition
     // const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
@@ -184,9 +183,10 @@ void _spi_init(const mspi_t *self, bool enable_nss_pin) {
     #endif
     } else {
         // SPI does not exist for this board (shouldn't get here, should be checked by caller)
-        return;
+        return -MP_EINVAL;
     }
 
+    return 0; // success
 }
 
 void spi_deinit(const mspi_t *spi_obj) {

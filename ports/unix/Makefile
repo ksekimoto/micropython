@@ -59,8 +59,8 @@ endif
 # Remove unused sections.
 COPT += -fdata-sections -ffunction-sections
 
-# Always enable symbols -- They're occasionally useful, and don't make it into the
-# final .bin/.hex/.dfu so the extra size doesn't matter.
+# Note: Symbols and debug information will still be stripped from the final binary
+# unless "DEBUG=1" or "STRIP=" is passed to make, see README.md for details.
 CFLAGS += -g
 
 ifndef DEBUG
@@ -201,7 +201,6 @@ SRC_C += \
 	mpthreadport.c \
 	input.c \
 	modmachine.c \
-	modselect.c \
 	alloc.c \
 	fatfs_port.c \
 	mpbthciport.c \

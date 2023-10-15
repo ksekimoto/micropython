@@ -53,6 +53,8 @@ int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t fr
     return 0;
 }
 
+// For write: len = 0, 1 or N
+// For read: len = 1, 2 or N; stop = true
 int i2c_start_addr(i2c_t *i2c, int rd_wrn, uint16_t addr, size_t next_len, bool stop) {
     i2c->addr = addr;
     return 0;

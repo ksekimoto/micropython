@@ -525,6 +525,7 @@ def run_tests(pyb, tests, args, result_dir, num_threads=1):
         )  # requires fp32, there's string_format_fp30.py instead
         skip_tests.add("float/bytes_construct.py")  # requires fp32
         skip_tests.add("float/bytearray_construct.py")  # requires fp32
+        skip_tests.add("float/float_format_ints_power10.py")  # requires fp32
     if upy_float_precision < 64:
         skip_tests.add("float/float_divmod.py")  # tested by float/float_divmod_relaxed.py instead
         skip_tests.add("float/float2int_doubleprec_intbig.py")
@@ -567,7 +568,6 @@ def run_tests(pyb, tests, args, result_dir, num_threads=1):
                     for t in "bytearray le native_le ptr_le ptr_native_le sizeof sizeof_native array_assign_le array_assign_native_le".split()
                 }
             )  # requires uctypes
-            skip_tests.add("extmod/zlibd_decompress.py")  # requires zlib
             skip_tests.add("extmod/heapq1.py")  # heapq not supported by WiPy
             skip_tests.add("extmod/random_basic.py")  # requires random
             skip_tests.add("extmod/random_extra.py")  # requires random
@@ -710,7 +710,9 @@ def run_tests(pyb, tests, args, result_dir, num_threads=1):
             # run CPython to work out expected output
             try:
                 output_expected = subprocess.check_output(
-                    CPYTHON3_CMD + [os.path.abspath(test_file)], cwd=os.path.dirname(test_file)
+                    CPYTHON3_CMD + [os.path.abspath(test_file)],
+                    cwd=os.path.dirname(test_file),
+                    stderr=subprocess.STDOUT,
                 )
                 if args.write_exp:
                     with open(test_file_expected, "wb") as f:

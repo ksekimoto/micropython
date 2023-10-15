@@ -507,7 +507,7 @@ STATIC mp_int_t compute_ticks_from_dtg(uint32_t dtg) {
 }
 
 STATIC void config_deadtime(pyb_timer_obj_t *self, mp_int_t ticks, mp_int_t brk) {
-    TIM_BreakDeadTimeConfigTypeDef deadTimeConfig;
+    TIM_BreakDeadTimeConfigTypeDef deadTimeConfig = {0};
     deadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
     deadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
     deadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
@@ -605,7 +605,7 @@ STATIC void pyb_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
 ///   - `mode` can be one of:
 ///     - `Timer.UP` - configures the timer to count from 0 to ARR (default)
 ///     - `Timer.DOWN` - configures the timer to count from ARR down to 0.
-///     - `Timer.CENTER` - confgures the timer to count from 0 to ARR and
+///     - `Timer.CENTER` - configures the timer to count from 0 to ARR and
 ///       then back down to 0.
 ///
 ///   - `div` can be one of 1, 2, or 4. Divides the timer clock to determine
@@ -884,10 +884,11 @@ STATIC const uint32_t tim_instance_table[MICROPY_HW_MAX_TIMER] = {
     TIM_ENTRY(7, TIM7_IRQn),
     #endif
     #endif
+
     #if defined(TIM8)
     #if defined(STM32F4) || defined(STM32F7) || defined(STM32H7)
     TIM_ENTRY(8, TIM8_UP_TIM13_IRQn),
-    #elif defined(STM32G4) || defined(STM32L4)
+    #else
     TIM_ENTRY(8, TIM8_UP_IRQn),
     #endif
     #endif

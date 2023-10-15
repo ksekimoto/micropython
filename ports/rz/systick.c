@@ -27,11 +27,10 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
-#include "shared/runtime/softtimer.h"
 #include "irq.h"
 #include "pendsv.h"
 #include "systick.h"
-#include "pybthread.h"
+#include "softtimer.h"
 #include "mbed_wait_api.h"
 #include "hal/us_ticker_api.h"
 #include "mbed_timer.h"
@@ -137,7 +136,7 @@ void mp_hal_delay_us(mp_uint_t usec) {
 }
 
 bool systick_has_passed(uint32_t start_tick, uint32_t delay_ms) {
-    return (long)mtick() - (long)start_tick >= (long)delay_ms;
+    return (long)mp_hal_ticks_ms() - (long)start_tick >= (long)delay_ms;
 }
 
 // waits until at least delay_ms milliseconds have passed from the sampling of

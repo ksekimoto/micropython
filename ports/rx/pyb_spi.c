@@ -59,9 +59,6 @@ STATIC const pyb_spi_obj_t pyb_spi_obj[] = {
     {{&pyb_spi_type}, &spi_obj[0]},
     {{&pyb_spi_type}, &spi_obj[1]},
     {{&pyb_spi_type}, &spi_obj[2]},
-    {{&pyb_spi_type}, &spi_obj[3]},
-    {{&pyb_spi_type}, &spi_obj[4]},
-    {{&pyb_spi_type}, &spi_obj[5]},
 };
 
 STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -102,7 +99,10 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
     uint32_t nss = args[7].u_int;
     // ToDo
     // init the SPI bus
-    spi_init(self->spi, nss != SPI_NSS_SOFT);
+    int ret = spi_init(self->spi, nss != SPI_NSS_SOFT);
+    if (ret != 0) {
+        mp_raise_OSError(-ret);
+    }
     spi_set_params(self->spi, args[2].u_int, args[1].u_int, args[3].u_int, args[4].u_int,
         args[6].u_int, args[8].u_int);
 

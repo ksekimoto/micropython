@@ -21,6 +21,10 @@ QSTR_GLOBAL_REQUIREMENTS += $(HEADER_BUILD)/mpversion.h
 # some code is performance bottleneck and compiled with other optimization options
 CSUPEROPT = -O3
 
+ifeq ($(LVGL_ENABLE),1)
+include $(TOP)/py/lvgl.mk
+endif
+
 # Enable building 32-bit code on 64-bit host.
 ifeq ($(MICROPY_FORCE_32BIT),1)
 CC += -m32

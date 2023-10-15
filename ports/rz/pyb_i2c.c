@@ -24,16 +24,12 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-
 #include "py/runtime.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
 #include "irq.h"
 #include "pin.h"
 #include "bufhelper.h"
-// #include "rz_i2c.h"
 #include "i2c.h"
 
 #if MICROPY_PY_PYB_LEGACY && MICROPY_HW_ENABLE_HW_I2C
@@ -42,10 +38,6 @@
 #include "debug_printf.h"
 // #define DEBUG_I2C
 #endif
-// dummmy definition
-typedef int HAL_StatusTypeDef;
-#define HAL_OK  0
-//
 
 /// \moduleref pyb
 /// \class I2C - a two-wire serial protocol
@@ -312,8 +304,6 @@ STATIC void pyb_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     #endif
 
     mp_printf(print, "I2C(%u)", i2c_num);
-    // ToDo implement
-    // print more information
 }
 
 /// \method init(mode, *, addr=0x12, baudrate=400000, gencall=False)
@@ -420,16 +410,6 @@ STATIC mp_obj_t pyb_i2c_is_ready(mp_obj_t self_in, mp_obj_t i2c_addr_o) {
         mp_raise_TypeError(MP_ERROR_TEXT("I2C must be a controller"));
     }
 
-    // mp_uint_t i2c_addr = mp_obj_get_int(i2c_addr_o) << 1;
-
-    // ToDo implement
-//    for (int i = 0; i < 10; i++) {
-//        HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(self->i2c, i2c_addr, 10, 200);
-//        if (status == HAL_OK) {
-//            return mp_const_true;
-//        }
-//    }
-
     return mp_const_false;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_i2c_is_ready_obj, pyb_i2c_is_ready);
@@ -448,12 +428,7 @@ STATIC mp_obj_t pyb_i2c_scan(mp_obj_t self_in) {
 
     // ToDo implement
     // scan i2c devices
-//    for (uint addr = 0x08; addr <= 0x77; addr++) {
-//        HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(self->i2c, addr << 1, 1, 200);
-//        if (status == HAL_OK) {
-//            mp_obj_list_append(list, MP_OBJ_NEW_SMALL_INT(addr));
-//        }
-//    }
+
 
     return list;
 }

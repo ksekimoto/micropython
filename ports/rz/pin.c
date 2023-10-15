@@ -25,10 +25,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "extmod/virtpin.h"
@@ -104,15 +100,17 @@ void pin_init0(void) {
 
 // C API used to convert a user-supplied pin name into an ordinal pin number.
 const pin_obj_t *pin_find(mp_obj_t user_obj) {
+    const mp_print_t *print = &mp_plat_print;
+
     const pin_obj_t *pin_obj;
 
     // If a pin was provided, then use it
     if (mp_obj_is_type(user_obj, &pin_type)) {
         pin_obj = MP_OBJ_TO_PTR(user_obj);
         if (pin_class_debug) {
-            printf("Pin map passed pin ");
+            mp_printf(print, "Pin map passed pin ");
             mp_obj_print(MP_OBJ_FROM_PTR(pin_obj), PRINT_STR);
-            printf("\n");
+            mp_printf(print, "\n");
         }
         return pin_obj;
     }
@@ -124,11 +122,11 @@ const pin_obj_t *pin_find(mp_obj_t user_obj) {
                 mp_raise_ValueError(MP_ERROR_TEXT("Pin.mapper didn't return a Pin object"));
             }
             if (pin_class_debug) {
-                printf("Pin.mapper maps ");
+                mp_printf(print, "Pin.mapper maps ");
                 mp_obj_print(user_obj, PRINT_REPR);
-                printf(" to ");
+                mp_printf(print, " to ");
                 mp_obj_print(o, PRINT_STR);
-                printf("\n");
+                mp_printf(print, "\n");
             }
             return MP_OBJ_TO_PTR(o);
         }
@@ -142,11 +140,11 @@ const pin_obj_t *pin_find(mp_obj_t user_obj) {
         if (elem != NULL && elem->value != MP_OBJ_NULL) {
             mp_obj_t o = elem->value;
             if (pin_class_debug) {
-                printf("Pin.map_dict maps ");
+                mp_printf(print, "Pin.map_dict maps ");
                 mp_obj_print(user_obj, PRINT_REPR);
-                printf(" to ");
+                mp_printf(print, " to ");
                 mp_obj_print(o, PRINT_STR);
-                printf("\n");
+                mp_printf(print, "\n");
             }
             return MP_OBJ_TO_PTR(o);
         }
@@ -156,11 +154,11 @@ const pin_obj_t *pin_find(mp_obj_t user_obj) {
     pin_obj = pin_find_named_pin(&pin_board_pins_locals_dict, user_obj);
     if (pin_obj) {
         if (pin_class_debug) {
-            printf("Pin.board maps ");
+            mp_printf(print, "Pin.board maps ");
             mp_obj_print(user_obj, PRINT_REPR);
-            printf(" to ");
+            mp_printf(print, " to ");
             mp_obj_print(MP_OBJ_FROM_PTR(pin_obj), PRINT_STR);
-            printf("\n");
+            mp_printf(print, "\n");
         }
         return pin_obj;
     }
@@ -169,11 +167,11 @@ const pin_obj_t *pin_find(mp_obj_t user_obj) {
     pin_obj = pin_find_named_pin(&pin_cpu_pins_locals_dict, user_obj);
     if (pin_obj) {
         if (pin_class_debug) {
-            printf("Pin.cpu maps ");
+            mp_printf(print, "Pin.cpu maps ");
             mp_obj_print(user_obj, PRINT_REPR);
-            printf(" to ");
+            mp_printf(print, " to ");
             mp_obj_print(MP_OBJ_FROM_PTR(pin_obj), PRINT_STR);
-            printf("\n");
+            mp_printf(print, "\n");
         }
         return pin_obj;
     }

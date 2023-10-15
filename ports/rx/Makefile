@@ -204,7 +204,6 @@ SHARED_SRC_C += $(addprefix shared/,\
 	runtime/interrupt_char.c \
 	runtime/mpirq.c \
 	runtime/pyexec.c \
-	runtime/softtimer.c  \
 	runtime/stdout_helpers.c \
 	runtime/sys_stdio_mphal.c \
 	timeutils/timeutils.c \
@@ -361,6 +360,7 @@ SRC_C += \
 	modrxreg.c \
 	mpy_file.c \
 	pwm.c \
+	softtimer.c \
 	$(wildcard $(BOARD_DIR)/*.c)
 
 SRC_C += esp8266/base64encode.c

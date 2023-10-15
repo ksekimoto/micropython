@@ -49,7 +49,6 @@
 #if MICROPY_PY_LWIP
 #include "lwip/init.h"
 #include "lwip/apps/mdns.h"
-// #include "drivers/cyw43/cyw43.h"
 #endif
 
 #if MICROPY_PY_BLUETOOTH
@@ -98,14 +97,6 @@ int mp_interrupt_channel;
 
 #if MICROPY_PY_THREAD
 STATIC pyb_thread_t pyb_thread_main;
-#endif
-
-#if MICROPY_HW_ENABLE_STORAGE
-// STATIC fs_user_mount_t fs_user_mount_flash;
-#endif
-
-#if MICROPY_HW_ENABLE_SDCARD
-FATFS *fatfs_sd = (FATFS *)0;
 #endif
 
 #if defined(MICROPY_HW_UART_REPL)

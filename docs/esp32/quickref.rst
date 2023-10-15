@@ -101,7 +101,7 @@ A useful function for connecting to your local WiFi network is::
         print('network config:', wlan.ifconfig())
 
 Once the network is established the :mod:`socket <socket>` module can be used
-to create and use TCP/UDP sockets as usual, and the ``urequests`` module for
+to create and use TCP/UDP sockets as usual, and the ``requests`` module for
 convenient HTTP requests.
 
 After a call to ``wlan.connect()``, the device will by default retry to connect
@@ -149,6 +149,12 @@ These are working configurations for LAN interfaces of popular boards::
 
     lan = network.LAN(mdc=machine.Pin(23), mdio=machine.Pin(18),
                       phy_type=network.PHY_LAN8720, phy_addr=1, power=None)
+
+    # Wireless-Tag's WT32-ETH01 v1.4
+
+    lan = network.LAN(mdc=machine.Pin(23), mdio=machine.Pin(18),
+                      phy_type=network.PHY_LAN8720, phy_addr=1,
+                      power=machine.Pin(16))
 
     # Espressif ESP32-Ethernet-Kit_A_V1.2
 

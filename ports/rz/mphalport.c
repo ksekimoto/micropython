@@ -33,6 +33,9 @@
 #include "py/mphal.h"
 #include "extmod/misc.h"
 #include "usb.h"
+#if MICROPY_HW_ENABLE_LCD_CONSOLE
+#include "lcd.h"
+#endif
 #include "uart.h"
 #include "modmachine.h"
 
@@ -103,6 +106,9 @@ MP_WEAK int mp_hal_stdin_rx_chr(void) {
 }
 
 MP_WEAK void mp_hal_stdout_tx_strn(const char *str, size_t len) {
+    #if MICROPY_HW_ENABLE_LCD_CONSOLE
+    lcd_print_strn(str, len);
+    #endif
     if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
         uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
     }
@@ -144,26 +150,6 @@ void mp_hal_pin_config_speed(mp_hal_pin_obj_t pin_obj, uint32_t speed) {
 
 // Generate a random locally administered MAC address (LAA)
 void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
-    #if 0
-    // STM32
-    uint8_t *id = (uint8_t *)MP_HAL_UNIQUE_ID_ADDRESS;
-    buf[0] = 0x02; // LAA range
-    buf[1] = (id[11] << 4) | (id[10] & 0xf);
-    buf[2] = (id[9] << 4) | (id[8] & 0xf);
-    buf[3] = (id[7] << 4) | (id[6] & 0xf);
-    buf[4] = id[2];
-    buf[5] = (id[0] << 2) | idx;
-    #else
-    #if defined(RX65N)
-    uint8_t id[16];
-    get_unique_id((uint8_t *)&id);
-    buf[0] = 0x02;
-    buf[1] = id[11];
-    buf[2] = id[12];
-    buf[3] = id[13];
-    buf[4] = id[14];
-    buf[5] = id[15];
-    #else
     #if defined(MICROPY_HW_ETH_MAC_ADDRESS_0)
     buf[0] = MICROPY_HW_ETH_MAC_ADDRESS_0;
     buf[1] = MICROPY_HW_ETH_MAC_ADDRESS_1;
@@ -179,8 +165,6 @@ void mp_hal_generate_laa_mac(int idx, uint8_t buf[6]) {
     buf[3] = (uint8_t)(tick >> 16);
     buf[4] = (uint8_t)(tick >> 8);
     buf[5] = (uint8_t)(tick);
-    #endif
-    #endif
     #endif
 }
 

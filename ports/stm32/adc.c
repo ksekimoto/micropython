@@ -51,9 +51,14 @@
 ///     val = adc.read_core_vref()      # read MCU VREF
 
 /* ADC definitions */
+#if defined(STM32H5)
+// STM32H5 features two ADC instances, ADCx and pin_adc_table are set dynamically
+#define PIN_ADC_MASK            (PIN_ADC1 | PIN_ADC2)
+#else
 #define ADCx                    (ADC1)
 #define PIN_ADC_MASK            PIN_ADC1
 #define pin_adc_table           pin_adc1
+#endif
 
 #if defined(STM32H7A3xx) || defined(STM32H7A3xxQ) || \
     defined(STM32H7B3xx) || defined(STM32H7B3xxQ)
@@ -220,6 +225,14 @@ static inline uint32_t adc_get_internal_channel(uint32_t channel) {
     if (channel == 16) {
         channel = ADC_CHANNEL_TEMPSENSOR;
     }
+    #elif defined(STM32G4)
+    if (channel == 16) {
+        channel = ADC_CHANNEL_TEMPSENSOR_ADC1;
+    } else if (channel == 17) {
+        channel = ADC_CHANNEL_VBAT;
+    } else if (channel == 18) {
+        channel = ADC_CHANNEL_VREFINT;
+    }
     #elif defined(STM32L4)
     if (channel == 0) {
         channel = ADC_CHANNEL_VREFINT;
@@ -344,7 +357,11 @@ STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
     adch->Init.DataAlign = ADC_DATAALIGN_RIGHT;
     adch->Init.DMAContinuousRequests = DISABLE;
     #elif defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32L4) || defined(STM32WB)
+    #if defined(STM32G4) || defined(STM32H5)
+    adch->Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV16;
+    #else
     adch->Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+    #endif
     adch->Init.ScanConvMode = ADC_SCAN_DISABLE;
     adch->Init.LowPowerAutoWait = DISABLE;
     adch->Init.Overrun = ADC_OVR_DATA_PRESERVED;
@@ -367,8 +384,8 @@ STATIC void adcx_init_periph(ADC_HandleTypeDef *adch, uint32_t resolution) {
     #endif
 }
 
-STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
-    adc_obj->handle.Instance = ADCx;
+STATIC void adc_init_single(pyb_obj_adc_t *adc_obj, ADC_TypeDef *adc) {
+    adc_obj->handle.Instance = adc;
     adcx_init_periph(&adc_obj->handle, ADC_RESOLUTION_12B);
 
     #if (defined(STM32G4) || defined(STM32L4)) && defined(ADC_DUALMODE_REGSIMULT_INJECSIMULT)
@@ -383,7 +400,7 @@ STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
 STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) {
     ADC_ChannelConfTypeDef sConfig;
 
-    #if defined(STM32G0) || defined(STM32G4) || defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
+    #if defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
     sConfig.Rank = ADC_REGULAR_RANK_1;
     if (__HAL_ADC_IS_CHANNEL_INTERNAL(channel) == 0) {
         channel = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
@@ -427,7 +444,7 @@ STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) 
     if (__HAL_ADC_IS_CHANNEL_INTERNAL(channel)) {
         sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
     } else {
-        sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
+        sConfig.SamplingTime = ADC_SAMPLETIME_6CYCLES_5;
     }
     sConfig.SingleDiff = ADC_SINGLE_ENDED;
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
@@ -446,9 +463,18 @@ STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) 
 }
 
 STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
-    HAL_ADC_Start(adcHandle);
-    adc_wait_for_eoc_or_timeout(adcHandle, EOC_TIMEOUT);
-    uint32_t value = adcHandle->Instance->DR;
+    uint32_t value;
+    #if defined(STM32G4)
+    // For STM32G4 there is errata 2.7.7, "Wrong ADC result if conversion done late after
+    // calibration or previous conversion".  According to the errata, this can be avoided
+    // by performing two consecutive ADC conversions and keeping the second result.
+    for (uint8_t i = 0; i < 2; i++)
+    #endif
+    {
+        HAL_ADC_Start(adcHandle);
+        adc_wait_for_eoc_or_timeout(adcHandle, EOC_TIMEOUT);
+        value = adcHandle->Instance->DR;
+    }
     HAL_ADC_Stop(adcHandle);
     return value;
 }
@@ -474,7 +500,15 @@ STATIC uint32_t adc_config_and_read_channel(ADC_HandleTypeDef *adcHandle, uint32
 
 STATIC void adc_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pyb_obj_adc_t *self = MP_OBJ_TO_PTR(self_in);
+    #if defined STM32H5
+    unsigned adc_id = 1;
+    if (self->handle.Instance == ADC2) {
+        adc_id = 2;
+    }
+    mp_printf(print, "<ADC%u on ", adc_id);
+    #else
     mp_print_str(print, "<ADC on ");
+    #endif
     mp_obj_print_helper(print, self->pin_name, PRINT_STR);
     mp_printf(print, " channel=%u>", self->channel);
 }
@@ -489,6 +523,13 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
     // 1st argument is the pin name
     mp_obj_t pin_obj = args[0];
 
+    #if defined(STM32H5)
+    // STM32H5 has two ADC instances where some pins are only available on ADC1 or ADC2 (but not both).
+    // Assume we're using a channel of ADC1. Can be overridden for ADC2 later in this function.
+    ADC_TypeDef *adc = ADC1;
+    const pin_obj_t *const *pin_adc_table = pin_adc1;
+    uint32_t num_adc_pins = MP_ARRAY_SIZE(pin_adc1);
+    #endif
     uint32_t channel;
 
     if (mp_obj_is_int(pin_obj)) {
@@ -499,6 +540,13 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
             // No ADC function on the given pin.
             mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Pin(%q) doesn't have ADC capabilities"), pin->name);
         }
+        #if defined(STM32H5)
+        if ((pin->adc_num & PIN_ADC2) == PIN_ADC2) {
+            adc = ADC2;
+            pin_adc_table = pin_adc2;
+            num_adc_pins = MP_ARRAY_SIZE(pin_adc2);
+        }
+        #endif
         channel = pin->adc_channel;
     }
 
@@ -507,20 +555,32 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
     }
 
     // If this channel corresponds to a pin then configure the pin in ADC mode.
+    #if defined(STM32H5)
+    if (channel < num_adc_pins) {
+        const pin_obj_t *pin = pin_adc_table[channel];
+        if (pin != NULL) {
+            mp_hal_pin_config(pin, MP_HAL_PIN_MODE_ADC, MP_HAL_PIN_PULL_NONE, 0);
+        }
+    }
+    #else
     if (channel < MP_ARRAY_SIZE(pin_adc_table)) {
         const pin_obj_t *pin = pin_adc_table[channel];
         if (pin != NULL) {
             mp_hal_pin_config(pin, MP_HAL_PIN_MODE_ADC, MP_HAL_PIN_PULL_NONE, 0);
         }
     }
+    #endif
 
     pyb_obj_adc_t *o = m_new_obj(pyb_obj_adc_t);
     memset(o, 0, sizeof(*o));
     o->base.type = &pyb_adc_type;
     o->pin_name = pin_obj;
     o->channel = channel;
-    adc_init_single(o);
-
+    #if defined(STM32H5)
+    adc_init_single(o, adc);
+    #else
+    adc_init_single(o, ADCx);
+    #endif
     return MP_OBJ_FROM_PTR(o);
 }
 
@@ -862,6 +922,12 @@ int adc_read_core_temp(ADC_HandleTypeDef *adcHandle) {
 STATIC volatile float adc_refcor = 1.0f;
 
 float adc_read_core_temp_float(ADC_HandleTypeDef *adcHandle) {
+    #if defined(STM32G4) || defined(STM32L1) || defined(STM32L4)
+    // Update the reference correction factor before reading tempsensor
+    // because TS_CAL1 and TS_CAL2 of STM32G4,L1/L4 are at VDDA=3.0V
+    adc_read_core_vref(adcHandle);
+    #endif
+
     #if defined(STM32G4)
     int32_t raw_value = 0;
     if (adcHandle->Instance == ADC1) {
@@ -869,19 +935,24 @@ float adc_read_core_temp_float(ADC_HandleTypeDef *adcHandle) {
     } else {
         return 0;
     }
-    #else
-    #if defined(STM32L1) || defined(STM32L4)
-    // Update the reference correction factor before reading tempsensor
-    // because TS_CAL1 and TS_CAL2 of STM32L1/L4 are at VDDA=3.0V
-    adc_read_core_vref(adcHandle);
-    #endif
+    float core_temp_avg_slope = (*ADC_CAL2 - *ADC_CAL1) / 100.0f;
+    #elif defined(STM32H5)
     int32_t raw_value = adc_config_and_read_ref(adcHandle, ADC_CHANNEL_TEMPSENSOR);
-    #endif
+    float core_temp_avg_slope = (*ADC_CAL2 - *ADC_CAL1) / 100.0f;
+    #else
+    int32_t raw_value = adc_config_and_read_ref(adcHandle, ADC_CHANNEL_TEMPSENSOR);
     float core_temp_avg_slope = (*ADC_CAL2 - *ADC_CAL1) / 80.0f;
+    #endif
     return (((float)raw_value * adc_refcor - *ADC_CAL1) / core_temp_avg_slope) + 30.0f;
 }
 
 float adc_read_core_vbat(ADC_HandleTypeDef *adcHandle) {
+    #if defined(STM32G4) || defined(STM32L4)
+    // Update the reference correction factor before reading tempsensor
+    // because VREFINT of STM32G4,L4 is at VDDA=3.0V
+    adc_read_core_vref(adcHandle);
+    #endif
+
     #if defined(STM32L152xE)
     mp_raise_NotImplementedError(MP_ERROR_TEXT("read_core_vbat not supported"));
     #else

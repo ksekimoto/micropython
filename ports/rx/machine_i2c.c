@@ -39,8 +39,7 @@
 
 #define I2C_POLL_DEFAULT_TIMEOUT_US (50000) // 50ms
 
-#if defined(STM32F0) || defined(STM32F4) || defined(STM32F7) || defined(STM32H7)
-
+#if 0
 typedef struct _machine_hard_i2c_obj_t {
     mp_obj_base_t base;
     i2c_t *i2c;
@@ -124,6 +123,7 @@ int machine_hard_i2c_transfer(mp_obj_base_t *self_in, uint16_t addr, size_t n, m
         }
         num_acks += ret;
     }
+
     return num_acks;
 }
 

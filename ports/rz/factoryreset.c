@@ -110,7 +110,7 @@ MP_WEAK void factory_reset_make_files(FATFS *fatfs) {
 MP_WEAK int factory_reset_create_filesystem(void) {
     // LED on to indicate creation of local filesystem
     led_state(PYB_LED_GREEN, 1);
-    // uint32_t start_tick = mp_hal_ticks_ms();
+    uint32_t start_tick = mp_hal_ticks_ms();
 
     fs_user_mount_t vfs;
     vfs.blockdev.flags = 0;
@@ -129,8 +129,7 @@ MP_WEAK int factory_reset_create_filesystem(void) {
     factory_reset_make_files(&vfs.fatfs);
 
     // Keep LED on for at least 200ms
-    // systick_wait_at_least(start_tick, 200);
-    mp_hal_delay_ms(200);
+    systick_wait_at_least(start_tick, 200);
     led_state(PYB_LED_GREEN, 0);
 
     return 0; // success

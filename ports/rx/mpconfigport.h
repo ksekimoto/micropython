@@ -28,7 +28,6 @@
 // Options to control how MicroPython is built for this port,
 // overriding defaults in py/mpconfig.h.
 
-#include <stdint.h>
 // board specific definitions
 #include "mpconfigboard.h"
 #include "mpconfigboard_common.h"
@@ -55,7 +54,7 @@
 // Don't enable lookup cache on M0 (low RAM)
 
 // Python internal features
-#define MICROPY_TRACKED_ALLOC       (MICROPY_SSL_MBEDTLS || MICROPY_BLUETOOTH_BTSTACK)
+#define MICROPY_TRACKED_ALLOC       (MICROPY_SSL_MBEDTLS)
 #define MICROPY_READER_VFS          (1)
 #define MICROPY_ENABLE_GC           (1)
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF (1)
@@ -83,7 +82,6 @@
 #endif
 
 // extended modules
-#define MICROPY_PY_SSL_FINALISER    (MICROPY_PY_SSL)
 #define MICROPY_PY_HASHLIB_MD5      (MICROPY_PY_SSL)
 #define MICROPY_PY_HASHLIB_SHA1     (MICROPY_PY_SSL)
 #define MICROPY_PY_CRYPTOLIB        (MICROPY_PY_SSL)
@@ -114,7 +112,6 @@
 #define MICROPY_PY_MACHINE_SPI_LSB  (SPI_FIRSTBIT_LSB)
 #define MICROPY_PY_MACHINE_SOFTSPI  (1)
 #define MICROPY_PY_MACHINE_TIMER    (1)
-#define MICROPY_SOFT_TIMER_TICKS_MS mtick()
 #endif
 #define MICROPY_HW_SOFTSPI_MIN_DELAY (0)
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (1000000)
@@ -128,9 +125,6 @@
 #endif
 #ifndef MICROPY_PY_ONEWIRE
 #define MICROPY_PY_ONEWIRE          (1)
-#endif
-#ifndef MICROPY_PY_PLATFORM
-#define MICROPY_PY_PLATFORM         (1)
 #endif
 
 #if LVGL_ENABLE
@@ -177,7 +171,6 @@ extern const struct _mp_obj_module_t rxreg_module;
 
 #if MICROPY_PY_MACHINE
 #define MACHINE_BUILTIN_MODULE_CONSTANTS \
-    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
 #else
 #define MACHINE_BUILTIN_MODULE_CONSTANTS
@@ -386,6 +379,9 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_THREAD_YIELD()
 #endif
+
+// Configuration for shared/runtime/softtimer.c.
+#define MICROPY_SOFT_TIMER_TICKS_MS uwTick
 
 // The LwIP interface must run at a raised IRQ priority
 #ifndef IRQ_PRI_PENDSV

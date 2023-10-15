@@ -27,11 +27,10 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
-#include "shared/runtime/softtimer.h"
 #include "irq.h"
 #include "pendsv.h"
 #include "systick.h"
-#include "pybthread.h"
+#include "softtimer.h"
 #include "rx_timer.h"
 
 #if MICROPY_HW_MCU_PCLK
@@ -50,7 +49,7 @@ void SysTick_Handler(void) {
     // Instead of calling HAL_IncTick we do the increment here of the counter.
     // This is purely for efficiency, since SysTick is called 1000 times per
     // second at the highest interrupt priority.
-    uint32_t uw_tick = mtick() + 1;
+    uint32_t uw_tick = mp_hal_ticks_ms() + 1;
     uwTick = uw_tick;
 
     // Read the systick control regster. This has the side effect of clearing
@@ -64,7 +63,7 @@ void SysTick_Handler(void) {
         f(uw_tick);
     }
 
-    if (soft_timer_next == mtick()) {
+    if (soft_timer_next == mp_hal_ticks_ms()) {
         pendsv_schedule_dispatch(PENDSV_DISPATCH_SOFT_TIMER, soft_timer_handler);
     }
 
@@ -88,9 +87,9 @@ void SysTick_Handler(void) {
 void HAL_Delay(uint32_t Delay) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = mtick();
+        uint32_t start = mp_hal_ticks_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (mtick() - start < Delay) {
+        while (mp_hal_ticks_ms() - start < Delay) {
             // Enter sleep mode, waiting for (at least) the SysTick interrupt.
             __WFI();
         }
@@ -105,14 +104,14 @@ void HAL_Delay(uint32_t Delay) {
 void mp_hal_delay_ms(mp_uint_t Delay) {
     if (query_irq() == IRQ_STATE_ENABLED) {
         // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = mtick();
+        uint32_t start = mp_hal_ticks_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
         do {
             // This macro will execute the necessary idle behaviour.  It may
             // raise an exception, switch threads or enter sleep mode (waiting for
             // (at least) the SysTick interrupt).
             MICROPY_EVENT_POLL_HOOK
-        } while (mtick() - start < Delay);
+        } while (mp_hal_ticks_ms() - start < Delay);
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
@@ -143,7 +142,7 @@ void mp_hal_delay_us(mp_uint_t usec) {
 }
 
 bool systick_has_passed(uint32_t start_tick, uint32_t delay_ms) {
-    return (long)mtick() - (long)start_tick >= (long)delay_ms;
+    return (long)mp_hal_ticks_ms() - (long)start_tick >= (long)delay_ms;
 }
 
 // waits until at least delay_ms milliseconds have passed from the sampling of

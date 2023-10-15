@@ -49,7 +49,7 @@ extern const pyb_i2c_obj_t pyb_i2c_obj[4];
 
 void i2c_init0(void);
 int pyb_i2c_init(i2c_t *i2c);
-void pyb_i2c_init_freq(const pyb_i2c_obj_t *self, mp_int_t freq);
+int pyb_i2c_init_freq(const pyb_i2c_obj_t *self, mp_int_t freq);
 uint32_t pyb_i2c_get_baudrate(i2c_t *i2c);
 
 int i2c_init(i2c_t *i2c, mp_hal_pin_obj_t scl, mp_hal_pin_obj_t sda, uint32_t freq, uint16_t timeout);

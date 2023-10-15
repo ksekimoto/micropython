@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu -o pipefail
-git submodule update --init --recursive ../../lib/mbedtls
-git submodule update --init --recursive ../../lib/lwip
+# git submodule update --init --recursive ../../lib/mbedtls
+# git submodule update --init --recursive ../../lib/lwip
 export LOG_PATH="./_logs"
 mkdir -p ${LOG_PATH}
 # export VERBOSE="V=1"
